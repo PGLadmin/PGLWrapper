@@ -1,0 +1,16 @@
+'PROGRAMME DE CALCUL DE FLASH DIPHASIQUE ET/OU TRIPHASIQUE'
+'Etude de stabilite et equilibres triphasiques (1/0)  ph3 ='   0
+'Niveau d''impression des details (-1,0,1,2 ou 3)    nimp ='   0
+'Choix eq cubique : VdW(1), SRK(2), PR(3)      choix_r1r2 ='   3
+'Methode d''acceleration (0,1,2,3)                    iac ='   1
+'Methode du substitution seule (1/0)                isubs ='   0
+'Utilisation du critere d''Ammar (1/0)                cam ='   0
+'Precision de la resolution de l''equation d''etat  EPSEQ ='   1.D-14
+'Precision relative de l''ordinateur                 EPS0 ='   1.D-14
+'Critere pour la fin de la methode de substitution   EPS1 ='   1.D-3
+'Option A1 ou A2 (1 ou 2)                              oa ='   2
+'Nombre d''iterations pour le stade B                  nb ='   2
+'Initialisation standard  n(liq)/n(gaz)                L0 ='   0.5D+00
+'Nombre d''initialisations a essayer (flash prim. et sec.) '   1 3
+'Liste d''initialisations:'   0.5D+00  0.01D+00  1.0D+00
+'Nombre d''iterations max (dans FLASH2 / TPD):             '   20

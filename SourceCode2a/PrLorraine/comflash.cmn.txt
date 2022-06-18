@@ -1,0 +1,231 @@
+c VERSION JUILLET 2018
+       integer lun1,lun2,pmax,phmax,nbgr_tot_max,tempcmax,tempdmax,
+     &           ntempmax,parmax
+       parameter (lun1=6,lun2=55,pmax=2,phmax=2,nbgr_tot_max=40,
+     &            tempcmax=500,tempdmax=10,ntempmax=9000,parmax=3)
+c
+c --------------------------------------------------------------
+c*** common fluide
+       common /fluide/ t0,p0,ntt,vt,mmolt,zt,denst,dropout
+     &                 ,nt,npt,vp,mmolp,zp,vph
+     &                 ,densp,np,xp,volat
+     &                 ,nco
+     &                 ,nom
+       real*8 t0,p0,ntt,vt,mmolt,zt,denst,dropout,zp(phmax)
+       real*8 nt(pmax),npt(phmax),vp(phmax),vph(phmax),mmolp(phmax)
+       real*8 densp(phmax),np(pmax,phmax),xp(pmax,phmax),volat(pmax)
+       integer nco
+       character*15 nom(pmax)
+c
+c --------------------------------------------------------------
+c*** common param
+       common /param/ epseq,eps0,eps1,l0,ld
+     &                ,nimp,ph3,iac,isubs,cam,oa,nb,nlp,nls
+       real*8 r,epseq,eps0,eps1,l0,ld(10),rgas
+	   parameter(r=83.14472d0) ! bar.cm3.mol^(-1).K^(-1)
+	   parameter(rgas=r*0.1d0) ! J/mol/K
+       integer nimp,ph3,iac,isubs,cam,oa,nb,nlp,nls
+c
+c --------------------------------------------------------------
+c*** common com1
+       integer ncompmaxcp,ncompmaxcp2
+       parameter(ncompmaxcp=300,ncompmaxcp2=2000)
+       integer choix_eos,choix_b,choix_ge,choix_h,choix_cP
+       integer indice_cp(ncompmaxcp2)
+       real*8 tc(pmax),pc(pmax),fac(pmax),zra(pmax)
+       real*8 ac(pmax),msoave(pmax),pcmax,parC(pmax)
+	   real*8 parL(pmax),parM(pmax),parN(pmax),qi(pmax)
+       real*8 tabcpgp(ncompmaxcp,6),vc(pmax),omega(pmax)
+       common /com1/ tc,pc,fac,zra,ac,msoave,tabcpgp,parL,parM,
+     &               indice_cp,choix_eos,choix_b,pcmax,parN,qi,
+     &               choix_ge,parC,choix_h,choix_cP,vc,omega
+c
+c --------------------------------------------------------------
+c*** common com2
+       common /com2/ eta,peq,dpdeta,gamma,rt,v,dzdeta,qpseta,rtsb,y,z
+     &              ,q
+       real*8 eta,peq,dpdeta,gamma,rt,v,dzdeta,qpseta,rtsb,y,z,q
+c
+c --------------------------------------------------------------
+c*** common com13
+       common /com13/ pvap,lourd
+       real*8 pvap(pmax)
+       integer lourd
+c
+c --------------------------------------------------------------
+c*** common com6
+       common /com6/ aa,bm,ee,b,asb,bisb,aai,bx,e,bc,daidx,en,k12
+     &               ,k12_const,choix_flash,nombre_flash,Lij,kij
+     &               ,quadra_b,puisb,Lambda,am,dEijsRT,d2EijsRT
+     &               ,modele_gE,amix,bmix,att,at,daai_dT
+     &               ,agE0,bgE0,cgE0,pargE,dpargE,d2pargE,alphgE
+     &               ,sigma,mu,expA,tabingr_file,delta_sur_RacRT 
+       integer choix_flash,nombre_flash
+       real*8 aa,bm,ee,am,amix,bmix
+       real*8 b(pmax),asb(pmax),bisb(pmax),aai(pmax),bx(pmax)
+       real*8 e(pmax),bc(pmax),dEijsRT(pmax,pmax),d2EijsRT(pmax,pmax)
+       real*8 daidx(pmax,pmax),en(pmax,pmax),k12
+       real*8 Lij(pmax,pmax),kij(pmax,pmax),Lambda
+       real*8 k12_const,puisb,att,at,daai_dT(pmax)
+       real*8 agE0(pmax,pmax),bgE0(pmax,pmax),cgE0(pmax,pmax)
+       real*8 pargE(pmax,pmax),dpargE(pmax,pmax),d2pargE(pmax,pmax)
+       real*8 expA(pmax,pmax),sigma(pmax),mu(pmax),alphgE(pmax,pmax)
+	   real*8 delta_sur_RacRT(pmax)
+       character*30 modele_gE
+	character*50 tabingr_file
+       logical quadra_b
+c
+c --------------------------------------------------------------
+c*** common com11
+       common /com11/ gt,gt0,etap,gp
+       real*8 gt,gt0
+       real*8 etap(phmax),gp(phmax)
+c
+c --------------------------------------------------------------
+c*** common com12
+       common /com12/ theta1,theta2,omegab,omegaa
+     &                ,mmol,ss
+       real*8 theta1,theta2,omegab,omegaa
+       real*8 mmol(pmax),ss(pmax)       
+c
+c --------------------------------------------------------------
+c*** common com14
+       common /com14/ lphi,dlphideta,dmudn,dpdn,dmudv,dpdv,dmudpar
+     &                ,dpdpar,dmudt,dpdt,dlphidp,dlphidt
+     &                ,detadt	 
+       real*8 dpdv,dpdt
+       real*8 lphi(pmax),dlphideta(pmax),dpdn(pmax),dmudv(pmax)
+       real*8 dmudt(pmax),dpdpar(parmax),dlphidp(pmax),detadt
+       real*8 dmudn(pmax,pmax),dmudpar(pmax,parmax),dlphidt(pmax)
+c
+c --------------------------------------------------------------
+c*** common com15
+       common /com15/ fmaxi,l12,iph, nitflash
+       real*8 fmaxi,l12
+       integer iph, nitflash
+c
+c --------------------------------------------------------------
+c*** common cchol
+       common /cchol/ m0,n0
+       integer m0,n0
+c
+c --------------------------------------------------------------
+c*** common grouper
+       common /grouper/ agr,bgr,srg
+     &                 ,asb0
+     &                 ,nbgr_tot,ngroupe,knum,imin,imax
+       real*8 agr(nbgr_tot_max,nbgr_tot_max)
+       real*8 bgr(nbgr_tot_max,nbgr_tot_max),srg(pmax,nbgr_tot_max)
+       real*8 asb0(pmax)
+       integer nbgr_tot,ngroupe
+       integer knum(10),imin(10),imax(10)
+c
+c --------------------------------------------------------------
+c*** common sov_temp
+       common /sov_temp/ tmemc,tmemd,ent
+     &                  ,dendtt
+     &                  ,itempc,kijt
+     &                  ,pargEt,expAt
+       real*8 tmemc(tempcmax),tmemd(tempdmax)
+       real*8 kijt(tempcmax,pmax,pmax)
+       real*8 ent(tempcmax,pmax,pmax),dendtt(tempdmax,pmax,pmax)
+       real*8 pargEt(tempcmax,pmax,pmax),expAt(tempcmax,pmax,pmax)
+       integer itempc
+c
+c --------------------------------------------------------------
+       integer nsysmax,nsermax,nptmax,i_max,npmax
+       parameter (nsysmax=1500,nsermax=500,nptmax=200,i_max=25000,
+     &            npmax=6*i_max)
+      logical predictif,fitting,kij_const,fitbin
+      logical simul_PRWil,fitting_PRWil
+
+
+c*** common FITTING
+       common /fitting0/ g1,g2,g3,g4,lg1,lg2,lg3,lg4,nser,appel_FO
+     &                  ,tg1,tg2,tg3,tg4,fichier,ygtx,fl_ok,corrFL
+     &                  ,predictif,fitting,kij_const,simul_PRWil
+     &                  ,fitting_PRWil,fitbin
+
+       integer g1,g2,g3,g4,lg1,lg2,lg3,lg4,nser(nsysmax),appel_FO
+       integer rien1,rien2,rien3
+       character*2 tg1,tg2,tg3,tg4
+       character*80 fichier
+       logical ygtx,pc_up,fl_ok,corrFL
+c
+c --------------------------------------------------------------
+c*** common optim
+       integer choix_fob
+	   logical eval_fo
+	real*8 borneinf(6),bornesup(6),poids_fob(10)
+       common /optim/ borneinf,bornesup
+	common/optim2/ poids_fob,choix_fob,eval_fo
+c
+c --------------------------------------------------------------
+c*** common courbe
+	   integer nllvmax
+       real*8 eps_pb
+       parameter (eps_pb = 1.0D-7)
+	   parameter (nllvmax=3)
+       common /courbe/ xcpu,xaze,pcri,tcri,xcri,ncpu,naze,ncri,
+     &                 paze,taze,xLLVcalc1,xLLVcalc2,xLLVcalc3,
+     &                 pLLVcalc,tLLVcalc,nLLVcalc,typeaz
+       real*8 xcpu(3),pcri(3),tcri(3),xcri(3)
+       real*8 xaze(3),paze(3),taze(3)
+       real*8 xLLVcalc1(nllvmax),xLLVcalc2(nllvmax)
+	   real*8 xLLVcalc3(nllvmax),pLLVcalc(nllvmax)
+	   real*8 tLLVcalc(nllvmax)
+	   character*2 typeaz(3)
+       integer ncpu,naze,ncri,nLLVcalc
+c
+c --------------------------------------------------------------
+c*** common affichage et rejet veleurs min et max des diagrammes
+       real*8 ecmax0,ecmax_y,ecmax_x,yrejet,xrejet,pmaxim,pminim,
+     &        tmaxim,tminim,pmax_opt,pmin_opt,tmax_opt,tmin_opt,
+     &        p_max_exp,T_min_exp,dxmax_global,fact_o,epsdel
+       logical voir_ecart,voir_bug,puceau,envt2_bug,option_debug
+	   parameter(fact_o = 1.d0)
+	   parameter(epsdel = 1.0d-07)
+       common /divers/ ecmax0,ecmax_y,ecmax_x,yrejet,xrejet,pmaxim,
+     &        pminim,tmaxim,tminim,pmax_opt,pmin_opt,tmax_opt,tmin_opt,
+     &        p_max_exp,T_min_exp,option_debug,
+     &        voir_ecart,voir_bug,puceau,envt2_bug,dxmax_global       
+c
+c --------------------------------------------------------------
+c
+      integer ngr,nbgr_used,liste_gr(nbgr_tot_max)
+      integer ngr1,nomgr1(nbgr_tot_max)
+      integer ngr2,nomgr2(nbgr_tot_max)
+
+      real*8 occurgr1(nbgr_tot_max),occurgr2(nbgr_tot_max)
+      real*8 pres_max
+      common/groupes_RP/  ngr1,nomgr1,occurgr1,ngr2,nomgr2,
+     &                    occurgr2,ngr,liste_gr,nbgr_used
+
+      integer ncomp1,ncomp2,codcomp1,codcomp2
+      real*8 agr0(nbgr_tot_max,nbgr_tot_max)
+      real*8 bgr0(nbgr_tot_max,nbgr_tot_max)
+      character*15 comp1,comp2
+      common/comp_RP/ comp1,comp2,ncomp1,ncomp2,
+     &                codcomp1,codcomp2,agr0,bgr0
+
+      integer nder,ntemp
+	  logical isGPED
+
+      real*8 ac0(pmax),ac1(pmax),ac2(pmax)
+      real*8 dlna_T(pmax),d2lna_T(pmax)
+      common/eoscub/ac0,ac1,ac2,dlna_T,d2lna_T,nder,ntemp,isGPED
+c
+c --------------------------------------------------------------
+      integer choix_r1r2
+      real*8 r1,r2,derbm(pmax)
+      real*8 dalphadx(pmax),dbmdx(pmax),der2bm(pmax,pmax)
+      real*8 bij(pmax,pmax),aij(pmax,pmax)
+      common/plus_de_tild/r1,r2,derbm,choix_r1r2,dalphadx,dbmdx,
+     &                    der2bm,bij,aij
+	  character*5 FoncAlpha
+	  common/alphafunction/ FoncAlpha
+
+c --------------------------------------------------------------
+      real*8    dE_dT, d2E_dT2, dalpha_dT, d2alpha_dT2
+      common/tempo/dE_dT, d2E_dT2, dalpha_dT, d2alpha_dT2
+c --------------------------------------------------------------
