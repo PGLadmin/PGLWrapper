@@ -180,7 +180,7 @@
 			elseif(zFactor==0) then
 				rhoG_cc=errDummy
 				ierCode=ierCode*100+1
-		   else
+			else ! All good!
 				rhoG_cc=pMPa*rMwPlus(1)/(zFactor*rGas*tKelvin)
 			endif
 			rhoKg_m3=1000*rhoG_cc
@@ -190,9 +190,10 @@
 			if(cmprsblty==0)then
 				vpt=errDummy
  				ierCode=ierCode*100+2
-			else
+			else !cmprsblty good!
 				vpt = 1/(cmprsblty*pKPa/zFactor)  !cmprsblty=(dP/dRho)T*(1/RT) => vpt = Z/(P/RT*dP/dRho) = 1/(rho*dP/dRho) = (1/rho)*(dRho/dP)_T
 			endif
+			! Res props are members of GlobConst, including CpRes and CvRes.
 			if(iProperty > 5.and.LOUD)write(*,*) ' tKelvin,pKPa,expRho,hRes_RT,CpRes_R,CvRes_R,vpt,ierCode '
 			if(iProperty > 5.and.LOUD)write(*,'( f8.3,1x,6(1pE11.4,1x),i4)')tKelvin,pKPa,expRho,hRes_RT,CpRes_R,CvRes_R,vpt,ierCode
 			if(iProperty > 5)write(52,'( f8.3,1x,6(1pE11.4,1x),i4)')tKelvin,pKPa,expRho,hRes_RT,CpRes_R,CvRes_R,vpt,ierCode

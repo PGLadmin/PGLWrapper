@@ -1,0 +1,33 @@
+30	nDs	nAs	bondVNm3	bVolSlo	eHbKcal_mol 	
+24 0	1	1	0.012000	0	1	1	Cl- in HCl
+0  4	2	2	0.000200	0	1	H2S
+0  3	1	1	0.001000	0	1.8	NH3
+13 1	2	2	0.0018000	0	3.2	H2O
+ 7 1	1	0	0.000022	0	0.5	butadiene solvation with ACN/DMF
+ 8 1	1	0	0.000013	0	0.5	cis/transButene solvation with ACN/DMF
+ 8 2	1	0	0.000022	0	0.5	Butadiene solvation with ACN/DMF
+14 1	1	1	0.001000	0	5	MeOH
+14 2	1	1	0.0007000	0	5.3	EtOH
+14 3	1	1	0.0007000	0	4.8	nC4OH,nC5OH,...
+14 4	1	1	0.000500	0	5	iPrOH
+14 6	1	1	0.000500	0	3.8	HO- phenol
+14 10	1	1	0.000700	0	4.9	nPrOH
+14 12	1	1	0.000200	0	0.5	HO in carboxy acid
+15 1	0	1	0.000700	0	1.4	>O in ether
+15 4	0	1	0.000700	0	1.4	>O 6ring ether
+16 1	1	1	0.002500	0	1.3	O= 3.2 Acetone
+16 2	1	1	0.004300	0	1.8	O= middle -ketones
+16 3	0	1	0.0000001	0	7.5	O= in carboxy acid !same bondVol used for C-C (dimer) site on this interaction, eHbCC=3*eHbAD.
+16 5	0	1	0.000800	0	4.5	O= Amide
+16 6	1	1	0.000500	53	2	O= Aldehyde
+18 1	1	1	0.000700	0	2	HS- nPrSH
+19 1	1	1	0.000800	0	2.2	NH2- in 1' amine e.g. nPrNH2
+19 3	1	0	0.000800	0	4.5	NH2- in 1'amide
+20 1	1	1	0.000100	0	1.9	NH< in 2' amine (dimethyl amine)
+21 1	0	1	0.000100	0	1.0	N< in 3' amine
+22 1	0	1	0.000030	0	1.0	=AN imine (pyridine)
+23 2	0	1	0.000800	0	3.0	<CN> in acetonitrile
+24 3	1	0	0.000700	0	0	diCl- in dichloromethane
+24 4	1	0	0.000700	0	0	triCl- in chloroform
+
+19 1	1	1	0.000400	35	2.2	NH2- in 1' amine e.g. nPrNH2

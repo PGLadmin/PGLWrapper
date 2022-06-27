@@ -1,0 +1,14 @@
+643.11.7
+He.11
+H2S.11
+IPAmine
+He
+ac.acid
+propane.3
+N2.Jaubert.Cp
+IPAmine.11
+Benzene
+ipr
+formic.4
+methanol.6.4
+propane.Jaubert

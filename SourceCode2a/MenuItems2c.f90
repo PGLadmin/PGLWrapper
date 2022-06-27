@@ -553,15 +553,21 @@
 	!C  PROGRAMMED BY:  JRE 2/93
 	!C
 	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
-	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
+	Implicit DoublePrecision(A-H,K,O-Z)
 	CHARACTER*1 ANSWER
-	DIMENSION fugcV(NMX),fugcL(NMX)
-	DIMENSION X(NMX),Y(NMX),VLK(NMX),wFrac(NMX)
-	dimension ier(20)
+	character*133 outFile
+	LOGICAL LOUDER
+	DoublePrecision fugcV(NMX),fugcL(NMX)
+	DoublePrecision X(NMX),Y(NMX),VLK(NMX),wFrac(NMX)
+	Integer ier(20)
 	COMMON/eta/etaL,etaV,zLiqDum,zVapDum
 	common/eta2/eta
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	data initCall/1/
+	LOUDER=LOUD
+	LOUDER=.TRUE.
+	outFile=TRIM(masterDir)//'\output\PropTable.txt'
+	OPEN(6123,file=outFile)
 1000  CONTINUE
 	WRITE(6,*)'ENTER TEMPERATURE(KELVIN) AND PRESSURE(MPa)   '
 	READ(5,*)T,P
@@ -640,13 +646,14 @@
 	!C        7 - eta > 0.53
 	!C		11 - goldenZ instead of real Z.
 
-	IF(ier(2)==1 .and. LOUD)write(*,*)'ERROR ALL UPPER PHASE'
-	IF(ier(3)==1 .and. LOUD)write(*,*)'ERROR ALL LOWER PHASE'
+	IF(ier(2)==1 .and. LOUDER)write(*,*)'ERROR ALL UPPER PHASE'
+	IF(ier(3)==1 .and. LOUDER)write(*,*)'ERROR ALL LOWER PHASE'
 	!C      PAUSE
 	rLogInfinity=707				!larger #'s in xls give #VALUE
 	expLogInf=EXP(rLogInfinity)		!useful for trapping overflows in log's and exp's
 	DO I=1,NC
 		write(*,602)NAME(I),ID(I)
+		write(6123,602)NAME(I),ID(I)
 		activity=fugcL(I)-fugcV(I)
 		if(activity.gt.rLogInfinity)then			!polymers can cause this error.
 			pause 'Fiter warning: exp overflow.  Setting kRatio to rLogInfinity.'
@@ -654,6 +661,7 @@
 		endif
 		VLK(I)=EXP(activity)
 		write(*,603)
+		write(6123,603)
 		if(x(i).lt.1/expLogInf)x(i)=1/expLogInf  !fix if x(i)=0 for one component.
 		activity=LOG(x(i)*p)+fugcL(i)	!log of the product is the sum of the logs.
 		if(activity.gt.rLogInfinity)then			!polymers can cause this error.
@@ -669,17 +677,25 @@
 		endif
 		fugVi=EXP(activity)
 		write(*,604)X(I),Y(I),fugLi,fugVi,fugcL(I),fugcV(I)
+		write(6123,604)X(I),Y(I),fugLi,fugVi,fugcL(I),fugcV(I)
 		write(*,*)'  '
 		write(*,605)
 		write(*,606)VLK(I),T,P,rhoLo,rhoUp,ZL,ZV
+		write(6123,605)
+		write(6123,606)VLK(I),T,P,rhoLo,rhoUp,ZL,ZV
 		write(*,*)' '
-		if(LOUD)PAUSE
+		!if(LOUDER)PAUSE
 	enddo
 	write(*,*)'DEPARTURE FUNCTIONS:'    
-	write(*,*)' (HLo-Hig)/RT SresLo/R CvResLo/R  CpResLo/R  cmpLo/R    '
+	write(*,*)' (HLo-Hig)/RT SresLo/R CvResLo/R  CpResLo/R  dP/dRho/RT    '
 	write(*,610)DHL,DSL,CvL,CpL,cmL
-	write(*,*)' (HUp-Hig)/RT SresUp/R CvResUp/R  CpResUp/R  cmpUp/R  '
+	write(*,*)' (HUp-Hig)/RT SresUp/R CvResUp/R  CpResUp/R  dP/dRho/RT  '
 	write(*,610)hRes_RT,sRes_R,CvRes_R,CpRes_R,cmprsblty  !vapor is latest call, so just print from GlobConst
+	!write(6123,*)'DEPARTURE FUNCTIONS:'    
+	write(6123,*)'      (H-Hig)/RT   Sres/R   CvRes/R    CpRes/R    dP/dRho/RT    '
+	write(6123,'(a,4x,10(F9.4,1X))')' L: ',DHL,DSL,CvL,CpL,cmL
+	!write(6123,*)' (HUp-Hig)/RT SresUp/R CvResUp/R  CpResUp/R  cmpUp/R  '
+	write(6123,'(a,4x,10(F9.4,1X))')' V: ',hRes_RT,sRes_R,CvRes_R,CpRes_R,cmprsblty  !vapor is latest call, so just print from GlobConst
 602	FORMAT(' COMPONENT IS',2X,A20,2X,'ID NO. IS  ',i5)
 603	FORMAT(2X,'LIQUID X',2X,'Upper Y',1X,'fugacityLo(MPa)',1X,'fugacityUp(MPa)    lnPhiLo',3X,'lnPhiUp')
 605 FORMAT(3X,'K-RATIO',7X,'T(K)',3X,'P(MPa)',2X,'rhoLo',4X,'rhoUp',6X,'ZLo  ',6X,'ZUp')
@@ -692,6 +708,9 @@
 	WRITE(52,*)'REPEAT FUGACITY CALCULATIONS? Y/N?'
 	write(52,'(A1)')ANSWER
 	IF(ANSWER.NE.'N'.AND.ANSWER.NE.'n')GOTO 1000
+	close(6123)
+	write(*,*)'outFile=',TRIM(outFile)
+	pause 'Success! Check results in outFile.'
 	RETURN
 	END
 

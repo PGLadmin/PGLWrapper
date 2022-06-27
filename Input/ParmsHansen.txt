@@ -1,0 +1,46 @@
+15	dd	dp	dh	R 	MPa.5 for all Notes (adapted from ParmsHb.txt) 	
+8636	14	13	10	4	PLA50K, Auras*,Harte,Selke, AntecProceedings2006, MSU.
+11177	14	13	10	86	PE
+12050	21.3	5.8	4.3	12.7	PS Solubility in the coatings industry, C. M. Hansen, Sksnd. Tidskr. Faerg. Lack, 17, 69. 1971 cf. http://cool.conservation-us.org/coolaic/sg/bpg/annual/v03/bp03-04.html
+13040	14.5	2.5	4.7	12.7	PIB Solubility in the coatings industry, C. M. Hansen, Sksnd. Tidskr. Faerg. Lack, 17, 69. 1971 cf. http://cool.conservation-us.org/coolaic/sg/bpg/annual/v03/bp03-04.html
+14006	14	13	10	86	PEO
+15500	14	13	10	86	PPO
+16020	18.6	10.5	7.5	8.6	PMMA Solubility in the coatings industry, C. M. Hansen, Sksnd. Tidskr. Faerg. Lack, 17, 69. 1971 cf. http://cool.conservation-us.org/coolaic/sg/bpg/annual/v03/bp03-04.html
+17170	20.9	11.3	9.6	13.7	PVAC Solubility in the coatings industry, C. M. Hansen, Sksnd. Tidskr. Faerg. Lack, 17, 69. 1971 cf. http://cool.conservation-us.org/coolaic/sg/bpg/annual/v03/bp03-04.html
+18067	14	13	10	86	PVALC
+19034	18.2	7.5	8.3	3.5	PVC34 Solubility in the coatings industry, C. M. Hansen, Sksnd. Tidskr. Faerg. Lack, 17, 69. 1971 cf. http://cool.conservation-us.org/coolaic/sg/bpg/annual/v03/bp03-04.html
+19050	18.7	9.7	7.7	6.4	PVC50 swelling, Hansen(00) Table 8.3
+23034	14	13	10	86	PVPyridine
+24034	18.6	4.4	13	10.6	PVButyral Solubility in the coatings industry, C. M. Hansen, Sksnd. Tidskr. Faerg. Lack, 17, 69. 1971 cf. http://cool.conservation-us.org/coolaic/sg/bpg/annual/v03/bp03-04.html
+25001	14	13	10	86	pdmso
+26068	14	13	10	86	pBuMeAcry
+27064	14	13	10	86	pEt56Oh44
+?????	19.6	10.8	9.2	6.2	PES - pEtherSulfone, Hansen(00) Table 3.3
+?????	21.7	14.1	9.1	10.9	PAN - pAcrylonitrile, Hansen(00) Table 3.3
+?????	18.0	3.0	3.0	8.0	PP - pPropylene, Hansen(00) Table 3.3, raw data(?) Ency pSci Eng v13,2ed, Mark et al. Wiley (1988)p482.
+?????	17.0	9.0	18.0	4.0	pVOH- pVinylAlcohol, Hansen(00) Table 3.3
+?????	20.5	10.5	12.3	7.3	pEVOH- pEtVinylAlcohol, Hansen(00) Table 8.3
+?????	20.4	10.0	10.2	7.6	PVDC- pVinylideneChloride(Tm=130C), Hansen(00) Table 3.3, JAPS, 14:1531(70)
+?????	24.3	19.9	22.5	17.4	Dextran - Hansen(00) Table 3.3, Data:IECPRD 8:2(69)
+?????	21.9	14.1	16.9	13.7	MPa.5 Lignin - Hansen(00) Table 9.1, Holzforschung 52:339(98)
+?????	19.1	7.0	17.3	86	paraCoumarylAlcohol - Hansen(00) Table 9.1
+?????	15.9	1.2	5.4	12.0	OliveOil- Hansen(00) Table 9.1
+?????	20.4	2.8	9.4	12.6	Cholesterol- Hansen(00) Table 9.1
+?????	23.4	18.4	20.8	16.0	sucrose- Hansen(00) Table 9.1
+1921	15.5	16.0	42.3	86	water  - Hansen(00) Table 8.4
+1911	13.7	15.7	17.8	86	ammonia - Hansen(00) Table 8.4
+923	17.3	10.0	0	86	chlorine - Hansen(00) Table 8.4
+924	15.8	8.4	10.0	86	SO2 - Hansen(00) Table 8.4	
+909	14.7	3.9	6.7	86	CO2 - Hansen(00) Table 8.4
+908	11.5	4.9	0	86	CO - Hansen(00) Table 8.4
+2	15.6	0	0	86	Ethane - Hansen(00) Table 8.4
+201	15.0	2.7	2.7	86	Ethylene - Hansen(00) Table 8.4
+901	1.0	0	0	86	He - Hansen(00) Table 8.4
+902	5.1	0	0	86	H2 - Hansen(00) Table 8.4
+905	17.0	6.0	10.2	86	H2S - Hansen(00) Table 8.4
+1	14.0	0	0	86	Methane - Hansen(00) Table 8.4
+911	11.5	20	0	86	NO - Hansen(00) Table 8.4
+903	11.9	0	0	86	N2 - Hansen(00) Table 8.4
+912	12.0	17	0	86	N2O - Hansen(00) Table 8.4
+904	14.7	0	0	86	O2 - Hansen(00) Table 8.4
+301	14.4	4.2	11.9	86	Acetylene - Hansen(00) Table 8.4
