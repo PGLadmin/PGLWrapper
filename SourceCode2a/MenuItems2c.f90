@@ -689,10 +689,10 @@
 	write(*,*)'DEPARTURE FUNCTIONS:'    
 	write(*,*)' (HLo-Hig)/RT SresLo/R CvResLo/R  CpResLo/R  dP/dRho/RT    '
 	write(*,610)DHL,DSL,CvL,CpL,cmL
-	write(*,*)' (HUp-Hig)/RT SresUp/R CvResUp/R  CpResUp/R  dP/dRho/RT  '
+	write(*,*)' (HUp-Hig)/RT SresUp/R CvResUp/R CpResUp/R dP/dRho/RT  '
 	write(*,610)hRes_RT,sRes_R,CvRes_R,CpRes_R,cmprsblty  !vapor is latest call, so just print from GlobConst
 	!write(6123,*)'DEPARTURE FUNCTIONS:'    
-	write(6123,*)'      (H-Hig)/RT   Sres/R   CvRes/R    CpRes/R    dP/dRho/RT    '
+	write(6123,*)'    (H-Hig)/RT   Sres/R   CvRes/R CpRes/Rb dP/dRho/RT    '
 	write(6123,'(a,4x,10(F9.4,1X))')' L: ',DHL,DSL,CvL,CpL,cmL
 	!write(6123,*)' (HUp-Hig)/RT SresUp/R CvResUp/R  CpResUp/R  cmpUp/R  '
 	write(6123,'(a,4x,10(F9.4,1X))')' V: ',hRes_RT,sRes_R,CvRes_R,CpRes_R,cmprsblty  !vapor is latest call, so just print from GlobConst
