@@ -11,7 +11,7 @@
 	USE BIPs
 	USE EsdParms
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	parameter (nEOSs=17)
+	parameter (nEOSs=18)
 
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
 	CHARACTER*1 ANSWER
@@ -29,7 +29,7 @@
 	COMMON/FEED/ZFEED
 	COMMON/KVALUES/S
 	!common/FloryWert/vLiq(nmx)
-	data EosName/'PR','Esd96','PRWS','Esd','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)'/
+	data EosName/'PR','Esd96','PRWS','Esd','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
 
 	LOUD =.FALSE.
 	!LOUD = .TRUE.
@@ -119,6 +119,7 @@
 	if(iEosOpt.eq.15)CALL GetPcSaft(NC,idCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters   !Diky model 21
 	if(iEosOpt.eq.16)CALL GetPcSaft(NC,idCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters   !Diky model 2_
 	if(iEosOpt.eq.17)CALL GetPrLorraine(NC,iErrGet)		!JRE 20210510 : Reads Jaubert's tcPR parameters including BIPs for GE mixing rule.   !Diky model 
+	if(iEosOpt.eq.18)CALL GetEsd2Cas(NC,idCas,iErrGet)	 !Results placed in USE EsdParms				!Diky model 12
 	!NewEos: Add here for initializing parms.
 	if(iErrGet > 0)then
 		if(LOUD)pause  'Error in Main: failed to get required dbase props.'
@@ -246,6 +247,7 @@
 		IF(calcType.EQ.'FC'.OR.calcType.EQ.'fc')CALL FREEZINGCURVECALC(NC)
 		IF(calcType.EQ.'FO'.OR.calcType.EQ.'fo')CALL FreezOptKij(NC)
 		IF(calcType.EQ.'FU'.OR.calcType.EQ.'fu')CALL FITER(NC)
+		IF(calcType.EQ.'FV'.OR.calcType.EQ.'fv')CALL FVITER(NC)
 		IF(calcType.EQ.'CR'.OR.calcType.EQ.'cr')CALL CRITER(NC)	                !Added by AGF, Dec. 2009	AUG 10
 		IF(calcType.EQ.'CP'.OR.calcType.EQ.'cp')CALL CPITER(NC) 	            	!Added by AGF, Dec. 2009	AUG 10
    		IF(calcType.EQ.'GE'.OR.calcType.EQ.'ge')CALL GibbsXS(NC)

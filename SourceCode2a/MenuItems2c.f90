@@ -546,7 +546,6 @@
 	END
 
 !***********************************************************************
-
 	SUBROUTINE FITER(NC)
 	!C
 	!C  PURPOSE:  ITERATIVE FUGACITY EVALUATIONS
@@ -712,7 +711,123 @@
 	write(*,*)'outFile=',TRIM(outFile)
 	pause 'Success! Check results in outFile.'
 	RETURN
-	END
+	END	 !FITER
+
+!***********************************************************************
+	SUBROUTINE FVITER(NC)
+	!C
+	!C  PURPOSE:  ITERATIVE FUGACITY EVALUATIONS
+	!C  PROGRAMMED BY:  JRE 2022
+	!C
+	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
+	Implicit DoublePrecision(A-H,K,O-Z)
+	CHARACTER*1 ANSWER
+	character*133 outFile
+	LOGICAL LOUDER
+	DoublePrecision fugcL(NMX) !fugcV(NMX),
+	DoublePrecision X(NMX),VLK(NMX),wFrac(NMX) !,Y(NMX)
+	!Integer ier(20)
+	COMMON/eta/etaL,etaV,zLiqDum,zVapDum
+	common/eta2/eta
+	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
+	data initCall/1/
+	LOUDER=LOUD
+	LOUDER=.TRUE.
+	outFile=TRIM(masterDir)//'\output\PropTable.txt'
+	OPEN(6123,file=outFile)
+1000  CONTINUE
+	WRITE(6,*)'ENTER TEMPERATURE(KELVIN) AND packing fraction   '
+	READ(5,*)T,eta
+	WRITE(52,*)'ENTER TEMPERATURE(KELVIN) AND packing fraction   '
+	write(52,*)T,eta
+
+	IFLAG=0
+	WRITE(6,*)'ENTER COMPOSITIONS '
+	READ(5,*)(X(J),J=1,NC)
+	WRITE(52,*)' COMPOSITIONS '
+	write(52,*)(X(J),J=1,NC)
+	rMwAvg=0
+	do i=1,nc
+		rMwAvg=rMwAvg+x(i)*rMwPlus(i)
+	enddo
+	do i=1,nc
+		wFrac(i)=x(i)*rMwPlus(i)/rMwAvg
+	enddo
+	write(*,*)'Wt Fracs'
+	write(*,'(11f8.5)')(wFrac(i),i=1,nc)
+	if(initCall)print*,'FViter: calling Fugi for liq. T(K)=',T
+	bMix=SUM( x(1:Nc)*bVolCc_mol(1:Nc) )
+	vTotCc=bMix/eta
+	isZiter=0
+	Call FuVtot(isZiter,T,vTotCc,x,NC,FUGCL,ZL,iErr)
+	if(initCall)write(*,'(a,f8.2,E12.4)')' FViter: called Fugi for liq. T(K),ZL=',T,ZL
+	etaLo=eta
+	rhoLo=1/vTotCc
+	P = rhoLo*ZL*Rgas*T
+	IF (iErr > 0 )then
+		WRITE(*,'(a,22I4)')'iErr=',iErr
+		WRITE(*,*)'error in calculation'
+		goto 81 
+	endif
+	DHL=hRes_RT  !these are passed through GlobConst
+	DSL=sRes_R
+	CvL=CvRes_R
+	CpL=CpRes_R
+	cmL=cmprsblty
+
+	rLogInfinity=707				!larger #'s in xls give #VALUE
+	expLogInf=EXP(rLogInfinity)		!useful for trapping overflows in log's and exp's
+	DO I=1,NC
+		write(*,602)NAME(I),ID(I)
+		write(6123,602)NAME(I),ID(I)
+		activity=fugcL(I)-1
+		if(activity.gt.rLogInfinity)then			!polymers can cause this error.
+			pause 'Fiter warning: exp overflow.  Setting kRatio to rLogInfinity.'
+			activity=rLogInfinity
+		endif
+		VLK(I)=EXP(activity)
+		write(*,603)
+		write(6123,603)
+		if(x(i).lt.1/expLogInf)x(i)=1/expLogInf  !fix if x(i)=0 for one component.
+		activity=LOG(x(i)*p)+fugcL(i)	!log of the product is the sum of the logs.
+		if(activity.gt.rLogInfinity)then			!polymers can cause this error.
+			pause 'Fiter warning: exp overflow.  Setting activity to rLogInfinity.'
+			activity=rLogInfinity
+		endif
+		fugLi=EXP(activity)
+		write(*,'(f7.4,E12.4,f12.4,f12.7,E12.5)')X(I),fugLi,fugcL(I),VLK(i)
+		write(6123,'(f7.4,E12.4,f12.4,f12.7,E12.5)')X(I),fugLi,fugcL(I),VLK(i)
+		!write(6123,604)X(I),Y(I),fugLi,fugVi,fugcL(I),fugcV(I)
+		!if(LOUDER)PAUSE
+	enddo
+	!write(*,*)'DEPARTURE FUNCTIONS:'    
+	write(*,*)' (HLo-Hig)/RT SresLo/R CvResLo/R  CpResLo/R  dP/dRho/RT    Z       rho(mol/cc)'
+	write(*,610)DHL,DSL,CvL,CpL,cmL,ZL,1/vTotCc
+	!write(*,*)' (HUp-Hig)/RT SresUp/R CvResUp/R CpResUp/R dP/dRho/RT  '
+	!write(*,610)hRes_RT,sRes_R,CvRes_R,CpRes_R,cmprsblty  !vapor is latest call, so just print from GlobConst
+	!write(6123,*)'DEPARTURE FUNCTIONS:'    
+	write(6123,*)'    (H-Hig)/RT   Sres/R   CvRes/R CpRes/R dP/dRho/RT    Z       rho(mol/cc)'
+	write(6123,'(a,4x,10(F9.4,1X))')' ',DHL,DSL,CvL,CpL,cmL,ZL,1/vTotCc
+	!write(6123,*)' (HUp-Hig)/RT SresUp/R CvResUp/R  CpResUp/R  cmpUp/R  '
+	!write(6123,'(a,4x,10(F9.4,1X))')' V: ',hRes_RT,sRes_R,CvRes_R,CpRes_R,cmprsblty  !vapor is latest call, so just print from GlobConst
+602	FORMAT(' COMPONENT IS',2X,A20,2X,'ID NO. IS  ',i5)
+603	FORMAT(2X,'LIQUID X',1X,'fugacityLo(MPa)',1X,'   lnPhiLo',3X,' ')
+605 FORMAT(3X,'K-RATIO',7X,'T(K)',3X,'P(MPa)',2X,'rhoLo',4X,'rhoUp',6X,'ZLo  ',6X,'ZUp')
+604	FORMAT(2(3x,F7.4),2(3x,e11.4),2(3x,f12.7))
+606	FORMAT(e12.5,3X,F7.2,1X,F7.4,1X,2(F6.4,3X),2(F11.8,1X))
+610	FORMAT(4x,10(F9.4,1X))
+	initCall=0      
+81 WRITE(6,*)'REPEAT FUGACITY CALCULATIONS? Y/N?'
+	READ(*,'(A1)')ANSWER
+	WRITE(52,*)'REPEAT FUGACITY CALCULATIONS? Y/N?'
+	write(52,'(A1)')ANSWER
+	IF(ANSWER.NE.'N'.AND.ANSWER.NE.'n')GOTO 1000
+	close(6123)
+	write(*,*)'outFile=',TRIM(outFile)
+	pause 'Success! Check results in outFile.'
+	RETURN
+	END	 !FVITER
+!***********************************************************************
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !C																			   C
@@ -1299,10 +1414,11 @@
 	!C  PROGRAMMED BY:  JRE 6/99
 	!C
 	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
-	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
+	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	CHARACTER answer*1
 	character outFile*251
-	DIMENSION X(NMX),x1(19),fugcL(NMX),ier(20)
+	Integer ier(20)
+	DoublePrecision X(NMX),x1(19),fugcL(NMX)
 	DoublePrecision hPure(NMX),fugRepPure(NMX),fugAttPure(NMX),fugAssocPure(NMX),fugcPure(NMX)
 	DoublePrecision rLnGam(NMX),rLnGamRep(NMX),rLnGamAtt(NMX),rLnGamAssoc(NMX),Vcc_mol(NMX)
 	LOGICAL LOUDER
@@ -1347,7 +1463,7 @@
 		fugAttPure(iPure)=fugAtt(iPure)-zAtt
 		fugAssocPure(iPure)=fugAssoc(iPure)-zAssoc
 		fugcPure(iPure)=fugcL(iPure)
-		hPure(iPure)=DHONKT
+		hPure(iPure)=hRes_RT
 	enddo
 	if(nc==2 .and. LOUDER)write(6 ,*)'   x1      x2       hE      gMix         gE       gIs        LnGam(i)'
 	if(nc==3 .and. LOUDER)write(6 ,*)'   x1      x2      x3      hE      gMix         gE       gIs        LnGam(i)'
@@ -1378,23 +1494,20 @@
 			call Fugi(t,p,x,nc,1,fugcL,zL,ier)
 			vTotCc=ZL*Rgas*T/P
 			gIs=0
-			gE=0
-			gMix=0
-			hIs=0
-			bMix=sumproduct(nc,x,bVolCC_mol)
+			bMix=SumProduct(nc,bVolCC_mol(1:nc),x(1:nc) )
 			eta=bMix/vTotCc
 			do iComp=1,nc
 				gIs=gIs+x(iComp)*LOG(x(iComp))
-				hIs=hIs+x(iComp)*hPure(iComp)
-				gE=gE+x(iComp)*rLnGam(iComp)
-				gMix=gIs+gE
 				rLnGamRep(iComp)=fugRep(iComp)-Zrep*Vcc_mol(iComp)/vTotCc-fugRepPure(iComp)
 				rLnGamAtt(iComp)=fugAtt(iComp)-Zatt*Vcc_mol(iComp)/vTotCc-fugAttPure(iComp)
 				rLnGamAssoc(iComp)=fugAssoc(iComp)-Zassoc*Vcc_mol(iComp)/vTotCc-fugAssocPure(iComp)
 				!rLnGam(iComp)=fugc(iComp)-Zfactor*bVolCc_mol(iComp)/bVolMix - LOG(vTotCc)-fugcPure(iComp)
 				rLnGam(iComp)=fugcL(iComp)-fugcPure(iComp) 
 			enddo
-			hE=DHONKT-hIs
+			hIs =SumProduct(Nc, x(1:Nc),hPure(1:Nc) )
+			gE  =SumProduct(Nc, x(1:Nc),rLnGam(1:Nc) )
+			gMix=gIs+gE
+			hE=hRes_RT-hIs
 			!if(LOUDER)write(* ,611)(x(i),i=1,nc),hE,gMix,gE,gIs,(rLnGam(i),i=1,nc)
 			write(61,611)(x(i),i=1,nc),hE,gMix,gE,gIs,(rLnGam(i),i=1,nc)
 			write(* ,612)x(1),eta, vTotCc, Fassoc, (rLnGam(i),i=1,nc),(rLnGamRep(i),i=1,nc),(rLnGamAtt(i),i=1,nc),(rLnGamAssoc(i),i=1,nc),(ralph(i),i=1,nc)
@@ -1969,7 +2082,7 @@
 	Integer idStore(NMX),idcc(2),QueryNParMix !,iErrGet,idCas(NMX)
 	LOGICAL LOUDER
 	EXTERNAL LMDevFcn
-	character*77 inFile,outFile,errMsgPas,dumString ,name1,name2
+	character*77 inFile,outFile,errMsgPas !,dumString ,name1,name2
 	character*1 tabChar
 	COMMON/eta/etaL,etaV,ZL,ZV
 	common/FloryWert/ vLiq(nmx)
@@ -1991,7 +2104,8 @@
 !	read(*,*)idOpt
 	WRITE(*,*)'ENTER NAME OF FILE WITH EXPERIMENTAL DATA (FN.FT in VleData subdir)'
 	WRITE(*,*)'FIRST LINE =NPTS,id1,id2 2ND LINE = TK, PMPA, X,Y, ...'
-	write(*,*)'Enter 1 for Jaubert, 2 for JaubertAq, 3 for DannerGess, +10 to skip opt'
+	write(*,*)'Enter 1 for Jaubert, 2 for JaubertAq, 3 for DannerGess, 4 Solvation '
+	print*,'Add +10 to skip opt'
 	read(*,*)iAns
 	iOptimize=1
 	if(iAns > 10)then
@@ -2003,8 +2117,8 @@
 	endif
     FN="Jaubert.txt"
 	if(iAns==2)FN="JaubertAq.txt"
-	if(iAns==4)FN="JaubertAbb.txt"
-	if(iAns==3)FN="DannerGessVle.txt"
+	if(iAns==3)FN="DannerGessVle.txt"															
+	if(iAns==4)FN="SolvationSystems.txt"
 !	READ(*,'(A)')FN
 	inFile=TRIM(masterDir)//'\VleData\'//TRIM(FN)
 	if(DEBUG)inFile='c:\spead\calceos\VleData\'//TRIM(FN)
@@ -2044,9 +2158,14 @@
     iSystem=0
 	do while(ier.eq.0) !loop over data sets in db
         iSystem=iSystem+1
-		READ(51,'(4i5,a,a,a77)',ioStat=ioErr)nPtsBipDat,id(1),id(2),iRefNum,name1,name2,dumString !,idCas(1),idCas(2)
-        if(ioErr == -1)exit ! end of file reached
-		call IdCasLookup(NC,idCas,ierLookup,errMsgLookup)	! idDippr comes from GlobConst. This also sets the class()
+		!READ(51,'(4i5,a,a,a77)',ioStat=ioErr)nPtsBipDat,id(1),id(2) !,iRefNum,name1,name2,dumString !,idCas(1),idCas(2)
+		READ(51,*,ioStat=ioErr)nPtsBipDat,id(1),id(2) !,iRefNum,name1,name2,dumString !,idCas(1),idCas(2)
+        if(ioErr == -1)then
+			print*,'KijDb: read error. File=',TRIM(inFile)
+			pause 'KijDb: end of file?'
+			exit ! end of file reached
+		endif
+		call IdCasLookup(NC,idCas,ierLookup,errMsgLookup)	! idDippr passed by GlobConst. This also sets the class()
 		if(iOptimize < 0)then
 			!write(661,'(i4,2i5,2i6,a)')nPtsBipDat,id(1),id(2),idTrc(1),idTrc(2),' ! Line0:nPts,idDip1,idDip2,idTrc1,idTrc2; Line1-nPts:T(K),P(MPa),x1,y1' 	
 		endif !iOptimize < 0
@@ -2077,6 +2196,7 @@
 			pause
 		endif
 		iErrGet=SetNewEos(iEosOpt) !wipe out any instance of other eos.
+		iErrGet=1 !should be set to zero by Get__(), so something went wrong if iErrGet>0 after calls.
 		if(iEosOpt==1)CALL GetPR(NC,iErrGet)
 		if(iEosOpt==2)CALL GetEsdCas(NC,idCas,iErrGet)
 		if(iEosOpt==3)CALL GetPRWS(NC,iErrGet)
@@ -2086,6 +2206,7 @@
 		if(iEosOpt==10)CALL GetPcSaft(NC,idCas,iErrGet)
 		if(iEosOpt==11)CALL GetPrtc(NC,iErrGet)
 		if(iEosOpt==17)CALL GetPrLorraine(NC,iErrGet)
+		if(iEosOpt==18)CALL GetEsd2Cas(NC,idCas,iErrGet)
 		if(iErrGet > 0 .or. iErrCrit.ne.0 .or. ierLookup > 0 .or. iOptimize < 0)then
 			write(*,*)'KijDB Error: failed to get required pure props.'
 			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)								 
@@ -2093,7 +2214,7 @@
 			DO I=1,nPtsBipDat	!read the points but do nothing so we can cycle to next
 				!READ(51,'(a77)')dumString
 				READ(51,*)tDat(I),PDAT(I),XDAT(I),YDAT(I)
-				if(iOptimize < 0) write(661,'(2(i6,a),f8.2,a,3(f8.5,a),1x,a)')idTrc(1),tabChar,idTrc(2),tabChar,tDat(I),tabChar,PDAT(I),tabChar,XDAT(I),tabChar,YDAT(I),tabChar,dumString
+				if(iOptimize < 0) write(661,'(2(i6,a),f8.2,a,3(f8.5,a),1x,a)')idTrc(1),tabChar,idTrc(2),tabChar,tDat(I),tabChar,PDAT(I),tabChar,XDAT(I),tabChar,YDAT(I),tabChar !,dumString
 			enddo
 			cycle !loop to next component but leave ier alone so keep looping.
         endif

@@ -26,6 +26,8 @@
 	if(iEosOpt.eq.0)iEosOpt=1
 	if(iEosOpt==4)then
         call FuEsdTp( T,P,X,NC,LIQ,FUGC,Z,ier )  !AUG 10
+	elseif(iEosOpt==18)then !ESD2.  
+		call FugiESD2( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(isESD)then !all other ESD is ESD96.  
 		call FugiESD( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(iEosOpt==1)then
@@ -92,6 +94,8 @@
 	nComps=NC
 	if(iEosOpt==4)then ! iEosOpt==4 calls Wertheim so ... it's complicated.
 		call FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
+	elseif(iEosOpt==18)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
+		call FuEsd2Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
 	elseif(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
 		call FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
 	elseif(isTPT)then
