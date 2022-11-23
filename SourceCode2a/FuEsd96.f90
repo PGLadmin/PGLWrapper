@@ -21,33 +21,28 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 	PARAMETER(ndb=3000,listPool=1000)
 	character*222 bipFile,inFile,dumString !,dumString,ParmsTptFile*50 !,bipHbFile*50
 	integer iGotIt(NC),idCasPas(NC),idCasa(ndb),GetBIPs,ierCompExact(NC)  !,idStore(NC) 
-	doublePrecision kcSta
-	DIMENSION IDA(ndb),CA(ndb),QA(ndb),KCSTA(ndb),DHA(ndb),NDSA(ndb),NASA(ndb),bVolA(ndb),eokA(ndb),NDA(ndb)
+	doublePrecision KCSTA(ndb),DHA(ndb),bVolA(ndb),eokA(ndb),cA(ndb),qA(ndb)
+	integer IDA(ndb),NDSA(ndb),NASA(ndb),NDA(ndb)
 	doublePrecision bondRate(nmx,maxTypes)
 	!iErr=1 !Parms missing and iErrExact.ne.0 for at least one component
 	LOGICAL LOUDER
-    do i=1,NC
-        idCas(i)=idCasPas(i)
-    enddo
-	!idCas(1:NC)=idCasPas(1:NC) ! workaround after promoting idCas to GlobConst 
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
+    !do i=1,NC
+    !    idCas(i)=idCasPas(i)
+    !enddo
+	idCas(1:NC)=idCasPas(1:NC) ! workaround after promoting idCas to GlobConst 
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or isPcSaft.
 	isESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI 
 	etaMax=1/1.9D0-zeroTol
-!	nComps=1
-!	do i=1,nComps
-!		idStore(i)=id(i)
-!		id(i)=idCas(i)
-!	enddo
-	IF(DEBUG)then 
+	IF(DEBUG)then  !DEBUG is part of GlobConst
 		inFILE='c:\Spead\CalcEos\input\ParmsEsd.TXT'
 		if(iEosOpt==12)inFILE='c:\Spead\CalcEos\input\ParmsEsdEmami.TXT'
 		if(iEosOpt==13)inFILE='c:\Spead\CalcEos\input\ParmsEsdEmamiTb.TXT'
 	ELSE
-		inFile=TRIM(masterDir)//'\input\ParmsEsd.txt' ! // is the concatenation operator
-		if(iEosOpt==12)inFILE=TRIM(masterDir)//'\input\ParmsEsdEmami.txt' ! // is the concatenation operator
-		if(iEosOpt==13)inFILE=TRIM(masterDir)//'\input\ParmsEsdEmamiTb.txt' ! // is the concatenation operator
+		inFile=TRIM(masterDir)//'\input\ParmsEsd.txt' ! ESD96(MEM1) with optimized compound parameters for associating compounds
+		if(iEosOpt==12)inFILE=TRIM(masterDir)//'\input\ParmsEsdEmami.txt' ! // ESD96 with group contribution parameter estimates
+		if(iEosOpt==13)inFILE=TRIM(masterDir)//'\input\ParmsEsdEmamiTb.txt' ! // ESD96 with group contribution parameter estimates except EOK is varied to match Tb760
 	ENDIF
 	OPEN(31,FILE=inFile)
 	if(LOUDER)print*,'GetEsd:inFile=',TRIM(inFile)
@@ -59,7 +54,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 		READ(31,'(a222)')dumString
 		READ(dumString,*,ioStat=ioErr)IDA(I),CA(I),QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I) ,idCasa(i)
 		!write(*,*)IDA(I),CA(I),QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I)  ,idCasa(i)
-		if(ioErr .and. LOUDER)print*,'GetESD: error reading ParmsEsd_.txt. line=',TRIM(dumString)
+		if(ioErr /=0 .and. LOUDER)print*,'GetESD: error reading ParmsEsd_.txt. line=',TRIM(dumString)
 		if(  ( idCasa(i)==id(1) .or. idCasa(i)==id(2) ) .and. LOUDER  )print*,'Found in ParmsEsd idCas=',idCasa(i) 
 	enddo
 	NDI=1
@@ -80,18 +75,16 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
     !  Begin by computing corr states values.  these will be replaced if in dbase
     ierCompExact=0
 	if(iEosOpt > 4)then
-		ierCompExact=1 ! Set error for all comps. Declare error because iEosOpt > 4 means using only GC parameters from one of ParmsEsdEmami__
+		ierCompExact=1 ! Set error for all comps. Declare error because iEosOpt=12,13 means using only GC parameters from one of ParmsEsdEmami__
 	else
 		if(Tc(1) < 4)call GetCritCas(nC,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
 		call ExactEsd(nC,VX,C,Q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc or Asso+. Wait to see if Parms are in ParmsEsd before failing.
-		if(LOUDER.and.iErrExact)print*,'GetESDWarning: iErrExact=',iErrExact,' Checking database for iComp='	,( ierCompExact(iComp),iComp=1,NC)
+		if(LOUDER.and.iErrExact/=0)print*,'GetESDWarning: iErrExact=',iErrExact,' Checking database for iComp='	,( ierCompExact(iComp),iComp=1,NC)
 	endif
-	DO I=1,NC
-		nTypes(I)=1	 !all esd versions use wertheim2c now and nTypes=1 for all ESD.
-	ENDDO
+	nTypes(1:NC)=1	 !all esd versions use nTypes=1. Multifunctional molecules require SPEADMD. 
 
 	iType=1 	 ! Only one siteType per molecule in ESD for now. Can generalize more later if desired.
-	DO J=1,nC
+	DO J=1,NC
         bVolCC_mol(j)=Vx(j) !Copy ExactEsd value first. Replaced below if in dbase.
 		ND(J)=0
 		NDS(J)=0
@@ -162,7 +155,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
     
 	if(LOUDER)then
         write(*,*)'  ID     NAME       cESD    eok      bVol    Nd     KAD   eHB/k(K)'
-	    do i=1,nC
+	    do i=1,NC
 		    write(*,606)IDCas(i),NAME(i),C(i),eokP(i),Vx(i),ND(i),KCSTAR(i),DH(i)*1.987*Tc(i)/1000
         enddo
     end if
@@ -174,7 +167,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 	ELSE 
 		bipFile=TRIM(masterDir)//'\input\BipEsd.txt' ! // is the concatenation operator
 	ENDIF
-	if(nC > 1)iErrCode=GetBIPs(bipFile,ID,nC) !not necessary for pure fluids
+	if(NC > 1)iErrCode=GetBIPs(bipFile,ID,NC) !not necessary for pure fluids
 	if(iErrCode > 10)iErr=11 ! 
     if(LOUDER)then
 		print*,'GetEsdCas: bipFile=',TRIM(bipFile)
@@ -202,13 +195,14 @@ end	!GetEsdCas
 !------------------------------------------------------------------------------------  
 subroutine ExactEsd(nC,VX,c,q,eokP,iErr,ierComp)
 	USE GlobConst
-	implicit doubleprecision(A-H,K,O-Z)
+	Implicit DoublePrecision(A-H,K,O-Z)
 	!  compute ESD parameters for hydrocarbons based on the more exact solution
 	!  for Zc, Bc, and Yc vs. cShape
 	!  Ref:  Elliott and Lira, Introductory Chemical Engineering Thermo, p564 (1999).
 	!parameter (NMX=55)
 	DoublePrecision k1
-	dimension VX(nmx),c(nmx),Q(nmx),eokP(nmx),ierComp(NC) !,ID(nmx)
+	DoublePrecision VX(nmx),c(nmx),Q(nmx),eokP(nmx)
+	integer ierComp(NC) !,ID(nmx)
 	LOGICAL LOUDER
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
@@ -241,22 +235,24 @@ subroutine ExactEsd(nC,VX,c,q,eokP,iErr,ierComp)
 		endif	
 
 		Wci=ACEN(i)
-		cShape=1+3.535*Wci+	0.533*Wci*Wci
-		RooTCinv=1/SQRT(cShape)
-		k1=1.7745
-		qShape=1+1.90476*(cShape-1)
-		ZcTmp=1.d0/3.d0+RooTCinv*(.0384+RooTCinv*(-.062+RooTCinv*(0.0723-.0577*RooTCinv)))
-		atemp=9.5*qShape*1.9+4*cShape*k1-k1*1.9
-		quadB=k1*1.9*ZcTmp+3*atemp
-		sqArg=quadB*quadB+4*atemp*(4*cShape-1.9)*(9.5*qShape-k1)/ZcTmp
+		cShape=1+3.535d0*Wci+0.533d0*Wci*Wci
+		RootCinv=1/SQRT(cShape)
+		rootC=SQRT(cShape)
+		k1=1.7745d0
+		qShape=1+1.90476d0*(cShape-1)
+		ZcTmp=(1+0.115d0/rootC-0.186d0/cShape+0.217d0/cShape/rootC-0.173d0/cShape**2)/3	!EL2ed Eq. 19.125
+		!Alt: ZcTmp=(1+0.1388/SQRT(q)-0.171/q-0.01874/q/SQRT(q)+0.02361/q**2)/3
+		atemp=9.5d0*qShape*1.9d0+4*cShape*k1-k1*1.9d0
+		quadB=k1*1.9d0*ZcTmp+3*atemp
+		sqArg=quadB*quadB+4*atemp*(4*cShape-1.9d0)*(9.5d0*qShape-k1)/ZcTmp
 
-		Bc=ZcTmp*ZcTmp*(-quadB+SQRT(sqArg))/(2*atemp*(4*cShape-1.9))
+		Bc=ZcTmp*ZcTmp*(-quadB+SQRT(sqArg))/(2*atemp*(4*cShape-1.9d0))
 		Yc=ZcTmp*ZcTmp*ZcTmp/(atemp*Bc*Bc)
-		rlnY1=LOG(Yc+1.0617)
+		rlnY1=LOG(Yc+1.0617d0)
 		c(i) = cShape
 		Q(i) = qShape
 		eokP(i)=TC(i)*rlnY1
-		bVolCc_mol(i)=8.314*TC(i)/PC(i)*Bc
+		bVolCc_mol(i)=Rgas*TC(i)/PC(i)*Bc
 		VX(i)=bVolCc_mol(i)
 	enddo
 	return
@@ -336,11 +332,12 @@ end	! SetParPureEsd
 !------------------------------------------------------------------------------ 
 	!	FugiESD
 	!   LATEST REVISION : 
-	!	9/94 jre
-	!	1/96 (swiTChed to chempot, ADDED POLYETHYLENE  jre)
+	!	9/94 jre implemented ESD96 method
+	!	1/96 (switched to chempot, ADDED POLYETHYLENE  jre)
 	!	7/96 PS, PPO, PEO, PIB (ram natarajan)
 	!	1/97 PS, PPO, PEO, PIB (made consistent, jre)
 	!	7/06 jre ->f90, sample calcs, check <k1Yb> rule from 91, cf[2].
+	!   11/22 jre: implemented module structure, Trange error checking, and calling FuVtot instead of redundancy in FugiESD
 	!	Literature:
 	!	[1] ESD, IECR, 29:1476 (1990) Note: <Yb>=<qYb>/<q> was superseded in ref[2]apx.
 	!	[2] S&E, IECR, 30:524  (1991) Note:	Many typos in the apx here make it worthless. W1,W2 approach superseded in ref[3]
@@ -384,29 +381,20 @@ end	! SetParPureEsd
 	!	bMix	cshapemix	cbMix	qYbMix	k1YbMix	etaLiq	zRep	zAtt	zAssoc	sqrt(alpha1)	fAssoc	kbe(1)
 	!	34.044	1.883551	64.1246	107.349	71.1151	0.30995	5.68055	-5.6358	-1.0410		4.701303	0.65418	998.0017
 
-	SUBROUTINE FugiESD(T,P,X,nC,LIQ,FUGC,zFactor,ier)
+	SUBROUTINE FugiESD(tKelvin,pMPa,xFrac,NC,LIQ,FUGC,zFactor,ier)
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS	  + GlobConst{rGas,Tc,Pc,...}
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
-	integer kComp,QueryNParPure
-	DoublePrecision X(NMX),FUGC(NMX),chemPoAssoc(nmx)
-	integer ier(12),iera(12)
-	DoublePrecision YQVIJ(NMX,NMX),KVE(NMX),YQVI(NMX),Y(NMX,NMX),eok(NMX,NMX)
-	DoublePrecision CVI(NMX),CVIJ(NMX,NMX),QV(NMX,NMX),XA(NMX),dXsYbN(NMX)
-	DoublePrecision k1(NMX) !,RALPH(NMX)
+	DoublePrecision xFrac(NMX),FUGC(NMX) !,chemPoAssoc(nmx)
+	Integer ier(12) !,iera(12)
 	LOGICAL LOUDER
-	common/FugiParts/fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),ralph(nmx),Zrep,Zatt,Zassoc,Fassoc
-	COMMON/eta/etaL,etaV,ZL,ZV
-	COMMON/eta2/eta
-	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
-	!      COMMON/xsGibbs/xsBIP(NMX,NMX),xsNrtlAl(NMX,NMX)
 	!  ND IS THE DEGREE OF POLYMERIZATION OF EACH SPECIES
 	!  eokP IS THE DISPERSE ATTRACTION OVER BOLTZ k FOR PURE SPECIES
 	!  KCSTAR IS THE BONDING VOLUME IN NM^3 
 	!  DH IS THE BONDING ENERGY /RTC 
 	!  C,Q,bVol ARE THE PURE COMPONENT EOS PARAMETERS
 	!  KIJ IS THE BINARY INTERACTION COEFFICIENT 
-	!  Z IS PV/NoKT HERE  
+	!  zFactor IS PV/NoKT HERE  
 	!  ier = 1 - AT LEAST ONE ERROR
 	!        2 - NOT USED
 	!        3 - NOT USED
@@ -416,141 +404,70 @@ end	! SetParPureEsd
 	!        7 - eta > 0.53
 	!		11 - goldenZ instead of real Z.
 	!
-	DATA k10,K2,zM,INITIAL/1.7745,1.0617,9.5,1/  !Zm=9.5 since 1996, at least.  It is 9.5 in the CHEMCAD documentation, the EL text, and 2002.  It is not mentioned in ref[2,3,4,5,6]
+	DATA INITIAL/1/  !Zm=9.5 since 1996, at least.  It is 9.5 in the CHEMCAD documentation, the EL text, and 2002.  It is not mentioned in ref[2,3,4,5,6]
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
+	ier=0
 
-	do i=1,11
-		ier(i)=0
-	enddo
-	if(initial==1.and.LOUD)then
-		initial=0
-		nParPure=QueryNParPure()
-		print*,'nParPure=',nParPure
-		pause 'FugiEsd: check nParPure'
-	endif
-	!	if(initial.eq.0)then
-	!	  write(*,*)'enter xsScale '
-	!	  read(*,*)xsScale
-	!	  write(*,*)'enter xsBIP(1,2),xsBIP(2,1) '
-	!	  read(*,*)xsBIP(1,2),xsBIP(2,1)
-	!	endif
-	qYbMix=0.0
-	bMix=0.0
-	cbMix=0
-	k1YbMix=0
-	sumx=0
-	cShapeMix=0
 	iErrTmin=0
-	sixth=1.d0/6.d0
 	TminTot=.01
 	TrVolatile=0.1
-	if(LOUD)call QueryParMix(1,checkKij12,iErrBip)
-	if(LOUD)print*,'FugiEsd: Kij(1,2)= ',checkKij12
+	if(LOUDER)call QueryParMix(1,checkKij12,iErrBip)
+	if(LOUDER)print*,'FugiEsd: Kij(1,2)= ',checkKij12
 	DO I=1,NC
-		sumx=sumx+x(i)
 		rLogPr=DLOG10( 0.0001/Pc(i) )	! ESD not recommended below 0.0001 MPa for pure fluids. For mixes, ensure most volatile comp has Psat > 0.0001 MPa. Think about polymers.
 		aScvp=7*(1+acen(i))/3	 !SCVP: log10(Pr)=7(1+w)/3*(1-1/Tr) = a*(1-x) 
 		xt1= 1-rLogPr/aScvp  ! x = 1/Tr at Psat=0.0001 MPa, first approximation of x = x1 + dx
-		xt = xt1 -0.178*acen(i)**2*(1-xt1)*(1-xt1)  ! This crude empirical correlation was developed for nonadecanol.  cf. PGL6Samples.xlsx(nC19oh).
+		xt = xt1 -0.178*acen(i)*acen(i)*(1-xt1)*(1-xt1)  ! This crude empirical correlation was developed for nonadecanol.  cf. PGL6Samples.xlsx(nC19oh).
 		if( xt > 2.222)xt = 2.2222	!1/2.2222 = 0.45. If 
 		if( xt < 1 .and. LOUD)pause 'FugiEsd: TrMin > Tc???'
 		TrMin = 1/xt ! = min( Tr@Psat=0.0001 or 0.45 )
 		if(initial .and. LOUD)print*,'xt1,xt,TrMin',xt1,xt,TrMin
-		if( T/ TC(i) < TrMin .and. NC==1)iErrTmin=iErrTmin+1
-		if( T/Tc(i) > TrVolatile) TrVolatile=T/Tc(i)  ! The largest TrVolatile is the Tr of the compd with lowest Tc. 
+		if( tKelvin/ Tc(i) < TrMin .and. NC==1)iErrTmin=iErrTmin+1
+		if( tKelvin/Tc(i) > TrVolatile) TrVolatile=tKelvin/Tc(i)  ! The largest TrVolatile is the Tr of the compd with lowest Tc. 
 		if( Tc(i)*TrMin > TminTot) TminTot=Tc(i)*TrMin	 ! The largest Tmin is the weakest link. 
 		if( Tc(i)*TrMin > TminTot .and. LOUD) print*,'i,Tmin(i): ', i,Tc(i)*TrMin
-		IF(X(I) < 0 .and. LOUD)PAUSE 'FugiEsd: ERROR - Xi<0'
-		k1(I)=k10
-		DO J=1,nC
-			kIJtemp=(KIJ(I,J)+KTIJ(I,J)/T) 
-			eok(I,J)=DSQRT(eokP(I)*eokP(J))*( 1-kIJtemp )
-			Y(I,J)=DEXP(eok(I,J)/T)-K2
-			QV(I,J) = (Q(I)*Vx(J) + Q(J)*Vx(I)) / 2.0
-			YQVIJ(I,J)=QV(I,J)*Y(I,J)
-			CVIJ(I,J) = (C(I)*Vx(J) + C(J)*Vx(I))/2.0
-			qYbMix=qYbMix+YQVIJ(I,J)*X(I)*X(J)
-			cbMix = cbMix + CVIJ(I,J)*X(I)*X(J)								   
-		enddo
-		KVE(I)=KCSTAR(I)*avoNum*( DEXP(DH(I)/ T*TC(I))-1 )  !this KVE is in cc/mol
-		!if(initial.and.LOUD)print*,'FugiESD: KcStar=',KcStar(i)
-		!if(initial.and.LOUD)pause 'Right?'
-		bMix=bMix+X(I)*Vx(I)
-		cShapeMix=cShapeMix+X(I)*C(I)
-		k1YbMix=k1YbMix+X(I)*k1(I)*Y(I,I)*Vx(I)  !91 form, overwritten if applying 90 form
-		dXsYbN(I) = 0
+		IF(xFrac(I) < 0 .and. LOUD)PAUSE 'FugiEsd: ERROR - Xi<0'
 	enddo 
 	if(TrVolatile < 0.44d0)iErrTmin =2 ! it's only a problem if the most volatile compound has Tr < 0.45 or Psat < 0.0001.
 	if(iErrTmin > 0) then
 		ier(1)=5
 		ier(2)=iErrTmin
-		if(LOUD)print*,'FugiEsd: T(K) < Tmin(all i)',T,TminTot
+		if(LOUD)print*,'FugiEsd: T(K) < Tmin(all i)',tKelvin,TminTot
 		!if(LOUD) pause 'FugiEsd: at least one compound has Tr < TrMin'
 		!return  !! make this a warning for Vex,Hex etc.  
 	endif
+	sumx=SUM( xFrac(1:NC) )
 	if(ABS(sumx-1) > 1e-8)then
-		if(LOUD)pause 'FugiEsd: sumx .ne. 1'
+		if(LOUDER)pause 'FugiEsd: sumx .ne. 1'
 	endif
-	! Mixing Rule T derivatives
-	TdYQVM_dT=0.d0
-	TdK1YVM_dT=0.d0
-	DO I=1,NC 
-		DO J=1,NC
-	  		dEOK_dTij=DSQRT(EOKP(I)*EOKP(J))*(KTIJ(I,J)/(T*T)) 
-			dY_dTij=(dEOK_dTij*T-EOK(I,J))*DEXP(EOK(I,J)/T)/(T*T)
-			TdYQVM_dT=TdYQVM_dT+X(I)*X(J)*QV(I,J)*dY_dTij
-			if(i==j) TdK1YVM_dT=TdK1YVM_dT+X(I)*K1(I)*VX(I)*dY_dTij
-		enddo
-    enddo
-
-	!call xsMixRule(dXsYbN,xsYb,dXsYbB,bVol,X,T,nC)
-	!k1YbMix=k1YbMix+k10*xsYb			!91 form ignores this.
-
-	!qMix=1+1.90476*(cShapeMix-1) 		!90 form, not used otherwise
-	!k1YbMix=k10*qYbMix/qMix			!90 form, comment out to eliminate, cf. EL99 p559 & S&E91apx
-	!pause 'In FugiESD. Using 1990 form'
-
-	    if(k1YbMix==0 .and. LOUD)pause 'FugiESD: k1YbMix=0' 
-      
 	!INITIATE SECANT ITERATION ON rho
-	Pb_RT=P*bMix/(RGAS*T)
+	bMix=SUM( xFrac(1:NC)*bVolCC_mol(1:NC) )
+	Pb_RT=pMPa*bMix/(Rgas*tKelvin)
 	!GUESS FOR rho
 	eta=Pb_RT/1.05D0  !NOTE: Pb_RT > 1 can happen when Z >>1, like at GPa.
-	IF(LIQ==1 .or. LIQ==3 .or. eta>0.5)eta=.5D0
+	IF(LIQ==1 .or. LIQ==3 .or. eta>etaMax)eta=etaMax-0.05d0
 	rho=eta/bMix
-	if(eta > 1/1.9 .and. LOUD)print*,'FugiEsd:etaInit > 0.53. P,T=',P,T 
-
-	!ALPSOL WILL USE THIS VALUE OF rho TO CALCULATE A NEW VALUE OF zAssoc
-	CALL AlpSolEz(X,nC,KVE,ND,bMix,NAS,NDS,rho,zAssoc,XA,RALPH,fAssoc,iera)
-	IF(iera(4)==1)GOTO 86
-	voidFrac=(1-1.9D0*eta)
-	zRep=4*cbMix*rho/voidFrac
-	zAtt=-zM*qYbMix*rho/(1+k1YbMix*rho)
-	zFactor=(1+zRep+zAtt+zAssoc)
-
+	if(eta > 1/1.9 .and. LOUDER)print*,'FugiEsd:etaInit > etaMax. P,T=',pMPa,tKelvin 
+	isZiter=1 ! FUGC calculations are skipped for isZiter=1
+	Call FuEsd96Vtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
+	IF(iErr > 0)GOTO 86
 	etaOld=eta
 	ERROLD=Pb_RT-eta*zFactor
-	eta=etaOld*1.05D0
+
+	eta=etaOld/1.05D0
 	IF (eta < 0 .and. LOUD) WRITE(6,31)LIQ
 	rho=eta/bMix
 	if(initial.and.LOUD)print*,'FugiEsd: initial eta,err',etaOld,errOld
 	itMax=77
-	nIter=0
+	errBestEta=1234
 	do nIter=1,itMax
-		ier(2)=0
-		ier(3)=0
-		CALL AlpSolEz(X,NC,KVE,ND,bMix,NAS,NDS,rho,zAssoc,XA,RALPH,fAssoc,iera)
-		IF(iera(4)==1)EXIT
-		voidFrac=(1-1.9D0*bMix*rho)
-		zRep=4*cbMix*rho/voidFrac
-		zAtt=-zM*qYbMix*rho/(1+k1YbMix*rho)
-		zFactor=(1+zRep+zAtt+zAssoc)
-
+		Call FuEsd96Vtot(isZiter,tKelvin,bMix/eta,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
+		IF(iErr > 0)EXIT
 		ERR=Pb_RT-eta*zFactor
 		CHNG=ERR/(ERR-ERROLD)*(eta-etaOld)
-		if(initial.and.LOUD)write(*,'(a,2e11.4,3f10.5)')' rho,Z,zAssoc,fAssoc', rho,zFactor,zAssoc,fAssoc
-		if(initial.and.LOUD)write(*,'(a,f8.5,e11.4,i3,9f8.3)')' eta,CHNG,niter,ralph',eta,CHNG,niter,(ralph(i),i=1,NC)
+		if(initial.and.LOUDER)write(*,'(a,2e11.4,3f10.5)')'FuEsd96 eta,Z', eta,zFactor
+		if(initial.and.LOUDER)write(*,'(a,f8.5,e11.4,i3,9f8.3)')'FuEsd96 eta,CHNG,niter',eta,CHNG,niter 
 		etaOld=eta
 		ERROLD=ERR
 		!  LIMIT THE CHANGE IN Density for liquid..
@@ -560,252 +477,69 @@ end	! SetParPureEsd
 		IF(liq==3.and.DABS(CHNG/etaOld).GT.0.1D0)CHNG=DSIGN(0.1D0,CHNG)*etaOld
 		IF(liq==2.and.DABS(CHNG).GT.0.02d0)CHNG=DSIGN(0.02D0,CHNG)
  		eta=eta-CHNG
+		if(ABS(CHNG) < errBestEta)then
+			etaBest=eta
+			errBestEta=ABS(CHNG)
+		endif
 		if(eta < 0 .or. eta > 1/1.9)eta=etaOld-DSIGN(0.1D0,CHNG)*etaOld
-		rho=eta/bMix
 		IF(DABS(CHNG) < 1.D-9 .and. eta > 0)EXIT  ! Don't use CHNG/eta here. Converge quickly to ideal gas if P->0, still ~9 sigfigs if liquid.
 	enddo !nIter=1,itMax
 	if(eta < 0 .or. eta > 1.9)then
-		if(LOUD)pause 'eta < 0 or > 1.9 on final iteration in FugiESD.'
+		if(LOUDER)pause 'eta < 0 or > 1.9 on final iteration in FugiESD.'
 		continue
 	endif
 
-	if(iera(4).ne.0.or.nIter.ge.itMax.or.eta < 0)then
-		ier(4)=iera(4)
-		if(LOUD)print*, 'FugiEsd: calling GoldenZ. nIter, eta',nIter,eta
-		call GoldenZesd(X,nC,KVE,ND,bMix,NAS,NDS,cbMix,qYbMix,k1YbMix,Pb_RT,LIQ,zFactor,rho,zAssoc,XA,RALPH,fAssoc,ier)
-		eta=rho*bMix
+	if(iErr.ne.0.or.nIter.ge.itMax.or.eta < 0)then
+		ier(4)=iErr
+		eta=etaBest
+		Call FuEsd96Vtot(isZiter,tKelvin,bMix/eta,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
 		ier(11)=1
 		ier(1)=10
 	endif
-	!One last call of AlpSol to help with debugging. Should not affect answer.
-	CALL AlpSolEz(X,nC,KVE,ND,bMix,NAS,NDS,rho,zAssoc,XA,RALPH,fAssoc,iera)
+	!One last call to get FUGC.
+	if(initial.and.LOUD)write(*,'(a,f8.5,e11.4,i3,9f8.3)')' FuEsd96 cnvrgd: eta,CHNG,niter',eta,CHNG,niter
+	rho=eta/bMix 
 	IF (rho < 0)THEN
 		ier(5)=1
         ier(1)=15
-		if(LOUD)WRITE(6,31)LIQ
+		if(LOUDER)WRITE(6,31)LIQ
 		GOTO 86
 	ENDIF
-!  ITERATION ON rho HAS CONCLUDED.  GET DEPARTURES AND FUGACITY COEFFS.
-
-	if(ABS(eta-rho*bMix) > 1E-11 .and. LOUD)pause 'eta.ne.(rho*bMix)?'
-	DO I=1,nC
-	   YQVI(I)=0.D0
-	   CVI(I)=0.D0
-	enddo
-	if(P==0 .and. LOUD)print*,'FugiEsd: P=0? LIQ,P=',LIQ,P
-	zFactor=P/(rho*rGas*T)  ! add this to improve precision when computing rho from Z after return.   
-	if(zFactor.le.0 .and. LOUD)print*,'FugiEsd: converged Z <= 0. eta,Z=',eta,zFactor
-
-	!For uAssoc, cf H&M,FPE,180:165,2001. Eq. 6 can be written
-	!Q({XAi},{alphai}) = sum(ni*[lnXAi+(1-XAi)+lnXDi+(1-XDi)]) - h({XAi},{alphai})/2 = aAssoc/RT
-	!dQ/dBeps=sum(dQ/dXAi*dXAi/dBeps)+sum(dQ/dAlphai*dAlphai/dBeps)
-	!By the stationary property, everything cancels except the derivatives of h wrt {alphai}, so
-	!uAssoc/RT= -(1/2)sum{ xixjNdiNdjXAiXDj*beta*[d(rho*gKADij*Yij/dBeta] }
-	!         = -(1/2)sum{ xixjNdiNdjXAiXDj*rho*gKADij*bepsADij*(Yij+1) }
-	!         = -(1/2)sum{ xixjNdiNdjXAiXDj*alphaij*bepsADij*(Yij+1)/Yij }
-	!uAssoc/RT= -(1/2)sum{ xixjNdiNdjXAiXDj*beta*[sqrt(alphai)*dSqrt(alphaj)/dBeta+sqrt(alphai)*dSqrt(alphaj)/dBeta] }
-	!		  = -(1/2)sum{ xixjNdiNdjXAiXDj*beta*[sqrt(alphai)*(1/2)alphaj^(-0.5)*epsADi*(Yi+1)+sqrt(alphai)*dSqrt(alphaj)/dBeta] }
-	!         = -(1/2)sum{ xixjNdiNdjXAiXDj*alphaij*beta*[(dSqrt(alphaj)/dBeta)/sqrt(alphaj)+(dSqrt(alphai)/dBeta)/sqrt(alphai)] }
-	![beta*dSqrt(alphai)/dBeta]/sqrt(alphai)= [(+1/2)/sqrt(alphai)*rho*gKad*bepsADi*(Yi+1)]/sqrt(alphai)=(+1/2)*bepsADi*(Yi+1)/Yi
-	!uAssoc/RT= -(1/2)sum{ xi*xjNdjXDjNdiXAi*alphaij* [bepsADi*(Yi+1)/Yi+bepsADj*(Yj+1)/Yj]/2 } ; 
-	!         = -(1/2)sum{ xi*xjNdjXDjNdiXAi*sqrt(alphai)*sqrt(alphaj)*[bepsADi*(Yi+1)/Yi+bepsADj*(Yj+1)/Yj]/2 } ; 
-	!         = -(1/4)sum{ xiNdiXAi*sqrt(alphai)*xjNdjXDj*sqrt(alphaj)*[bepsADi*(Yi+1)/Yi+bepsADj*(Yj+1)/Yj] } ; 
-	!         = -(1/4)sum{ xiNdiXAi*sqrt(alphai)*xjNdjXDj*sqrt(alphaj)*[bepsADi*(Yi+1)/Yi]+sum{ xiNdiXAi*sqrt(alphai)*xjNdjXDj*sqrt(alphaj)*[bepsADj*(Yj+1)/Yj] } ; 2 in 2/4 is by symmetry.
-	!         = -(1/4)sum{ xiNdiXAi*sqrt(alphai)*[bepsADi*(Yi+1)/Yi]*sum[xjNdjXDj*sqrt(alphaj)]+sum{ xiNdiXAi*sqrt(alphai)*sum(xjNdjXDj*sqrt(alphaj)*[bepsADj*(Yj+1)/Yj]) } ; 2 in 2/4 is by symmetry.
-	!         = -(2/4)sum{ xiNdiXAi*sqrt(alphai)*bepsADi*(Yi+1)/Yi*sum(xjNdjXDjSqrt(alphaj) } ; 2 in 2/4 is by symmetry.
-	!         = -(F/2)sum{ xiNdiXAi*Sqrt(alphai)*bepsADi*(Yi+1)/Yi } = (2F/2)*beta*dF/dBeta; beta*dF/dBeta=(+1/2)sum{ xiNdiXAi*Sqrt(alphai)*bepsADi*(Yi+1)/Yi }
-	!CvAssoc/R = d(UAssoc/R)/dT. T*d(UAssoc/RT)/dT = (T/T)*d(UAssoc/R)/dT-T*(UAssoc/R)/T^2=>CvAssoc=uAssoc/RT+T*d(UAssoc/RT)/dT
-	!CvAssoc=uAssoc/RT-beps*d(UAssoc/RT)/dBeps=uAssoc/RT-(1/2)(beps*dF/dBeps)^2-F/2*(dF/dBeps+beps^2*d2F/dBeps^2)
-	!dF/dBeta = (1/2)*sum{ xiNdiXAiSqrt(rho*gKad)*epsADi*(Yi+1)/sqrt(Yi) }
-	!d2F/dBeta2 = (1/2)*sum{ xiNdiXAiSqrt(rho*gKadi)*epsADi*[epsADi*(Yi+1)/sqrt(Yi)-(1/2)(Yi+1)/Yi^1.5*epsADi*(Yi+1) }
-	!d2F/dBeta2 = (1/2)*sum{ xiNdiXAiSqrt(alphai)*epsADi^2*((Yi+1)/Yi)*[1-(1+Yi)/(2Yi)] }
-	!beta^2d2F/dBeta2 = (1/2)*sum{ xiNdiXAiSqrt(alphai)*bepsADi^2*((Yi+1)/Yi)*[1-(1+Yi)/(2Yi)] }
-	!beta^2d2F/dBeta2 = (1/2)*sum{ xiNdiXAiSqrt(alphai)*(bepsADi*(Yi+1)/Yi)*[bepsADi-bepsADi*(1+Yi)/(2Yi)] }
-	!  d(...)B is beta*d(...)/dbeta.  d2(...)BB is d2(...)/dbeta^2, eTC...
-	dYbB=0
-	dYqbB=0
-	ASSOC=0
-	betaDF_dBeta=0
-	beta2D2F_dBeta2=0
-	SumDenom=0
-	DO I=1,nC
-		ASSOC=ASSOC+X(I)*ND(I)*( 2*LOG(XA(I))+1-XA(I) )
-		!this is just the 1st part of dYbB.  dXsYbB is added below. 
-		dYbB=dYbB+X(I)*Vx(I)*eok(I,I)/T*(Y(I,I)+K2)
-		do jComp=1,nC
-			qbij=( Q(I)*Vx(jComp)+Q(jComp)*Vx(I) )/2
-			eokIJroot=SQRT(eok(I,I)*eok(jComp,jComp))
-			kIJtemp=(KIJ(I,jComp)+KTIJ(I,jComp)/T) 
-			dKijB=KTIJ(I,jComp)/T
-			dYqbB=dYqbB+X(I)*X(jComp)*qbij*(Y(I,jComp)+k2)*eokIJroot/T*( 1-kIJtemp - dKijB )
-		enddo
-        UFACTI=X(I)*ND(I)*XA(I)*RALPH(I)
-        bepsADi=DH(I)/T*TC(I)
-		Yi=EXP(bepsADi)-1
-		bepsY1_Y=Yi+1
-        IF(bepsADi.GT.1.D-5)bepsY1_Y=bepsADi*(Yi+1)/Yi
-		betaDF_dBeta=betaDF_dBeta+UFACTI*bepsY1_Y/2 ! "/2" because (beta/ralph)*dRalph/dBeta=(1/2)(beta/alpha)*dAlpha/dBeta
-		beta2D2F_dBeta2=beta2D2F_dBeta2+UFACTI*bepsY1_Y*(bepsADi-bepsY1_Y/2)
-		sumDenom=sumDenom+UFACTI*XA(I)*RALPH(I)
-        DO J=1,nC
-			YQVI(I)=YQVI(I)+YQVIJ(I,J)*X(J)
-			CVI(I)=CVI(I) + CVIJ(I,J)*X(J)
-		enddo
-	enddo
-	UASSOC= -2*fAssoc*betaDF_dBeta ! because Qassoc~h/2=F^2	 !This works!!!
-	!CvAssoc=uAssoc/RT-beta*d(UAssoc/RT)/dBeta=uAssoc/RT-(1/2)(beta*dF/dBeta)^2-F/2*(beta*dF/dBeta+beps^2*d2F/dBeps^2)
-	!CvAssoc=uAssoc + 2*(betaDF_dBeta)**2 + 2*fAssoc*(betaDF_dBeta+beta2D2F_dBeta2)
-	!print*,'uAssoc,CvAssoc',uAssoc,CvAssoc
-
-	dYbB = dYbB ! + dXsYbB !for xs form
-	uAtt = -zM*qYbMix/(k1YbMix)*LOG(1+rho*k1YbMix)*( dYqbB/qYbMix - k10*dYbB/k1YbMix ) 
-	uAtt =uAtt-zM*qYbMix/(k1YbMix)*k10*rho*dYbB/(1+rho*k1YbMix)
-
-	eta=rho*bMix
-	IF (LIQ.EQ.1) THEN
-	  etaL=eta
-	  ZL=zFactor  
-	ELSE
-	  etaV=eta
-	  ZV=zFactor  
-	ENDIF
-
-	!call acTCoeff(fugXS,bVol,X,T,rho,nC)
-
-	voidFrac=1-1.9D0*eta
-	IF (voidFrac.LT.0)THEN
-		if(LOUD)WRITE(6,*)'WARNING! (1-1.9*eta) IS -VE IN FUGI. eta=',eta
-		ier(7)=1
-        ier(1)=17
-		GOTO 86
-	ENDIF
-
-	!etaYmix=qYbMix/qMix*rho					   !90 form, not used otherwise
-	FREP= -4.D0/1.9D0*LOG(voidFrac)*cbMix/bMix
-	FATT= -zM*qYbMix/k1YbMix*LOG(1.D0+k1YbMix*rho)
-	uRes_RT=uAtt+UASSOC
-	aRes_RT=FREP+FATT+ASSOC !-LOG(zFactor)
-	DHONKT=uRes_RT+zFactor-1
-	DUONKT=uAtt+UASSOC
-	DAONKT=FREP+FATT+ASSOC !-LOG(zFactor)
-	DSONK =DUONKT-DAONKT
-	DGONKT=DAONKT+zFactor-1  !=sum[xi*fugc(i)]. note that bVol(i)/bMix -> 1 for pure i, so these terms sum to zRep+zAtt=Z-1.
-	gAssoc=Assoc+zAssoc
-	if(initial.and.LOUD)write(*,'(a, I3,4F9.5)') ' FugiEsd: eta done. LIQ,Z,zAssoc,XA1=',LIQ,zFactor,zAssoc,XA(1)
-	if(initial.and.LOUD)write(*,'(a, 4F9.5)') ' FugiEsd: aResRep,aResAtt,aAssoc,aRes_RT:',frep,fatt,Assoc,aRes_RT
-	if(initial > 0)initial=initial+1
-	if(initial > 3)initial=0										!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    initial   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	if(liq > 1)return !for EAR method. Don't evaluate LOG(zFactor) in case zFactor < 0.
-	if(zFactor.le.0 .and. LOUD)pause 'FugiEsd: LIQ<2 but Z <= 0???'
-	IF(LOUDER)WRITE(*,'(a,f10.5)')' kComp,lnGamRep,lnGamAtt,lnGamAssoc,ralph. F=',Fassoc
-	DO kComp=1,nC
-		FUGREP(kComp)=FREP*( 2*CVI(kComp)/cbMix-Vx(kComp)/bMix )+zRep*Vx(kComp)/bMix
-		!dNk1YbNk=k1(kComp)*etaYmix*(2*YQVI(kComp)/qYbMix-Q(kComp)/qMix) !90 form, overwritten by next line for xs option
-		dNk1YbNk=k1(kComp)*( Y(kComp,kComp)*Vx(kComp)+dXsYbN(kComp) ) !91 form,comment out to eliminate, cf. EL99 p559 & S&E91apx
-		FUGATT(kComp)=zAtt*dNk1YbNk/k1YbMix+FATT*( 2*YQVI(kComp)/qYbMix-dNk1YbNk/k1YbMix )
-		FUGASN=-fAssoc*fAssoc*Vx(kComp)/bMix*1.9D0*eta/voidFrac
-		FUGAssoc(kComp)=2*ND(kComp)*LOG( XA(kComp) )+FUGASN
-		chemPoAssoc(kComp)=FUGAssoc(kComp)
-		IF (zFactor<0 .and. LOUD)WRITE(6,*)'WARNING! Z NEGATIVE IN FUGI!'
-		FUGC(kComp)=FUGREP(kComp)+FUGATT(kComp)+fugAssoc(kComp)-LOG(zFactor)
-		!JRE: Pause here to check sample results.
-		!rLnGamRep=FUGREP-Zrep*Vx(kComp)/bMix  ! cf. Bala and Lira (2016), Eqs A6-A14.
-		!rLnGamAtt=FUGATT-Zatt*Vx(kComp)/bMix
-		!rLnGamBon=FUGBON-Zassoc*Vx(kComp)/bMix
-		!IF(LOUDER)WRITE(*,'(i3,5E12.4)')kComp,rLnGamRep,rLnGamAtt,rLnGamBon,ralph(kComp)
-	enddo
-	aRes_RT = DAONKT
-	uRes_RT = DUONKT
-	hRes_RT = DHONKT
-	sRes_R  = DSONK											   
-	gDep_RT = DGONKT
-	cmprsblty=0
-	cvRes_R = 0
-	cpRes_R = 0
-    if(LOUD .and. initial > 0)print*,'FugiEsd: returning. fugc=',(FUGC(i),i=1,NC)
-	if(Nc>1)return	!I'm not confident in these derivatives for multicomp as of 9/21/19.
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Derivative Props!!!!!!!!!!!!!!!!!!!!!!
-	!cmprsblty=[(dP/dRho)/RT] by definition here.
-	!Zassoc=-F^2/(1-1.9eta)=>eta*dZassoc/dEta= -2F/(1-1.9eta)*eta*dF/dEta-F^2*1.9eta/(1-1.9eta)^2
-	!F = Nd*XA*ralph => eta*dF/dEta = F*[(eta/XA)*dXA/dEta+(eta/ralph)*dRalph/dEta]
-	!1-XA = alpha*XA^2 => -eta*dXA/dEta = alpha*2XA*eta*dXA/dEta + XA^2*eta*dAlpha/dEta
-	! -alphaXA^2*(eta/alpha)*dAlpha/dEta = eta*dXA/dEta*(1+2alpha*XA) = -(1-XA)*(eta/alpha)*dAlpha/dEta
-	! (eta/XA)*dXA/dEta = -(1-XA)/(X+2alpha*XA^2)*(eta/alpha)*dAlpha/dEta= -(1-XA)/(2-XA)*(eta/alpha)*dAlpha/dEta
-	! eta*dF/dEta = F * (eta/alpha)*(dAlpha/dEta)*[1/2-(1-XA)/(2-XA)]
-	! alpha=eta*Kad'*Y/(1-1.9eta) =>(eta/alpha)*(dAlpha/dEta)=1/(1-1.9eta)
-	! eta*dF/dEta = F * [1/2-(1-XA)/(2-XA)]/(1-1.9eta)
-	! eta*dZassoc/dEta = -2F/(1-1.9eta)*{F * [1/2-(1-XA)/(2-XA)]/(1-1.9eta)} -F^2*1.9eta/(1-1.9eta)^2
-	! eta*dZassoc/dEta = -F^2/(1-1.9eta)*{2*[1/2-(1-XA)/(2-XA)]/(1-1.9eta)} +zAssoc*1.9eta/(1-1.9eta)
-	! eta*dZassoc/dEta = zAssoc*[1-2*(1-XA)/(2-XA)]/(1-1.9eta)} +zAssoc*1.9eta/(1-1.9eta)
-	! 2*[1/2-(1-XA)/(2-XA)] = 2[(2-XA)-2(1-XA)]/(2(2-XA))= XA/(2-XA)
-	rhoDZASSOC_dRho=zAssoc/voidFrac*( 1.9*eta+XA(1)/(2-XA(1)) ) 
-	rhoDZASSOC_dRho=zAssoc/voidFrac*( 1.9*eta+1-2*sumDenom/(1+sumDenom) ) 
-	cmprsblty=zFactor+zRep/voidFrac+zAtt/(1+k1Ybmix*rho)+rhoDZassoc_dRho
-	beps=eok(1,1)/T
-	!Aassoc=2*lnXA+(1-XA)=>uAssoc=(2-XA)(beps/XA)*dXA/dBeps;1-XA=alpha*XA^2=> -dXA/dBeps=2*alpha*XA*dXA/dBeps+XA^2*dAlpha/dBeps
-	!(1+2alpha*X)(beps*dXA/dBeps) = -alphaXA^2(beps/alpha)*dAlpha/dBeps = -(1-XA)*beps(Y+1)/Y=(X+2alphaXA^2)(beps/XA)(dXA/dBeps)=(2-XA)(beps/XA)(dXA/dBeps)
-	!(beps/XA)(dXA/dBeps)= -[(1-XA)/(2-XA)]*beps(Y+1)/Y => uAssoc= -(2-XA)[(1-XA)/(2-XA)]*beps(Y+1)/Y = -(1-XA)*beps(Y+1)/Y
-	!uAssoc= -(1-XA(1))*bepsY1_Yad	 !multicomp formula above gives same result.
-	!bepsDxa = -XA(1)*XA(1)*alpha*bepsDYad_Yad/SQRT(1+4*alpha)
-	!CvAssoc/R = d(UAssoc/R)/dT. T*d(UAssoc/RT)/dT = (T/T)*d(UAssoc/R)/dT-T*(UAssoc/R)/T^2=>CvAssoc=uAssoc/RT+T*d(UAssoc/RT)/dT
-	!CvAssoc=uAssoc/RT-beps*d(UAssoc/RT)/dBeps
-	!beps*d(UAssoc/RT)/dBeps = -bepsY1_Yad*(-beps*dXA/dBeps) -(1-XA)*beps*(Y1/Yad+bepsY1/Yad-bepsY1^2/Y^2)
-	!beps*d(UAssoc/RT)/dBeps = +bepsY1_Yad*(beps*dXA/dBeps) -(1-XA)*beps*(Y1/Yad)(1+beps-bepsY1/Y)
-	!beps*d(UAssoc/RT)/dBeps = +bepsY1_Yad*[-XA*(1-XA)/(2-XA)]*bepsY1_Yad -(1-XA)*beps*(Y1/Yad)(1+beps-bepsY1/Y)
-	!beps*d(UAssoc/RT)/dBeps = -bepsY1_Yad*[XA*(1-XA)/(2-XA)]*bepsY1_Yad -(1-XA)*beps*(Y1/Yad)(1+beps-bepsY1/Y)
-	!beps*d(UAssoc/RT)/dBeps = -bepsY1_Yad^2*[XA*(1-XA)/(2-XA)] -(1-XA)*beps*(Y1/Yad)(1+beps-bepsY1/Y)
-	bepsAD=DH(1)/T*TC(1)
-	alpha=ralph(1)*ralph(1)
-	bepsY1_Yad=1
-	if(bepsAD > 1D-5)bepsY1_Yad=bepsAD*exp(bepsAD)/( exp(bepsAD)-1 ) !
-	CvAssoc= uAssoc + bepsY1_Yad**2*XA(1)*(1-XA(1))/(2-XA(1)) + (1-XA(1))*bepsY1_Yad*(1+bepsAD-bepsY1_Yad)
-	!print*,'uAssoc,CvAssoc',uAssoc,CvAssoc
-	cvRes_R = uAtt*( 1.7745*eta*beps*exp(beps)/(1+k1YbMix*rho) - beps ) + CvAssoc
-	!Z=P/rho*R*T => dZ/dT = (dP/dT)/rho*R*T- P/(rho*RT^2)=> (dP/dT) = rho*R*(Z+T*dZ/dT)
-	!V*dP/dV = -rho*dP/dRho => dP/dV = -rho^2*dP/dRho . 
-	!cpRes_R =  CvRes_R -1 - (T/R)*(dP/dT)^2/(dP/dV) = CvRes_R-1 + (rho*R)^2*(Z+T*dZ/dT)^2*(T/R)/[rho^2*dP/dRho]
-	!CpRes_R =  CvRes_R-1 + R*T*(Z+T*dZ/dT)^2/[dP/dRho] =  CvRes_R-1 + (Z-beps*dZ/dBeps)^2/[(dP/dRho)/RT]
-    if(LOUD)then
-	    if(exp(beps) < 1.0617)pause 'FuEsd96: beps < ln(1.0617)'
-    end if
-	bepsDY_Y=beps*exp(beps)/( exp(beps)-1.0617 ) !add 1D-8 to avoid zero divide.
-	bepsDZatt_dBeps = zAtt*bepsDY_Y/(1+k1YbMix*rho)
-		!zAssoc= -F^2/(1-1.9eta)=> beps*dZAssoc/dBeps = -2F*(beps*dF/dBeps)/denom
-		!F = NdiXAiRalphi)=> beps*dF/dBeps = Ndi*ralphi*XA[(beps/XA)(dXA/dBeps)+(beps/2alpha)*(dAlpha/dBeps)]}= F*[(beps/XA)(dXA/dBeps)+(beps/2alpha)*(dAlpha/dBeps)]}
-		!beps*dZAssoc/dBeps = -2F/denom *  F*[(beps/XA)(dXA/dBeps)+(beps/2alpha)*(dAlpha/dBeps)]} = 2Zassoc*[(beps/XA)(dXA/dBeps)+(beps/2alpha)*(dAlpha/dBeps)]}
-		bxDxa_db= -(1-XA(1))/(2-XA(1))*bepsY1_Yad
-		bepsDZassoc_dBeps=2*zAssoc*(bxDxa_db+bepsY1_Yad/2)
-	!bepsDZassoc_dBeps = 2*zAssoc*bepsY1_Yad*( 0.5d0+fAssoc*SQRT(alpha)/SQRT(1+4*alpha) )
-	TdZATT_dT=-ZM*RHO*( TdYQVM_dT*(1.d0+k1Ybmix*RHO)-qYbmix*TdK1YVM_dT*RHO )/( (1.d0+k1Ybmix*RHO)*(1.d0+k1Ybmix*RHO) )
-	!print*,'FuEsd96: bepsDZatt_dBeps,TdZatt_dT',bepsDZatt_dBeps !,TdZatt_dT
-	CpRes_R = cvRes_R-1 + (zFactor-bepsDZatt_dBeps-bepsDZassoc_dBeps)**2/cmprsblty 
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Derivative Props!!!!!!!!!!!!!!!!!!!!!!
-
+!  ITERATION ON rho HAS CONCLUDED.  DEPARTURES PASSED THROUGH GlobConst.
+	if(ABS(eta-rho*bMix) > 1E-11 .and. LOUDER)pause 'eta.ne.(rho*bMix)?'
+	if(pMPa==0 .and. LOUDER)print*,' FugiEsd: P=0? LIQ,P=',LIQ,pMPa
+	!zFactor=P/(rho*rGas*T)  ! add this to improve precision when computing rho from Z after return.   
+	if(zFactor.le.0 .and. LOUDER)print*,'FugiEsd: converged Z <= 0. eta,Z=',eta,zFactor
+	isZiter=0
+	rho=eta/bMix
+	Call FuEsd96Vtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
+	FUGC(1:NC)=FUGC(1:NC)-DLOG(zFactor)	 !Must subtract ln(Z) when given Vtot as independent variable.
+	if(LOUDER)write(*,'(a,f8.5,e11.4,i3,9f8.3)')' FuEsd96: eta,CHNG,niter,FUGC',eta,CHNG,niter,(FUGC(i),i=1,NC) 
 	initial=0
-	RETURN
-86	WRITE(6,*)' ERROR IN FuEsd96.  '
+	return
+86	if(LOUDER)WRITE(6,*)' ERROR IN FuEsd96.  '
 31	FORMAT(1X,'LIQ=',1X,I1,2X,',','WARNING! rho -VE IN FUGI')
 	IF(NITER.GE.ITMAX)THEN
-		if(LOUD)write(*,*)'TOO MANY Z ITERATIONS'
+		if(LOUDER)write(*,*)'TOO MANY Z ITERATIONS'
 		ier(6)=1
         ier(1)=16
 	END IF
-	IF(ier(4)==1.and.LOUD) WRITE(*,*)'ERROR IN ALPSOL'
+	IF(ier(4)==1.and.LOUDER) WRITE(*,*)'ERROR IN FuEsd96Vtot'
 	if(ier(1) < 10)ier(1)=11
 	initial=0
 	RETURN
 	END	!FugiESD()
-	          
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	!  ELLIOTT'S SUBROUTINE 
 	!  REVISED  9/94 FOR POLYSEGMENTED MOLECULES LIKE GLUTARAL
 	!  REVISED 10/94 FOR ANY # OF ASSOCIATING SPECIES
-	SUBROUTINE AlpSolEz(X,nC,KVE,ND,VM,NAS,NDS,rho,zAssoc,XA,RALPH,fAssoc,ier)
+	SUBROUTINE AlpSolEz(X,NC,KVE,ND,VM,NAS,NDS,rho,zAssoc,XAPas,RALPH,fAssoc,ier)
+	USE ASSOC !GlobConst+XA+XD+XC
 	USE GlobConst
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (fAssoc) AND zAssoc given rho,VM
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	!PARAMETER(NMX=55)
-	DOUBLEPRECISION X(NMX),KVE(NMX),RALPH(NMX),XA(NMX),rLnPhiAssoc(NMX)
+	DOUBLEPRECISION X(NMX),KVE(NMX),RALPH(NMX),XAPas(NMX,maxTypes),rLnPhiAssoc(NMX)
     Integer ND(NMX),NAS(NMX),NDS(NMX),ier(12)
 	LOGICAL LOUDER 
 	!  NDi     = THE DEGREE OF POLYMERIZATION OF COMPO i
@@ -823,7 +557,7 @@ end	! SetParPureEsd
 
 	DO I=1,nC           
 		SQARG=KVE(I)/VM*eta/(1-1.9D0*eta)
-		IF(SQARG.LT.0)THEN
+		IF(SQARG < 0)THEN
 			if(LOUD)write(*,*)'SQARG < 0 IN ALPSOL '
 			ier(4)=1
 			RETURN
@@ -868,8 +602,8 @@ end	! SetParPureEsd
 
 	zAssoc= -fAssoc*fAssoc/(1-1.9D0*eta)
 	DO I=1,nC
-		XA(I)=1/(fAssoc*RALPH(I)+1)
-		rLnPhiAssoc(i)=2*ND(I)*LOG( XA(I) )+zAssoc*1.9d0*bVolCC_mol(i)*rho
+		XAPas(I,1)=1/(fAssoc*RALPH(I)+1)
+		rLnPhiAssoc(i)=2*ND(I)*LOG( XAPas(I,1) )+zAssoc*1.9d0*bVolCC_mol(i)*rho
 	enddo
 
 	if(LOUDER)print*,'eta,Fassoc,Zassoc,ralph(),lnPhiAssoc'
@@ -1215,28 +949,19 @@ end	! SetParPureEsd
 !C	With Having T,V and nMols, this routine calculates the Z factor and all derivatives needed in 			C
 !C	critical point,	flash and bubble point calculations.													C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	SUBROUTINE FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
+	SUBROUTINE FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,zFactor,Ares,Ures,iErr)
 	USE Assoc !includes GlobConst {Tc,Pc,...} + XA,XD,XC...
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
-	DoublePrecision gmol(NMX),xFrac(NMX),FUGC(NMX),KCSTARp(NMX)
-	integer IER(12),iera(12)
+	DoublePrecision gmol(NMX),xFrac(NMX),FUGC(NMX),KCSTARp(NMX) !,XA(NMX)
+	integer IER(12),iera(12) !,kComp
 	DoublePrecision YQVIJ(NMX,NMX),KVE(NMX),YQVI(NMX),Y(NMX,NMX),EOK(NMX,NMX)
 	DoublePrecision CVI(NMX),CVIJ(NMX,NMX),QV(NMX,NMX)
 	DoublePrecision k1(NMX) !,RALPH(NMX)
-	!DoublePrecision FUGASSOC(NMX),FUGREP(NMX),FUGATT(NMX)			  
-	!double precision moleStep
 	DoublePrecision dEOK_dT(NMX,NMX),dY_dT(NMX,NMX),dYQVI_dT(NMX),dYQVIJ_dT(NMX,NMX)
 	DoublePrecision dCVM_dN(NMX),dYQVM_dN(NMX) ,dVM_dN(NMX),dK1YVM_dN(NMX) !,dCVI_dN(NMX,NMX)
-	!DIMENSION dZREP_dN(NMX),dZATT_dN(NMX),dZASSOC_dN(NMX),dZ_dN(NMX),dP_dN(NMX),dFREP_dN(NMX),dFATT_dN(NMX),dYQVI_dN(NMX,NMX)
-	!DIMENSION dFUGC1_dP(NMX),dFUGC1_dT(NMX),dFUGC2_dP(NMX),dFUGC2_dT(NMX),dFUGASSOC_dRHO(NMX)
-	!DIMENSION dFUGREP_dN(NMX,NMX),dFUGATT_dN(NMX,NMX),dFUGC1_dN(NMX,NMX),dFUGC2_dN(NMX,NMX),dFUG_dN(NMX,NMX)
-	!DIMENSION dh_dN(NMX),dFUGASSOC_dT(NMX),dFUGASSOC_dN(NMX,NMX)
-	!DIMENSION dh_dN_num(NMX),dFUGASSOC_dN_num(NMX,NMX),fugassocLoop(NMX),gmol_old(NMX)
-	!DoublePrecision vMolecNm3(NMX) !for Wertheim
 	LOGICAL LOUDER
-	
 	COMMON/ETA/ETAL,ETAV,ZL,ZV
 	COMMON/ETA2/ETA
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
@@ -1313,8 +1038,8 @@ end	! SetParPureEsd
 		K1YVM=K1YVM+xFrac(I)*K1(I)*Y(I,I)*VX(I) !1991 form, overwritten if applying 1990 form
 		!vMolecNm3(i)=VX(I)/avoNum
 		bondVolNm3Esd(I)=KCSTAR(I) !*vMolecNm3(I)
-		eHbKcal_mol(I,iType)=dHkcalMol(I)
-		bondVolNm3(I,iType)=bondVolNm3Esd(I)
+		!eHbKcal_mol(I,iType)=dHkcalMol(I)
+		!bondVolNm3(I,iType)=bondVolNm3Esd(I)
 	enddo
 	if( ABS(VX(1) - bVolCC_mol(1)) > zeroTol .and. LOUD ) print*,'FuEsdVtot: VX.ne.bVol=',VX(1),bVolCC_mol(1)
 	!endif	!this was not working when computing vp
@@ -1332,8 +1057,8 @@ end	! SetParPureEsd
 	ZREP= 4.d0*CVM*RHO/denom  ! old form.
 	ZREP= 4.d0*Cmix*eta/denom
 	ZATT= -ZM*YQVM*RHO/(1.d0+K1YVM*RHO)
-	Z=(1.d0+ZREP+ZATT+ZASSOC)
-	PMpa=Z*rGas*RHO*tKelvin
+	zFactor=(1.d0+ZREP+ZATT+ZASSOC)
+	PMpa=zFactor*rGas*RHO*tKelvin
     if(LOUD)then
 	    IF (voidFrac < 0 .and. LOUD)print*, 'FuEsd96Vtot:Error! (1-1.9*ETA) IS -VE. eta,rho=',eta,rho
     end if
@@ -1357,9 +1082,12 @@ end	! SetParPureEsd
 	DO I=1,NC
 		!ralph(I)=SQRT(alphAD(I,I))	 ! ralph is computed in alpsolEz.
 		aAssoc=aAssoc+xFrac(I)*ND(I)*( 2.d0*DLOG(XA(I,1))+1.d0-XA(I,1) )
+		!aAssoc=aAssoc+xFrac(I)*ND(I)*( 2.d0*DLOG(XA(I))+1.d0-XA(I) )
 		UATT=UATT+xFrac(I)*VX(I)*EOK(I,I)/tKelvin*(Y(I,I)+K2)*K1(I)       
 		UFACTI=xFrac(I)*ND(I)*RALPH(I)*XA(I,1)*(2.d0-XA(I,1))
+		!UFACTI=xFrac(I)*ND(I)*RALPH(I)*XA(I)*(2.d0-XA(I))
 		UDENOM=UDENOM+xFrac(I)*ND(I)*(RALPH(I)*XA(I,1))**2    
+		!UDENOM=UDENOM+xFrac(I)*ND(I)*(RALPH(I)*XA(I))**2    
 		bepsADi=DH(I)/tKelvin*TC(I)
 		EBETHI=1
 		IF(bepsADi > 1.D-5)EBETHI=(EXP(bepsADi)-1.d0)/bepsADi
@@ -1370,6 +1098,7 @@ end	! SetParPureEsd
 			QIJ=(EXP(DH(J)/tKelvin*TC(J))/EBETHJ+EXP(DH(I)/tKelvin*TC(I))/EBETHI)/2.d0
 			!ralph(J)=SQRT(alphAD(J,J))
 			UNUMER=UNUMER+UFACTI*xFrac(J)*ND(J)*RALPH(J)*XA(J,1)*QIJ
+			!UNUMER=UNUMER+UFACTI*xFrac(J)*ND(J)*RALPH(J)*XA(J)*QIJ
 			YQVI(I)=YQVI(I)+YQVIJ(I,J)*xFrac(J)
 			CVI(I)=CVI(I) + CVIJ(I,J)*xFrac(J)
  		enddo
@@ -1387,12 +1116,36 @@ end	! SetParPureEsd
 	DUONKT=UATT+UASSOC
 	DAONKT=FREP+FATT+aAssoc !-DLOG(Z) !don't subtract log(z) for aRes)T,V. Important for EAR.
 	DSONK =DUONKT-DAONKT
-	DHONKT=DUONKT+Z-1.d0
+	DHONKT=DUONKT+zFactor-1.d0
 	uRes_RT=UATT+UASSOC
 	aRes_RT=FREP+FATT+aAssoc !-DLOG(Z) !don't subtract log(z) for aRes)T,V. Important for EAR.
-	!print*,'aRes_RT=',aRes_RT
 	sRes_R =UATT+UASSOC-aRes_RT
-	hRes_RT=UATT+UASSOC+Z-1
+	hRes_RT=UATT+UASSOC+zFactor-1
+	Ares=aRes_RT
+	Ures=uRes_RT
+	if (isZiter==0) then
+        if( zFactor .le. -8686)then  ! Z < 0 is no problem given Vtot because ln(Z) is not relevant.  JRE 20210724
+		    if(LOUDER)pause 'FuEsdVtot: zFactor.le.0 for fugc calculation.'
+			iErr=3
+			goto 86
+        end if
+		if(LOUDER)write(*,'(a,f10.5)')' i,lnGamRep,lnGamAtt,lnGamAsn,ralph.  F=',Fassoc
+		DO I=1,NC
+			!FUGREP(I)=FREP*( 2.d0*CVI(I)/CVM-VX(I)/VM ) + ZREP*VX(I)/VM
+			FUGREP(I)=FREP*( C(I)/Cmix ) + ZREP*VX(I)/VM ! For pure i, FugRepi= -4ci/1.9*ln(1-1.9eta) + 4ci*eta/(1-1.9eta) 
+			FUGATT(I)=FATT*( 2*YQVI(I)/YQVM-K1(I)*Y(I,I)*VX(I)/K1YVM )+ZATT*K1(I)*Y(I,I)*VX(I)/K1YVM !91-pres form, complete w/o dNk1YbNk, cf. EL99 p559 & S&E91apx
+			FUGASSOC(i)=ND(i)*2*DLOG(XA(i,1)) + zAssoc*1.9D0*VX(i)*rho !JRE'96 Eq.43.
+			!FUGASSOC(i)=ND(i)*2*DLOG(XA(i)) + zAssoc*1.9D0*VX(i)*rho !JRE'96 Eq.43.
+			FUGC(I)=FUGREP(I)+FUGATT(I)+FUGASSOC(I)  ! -DLOG(Z)  !Don't subtract ln(Z) when given Vtot as independent variable.
+			rLnGamRep=FUGREP(i)-Zrep*Vx(i)/VM  ! cf. Bala and Lira (2016), Eqs A6-A14. to correct from constant volume to P.
+			rLnGamAtt=FUGATT(i)-Zatt*Vx(i)/VM
+			rLnGamAsn=FUGASSOC(i)-Zassoc*Vx(i)/VM
+			IF(LOUDER)WRITE(*,'(i3,f7.4,9f10.4)')i,xFrac(i),rLnGamRep,rLnGamAtt,rLnGamAsn,ralph(i)
+		ENDDO
+	endif
+	if(LOUD)write(*,'(a,f8.5,e11.4,i3,9f8.3)')' FuEsd96vtot: eta,CHNG,niter,FUGC',eta,0.0,1,(FUGC(i),i=1,NC) 
+	if(isZiter < 2)return
+	!print*,'aRes_RT=',aRes_RT
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !Added by AFG 2010
@@ -1435,8 +1188,9 @@ end	! SetParPureEsd
 	dZASSOC_dRHO=-half*(2*fAssoc**2*(dAlph_deta*VM)+dh_dRHO*(1.d0+dLng)) !(eta/g)*dg/dEta=eta*(1-1.9eta)*1.9/(1-1.9eta)^2=1.9eta/(1-1.9eta)
 	rhoDZAssoc_dRho2=rho*dZASSOC_dRHO
 	rhoDZASSOC_dRho=-(-zAssoc*1.9*eta+XA(1,1)*(1-XA(1,1))/(2-XA(1,1))/voidFrac)/voidFrac !(eta/g)*dg/dEta=eta*(1-1.9eta)*1.9/(1-1.9eta)^2=1.9eta/(1-1.9eta)
+	!rhoDZASSOC_dRho=-(-zAssoc*1.9*eta+XA(1)*(1-XA(1))/(2-XA(1))/voidFrac)/voidFrac !(eta/g)*dg/dEta=eta*(1-1.9eta)*1.9/(1-1.9eta)^2=1.9eta/(1-1.9eta)
 	!print*,'rhoDZAssoc_dRho 1&2',rhoDZAssoc_dRho,rhoDZAssoc_dRho2
-	dP_dRHO=rGas*tKelvin*Z+rGas*tKelvin*(RHO*dZREP_dRHO+RHO*dZATT_dRHO+rhoDZASSOC_dRho)!=RT*(Z+rho*dZ_dRho)
+	dP_dRHO=rGas*tKelvin*zFactor+rGas*tKelvin*(RHO*dZREP_dRHO+RHO*dZATT_dRHO+rhoDZASSOC_dRho)!=RT*(Z+rho*dZ_dRho)
 	!rho*dh_dRho= -(dXAdRho+dXDdRho)
 	!rhoDh_dRho=rho*dh_dRHO
 	!rhoDh_dRho2= 2*XA(1,1)*(1-XA(1,1))/(2-XA(1,1))/voidFrac
@@ -1451,7 +1205,7 @@ end	! SetParPureEsd
 	ENDIF
 	dRho_dP=1/dP_dRHO
 	cmprsblty2=dP_dRHO/rGas/tKelvin
-	cmprsblty=Z+zRep/denom+zAtt/(1+K1YVM*RHO) + rhoDZassoc_dRho !cf. EsdDerivatives.jnt
+	cmprsblty=zFactor+zRep/denom+zAtt/(1+K1YVM*RHO) + rhoDZassoc_dRho !cf. EsdDerivatives.jnt
 	!print*,'cmprsblty&2=',cmprsblty,cmprsblty2
 	dZ_dP=(dZREP_dRHO+dZATT_dRHO+dZASSOC_dRHO)*dRho_dP
 
@@ -1459,7 +1213,7 @@ end	! SetParPureEsd
 	dZREP_dT=0.d0
 	dZATT_dT=-ZM*RHO*( dYQVM_dT*(1.d0+K1YVM*RHO)-RHO*YQVM*dK1YVM_dT )/( (1.d0+K1YVM*RHO)*(1.d0+K1YVM*RHO) )
 	dZASSOC_dT=-half*(1.9d0*RHO*VM/denom+1)*dh_dT !dh_dT is computed in WertheimFugc.
-	dP_dT=rGas*RHO*Z+rGas*tKelvin*RHO*(dZREP_dT+dZATT_dT+dZASSOC_dT)
+	dP_dT=rGas*RHO*zFactor+rGas*tKelvin*RHO*(dZREP_dT+dZATT_dT+dZASSOC_dT)
 	dT_dP=1/dP_dT
 	dZ_dT=(dZREP_dT+dZATT_dT+dZASSOC_dT)
 	cvRes_R=0
@@ -1470,6 +1224,7 @@ end	! SetParPureEsd
 		bepsY1_Yad=1
 		if(bepsAD > 1D-5)bepsY1_Yad=bepsAD*exp(bepsAD)/( exp(bepsAD)-1 ) !
 		CvAssoc= uAssoc + bepsY1_Yad**2*XA(1,1)*(1-XA(1,1))/(2-XA(1,1)) + (1-XA(1,1))*bepsY1_Yad*(1+bepsAD-bepsY1_Yad)
+		!CvAssoc= uAssoc + bepsY1_Yad**2*XA(1)*(1-XA(1))/(2-XA(1)) + (1-XA(1))*bepsY1_Yad*(1+bepsAD-bepsY1_Yad)
 		!print*,'uAssoc,CvAssoc=',uAssoc,CvAssoc
 		cvRes_R = uAtt*( 1.7745*eta*beps*exp(beps)/(1+k1YVM*rho) - beps ) + CvAssoc
 		!print*,'FuEsdVtot: TdZ_dT',tKelvin*dZ_dT
@@ -1477,13 +1232,14 @@ end	! SetParPureEsd
 		!F = NdiXAiRalphi)=> beps*dF/dBeps = Ndi*ralphi*XA[(beps/XA)(dXA/dBeps)+(beps/2alpha)*(dAlpha/dBeps)]}= F*[(beps/XA)(dXA/dBeps)+(beps/2alpha)*(dAlpha/dBeps)]}
 		!beps*dZAssoc/dBeps = -2F/denom *  F*[(beps/XA)(dXA/dBeps)+(beps/2alpha)*(dAlpha/dBeps)]} = 2Zassoc*[(beps/XA)(dXA/dBeps)+(beps/2alpha)*(dAlpha/dBeps)]}
 		bxDxa_db= -(1-XA(1,1))/(2-XA(1,1))*bepsY1_Yad
+		!bxDxa_db= -(1-XA(1))/(2-XA(1))*bepsY1_Yad
 		bepsDZassoc_dBeps=2*zAssoc*(bxDxa_db+bepsY1_Yad/2)
 		!write(666,'(a,5f10.4)')'beps,rho,zAssoc,rhoDZassoc_dRho',beps,zAssoc,bepsDZassoc_dBeps
 
 		bepsDZatt_dBeps= -tKelvin*dZatt_dT !see derivative formulas above.
-		TdP_dT1=Z+tKelvin*dZ_dT
+		TdP_dT1=zFactor+tKelvin*dZ_dT
 		TdZassoc_dT=tKelvin*dZASSOC_dT
-		TdP_dT=Z-bepsDZatt_dBeps-bepsDZassoc_dBeps
+		TdP_dT=zFactor-bepsDZatt_dBeps-bepsDZassoc_dBeps
 		!print*,'dZASSOC_dT,dh_dT ',dZASSOC_dT,dh_dT
 		if(ABS(cmprsblty) < 1D-11)then
 			if(LOUD.and.initCall)Print*,'FuEsdVtot warning: cmprsblty ~ 0'
@@ -1492,28 +1248,8 @@ end	! SetParPureEsd
 			cpRes_R = cvRes_R-1+TdP_dT**2/cmprsblty 
         end if
 	endif
-	if (isZiter==0) then
-		!call WertheimFugc(xFrac,vMolecNm3,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
-        if( Z .le. -8686)then  ! Z < 0 is no problem given Vtot because ln(Z) is not relevant.  JRE 20210724
-		    if(LOUDER)pause 'FuEsdVtot: Z.le.0 for fugc calculation.'
-			iErr=3
-			goto 86
-        end if
-		if(LOUDER)write(*,'(a,f10.5)')' i,lnGamRep,lnGamAtt,lnGamBon,ralph.  F=',Fassoc
-		DO I=1,NC
-			FUGREP(I)=FREP*( 2.d0*C(I)/Cmix-VX(I)/VM ) + ZREP*VX(I)/VM
-			FUGREP(I)=FREP*( C(I)/Cmix ) + ZREP*VX(I)/VM ! For pure i, FugRepi= -4ci/1.9*ln(1-1.9eta) + 4ci*eta/(1-1.9eta) 
-			FUGATT(I)=FATT*( 2*YQVI(I)/YQVM-K1(I)*Y(I,I)*VX(I)/K1YVM )+ZATT*K1(I)*Y(I,I)*VX(I)/K1YVM !91-pres form, complete w/o dNk1YbNk, cf. EL99 p559 & S&E91apx
-			FUGASSOC(i)=ND(i)*2*DLOG(XA(i,1)) + zAssoc*1.9D0*VX(i)*rho !JRE'96 Eq.43.
-			FUGC(I)=FUGREP(I)+FUGATT(I)+FUGASSOC(I)  ! -DLOG(Z)  Don't subtract ln(Z) when given Vtot as independent variable.
-			rLnGamRep=FUGREP(i)-Zrep*Vx(i)/VM  ! cf. Bala and Lira (2016), Eqs A6-A14. to correct from constant volume to P.
-			rLnGamAtt=FUGATT(i)-Zatt*Vx(i)/VM
-			rLnGamBon=FUGASSOC(i)-Zassoc*Vx(i)/VM
-			IF(LOUDER)WRITE(*,'(i3,f7.4,9f10.4)')i,xFrac(i),rLnGamRep,rLnGamAtt,rLnGamBon,ralph(i)
-		ENDDO
-	endif
 86	return
-	end
+	end	!FuEsd96Vtot
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1547,9 +1283,9 @@ end	! SetParPureEsd
 	print*,'Initial guess from ParmsEsd? Enter 1 for yes or 0 to use MW guides as guess'
 	read(*,*)iAns
 	if(iAns==0)then
-		c(1)=1+rmwPlus(1)/150
-		eokP(1)=359+.66/rmwPlus(1)
-		Vx(1)=17*rmwPlus(1)/50
+		c(1)=1+rMw(1)/150
+		eokP(1)=359+.66/rMw(1)
+		Vx(1)=17*rMw(1)/50
 		parm(1)=c(1)
 		if(ND(1)==0)call ExactEsd(nC,VX,c,q,eokP,iErr,iErr2)
 		if(ND(1)==1)call RegPureDev3(3,1,parm,error,iflag) !replaces eokP and Vx
@@ -1663,7 +1399,7 @@ end	! SetParPureEsd
 	EXTERNAL RegPureDev
 	dimension PARM(NPMAX),ERROR(55),stdErr(NMX)
 	common/ PUREVP /VPA,VPB,VPC,VPD,VPE,TMINVP,TMAXVP
-	common/ PURELD /RMW,SG,rLDA,rLDB,rLDC,rLDD,TMINLD,TMAXLD
+	common/ PURELD /SG,rLDA,rLDB,rLDC,rLDD,TMINLD,TMAXLD
 	common/ CONSTK /KIJ(NMX,NMX),INITIAL
 	common/ AVERR  /AAPERR,RHOERR,objfun
 	common/ CONST  /rKadStar, dHkJ_mol, iDenOpt
@@ -1693,15 +1429,15 @@ end	! SetParPureEsd
 	endif
 
 	c(1)=1+acen(1)*2
-	c(1)=1+rmw/150
-	u0ok=359+.66/rmw
-	v00=17*rmw/50
+	c(1)=1+rmw(1)/150
+	u0ok=359+.66/rmw(1)
+	v00=17*rmw(1)/50
 	kcStar(1)=rKadStar/C(1)
 	dH(1)=dHkJ_mol*1000/8.314/Tc(1)
 	!  general ***********************************
 	PARM(1)=c(1)
 	PARM(2)=v00
-	PARM(3)=359+.66/rmw
+	PARM(3)=359+.66/rmw(1)
 	PARM(4)=kcStar(1)
 	PARM(5)=dH(1)
 	nData=16 !this gives lots of points between tMax and tMin
@@ -1830,10 +1566,10 @@ end	! SetParPureEsd
 	dimension PARM(*),ERROR(nData),fugc(NMX),x(NMX),y(NMX),ierBp(12)
 	common/ PUREVP / VPA,VPB,VPC,VPD,VPE,TMINVP,TMAXVP !we need accurate VP for regression
 	common/ CONST / rKadStar, dHkJ_mol, iDenOpt
-	common/ PURELD / RMW,SG,rLDA,rLDB,rLDC,rLDD,TMINLD,TMAXLD
+	common/ PURELD /SG,rLDA,rLDB,rLDC,rLDD,TMINLD,TMAXLD
 	common/ AVERR / AAPERR,RHOERR,objfun
-	IF(TMAXVP/TC(1).LT.0.8)WRITE(66,*)'Warning TMAX<0.8Tc is TOO LOW'
-	IF(TMINVP/TC(1).GT.0.6)WRITE(66,*)'Warning TMIN>0.6Tc is TOO HIGH'
+	IF(TMAXVP/TC(1) < 0.8)WRITE(66,*)'Warning TMAX<0.8Tc is TOO LOW'
+	IF(TMINVP/TC(1) > 0.6)WRITE(66,*)'Warning TMIN>0.6Tc is TOO HIGH'
 	IF(IFLAG.NE.0)ABC=123	 !this is here so no warning for not using iflag
 	NC=1
 	x(1)=1
@@ -2005,7 +1741,7 @@ end	! SetParPureEsd
 	LIQ=1
 	call Fugi(TK,P,X,NC,LIQ,FUGC,ZL,IER)
 	!call FUGI(TCp,PCp,ACEN,ID,rGas,TK,P,X,NC,LIQ,FUGC,ZL,IER)
-	RHOL=RMW*P/8.314/TK/ZL
+	RHOL=RMW(1)*P/8.314/TK/ZL
 	IPTS=IPTS+1
 	RHOERR=(SG-RHOL)/SG*100
 	if(iDenOpt.eq.1)ERROR(nData)=iDenOpt*RHOERR
@@ -2143,7 +1879,7 @@ end	! SetParPureEsd
 	character outFile*251
 	common/ PUREVP / VPA,VPB,VPC,VPD,VPE,TMINVP,TMAXVP
 	common/ CONST /  rKadStar, dHkJ_mol, iDenOpt
-	common/ PURELD / RMW,SG,rLDA,rLDB,rLDC,rLDD,TMINLD,TMAXLD
+	common/ PURELD /SG,rLDA,rLDB,rLDC,rLDD,TMINLD,TMAXLD
 	common/ AVERR / AAPERR,RHOERR,objfun
 	print*,'Minimize vp error based on estd rKadStar and dHkJ_mol '  
 	print*,'constrained to match Tc. Pc is ~matched implicitly by vp' 

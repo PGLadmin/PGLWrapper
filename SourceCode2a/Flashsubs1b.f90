@@ -1507,7 +1507,7 @@
 	DIMENSION xFrac(NMX)
 	dimension FUGCPURE(NMX),fugcVap(NMX),fugcLiq(NMX),ierFugi(12) 
 	!dimension vMolec(NMX),gTotStor(100) !,dG_dxStor(100)
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 
 	ier=0
@@ -1616,7 +1616,6 @@
 	DIMENSION xFrac(NMX)
 	dimension FUGCPURE(NMX),fugcVap(NMX),fugcLiq(NMX),ierFugi(12) !,vMolec(NMX)
 	dimension gTotStor(100),dG_dxStor(100),iPhase(100)
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	!data rgold,cgold/0.61803399,0.38196602/
 	iErr=0
@@ -1741,7 +1740,6 @@
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	DIMENSION xFrac(NMX)
 	dimension FUGCPURE(NMX),vMolec(NMX),fugcVap(NMX),fugcLiq(NMX),ierFugi(12),gTotStor(100),dG_dxStor(100)
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	data rgold,cgold/0.61803399,0.38196602/
     if(LOUD)then
@@ -1758,10 +1756,7 @@
 			bMix=bMix+xFrac(i)*vMolec(i)
 		enddo
 	else
-		do i=1,NC
-			bMix=bMix+xFrac(i)*bVolCC_mol(i)
-			!rMw(i)=rMwPlus(i)
-		enddo
+		bMix=SUM( xFrac(1:NC)*bVolCC_mol(1:NC) )
 	endif
 	!if(rho < 0)etaHi = 0.2
 	minimax= -1	!routine was written to minimize, therefore take -ve to maximize.

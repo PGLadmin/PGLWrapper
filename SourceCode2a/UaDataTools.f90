@@ -21,7 +21,7 @@ MODULE GlobConst
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
 	!integer :: nComps, nsTypesTot,iTPT,iFlagFF,nNormGrid
 
-	DoublePrecision :: TC(nmx), PC(nmx), ACEN(nmx), ZC(nmx), rMwPlus(nmx), bVolCC_mol(NMX)
+	DoublePrecision :: TC(nmx), PC(nmx), ACEN(nmx), ZC(nmx), rMw(nmx), bVolCC_mol(NMX)
 	DoublePrecision uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)	= Z+rho*dZ/dRho
 	character*234 masterDir
 	character*30 NAME(NMX)
@@ -68,6 +68,25 @@ MODULE VpDb
 	DIMENSION IDNUM(nVpDb),rMINTD(nVpDb) ,VALMIND(nVpDb) ,rMAXTD(nVpDb),VALMAXD(nVpDb),AVGDEVD(nVpDb),NUMCOEFFD(nVpDb) ,vpCoeffsd(nVpDb,5),indexVpDb(9999)
 END MODULE VpDb
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). Sums are over sites per molecule then over molecules.
+	USE GlobConst
+	implicit NONE
+	integer maxTypes,nsx,maxTypesGlobal,localPool	
+	PARAMETER (maxTypes=44,nsx=maxTypes,maxTypesGlobal=999) 
+    parameter(localPool=9999) !this must be long enough to cover all SpeadMd site types (e.g. 1401=methanol hydroxy)
+	!maxTypes is the max # of site types for all molecules. maxTypes > sum^NC(count(Types))	!nsx = maxTypes (dunno why redundant), nbx=Max Bonds, 
+	DoublePrecision eHbKcal_mol(nmx,maxTypes),eDonorKcal_mol(nmx,maxTypes),eAcceptorKcal_mol(nmx,maxTypes)
+	DoublePrecision bondVolNm3(nmx,maxTypes)
+	Integer idType(NMX,maxTypes),nTypes(NMX),nTypesTot !nTypesTot is really the sum of nTypes(i) because the same type on a different molecule is treated distinctly (?)
+	Integer nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes),nDegree(nmx,maxTypes)
+	Integer localType(localPool),idLocalType(maxTypes)	!these are to accumulate site lists in Wertheim so the aBipAd,aBipDa arrays don't get too large. cf. AlphaSp
+	DoublePrecision aBipAD(maxTypes,maxTypes),aBipDA(maxTypes,maxTypes) !association bips
+	DoublePrecision XA(NMX,maxTypes),XD(NMX,maxTypes),XC(NMX,maxTypes),cvAssoc
+	LOGICAL LouderWert 
+	!localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
+	!idLocalType points back to localType for double-linking. E.g. idLocalType(1)=101.
+END MODULE Assoc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine ReadNext(inUnit,nexString3,maxLines,maxVars,bHeader,header77,nVars,var,nLines,iErr)
 	! Purpose: Read uncounted data with "next" character string between data sets.
@@ -387,7 +406,7 @@ END MODULE VpDb
 				ID(iComp)=IDNUM(J)
 				ACEN(iComp)=ACEND(J)
 				ZC(iComp)=ZCD(J)
-				rMwPlus(iComp)=rMwD(j)
+				rMw(iComp)=rMwD(j)
 				solParm(iComp)=solParmD(j)
 				vLiq(iComp)=vLiqD(j)
 				iGotIt=1
@@ -838,7 +857,7 @@ END MODULE VpDb
 				ID(iComp)=IDNUM(J)
 				ACEN(iComp)=ACEND(J)
 				ZC(iComp)=ZCD(J)
-				rMwPlus(iComp)=rMwD(j)
+				rMw(iComp)=rMwD(j)
 				solParm(iComp)=solParmD(j)
 				vLiq(iComp)=vLiqD(j)
 				iGotIt=1

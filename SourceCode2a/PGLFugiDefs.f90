@@ -24,25 +24,21 @@
     integer ier(12) !,ier2(11)
     ier(1)=0 !required if EOS uses iErr instead of ier().
 	if(iEosOpt.eq.0)iEosOpt=1
-	if(iEosOpt==4)then
-        call FuEsdTp( T,P,X,NC,LIQ,FUGC,Z,ier )  !AUG 10
-	elseif(iEosOpt==18)then !ESD2.  
-		call FugiESD2( T,P,X,NC,LIQ,FUGC,Z,ier )
-	elseif(isESD)then !all other ESD is ESD96.  
-		call FugiESD( T,P,X,NC,LIQ,FUGC,Z,ier )
-	elseif(iEosOpt==1)then
+	if(iEosOpt==1)then
 		call FugiPR( T,P,X,NC,LIQ,FUGC,Z,ier )
+	elseif(isESD)then ! iEosOpt=2, 
+		call FugiESD( T,P,X,NC,LIQ,FUGC,Z,ier )
+	!elseif(iEosOpt==4)then	!unused
 	elseif(iEosOpt==3)then
 	    call FugiPRWS( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(iEosOpt.eq.8)then
 		call FuSpeadGamma( T,P,X,NC,LIQ,FUGC,Z,ier )
-	elseif(isTPT)then
+	elseif(isTPT)then ! 
  	    call FuTpt( T,P,X,NC,LIQ,FUGC,Z,ier )	  !AUG 10
-	elseif(iEosOpt.eq.6)then
-	    call FuFloryWert( T,P,X,NC,LIQ,FUGC,Z,ier )
+	!elseif(iEosOpt.eq.6)then  ! unused
 	elseif(iEosOpt.eq.7)then
 		call FuNRTL( T,P,X,NC,LIQ,FUGC,Z,ier )
-	elseif(isPcSaft)then 
+	elseif(isPcSaft)then !iEosOpt=11,13
 		call FugiPcSaft(NC,T,P,X,LIQ,Z,FUGC,iErr)
 		if( iErr.ne.0)ier(1)=1
  	    !if(LOUD)print*,'Sorry: PcSaft not available at this time'!call FugiPcSaft(T,P,X,NC,LIQ,FUGC,Z,ier)	 ! Need to define this
@@ -92,17 +88,13 @@
 	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
 	COMMON/ETA2/ETA
 	nComps=NC
-	if(iEosOpt==4)then ! iEosOpt==4 calls Wertheim so ... it's complicated.
-		call FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
-	elseif(iEosOpt==18)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
-		call FuEsd2Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
+	if(iEosOpt==1)then
+		call FuPrVtot(isZiter,tKelvin,1/vTotCc,gmol,NC,LIQ,FUGC,Z,aDep,uDep,IER)
+	!elseif(iEosOpt==4)then ! unused for now.
 	elseif(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
-		call FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
+		call FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
 	elseif(isTPT)then
 		call FuTptVtot(isZiter,Z,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
-	elseif(iEosOpt==1)then
-	    !SUBROUTINE FuPrVtot(tAbs,rhoMol_Cc,xFrac,NC,LIQ,FUGC,zFactor,aDep,uDep,IER)
-		call FuPrVtot(isZiter,tKelvin,1/vTotCc,gmol,NC,LIQ,FUGC,Z,aDep,uDep,IER)
 	elseif(iEosOpt==11)then
 	    !SUBROUTINE FuPrVtot(tAbs,rhoMol_Cc,xFrac,NC,LIQ,FUGC,zFactor,aDep,uDep,IER)
 		call FuPrTcVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aDep,uDep,iErr)

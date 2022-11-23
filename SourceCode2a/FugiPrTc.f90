@@ -305,6 +305,7 @@ end	!Subroutine SetParPurePrTc
 		! T^2*d2(ln(alpha)/dT^2 = -pow + N -L*pow*(pow-1)*Tr^pow
 
 		TdLAL_dT(iComp)= Pow - alphaN(iComp) - alphaL(iComp)*pow*TrPow	 ! Ures/RT= -Ares/RT+(a/bRT)*TdLAL_dT*ln(...) = -Ares/RT + Ares/RT*TdLAL_dT
+		!              = alphaN_i*[alphaM_i-1-alphaL_i*alphaM_i*Tr^(alphaM*alphaN)]
 		! Td/dT[ TdLALdT ] = T*d/dT[ Pow - alphaN(iComp) - pow*alphaL(iComp)*TrPow ]
 		T2d2LAL_dT2(iComp) = -pow+alphaN(iComp) -pow*(pow-1)*alphaL(iComp)*TrPow
 		ALA(iComp,iComp) = aCrit*ALPHA

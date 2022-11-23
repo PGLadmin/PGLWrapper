@@ -5,6 +5,8 @@
 	!reqd routines:
 	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
 	!	LmDifEzCov2.for, Mintools.for
+	!           1     2       3     4      5        6         7        8           9        10       11      12       13          14         15           16            17            18
+	! EosName/'PR','Esd96','PRWS','Esd','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD-MEM2'/
 	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	USE PORTLIB
 	USE GlobConst
@@ -85,9 +87,7 @@
 	if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
 	if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
 	if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
-	if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
 	if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
-	if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
 	if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
 	if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms
 	if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms
@@ -150,8 +150,8 @@
     endif !iProperty <= 2.	###########################################################################################################3333
     notDone=1
     line=0  !read statement	debugging
-	if( ABS(Zc(1)) > 1E-11)rhoCritG_cc = Pc(1)*rMwPlus(1)/( Zc(1)*rGas*Tc(1) )
-	if(LOUD)print*,'UaWrapper:MW,rhoCrit',rMwPlus(1),rhoCritG_cc
+	if( ABS(Zc(1)) > 1E-11)rhoCritG_cc = Pc(1)*rMw(1)/( Zc(1)*rGas*Tc(1) )
+	if(LOUD)print*,'UaWrapper:MW,rhoCrit',rMw(1),rhoCritG_cc
 	if(iProperty < 11)then ! calculate density, departure functions, and derivative properties given T,P
 		do while(notDone)
 			read(51,*,ioStat=ioErr)tKelvin,pKPa,expRho,iPhase
@@ -181,7 +181,7 @@
 				rhoG_cc=errDummy
 				ierCode=ierCode*100+1
 			else ! All good!
-				rhoG_cc=pMPa*rMwPlus(1)/(zFactor*rGas*tKelvin)
+				rhoG_cc=pMPa*rMw(1)/(zFactor*rGas*tKelvin)
 			endif
 			rhoKg_m3=1000*rhoG_cc
 			if(iProperty > 2 .and. iProperty < 6)write(52,'( f8.3,1x,3(1pE11.4,1x),i4)')tKelvin,pKPa,expRho,1000*rhoG_cc,ierCode

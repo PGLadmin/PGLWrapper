@@ -2,7 +2,7 @@
 MODULE SpeadParms
 	USE GlobConst
 	USE Assoc
-	DoublePrecision zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX)
+	DoublePrecision zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX) !,rMwPlus(NMX)
 	Integer nTptCoeffs
 	!nnx = Total number of united-atom sites in a molecule.
 END MODULE SpeadParms
@@ -46,6 +46,7 @@ END MODULE SpeadParms
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!  OUTPUT
+	USE GlobConst
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
@@ -78,8 +79,8 @@ END MODULE SpeadParms
 	ErrMsg(2)='GetTpt: error reading ParmsHb4.txt. Path?'
 	ErrMsg(3)='GetTpt: error reading ParmsTpt.txt at line='
 	ErrMsg(4)='GetTpt: nTypesTot > maxTypes'
-	ErrMsg(5)='GetTpt: a1 > 0 for at least one component when 0 < eta < 0.75'
-	ErrMsg(6)='GetTpt: a2 > 0 for at least one component when 0 < eta < 0.75'
+	ErrMsg(5)='GetTpt: a1 > 0 for at least one component when 0 < eta < 0.85'
+	ErrMsg(6)='GetTpt: a2 > 0 for at least one component when 0 < eta < 0.85'
 	!if(LOUD)print*,'Debug=', DEBUG
 	IF(DEBUG)then 
 		ParmsTptFile='c:\SPEAD\CalcEos\input\ParmsTpt.txt'	 !use this form internal dev since spead\ParmsTpt is most reliable.
@@ -110,16 +111,18 @@ END MODULE SpeadParms
 		jComp=0 
 		DO while(jComp.lt.nDeck.and.iGotIt.eq.0) !rewind and loop through hard drive till you find the comp of interest.
 			jComp=jComp+1
-			read(40,'(A333)',ERR=863,END=111)dumString
-			read(dumString,*,ERR=863)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),&
-				vMolecNm3(iComp),tKmin(iComp),rMw(iComp),nTypes(iComp),(nFg(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
+			read(40,'(A333)',ioStat=ioErr,END=111)dumString
+			if(ioErr.ne.0)goto 863
+			read(dumString,*,ioStat=ioErr)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),&
+				vMolecNm3(iComp),tKmin(iComp),rMwDum,nTypes(iComp),(nFg(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
 				bVolCC_mol(iComp)=vMolecNm3(iComp)*AvoNum
+			if(ioErr.ne.0)goto 863
 111			continue  !transfer from read(40,...,END=111)dumString
 			!read(40,*,ERR=861)idBase,idCc,(zRefDb(iCoeff),iCoeff=1,3),(a1Db(iCoeff),iCoeff=1,nTptCoeffs),(a2Db(iCoeff),iCoeff=1,nTptCoeffs),vMolecDb,tKmin(iComp),nTypes(iComp),(idType(iComp,iType),iType=1,nTypes(iComp)),(nFg(iComp,iType),iType=1,nTypes(iComp))
 			IF(idBase.EQ.idComp(iComp))THEN
 				iGotIt=1  !this will kick us to the next component
 
-				if(LOUDER)write(*,'(a,5f13.4)')' Mw,bVol(cc/mol),vEff(nm3)',rMw(iComp),bVolCc_mol(iComp),vMolecNm3(iComp)
+				if(LOUDER)write(*,'(a,5f13.4)')' Mw,bVol(cc/mol),vEff(nm3)',rMwDum,bVolCc_mol(iComp),vMolecNm3(iComp)
 				if(LOUDER)write(*,'(a,5e13.5)')' zRefCof',(zRefCoeff(iComp,iCoeff),iCoeff=1,3)
 				if(LOUDER)write(*,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
 				if(LOUDER)write(*,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
@@ -145,17 +148,24 @@ END MODULE SpeadParms
 				!etaFactor=1
 				if(LOUDER)write(*,*)' bVol(Tc)/bVolCC_mol =  ' ,etaFactor
                 if(LOUDER)write(*,*)'  eta     zRef     A1/100    A2/10000   rho(g/cc)   zRefCs'
-                do i=5,85,5
+				etaStd=0.4d0
+				increment=5
+                do i=5,85,increment
                     eta=i/1.D2
                     etaRef=eta*etaFactor
 					rhoG_cc=eta*rMw(iComp)/bVolCC_mol(iComp)
 					ZrefCs = 4*eta*(1-eta/2)/(1-eta)**3
-	                call TptTerms(isZiter,nComps,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
+	                call TptTerms(isZiter,nComps,iComp,eta,etaStd,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
                     if(LOUDER)write(*,'(f7.4,6f10.5)')eta,z0i,a1i/100,a2i/(100*100),rhoG_cc,zRefCs
                     if(a1i > 0)iErrCode=5
                     if(a2i > 0)iErrCode=6
+					if(iErrCode > 0 .and. eta < etaMax)etaMax=eta-increment/1.D2 !We might still get useful results under reasonable conditions.
                 enddo
                 if(iErrCode .and. LOUDER)write(*,*) 'GetTpt: check Ais. A1 or A2 > 0 ? iErrCode=',iErrCode
+				if(iErrCode==5 .or. iErrCode==6)then
+					iErrCode=0 !convert to warning, while reducing etaMax to accommodate.
+					if(LOUDER)print*,'etaMax reduced to:',etaMax
+				endif
 				exit !quit searching if found
 			ENDIF !idBase==idComp
 		enddo !while(iGotIt.eq.0)
@@ -362,7 +372,7 @@ END MODULE SpeadParms
 	if(LOUD)pause
 	errMsgPas=Trim( ErrMsg(iErrCode) )
 	return                      
-863	continue
+863	continue  ! Error reading line of ParmsTpt. Try reading parts of dumString sequentially.
 	iErrCode=3
 	if(LOUDER)write(*,*)Trim( ErrMsg(3) ),jComp
 	if(LOUDER)write(*,*)trim( dumString )
@@ -375,13 +385,13 @@ END MODULE SpeadParms
 	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
 	if(LOUDER)write(*,*)'A2',(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
 	if(LOUDER)pause 'A2 read ok. Checking V,Tmin,Mw'
-	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),vMolecNm3(iComp),tKmin(iComp),rMw(iComp)
+	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),vMolecNm3(iComp),tKmin(iComp),rMwDum
 	if(LOUDER)write(*,*)'V,Tmin,Mw',vMolecNm3(iComp),tKmin(iComp),rMw(iComp)
 	if(LOUDER)pause 'VTM read ok. Checking nTypes, nFg, idType'
-	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),vMolecNm3(iComp),tKmin(iComp),rMw(iComp),nTypes(iComp),(nFg(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
+	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),vMolecNm3(iComp),tKmin(iComp),rMwDum,nTypes(iComp),(nFg(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
 	if(LOUDER)write(*,*)'Types',nTypes(iComp),(nFg(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
 	if(LOUDER)write(*,*)'nDeck,iCompo',NDECK,jComp
-	if(LOUDER)pause
+	if(LOUDER)pause	'Check the comp#. Thats all folks!'
 	errMsgPas=Trim( ErrMsg(iErrCode) )
 
 	return                      
@@ -541,6 +551,7 @@ end	!Subroutine QueryParPureSpead
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
+	LOGICAL LOUDER
 	character*111 errMsg(22)
 	integer assocFlag,ier(12)
 	DIMENSION xFrac(NMX),gmol(NMX),chemPo(NMX)
@@ -596,6 +607,8 @@ end	!Subroutine QueryParPureSpead
 	errMsg(14)=' FuTpt Error: zFactor < 0 on final iteration.'
 	errMsg(15)=' FuTpt Error: eta > 1 during iteration.'
 	errMsg(16)=' FuTpt Error: z iteration did not converge. Returning crude goldenz.'
+	LOUDER=LOUD
+	!LOUDER=.TRUE.
 
 	ier=0 !vector init
 	zRefMix=0      
@@ -610,7 +623,7 @@ end	!Subroutine QueryParPureSpead
 	endif
 	bVolMix=0
 	bRefMix=0
-	if(initCall.and.LOUD)print*,'FuTpt: T(K) = ',tKelvin
+	if(initCall.and.LOUDER)print*,'FuTpt: T(K) = ',tKelvin
     DO i=1,nComps
 		xFrac(i)=gmol(i)/totMoles
         bVolMix=bVolMix+xFrac(i)*bVolCC_mol(i)
@@ -625,11 +638,11 @@ end	!Subroutine QueryParPureSpead
     if(tKelvin < tKmin(iVolatile))then	   ! Don't round Tmin down here or NUMDERVS may fail later.
         isTtooLow=1
         iErr=5
-        if(LOUD.and.initCall)write(*,'(a,i3,2f7.1,a)')' FuVtot: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
+        if(LOUDER.and.initCall)write(*,'(a,i3,2f7.1,a)')' FuTpt: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
     endif
     if(isTtooLow==1)then
         iErr=5
-        if(LOUD)write(*,*)TRIM(errMsg(iErr))
+        if(LOUDER)write(*,*)TRIM(errMsg(iErr))
         !goto 86		! declare warning if T < Tmin, but compute properties anyway. e.g. LDEN probably OK although Psat might be nonsense.
     endif
     hRes_RT=86.8686D0 !initialize to error indicator in case of bad return
@@ -643,7 +656,7 @@ end	!Subroutine QueryParPureSpead
 
 	IF (rGas.Le.0 .or. tKelvin.le.0)then
 		iErr=11
-		if(LOUD)write(*,*)' FuTpt: Nonsense. rGas=',rGas,' tKelvin=',tKelvin
+		if(LOUDER)write(*,*)' FuTpt: Nonsense. rGas=',rGas,' tKelvin=',tKelvin
 		!call BeepMsg(errMsg(iErr))
 		goto 86
 	endif
@@ -653,22 +666,24 @@ end	!Subroutine QueryParPureSpead
 
 	!  GUESS FOR eta
 	eta=pb_rt/1.001D0 ! Make "old" value imprecise, so "new" value (below) will be ideal gas result at low rho. => precision when P -> 1E-11.
-	IF(LIQ==1.or.LIQ==3.or.eta > etaMax)eta=0.75D0+0.24d0*(1-exp(-PMPa/100) ) !increase the initial guess for high pressure
+	etaHi=0.75+0.24d0*( exp(-PMPa/100) ) !increase the initial guess for high pressure. etaMax might be less than 1 for some compounds.
+	if(etaHi > etaMax)etaHi=etaMax-0.05d0
+	IF(LIQ==1.or.LIQ==3.or.eta > etaMax)eta=etaHi
 	etaRef=eta*bRefMix/bVolMix
 	IF (eta > etaMax .or. etaRef > etaMax .or. eta < 0)then
 		iErr=11
-		if(LOUD)write(*,*)' pMPa=',pMPa,' eta=',eta,' etaRef=',etaRef
+		if(LOUDER)write(*,*)' pMPa=',pMPa,' eta=',eta,' etaRef=',etaRef
 		!call BeepMsg(errMsg(iErr))
 		goto 86
 	endif
 	rhoMol_cc=eta/bVolMix
 	vTotCc=totMoles/rhoMol_cc
 	isZiter=1
-	if(initCall.and.LOUD)print*,'FuTpt: first call to FuVtot. T(K),eta=',tKelvin,eta
+	if(initCall.and.LOUDER)print*,'FuTpt: first call to FuVtot. T(K),eta=',tKelvin,eta
 	call FuTptVtot(isZiter,zFactor,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErrZ)
 	if(iErrZ > 10)then
 		iErr=13
-		if(LOUD)write(*,*)'FuTpt: FuTptVtot returned with error code:',iErrZ
+		if(LOUDER)write(*,*)'FuTpt: FuTptVtot returned with error code:',iErrZ
 		!call BeepMsg(errMsg(iErr))
 		goto 86
 	endif
@@ -684,7 +699,7 @@ end	!Subroutine QueryParPureSpead
 	pMin=1.d11
 	isZiter=1
     iterGold=0
-	if(LOUD.and.initCall)print*,'FuTpt init: liq,eta', liq,eta
+	if(LOUDER.and.initCall)print*,'FuTpt init: liq,eta', liq,eta
 100 continue
 	do while(ABS(change) > 1.e-9 .and. iErr < 11)	! using change as criterion, instead of change/eta, means ~9 sig figs on liquid density, while ideal gas is exactly returned for vapor density, even when P-> 1E-11.
 		NITER=NITER+1
@@ -695,24 +710,24 @@ end	!Subroutine QueryParPureSpead
 		endif
 		!ETA=rhoMol_Cc*bVolMix
 		if( (1-eta) < 1.d-11)then
-			if(LOUD)write(*,*) ' FuTpt: eta > 1. nIter=',nIter
+			if(LOUDER)write(*,*) ' FuTpt: eta > 1. nIter=',nIter
 			do iComp=1,nComps
-				if(LOUD)write(*,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,i),i=1,nTptCoeffs)
-				if(LOUD)write(*,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,i),i=1,nTptCoeffs)
+				if(LOUDER)write(*,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,i),i=1,nTptCoeffs)
+				if(LOUDER)write(*,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,i),i=1,nTptCoeffs)
 			enddo
-			if(LOUD)pause
+			if(LOUDER)pause
 		endif
 		rhoMol_cc=eta/bVolMix
 		vTotCc=totMoles/rhoMol_cc
 		call FuTptVtot(isZiter,zFactor,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErrZ)
 		if(iErrZ > 10)then
 			iErr=13
-			if(LOUD)write(*,*)'FuTpt: FuTptVtot returned with error code:',iErrZ
+			if(LOUDER)write(*,*)'FuTpt: FuTptVtot returned with error code:',iErrZ
 			!call BeepMsg(errMsg(iErr))
 			cycle
 		endif
 		error=pb_rt-eta*zFactor
-		if(initCall.and.LOUD)write(*,'(a,i3,F9.5,2(1PE12.4))')' FuTpt: From FuVtot. iter,eta,Z,error=',NITER,eta,zFactor,error
+		if(initCall.and.LOUDER)write(*,'(a,i3,F9.5,2(1PE12.4))')' FuTpt: From FuVtot. iter,eta,Z,error=',NITER,eta,zFactor,error
 		if(eta*zFactor > pMax .and. eta < 0.15)then
 			pMax=eta*zFactor
 			etaAtPmax=eta	 !for crude goldenz. ~randomly searches for lo eta max in p
@@ -730,13 +745,13 @@ end	!Subroutine QueryParPureSpead
 		!if(ABS(change/zFactor) > 1)change=zFactor*DSIGN(0.5d0,change)	!step limiting. Stop zFactor from going negative.
 		eta=eta-change
 		rhoMol_cc=eta/bVolMix
-		if(eta < 0 .or. eta > etaMax)then !NOTE: this should not happen given step limiting
+		if(eta < 0 .or. eta > etaHi)then !NOTE: this should not happen given step limiting
 			if(niter < (itMax-1))niter=itMax-1 !restrict tries with new guess so we can crash if necessary.
-			if(LOUD)write(*,'(a,f8.4)')' Warning in FuTpt: next guess is eta=',eta
+			if(LOUDER)write(*,'(a,f8.4)')' Warning in FuTpt: next guess is eta=',eta
 			eta=0
-			if(liq==1.or.liq==3)eta=0.98
-			if(LOUD)write(*,*) 'Restarting iteration with eta=',eta
-			if(LOUD)pause
+			if(liq==1.or.liq==3)eta=etaHi
+			if(LOUDER)write(*,*) 'Restarting iteration with eta=',eta
+			if(LOUDER)pause
 		endif
 	enddo  !iteration on eta to find P=P(input)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Whoohoo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -748,14 +763,14 @@ end	!Subroutine QueryParPureSpead
 			rhoMol_cc=eta/bVolMix
 			vTotCc=totMoles/rhoMol_cc
 			call FuTptVtot(isZiter,zFactor,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErrZ)
-		    if(eta < 0 .or. eta > etaMax)eta=0.98 ! liq==1 or 3 in this if.
-			if(LOUD)write(*,'(a,f8.4,1x,a,i3,1x,a,f7.4,a,1PE11.4,a,1PE11.4)')' FuTpt: P=',pMPa,' LIQ=',LIQ,' etaMin=',etaAtPmin,' pMin=',pMin,' pMax=',pMax
+		    if(eta < 0 .or. eta > etaMax)eta=etaHi ! liq==1 or 3 in this if.
+			if(LOUDER)write(*,'(a,f8.4,1x,a,i3,1x,a,f7.4,a,1PE11.4,a,1PE11.4)')' FuTpt: P=',pMPa,' LIQ=',LIQ,' etaMin=',etaAtPmin,' pMin=',pMin,' pMax=',pMax
             if(iterGold < 2)goto 100
 		endif
 	endif
 	IF (eta < 0)then
 		iErr=12
-        if(LOUD)write(*,*)'FuTpt: eta < 0 after converged.'
+        if(LOUDER)write(*,*)'FuTpt: eta < 0 after converged.'
 		!call BeepMsg(errMsg(iErr))
 	endif
 	!call one more time to facilitate debugging
@@ -765,27 +780,30 @@ end	!Subroutine QueryParPureSpead
 	zFactor=pMPa/(rhoMol_cc*rGas*tKelvin) ! Seemingly unnecessary, this should improve precision when computing rho from return. Z = 1+zRef+zAtt+zAssoc is subject to roundoff when Z->1E-9, but Z=P/(rhoRT)=>rho=P/(ZRT) with precision.
 	IF (zFactor < zeroTol)then
 		iErr=14
-        if(LOUD)pause'FuTpt: eta < 0 after converged.'
+        if(LOUDER)pause'FuTpt: eta < 0 after converged.'
         return
-		!IF(LOUD)call BeepMsg(errMsg(iErr))
+		!IF(LOUDER)call BeepMsg(errMsg(iErr))
 	endif
+	etaPass=eta  ! etaPass in GlobConst
 	IF (LIQ==1 .or. LIQ==3) THEN
 	  ETAL=ETA
-	  etaPass=eta  ! etaPass in GlobConst
 	  ZL=zFactor  
 	ELSE
 	  ETAV=ETA
-	  etaPass=eta  ! etaPass in GlobConst
 	  ZV=zFactor  
 	ENDIF
 	dU_RT=uDep
 	dH_RT=uDep+zFactor-1
 	dA_RT=aDep
-	if(LOUD.and.initCall)print*,'FuTpt: done. T(K),eta=',tKelvin,eta
+    hRes_RT=dH_RT
+    uRes_RT=dU_RT
+    Ares_RT=dA_RT
+    Sres_R =dU_RT-dA_RT
+	if(LOUDER.and.initCall)print*,'FuTpt: done. T(K),eta=',tKelvin,eta
 	initCall=0
     if(LIQ > 1)return
 	isZiter=0
-    if(LOUD.and.initCall)print*,'FuTpt: Calculating fugacity. LIQ = ', LIQ
+    if(LOUDER.and.initCall)print*,'FuTpt: Calculating fugacity. LIQ = ', LIQ
 	call FuTptVtot(isZiter,zFactor,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErrZ)
 	if(iErr.eq.2 .or. iErr.eq.4)goto 86
    	
@@ -794,15 +812,15 @@ end	!Subroutine QueryParPureSpead
 	!call ChemPoPhysNum(chemPo,eta,tKelvin,xFrac,nComps,iErrCp)
 	if(LIQ < 2)call ChemPoCalcTpt(chemPo,eta,tKelvin,xFrac,nComps,iErrCp)
 	ChemPoPure=aDep+zFactor-1-DLOG(zFactor)
-	if(nComps==1 .and. LOUD .and. initCall)print*,'fugc(1),Gdep1',chemPo(1),ChemPoPure
+	if(nComps==1 .and. LOUDER .and. initCall)print*,'fugc(1),Gdep1',chemPo(1),ChemPoPure
 	initCall=0
 	RETURN
 
-86	if(LOUD)WRITE(6,'(a)')' FuTpt: error.  '
+86	if(LOUDER)WRITE(6,'(a)')' FuTpt: error.  '
 	IER(1)=iErr
 	RETURN
 867 continue
-	if(LOUD)write(*,*)'Exiting FuTpt: Please correct xFrac'
+	if(LOUDER)write(*,*)'Exiting FuTpt: Please correct xFrac'
 	ier(1)=17
 	ier(7)=1
 	return
@@ -889,10 +907,15 @@ end	!Subroutine QueryParPureSpead
 	iErr=0
 	NC=nComps
 	errMsg(1)='TptTerms Error: etaRef out of range.'
+	errMsg(2)='TptTerms Error: eta out of range.'
 	if(etaRef > etaMax .or. etaRef < 0)then
 		iErr=1
 		if(LOUD)write(*,*)'In TptTerms: eta=',eta
-		!call BeepMsg(errMsg(iErr))
+		return
+	endif
+	if(eta > etaMax .or. eta < 0)then
+		iErr=2
+		if(LOUD)write(*,*)'In TptTerms: eta=',eta
 		return
 	endif
 	c1=zRefCoeff(iComp,1)+3
@@ -1634,6 +1657,7 @@ end	!Subroutine QueryParPureSpead
 	PARAMETER(etaStep=2.d0/1000.d0,maxRhoStep=1.d0/etaStep)
 	character*77 errMsg(22)
 	doublePrecision moleStep,mShape(NMX)
+	LOGICAL LOUDER
 	integer assocFlag
 	DIMENSION xFrac(NMX),gmol_old(NMX),aMixQuadPart(NMX),gmol(NMX),bRef(NMX)
 
@@ -1662,6 +1686,8 @@ end	!Subroutine QueryParPureSpead
 	common/aRG/zNC,aDepNC
 	common/rg/iFlagRG,iFlagFit,mShape,cutOff(NMX),Phi(NMX),Zi(NMX)
 	data initCall/1/
+	LOUDER=LOUD
+	!LOUDER=.TRUE.
 
 	iErr=0
 	errMsg(11)=' FuTptVtot Error: Nonsense input. e.g. eta > 1'
@@ -1685,7 +1711,7 @@ end	!Subroutine QueryParPureSpead
     enddo
    if(tKelvin < tKmin(iVolatile)*0.998D0)then	   !round TKmin down a little for possible lost precision
         iErr=5
-        if(LOUD.and.initCall)write(*,'(a,i3,2f7.1,a)')' FuVtot: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
+        if(LOUDER.and.initCall)write(*,'(a,i3,2f7.1,a)')' FuVtot: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
     endif
     hRes_RT=86.8686D0 !initialize to error indicator in case of bad return
     uRes_RT=86.8686D0 !initialize to error indicator in case of bad return
@@ -1699,9 +1725,9 @@ end	!Subroutine QueryParPureSpead
 	eta2=eta*eta
 	eta3=eta2*eta
 	eta4=eta3*eta
-	if( (1-eta) < zeroTol)then
-		if(LOUD)write(*,*) 'FuTptVtot: eta > 1'
-		if(LOUD)pause
+	if( eta > etaMax)then
+		if(LOUDER)write(*,*) 'FuTptVtot: eta > etaMax. eta,etaMax=',eta,etaMax
+		if(LOUDER)pause
         iErr=11
         return
 	endif
@@ -1711,7 +1737,7 @@ end	!Subroutine QueryParPureSpead
 	call MixRule(isZiter,xFrac,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
 	if(iErrMix > 10)then
 		iErr=13
-        if(LOUD)write(*,*)'FuTptVtot: iErrMix=',iErrMix
+        if(LOUDER)write(*,*)'FuTptVtot: iErrMix=',iErrMix
 		!call BeepMsg(errMsg(iErr))
 		return
 	endif 
@@ -1742,7 +1768,7 @@ end	!Subroutine QueryParPureSpead
 !	if( ABS(zAssoc) < 1e-11 )print*,'zAssoc ~ 0???'		 !for debugging
 	IF(iErrCode)then
 		!iErr=iErrCode
-		if(LOUD)pause 'FuTptVtot: Wertheim gave error.'
+		if(LOUDER)pause 'FuTptVtot: Wertheim gave error.'
 		iErr=12
 		return
 	endif
@@ -1754,7 +1780,7 @@ end	!Subroutine QueryParPureSpead
 	endif
 
 	if(iErr > 10)then
-		if(LOUD)write(*,*)errMsg(iErr)
+		if(LOUDER)write(*,*)errMsg(iErr)
 		return
 	endif
 ! RG method disabled. Prefer GaussEx method. JRE 20191010 
@@ -1771,7 +1797,7 @@ end	!Subroutine QueryParPureSpead
 	
 	aDep=aTvRef+aAtt+aAssoc+aDepNC
 	uDep=uAtt+uAssoc
-	!if(LOUD)print*,'uAtt,uAssoc',uAtt,uAssoc,uDep
+	!if(LOUDER)print*,'uAtt,uAssoc',uAtt,uAssoc,uDep
 	zFactor=(1.d0+zRep+zAtt+zAssoc)+zNC
 	PMpa=(zFactor)*rGas*rhoMol_cc*tKelvin 
 	DAONKT=aDep
@@ -1784,14 +1810,14 @@ end	!Subroutine QueryParPureSpead
 	sRes_R =-(aDep-uDep) 
 	hRes_RT=uDep+zFactor-1.d0
 	if(isZiter==0)then
-		if(LOUD.and.initCall)print*,'FuTptVtot: T,rho,z=',tKelvin,rhoMol_cc,zFactor
-        if(LOUD.and.zFactor < zeroTol) then
+		if(LOUDER.and.initCall)print*,'FuTptVtot: T,rho,z=',tKelvin,rhoMol_cc,zFactor
+        if(LOUDER.and.zFactor < zeroTol) then
             pause 'FuTptVtot: zFactor < 0?'
             continue
         endif
 		call NUMDERVS(nComps,xFrac,tKelvin,rhoMol_cc,zFactor,cmprsblty,iErrNum)
-		if(LOUD.and.initCall)print*,'FuTptVtot: cmprsblty,CvRes_R=',cmprsblty,CvRes_R
-		if(iErrNum > 1.and.LOUD)then
+		if(LOUDER.and.initCall)print*,'FuTptVtot: cmprsblty,CvRes_R=',cmprsblty,CvRes_R
+		if(iErrNum > 1.and.LOUDER)then
 			print*,'FuTptVtot: NUMDERVS failed. No derivatives for you!'
 			iErr=16
 		endif
@@ -1832,7 +1858,7 @@ end	!Subroutine QueryParPureSpead
 	d3zFactor_dV3=d3zFactor_deta3*deta_dV**3+d2zFactor_deta2*2.d0*deta_dV*d2eta_dV2
 	d3zFactor_dV3=d3zFactor_dV3+d2zFactor_deta2*deta_dV*d2eta_dV2+d3eta_dV3*dzFactor_deta
 	cmprsblty=zFactor+eta*dzFactor_deta
-	!if(LOUD)print*,'cmprsblty=',cmprsblty
+	!if(LOUDER)print*,'cmprsblty=',cmprsblty
 	! First derivatives of P,ZREP,ZATT and ZASSOC in respect to T according to the ESD EOS while V and N are constant
 	betaDZREP_dBeta=0.d0
 	!zAtt=eta*dA_dEta=Z1/T+Z2/T^2> betaDZAtt_dBeta = Z1/T + 2Z2/T^2 
@@ -1942,16 +1968,16 @@ end	!Subroutine QueryParPureSpead
 !	cvRes_R=0
 !	if(nComps==1)then	!added by JRE 2018. I'm not confident of formulas for NC>1 as of 20191004.
 !		!uAssoc,CvAssoc computed in Wertheim() and passed in module Assoc.
-!		!if(LOUD)print*,'uAssoc,CvAssoc=',uAssoc,CvAssoc
+!		!if(LOUDER)print*,'uAssoc,CvAssoc=',uAssoc,CvAssoc
 !		!cvAtt = uAtt - beta*d(Ures_RT)/dBeta
 !		!uAtt = A1/T+2*A2/T^2 => beta*dUAtt_dBeta= A1/T+4*A2/T^2
 !!		cvAtt = uAtt - (a1Mix+4*a2Mix/tKelvin)/tKelvin !=4*A2/T^2
-!		!if(LOUD)print*,'uAtt,uAssoc',uAtt,uAssoc,uRes_RT
+!		!if(LOUDER)print*,'uAtt,uAssoc',uAtt,uAssoc,uRes_RT
 !		cvRes_R = CvAtt + CvAssoc
-!		!if(LOUD)print*,'FuTptVtot: uAtt,CvRes_R',uAtt,cvRes_R
-!		!if(LOUD)print*,'FuTptVtot: TdZ_dT',-betaDZ_dBeta
+!		!if(LOUDER)print*,'FuTptVtot: uAtt,CvRes_R',uAtt,cvRes_R
+!		!if(LOUDER)print*,'FuTptVtot: TdZ_dT',-betaDZ_dBeta
 !		TdP_dT=zFactor-betaDZ_dBeta
-!		!if(LOUD)print*,'dZASSOC_dT,dh_dT ',dZASSOC_dT,dh_dT
+!		!if(LOUDER)print*,'dZASSOC_dT,dh_dT ',dZASSOC_dT,dh_dT
 !		if(ABS(cmprsblty) < 1e-11 .and. LOUD)pause 'FuTptVtot: cmprsblty ~ 0'
 !		CpRes_R = cvRes_R-1+TdP_dT**2/cmprsblty 
 !	endif

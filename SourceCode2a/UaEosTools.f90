@@ -70,25 +70,39 @@
 	if(pMin < 0)then !Pmin < 0 means liquid root exists at p=0. Then Razavi works well.
 		pOld=1D-5 !If p < 0, then the vapor density goes negative and log(rhoLiq/rhoVap) is indeterminate.
         !NOTE: Don't use pOld=0 when pOld > 0. You might get Golden Error because vdw loop doesn't cross zero!
-		!print*,'calling fugi for liquid to construct Razavi initial guess.'
+		if(LOUD)print*,'calling fugi for liquid to construct Razavi initial guess.'
 		call FUGI(tK,pOld,xFrac,NC,3,FUGC,zLiq,ier) !LIQ=3=>liquid root with no fugc calculation
         if(ier(1)==0)then
-            rhoLiq=pOld/(zLiq*rGas*tK)
+			AresLiq=Ares_RT
+			rhoLiq=pOld/(zLiq*rGas*tK)			 !AresVap  +  Zvap-1 -ln(Zvap) =AresLiq+ZLiq-1-ln(ZLiq) 
+			!rhoLiq=etaL/bVolCC_mol(1)		 =>  !B2*rhoVap+B2*rhoVap+ln(rhoVap/rhoLiq) =AresLiq+0-1
 			if(iEosOpt==11)rhoLiq=etaPass/bVolCC_mol(1) ! crazy precision is required when etaLiq > 0.98 (and Z->0). e.g. pentanoic acid (1258)
 			eta=rhoLiq*bVolCC_mol(1)
-			if(eta < 0.15D0 .and. LOUD)print*,'Psat: etaLiq < 0.15? pOld,zLiq,tK=',pOld,zLiq,tK
-            rhoVap=rhoLiq*EXP( Ares_RT-1 ) !Razavi, FPE, 501:112236(19), Eq 19. Ares_RT from GlobConst
-            pTest=rhoVap*rGas*tK
-			if(LOUD.and.initCall)write(*,'(a,2f8.4,e11.4)')' Psat: Razavi Psat,eta,rhoLiq',pTest,eta,rhoLiq
+			if(eta < 0.15D0 .and. LOUD)print*,'PsatEar: etaLiq < 0.15? pOld,etaLiq,tK=',pOld,eta,tK
+            rhoVap=rhoLiq*EXP( AresLiq-1 ) !Razavi, FPE, 501:112236(19), Eq 19. Ares_RT from GlobConst
+			pSatRazavi=rhoVap*rGas*tK
+			call FUGI(tK,pSatRazavi,xFrac,NC,0,FUGC,zVap,ier) !LIQ=0=>vapor root with fugc calculation. zVap far from zero.
+			B2cc_mol=(zVap-1)*(zVap*rGas*tK)/pSatRazavi
+			rhoVap=rhoVap*exp(-2*B2cc_mol*rhoVap)! => rhoVap=rhoLiq*EXP(Ares_RT-1-2*B2*rhoVap), but Ares-RT changes with FUGI call, so reuse like this.
+			pSatRazavi=rhoVap*rGas*tK*(1+B2cc_mol*rhoVap)
+			zLiq=pSatRazavi/(rhoLiq*rGas*tK)
+			FugcLiq=AresLiq+zLiq-1-LOG(zLiq)
+			if(LOUD)print*,'PsatEar: FugcVap,FugcLiq=',Fugc(1),FugcLiq
+			if(pSatRazavi < pMax)then
+				pTest=pSatRazavi
+			else
+				if(LOUD)print*,'PsatEar: pSatRazavi > pMax?'
+			endif
+			if(LOUD)write(*,'(a,2f8.4,e11.4)')' PsatEar: Razavi Psat,eta,rhoLiqG/cc',pTest,eta,rhoLiq*rMw(1)
 	        !pEuba2=rGas*tK/(1/rhoVap-1/rhoLiq)*( Ares_RT- 0 +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
             !NOTE: When 1/rhoVap >> 1/rhoLiq, pEuba2=rGas*tK*rhoVap*( Ares_RT-ln(rhoVap/rhoLiq) )=pTest*( Ares_RT - (Ares_RT-1) )
             if(pTest < pMax)pOld=pTest
 		elseif(ier(2).ne.0)then
-			if(LOUD)print*,'PsatEar:T < Tmin. Sorry.'
+			if(LOUD)print*,'PsatEar:T < Tmin? Sorry.'
 			ierCode=6
 			return
 		else
-			if(LOUD)write(*,'(a,i12)')' PsatEar: Error from initial FUGI. ier=',(ier(i),i=1,7)
+			if(LOUD)write(*,'(a,i12)')' PsatEar: Error from Razavi call to fugi. ier=',(ier(i),i=1,7)
         endif
 	endif
 	etaLiq=rhoLiq*bVolCC_mol(1)
@@ -173,8 +187,8 @@
 	chemPot=FUGC(1) !since chemPotL=chemPotV at pSat       
 	uSatL=DUONKT
 	!Convert densities to g/cc.
-	if(zVap > 0)rhoVap=pMPa*rMwPlus(1)/(zVap*rGas*tK)
-	if(zLiq > 0)rhoLiq=pMPa*rMwPlus(1)/(zLiq*rGas*tK)
+	if(zVap > 0)rhoVap=pMPa*rMw(1)/(zVap*rGas*tK)
+	if(zLiq > 0)rhoLiq=pMPa*rMw(1)/(zLiq*rGas*tK)
 	if( (isTPT .or. isESD) .and. pMPa < 1.D-4 .and. LOUD)print*,'Psat: 1.D-4 > pMpa = ',pMPa
 	if( (isTPT .or. isESD) .and. pMPa < 1.D-4)ierCode=7
 	if(iEosOpt==22 .and. pMPa < 1.D-2)ierCode=7
@@ -215,28 +229,30 @@
 	if(Tc(1) < 1E-11 .and. LOUD)print*,'Spinodal: nonsense Tc(1)=',Tc(1)
 
 	Tr=tKelvin/TC(1)
+	!if(isTPT)print*,'Spinodal: etaMax=',etaMax
 	if(rho<0)then !this is the signal to use default estimates, but really using rhoCrit works much better in the critical region.
 		etaLo = 1e-11
 		etaHi = 0.17
-		if(LIQ)then
+		if(LIQ==1)then
 			etaLo=0.1;
-			etaHi=0.77;	!must be less than 0.526 for ESD.
-			if(isESD)etaHi=0.52
+			etaHi=etaMax;	!must be less than 0.526 for ESD.
+			!if(isESD)etaHi=0.52
 		endif
 		if(iEosOpt==1 .or. iEosOpt==11)then	 ! PR flavors
 			etaLo=etaLo*2
-			etaHi=etaHi*2
-			if(etaHi > 0.99)etaHi=0.99
+			!etaHi=etaHi*2
+			!if(etaHi > 0.99)etaHi=etaMax
 		endif
 	else
 		etaCrit=rho*bMix
 		etaLo=etaCrit*0.0001
 		etaHi=etaCrit !if LIQ=0 and rho>0, then use the given value as the guess for rhoVapHi
-		if(LIQ)then
+		if(LIQ==1)then
 			etaLo=etaCrit
-			etaHi=0.77
-			if(isESD)etaHi=0.52
-			if(iEosOpt==1.or.iEosOpt==11)etaHi=0.99
+			etaHi=etaMax
+			!etaHi=0.77
+			!if(isESD)etaHi=0.52
+			!if(iEosOpt==1.or.iEosOpt==11)etaHi=0.99
 		endif
 	endif
 	minimax= -1	!routine was written to minimize, therefore take -ve to maximize.
@@ -267,7 +283,7 @@
 	pHi = minimax*rhoHi*zFactor*rGas*tKelvin
 	if(LOUD)write(67,601)tKelvin,1/rhoHi,minimax*pHi,zFactor,DUONKT,DAONKT,rhoHi*bMix
 	!NOTE: iErrFu=1 for liquid because -ve Z values will cause error in fugacity calculation.
-	itMax = 66-33*(14/rMwPlus(1)) !Increase the precision for long chains cuz...
+	itMax = 66-33*(14/rMw(1)) !Increase the precision for long chains cuz...
     if(itMax < 33)itMax=33  !H2 and He give problems for above formula
 	etaOld=etaHi
 101	continue
@@ -342,8 +358,8 @@
 	!bVol=bVolCC_mol
 	bMix=SumProduct(NC,xFrac,bVolCC_mol)
 	eta=bMix*rhoMol_Cc
-	etaMax=1-zeroTol
-	if(isESD)etaMax=1/1.9D0-zeroTol
+	!etaMax=1-zeroTol
+	!if(isESD)etaMax=1/1.9D0-zeroTol
 	if(rhoMol_cc < zeroTol .or. tKelvin < zeroTol .or. eta < zeroTol .or. zFactor < zeroTol .or. eta > etaMax)then
 		if(LOUD)print*,'NUMDERVS: nonsense input. NC,T,rho,Z,eta,b,x1,bMix=',NC,tKelvin, rhoMol_cc,zFactor,eta, bVolCC_mol(1),xFrac(1),bMix
 		iErr=1

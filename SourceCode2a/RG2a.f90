@@ -21,7 +21,7 @@
 	COMMON/BIPs_SPEAD/aBipAD,aBipDA
 	COMMON/HbParms/dHkcalMol(NMX),bondVolNm3Esd(NMX)
 	COMMON/HbParms2/ND(NMX),NDS(NMX),NAS(NMX)
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	!COMMON/Assoc/eHbKcal_mol(nmx,maxTypes),eDonorKcal_mol(nmx,maxTypes),eAcceptorKcal_mol(nmx,maxTypes),bondVolNm3T(nmx,maxTypes),nDegree(nmx,maxTypes),nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes),idType(nmx,maxTypes),localType(maxTypesGlobal),idLocalType(maxTypes),nTypes(NMX),nTypesTot
 	common/rg/iFlagRG,iFlagFit,mShape,cutOff(NMX),Phi(NMX),Zi(NMX)
 
@@ -47,7 +47,7 @@
 		xFrac(i)=gmol(i)/totMoles
 	enddo
 	mShape2=mShape(1)*mShape(1)
-	sig=(vMolecNm3(1)*6.d0/Pi/mShape(1))**(1.d0/3.d0)  ![=]nm
+	sig=( bVolCC_mol(1)*6.d0/(Pi*AvoNum*mShape(1)) )**(1.d0/3.d0)  ![=]nm
 	sig2=sig*sig
 	sig3=sig*sig*sig
  	cutOffL=cutOff(1)*sig !Since the cutOffL param was actually L/sig
@@ -57,7 +57,7 @@
 	alpha=16.d0*Pi*eps*sig3/9.d0 	 ![=]MPa.nm6
 	zitta2=9.d0*sig2/7.d0 	 ![=]nm2
 	const=6.d0/(Pi*mShape(1)*sig3)	 ![=]1/nm3
-	vEff=vMolecNm3(1)
+	vEff=bVolCC_mol(1)/AvoNum
 	betaR=kB*tKelvin	![=]MPa.nm3
 	tTang=3.d0
 
@@ -266,14 +266,15 @@
 !C																											 C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	subroutine DevalCrit(nData,nParms,parm,deviate,iFlag)
+	USE GlobConst
 	implicit doubleprecision (A-H,O-Z)
-	parameter(NMX=55,rGAs=8.314339637756d0,AvoNum=602.22d0)
+	!parameter(NMX=55,rGAs=8.314339637756d0,AvoNum=602.22d0)
 	dimension deviate(nData),parm(nParms)
 	doubleprecision mShape(NMX)
-	COMMON/ppData/TC(NMX),PC(NMX),ACEN(NMX),ID(NMX)
-	COMMON/ppDataPlus/ZC(NMX) !,rMw(nmx)
+	!COMMON/ppData/TC(NMX),PC(NMX),ACEN(NMX),ID(NMX)
+	!COMMON/ppDataPlus/ZC(NMX) !,rMw(nmx)
 	COMMON/ETA2/ETA
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
 	common/rg/iFlagRG,iFlagFit,mShape,cutOff(NMX),Phi(NMX),Zi(NMX)
 	iFlag=iFlagRG !just to kill the warning
@@ -286,7 +287,7 @@
 	toll=1.d-7
 	call CritPure(NC,isZiter,toll,TC_Pure,VC_PURE,PC_Pure,ZC_Pure,Acen_pure,iErrCode)
 	etaC_PURE=eta
-	bVolPure=vMolecNm3(1)*AvoNum
+	bVolPure=bVolCC_mol(1)
 	etaCExp=PC(1)/ZC(1)/rGas/TC(1)*bVolPure
 	deviate(1)=dsqrt( ( (TC_Pure-TC(1))/TC(1) )**2 ) 
 	deviate(2)=dsqrt( ( (PC_Pure-PC(1))/PC(1) )**2 )*0.1d0	   !The weights are arbitrary
@@ -369,13 +370,14 @@
 !C																											 C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	subroutine FuTptVtotRG(bVolMix,xFrac,eta,tKelvin,nComps,aDep,iErr)
+	USE SpeadParms
 	USE Assoc !GlobConst+XA,XD,XC
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	character*77 errMsg(11)
 	DIMENSION xFrac(NMX)
     DoublePrecision FUGASSOC(NMX),dFUGASSOC_dT(NMX),dFUGASSOC_dRHO(NMX)
-    COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+    !COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	COMMON/rdf/d2lng,d2g,dlng,dg_deta,dAlph_deta
 
@@ -413,7 +415,8 @@
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	subroutine MixRuleRG(xFrac,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,iErr) 
+	subroutine MixRuleRG(xFrac,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,iErr)
+	USE SpeadParms 
 	USE GlobConst, only: avonum,LOUD
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
@@ -423,7 +426,7 @@
 	DIMENSION ks0ij(NMX,NMX),ks1ij(NMX,NMX)
 	DIMENSION KII(NMX,NMX),KTII(NMX,NMX)
 	COMMON/SIPs/KII,KTII
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	data initial/1/
 	data ks0,ks1/-0.04, 0/		! best I could do based on avg of the entire system AV 11/29/08
 	
@@ -541,10 +544,11 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
  	subroutine TptTermsRG(iComp,eta,a0i,a1i,a2i,iErr)
+	USE SpeadParms
 	USE BIPs
 	implicit doublePrecision(A-H,K,O-Z)
 	character*120 errMsg(4)
-	common/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!common/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	!common/Assoc/eHbKcal_mol(nmx,maxTypes),eDonorKcal_mol(nmx,maxTypes),eAcceptorKcal_mol(nmx,maxTypes),bondVolNm3T(nmx,maxTypes),nDegree(nmx,maxTypes),nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes),idType(nmx,maxTypes),localType(maxTypesGlobal),idLocalType(maxTypes),nTypes(NMX),nTypesTot
 
 	errMsg(1)='TptTermsRG Error: eta out of range.'

@@ -582,10 +582,10 @@
 	write(52,*)(X(J),J=1,NC)
 	rMwAvg=0
 	do i=1,nc
-		rMwAvg=rMwAvg+x(i)*rMwPlus(i)
+		rMwAvg=rMwAvg+x(i)*rMw(i)
 	enddo
 	do i=1,nc
-		wFrac(i)=x(i)*rMwPlus(i)/rMwAvg
+		wFrac(i)=x(i)*rMw(i)/rMwAvg
 	enddo
 	write(*,*)'Wt Fracs'
 	write(*,'(11f8.5)')(wFrac(i),i=1,nc)
@@ -621,7 +621,7 @@
 	CALL Fugi(T,P,Y,NC,iPhaseUp,fugcV,ZV,ier)
 	rMwAvg=0
 	do i=1,nc
-		rMwAvg=rMwAvg+y(i)*rMwPlus(i)
+		rMwAvg=rMwAvg+y(i)*rMw(i)
 	enddo
 	etaUp=eta
 	rhoUp=P*rMwAvg/(zV*rGas*T)
@@ -748,10 +748,10 @@
 	write(52,*)(X(J),J=1,NC)
 	rMwAvg=0
 	do i=1,nc
-		rMwAvg=rMwAvg+x(i)*rMwPlus(i)
+		rMwAvg=rMwAvg+x(i)*rMw(i)
 	enddo
 	do i=1,nc
-		wFrac(i)=x(i)*rMwPlus(i)/rMwAvg
+		wFrac(i)=x(i)*rMw(i)/rMwAvg
 	enddo
 	write(*,*)'Wt Fracs'
 	write(*,'(11f8.5)')(wFrac(i),i=1,nc)
@@ -904,7 +904,7 @@
             eta=bVolCC_mol(1)/VC_Pure
  			if(LOUD)write(*,*)'Tc=',TC_Pure,' etaC=',eta
 			if(LOUD)write(*,*)'Pc=',PC_pure,' Zc=',ZC_Pure
-			rhoc=PC_pure*rMwPlus(1)/(TC_Pure*8.31434*ZC_Pure)
+			rhoc=PC_pure*rMw(1)/(TC_Pure*8.31434*ZC_Pure)
 			if(LOUD)write(*,*)'rhoc(g/cc)=',rhoc
 			write(61,602)TC_Pure,PC_PURE,ZC_PURE,eta,rhoc
 		else
@@ -958,16 +958,16 @@
 	avgMwLiq=0
 	avgMwVap=0
 	do i=1,nComps
-		avgMwLiq=avgMwLiq+xFrac(i)*rMwPlus(i)
-		avgMwVap=avgMwVap+yFrac(i)*rMwPlus(i)
+		avgMwLiq=avgMwLiq+xFrac(i)*rMw(i)
+		avgMwVap=avgMwVap+yFrac(i)*rMw(i)
 	enddo
 
 	DO I=1,nComps
 		if(LOUDER)write(* ,602)NAME(I),ID(I)
 		WRITE(61,602)NAME(I),ID(I)
 		VLKI=yFrac(I)/(xFrac(I)+1.D-11)
-		wFrVap=yFrac(i)*rMwPlus(i)/avgMwVap
-		wFrLiq=xFrac(i)*rMwPlus(i)/avgMwLiq
+		wFrVap=yFrac(i)*rMw(i)/avgMwVap
+		wFrLiq=xFrac(i)*rMw(i)/avgMwLiq
 		if(LOUDER)write(* ,603)
 		if(xFrac(i).gt.1E-7)then
 			if(LOUDER)write(* ,604)xFrac(I),yFrac(I),VLKI,wFrLiq,wFrVap
@@ -1265,7 +1265,7 @@
 	DIMENSION fugcPure(NMX),fugRepPure(nmx),fugAttPure(nmx),fugAssocPure(nmx),hPure(NMX),sPure(NMX),fugc(NMX)
 	DoublePrecision rLnGam(NMX),rLnGamRep(NMX),rLnGamAtt(NMX),rLnGamAssoc(NMX)
 	LOGICAL LOUDER
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/eta/etaL,etaV,ZL,ZV
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	common/FugiParts/fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),ralph(nmx),Zrep,Zatt,Zassoc,Fassoc
@@ -1569,10 +1569,8 @@
 	!write(61,*)'Packing fraction =',eta,' V(cc/mol) = ',vTotCc
 10	WRITE(6,*)'ENTER density (g/cm3)   '
 	READ(5,*)rhoLiqG_cc
-	vTotCc = rMwPlus(1)/rhoLiqG_cc	 !Arbitrarily setting 1 mole for basis
+	vTotCc = rMw(1)/rhoLiqG_cc	 !Arbitrarily setting 1 mole for basis
 	eta=bVolCc_mol(1)/vTotCc
-	etaMax=0.99
-	if(isESD)etaMax=0.52
 	if(eta > etaMax)print*,'VpIter: etaMax < eta=',eta
 	if(eta > etaMax)goto 10
 	write(* ,*)'rho(g/cc) =',rhoLiqG_cc,' V(cc/mol) = ',vTotCc
@@ -1640,6 +1638,7 @@
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	parameter(nList=15)
 	character outFile*251
+	LOGICAL LOUDER
     !integer ier(12)
 	DIMENSION gMol(NMX),fugc(NMX),tList(nList)  ,ierFugi(12)
 	character*77 errMsg(0:11),errMsgPas
@@ -1647,14 +1646,16 @@
 	!COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	data tList/0.01,0.02,0.05,0.1,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.1/
 	data initCall/1/
+	LOUDER=LOUD
+	LOUDER=.TRUE.
 	iErrCode=0
-	errMsg(0)='No Problem in Isochore'
+	errMsg(0)='No Problem in IsoBar'
 	errMsg(1)='isobar Error: NC.ne.1'
 	errMsg(2)='isobar Error: itMax exceeded.'
 	errMsg(3)='isobar Error: NC.ne.1'
 	if(NC.ne.1)then
 		iErrCode=1
-		if(LOUD)write(*,*)'isobar Error: NC=1 only. Restart CalcEos with number of components = 1'
+		if(LOUDER)write(*,*)'isobar Error: NC=1 only. Restart CalcEos with number of components = 1'
 		goto 86
 	endif
 	gmol(1)=1				     !Arbitrarily setting 1 mole for basis.
@@ -1668,8 +1669,8 @@
 	!write(61,*)'Packing fraction =',eta,' V(cc/mol) = ',vTotCc
 10	WRITE(6,*)'ENTER Pressure (MPa)   '
 	READ(5,*)pMPa
-	if(LOUD)write(* ,*)'  T(K),      rhog/cc,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT,    CvRes/R,     (dP/dRho)/RT'
-	write(61,*)'  T(K),     rhog/cc,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT,    CvRes/R,     (dP/dRho)/RT'
+	if(LOUDER)write(* ,*)'  T(K),      rhog/cc,     zFactor,   (A-Aig)/RT,  (U-Uig)/RTc,    eta' !   CvRes/R,     (dP/dRho)/RT'
+	write(61,'(a155)')'  T(K),     rhog/cc,     zFactor,   (A-Aig)/RT,  (U-Uig)/RTc,      eta'	     
 	iTemp=0
 	!do while(iErr.eq.0)
 	do iTemp=1,nList
@@ -1690,43 +1691,53 @@
 		endif
 		call FUGI(tKelvin,pMPa,gmol,NC,LIQ,FUGC,zFactor,ierFugi)
 		if( ierFugi(1) )exit
-		rhoNew = pMPa*rMwPlus(1)/(zFactor*rGas*tKelvin)
-		if(LOUD)write(* ,601)tKelvin,rhoNew,zFactor,uRes_RT*tKelvin/TC(1),aRes_RT
-		write(61,601)tKelvin,rhoNew,zFactor,uRes_RT*tKelvin/TC(1),aRes_RT
+		rhoNew = pMPa*rMw(1)/(zFactor*rGas*tKelvin)
+		if(LOUDER)write(* ,601)tKelvin,rhoNew,zFactor,aRes_RT,uRes_RT*tKelvin/TC(1),etaPass
+		write(61,601)tKelvin,rhoNew,zFactor,aRes_RT,etaPass,uRes_RT*tKelvin/TC(1),etaPass
 	enddo !new temperatures
-	if(LOUD)write(*,*)'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R' !   Sdep'    
-	write(61,'(a)')'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R    HRes/RT'    
-	print*,'Enter Tstart,Tstop,increment'
-	read*,tStart,tStop,tInc
-	tKelvin=tStart-tInc
-	do while(tKelvin <= tStop)
-		tKelvin=tKelvin+tInc
+	if(LOUDER)write(*,*)'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R' !   Sdep'    
+	write(61,'(a)')'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes/R    HRes/RT     eta'    
+	print*,'Enter Tlo,Thi,increment'
+	read*,Tlo,Thi,tInc
+	tKelvin=Thi+tInc
+	do while(tKelvin >= Tlo)
+		tKelvin=tKelvin-tInc
 		LIQ=0
 		if( tKelvin/ Tc(1) < 1)then
+			PsatQnd=Pc(1)*10**( 7*(1+acen(1))/3*(1-Tc(1)/tKelvin) )
 			call PsatEar(tKelvin,pSatMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCode)
+			if(ierCode .ne. 0)then
+				if(ierCode .ne. 7)print*,'Isobar: PsatErrCode=',ierCode	! 7 means you are below PsatMin for the EOS.
+				pSatMPa=PsatQnd
+			endif
 			if(pMPa > pSatMPa)LIQ=1
 		endif
 		call FUGI(tKelvin,pMPa,gmol,NC,LIQ,FUGC,zFactor,ierFugi)
-		if(ierFugi(1))exit
+		if(ierFugi(1))then
+			if(LOUDER)print*,'Isobar: T,ierFugi=',tKelvin,ierFugi
+			exit
+		endif
 		if( ABS(zFactor) > 1D-11) rhoMol_cc=pMPa/(zFactor*rGas*tKelvin)
-		if(isTPT)call NUMDERVS(NC,gMol,tKelvin,rhoMol_cc,zFactor,cmprsblty,iErrNum)	!
+		rhoG_cc = rhoMol_cc*rMw(1)
+		eta=etaPass
+		call NUMDERVS(NC,gMol,tKelvin,rhoMol_cc,zFactor,cmprsblty,iErrNum)	!It's just way easier and more reliable to get derivative properties numerically.
 		if(isTPT.and.initCall)print*,'Isotherm: CvRes_R,pas=',CvRes_R
-		rhoNew = pMPa*rMwPlus(1)/(zFactor*rGas*tKelvin)
-		if(LOUD)write(* ,602)tKelvin,rhoNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R
-		write(61,602)tKelvin,rhoNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,hRes_RT
+		if(LOUDER)write(* ,602)tKelvin,rhoNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,eta
+		write(61,602)tKelvin,rhoG_cc,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,hRes_RT,etaPass
 		initCall=0
 	!DoublePrecision uRes_RT, sRes_R, aRes_RT, hRes_RT, CpRes_R, cvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)
 	enddo
-601	format(f11.4,5(',',f11.4))
-602	FORMAT(2F9.3,1x,1(F7.4),8(F9.4,1X))      
+601	format(f11.4,6(',',f11.4))
+602	FORMAT(F9.3,f9.6,1x,1(F7.4),9(F9.4,1X))      
 86	continue
-	if(LOUD)pause 'Your results are stored in Isobar.txt'
 	close(61)
 	!close(666)
+	IF(LOUDER)PRINT*,'Output file:',TRIM(outFile)
+	if(LOUDER)pause 'Success! Check output.'
 	errMsgPas=errMsg(iErrCode)
 	if(iErrCode.ne.0)then
-		if(LOUD)write(*,*)errMsgPas
-		if(LOUD)pause
+		if(LOUDER)write(*,*)errMsgPas
+		if(LOUDER)pause
 	endif
 	return
 	end
@@ -1748,7 +1759,7 @@
 	CHARACTER*77 errMsg(0:11),errMsgPas
 	COMMON/eta/etaL,etaV,ZL,ZV
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
 	COMMON/ETA2/ETA
 	COMMON/A/a0Mix,a1Mix,a2Mix,aAtt,a_d,zRep
@@ -1775,9 +1786,6 @@
 	tr=tKelvin/TC(1)
 	!tKelvin=TC(1)*tr
 	write(61,*)'Temperature =',tKelvin,' Tc = ',TC(1)
-	etaMax=1
-	if(isESD)etaMax=0.52D0
-	if(isTPT)etaMax=0.85D0
 	etaList(1)=1D-11
 	dEta=etaMax/100
 	do I=2,nEta	!nEta is a parameter
@@ -1836,7 +1844,7 @@
 	DIMENSION fugc(NMX),etaList(nEta),B2grid(nT),B3grid(nT),deltaEta(nEta),gmol(NMX)!,ierFugi(20)	  
 	CHARACTER*150 ErrMsg(4)
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/VCoeff/B2,B3
 
 	ErrMsg(1)='VirialCoeff error - NC>1 , NC must be equal to 1'
@@ -1870,7 +1878,7 @@
 			if (iEosOpt.EQ.4) then
 				vTotCc=VX(1)/eta
 			elseif (iEosOpt.EQ.5.or.iEosOpt.eq.9) then
-				vTotCc=vMolecNm3(1)*avoNum/eta
+				vTotCc=bVolCC_mol(1)/eta
 			else
 				if(LOUD)write(*,*)ErrMsg(2)
 				return
@@ -4361,7 +4369,9 @@
 	!			   uRes_RT, sRes_R, aRes_RT, hRes_RT, CpRes_R, cvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)
 
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
+	LOGICAL LOUDER
 	!CHARACTER*1 ANSWER
+	CHARACTER*77 OutFile
 	DIMENSION fugcL(NMX) !fugcV(NMX),
 	DIMENSION X(NMX),Y(NMX),wFrac(NMX) ,gmol(NMX) ! !,VLK(NMX)
 	dimension ier(12)
@@ -4369,14 +4379,17 @@
 	common/eta2/eta
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	IF(NC > 1)THEN
-		if(LOUD)PAUSE 'SORRY, THIS ROUTINE IS ONLY FOR PURE FLUIDS AT THIS TIME.'
+		if(LOUDER)PAUSE 'SORRY, THIS ROUTINE IS ONLY FOR PURE FLUIDS AT THIS TIME.'
 		RETURN
 	ENDIF
+	LOUDER=LOUD
+	LOUDER=.TRUE.
 	X(1) = 1
 	Y(1) = 1
-	rMwAvg=rMwPlus(1)
+	rMwAvg=rMw(1)
 	wFrac(1) = 1
-	open(601,file='PropTable.txt')
+	OutFile=TRIM(MasterDir)//'\output\PropTable.txt'
+	open(601,file=OutFile)
 	WRITE(6,*)'ENTER PRESSURE(MPa)  '
 	READ(5,*)P !,T
 	WRITE(601,*)'PRESSURE(MPa)   '
@@ -4413,8 +4426,8 @@
 		!C        7 - eta > 0.53
 		!C		11 - goldenZ instead of real Z.
 
-		!if(LOUD)write(*,*)'DEPARTURE FUNCTIONS: (HLo-Hig)/NkT (SLo-Sig)/Nk (HUp-Hig)/NkT (SUp-Sig)/Nk'
-		if(LOUD)write(* ,610)tKelvin,rhoG_cc,zFactor,aRes_RT,uRes_RT,cmprsblty,CvRes_R,CpRes_R !,DSONK
+		!if(LOUDER)write(*,*)'DEPARTURE FUNCTIONS: (HLo-Hig)/NkT (SLo-Sig)/Nk (HUp-Hig)/NkT (SUp-Sig)/Nk'
+		if(LOUDER)write(* ,610)tKelvin,rhoG_cc,zFactor,aRes_RT,uRes_RT,cmprsblty,CvRes_R,CpRes_R !,DSONK
 		WRITE(601,610)tKelvin,rhoG_cc,zFactor,aRes_RT,uRes_RT,cmprsblty,CvRes_R,CpRes_R, sRes_R
 		!Check derivatives using FuVtot
 		vTotCc=rMwAvg/rhoG_cc
@@ -4422,7 +4435,7 @@
 		isZiter=0 !=>compute derivative props
 		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGCL,zFactor,iErr)
 		pNew = zFactor*rGas*tKelvin/vTotCc
-		if(LOUD)write(* ,612)tKelvin,pNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R
+		if(LOUDER)write(* ,612)tKelvin,pNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R
 		!write(61,612)tKelvin,pNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,hRes_RT
 612	FORMAT(2F9.3,1x,1(F7.4),8(F9.4,1X))      
 	if(tKelvin < tMax)GOTO 1000
@@ -4432,7 +4445,8 @@
 605 FORMAT(3X,'K-RATIO',7X,'T(K)',3X,'P(MPa)',2X,'etaLo',4X,'etaUp',6X,'ZLo  ',6X,'ZUp')
 604	FORMAT(2(3x,F7.4),2(3x,e11.4),2(3x,f12.7))
 606	FORMAT(e12.5,3X,F7.2,1X,F7.4,1X,2(F6.4,3X),2(F9.4,1X))
-	if(LOUD)pause 'Success! cf. PropTable.txt'
+	if(LOUDER)WRITE(*,*)'Output is in:',TRIM(OutFile)
+	if(LOUDER)pause 'Success! cf. PropTable.txt'
 	close(601)
 	RETURN		
 	END
@@ -4509,17 +4523,31 @@
 	if(pMin < 0)then ! if rhoLiq exists at p~0, then Razavi works.
 		if(pOld < 0)pOld=1D-5 !If p < 0, then the vapor density goes negative and log(rhoLiq/rhoVap) is indeterminate.
 		!NOTE: Don't use pOld=0 when pOld > 0. You might get Golden Error because vdw loop doesn't cross zero!
-		!print*,'calling fugi for liquid to construct Razavi initial guess.'
+		print*,'calling fugi for liquid to construct Razavi initial guess.'
 		call FUGI(tK,pOld,xFrac,NC,1,FUGC,zLiq,ier) !LIQ=3=>liquid root with no fugc calculation
 		if(ier(1)==0)then
-			rhoLiq=pOld/(zLiq*rGas*tK)
-			!rhoLiq=etaL/bVolCC_mol(1)
-			rhoVap=rhoLiq*EXP(Ares_RT-1) !Razavi, FPE, 501:112236(19), Eq 19. Ares_RT from GlobConst
-			pTest=rhoVap*rGas*tK
+			AresLiq=Ares_RT
+			rhoLiq=pOld/(zLiq*rGas*tK)			 !AresVap  +  Zvap-1 -ln(Zvap) =AresLiq+ZLiq-1-ln(ZLiq) 
+			!rhoLiq=etaL/bVolCC_mol(1)		 =>  !B2*rhoVap+B2*rhoVap+ln(rhoVap/rhoLiq) =AresLiq+0-1
+			rhoVap=rhoLiq*EXP(AresLiq-1) !Razavi, FPE, 501:112236(19), Eq 19. Ares_RT from GlobConst
+			pSatRazavi=rhoVap*rGas*tK
 			!zLiq=pTest/(rhoLiq*rGas*tK) !this takes some of the imprecision off zLiq
 			!pEuba2=rGas*tK/(1/rhoVap-1/rhoLiq)*( Ares_RT- 0 +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
 			!NOTE: When 1/rhoVap >> 1/rhoLiq, pEuba2=rGas*tK*rhoVap*( Ares_RT-ln(rhoVap/rhoLiq) )=pTest*( Ares_RT - (Ares_RT-1) )
-			if(pTest < pMax)pOld=pTest
+			call FUGI(tK,pSatRazavi,xFrac,NC,0,FUGC,zVap,ier)
+			B2cc_mol=(zVap-1)*(zVap*rGas*tK)/pSatRazavi
+			rhoVap=rhoVap*exp(-2*B2cc_mol*rhoVap)! => rhoVap=rhoLiq*EXP(Ares_RT-1-2*B2*rhoVap), but Ares-RT changes with FUGI call, so reuse like this.
+			pSatRazavi=rhoVap*rGas*tK*(1+B2cc_mol*rhoVap)
+			zLiq=pSatRazavi/(rhoLiq*rGas*tK)
+			FugcLiq=AresLiq+zLiq-1-LOG(zLiq)
+			if(LOUD)print*,'PsatEar: FugcVap,FugcLiq=',Fugc(1),FugcLiq
+			if(pSatRazavi < pMax)then
+				pOld=pSatRazavi
+			else
+				if(LOUD)print*,'PsatChemPo: pSatRazavi > pMax?'
+			endif
+		else
+			print*,'PsatChemPo: Error from call to fugi for Razavi. ier=',ier 
 		endif ! ier(1)==0
 	endif  ! pMax < 0
 
@@ -4593,17 +4621,21 @@
 		if(LOUD)print*,'Psat: iterations exceeded. P,fErr=',pMPa,fBest
 		ierCode=9
 	endif
+	if(ierCode.ne.0 .and. pSatRazavi < 0.01)then
+		pMPa=pSatRazavi
+		ierCode=0 ! At P < 0.01 MPa, pSatRazavi must be pretty good. 
+	endif
 	!check that FugiTpt did not give warning on last calls
 	!pMPa=rGas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
 	!pMPa=pOld*( (aDepVap-aDepLiq)/(zVap-zLiq) +DLOG(zVap/zLiq)/(zVap-zLiq) )
 	uSatV=DUONKT  ! Last call to FUGI was for vapor.
-	if(zVap > 0)rhoVap=pMPa*rMwPlus(1)/(zVap*rGas*tK)
+	if(zVap > 0)rhoVap=pMPa*rMw(1)/(zVap*rGas*tK)
 86	continue
 	!print*, 'Psat=',pMPa,' Calling Fugi for fugc.'
 	if(ierCode==0)call Fugi(tK,pMPa,xFrac,NC,1,FUGC,zLiq,ier) !one last call to fugi for chemPo and debugging.
 	if(ier(1)==0)chemPot=FUGC(1) !since chemPotL=chemPotV at pSat       
 	uSatL=DUONKT
-	if(zLiq > 0)rhoLiq=pMPa*rMwPlus(1)/(zLiq*rGas*tK)
+	if(zLiq > 0)rhoLiq=pMPa*rMw(1)/(zLiq*rGas*tK)
     if(LOUD)write(*,'(f10.2,3f14.10,i2)')tK,pMPa,rhoVap,rhoLiq,ierCode
 	if(LOUD)pause 'check Psat'
 	RETURN
@@ -4651,7 +4683,7 @@
 		read(*,*)rhoLiq
 		if(rhoLiq.lt.0)goto 20
 		vTotCc=1
-		gmol(1)=rhoLiq/rMwPlus(1)
+		gmol(1)=rhoLiq/rMw(1)
 10		continue !correct unit for rho is g/cc
 		!eta=rhoLiq/rMw*bVolEff(0)
 		!zRef=(  1+eta*( zRefCoeff(1)+eta*(zRefCoeff(2)+eta*zRefCoeff(3)) )  )/(1-eta)**3
@@ -4673,13 +4705,13 @@
 		tSatK=1000/tInvSat
 		write(*,'(a,f8.1,a)')'Interpolated value of tSatK=',tSatK,'Enter your best guess of tSatK.'
 		read(*,*)tSatK
-		rhoVap=pMPa*rMwPlus(1)/(rGas*tSatK) !assume pMPa guess is accurate and ig law
+		rhoVap=pMPa*rMw(1)/(rGas*tSatK) !assume pMPa guess is accurate and ig law
 		!zVap=ZCalcTpt(rhoVap,tK,aDepVap,uDepVap,ierZ)
-		gmol(1)=rhoVap/rMwPlus(1)
+		gmol(1)=rhoVap/rMw(1)
 		call FuVtot(isZiter,tK,vTotCc,gmol,NC,FUGC,zVap,iErr)
 		!aDepVap+zVap-1-ln(zVap) = aDepLiq+zliq-1-ln(zLiq)
 		!zLiq = exp(aDepLiq-1-aDepVap)
-		pGuess=zLiq*rGas*tK*rhoLiq/rMwPlus(1)
+		pGuess=zLiq*rGas*tK*rhoLiq/rMw(1)
 		write(*,*)'rho,tSatK,pSatMPa'
 		write(*,*)rhoLiq,tSatK,pGuess
 		write(*,*)'Enter another liquid density (g/cc, <0 to stop)'
@@ -4767,11 +4799,11 @@
 	!pMPa=rGas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
 	!pMPa=pOld*( (aDepVap-aDepLiq)/(zVap-zLiq) +DLOG(zVap/zLiq)/(zVap-zLiq) )
 	uSatV=DUONKT
-	rhoV=pMPa*rMwPlus(1)/(zV*rGas*tK)
+	rhoV=pMPa*rMw(1)/(zV*rGas*tK)
 	chemPot=chemPotV !since chemPotL=chemPotV at pSat       
 	call Fugi(tK,pMPa,xFrac,NC,1,FUGC,zL,ier)
 	uSatL=DUONKT
-	rhoL=pMPa*rMwPlus(1)/(zL*rGas*tK)
+	rhoL=pMPa*rMw(1)/(zL*rGas*tK)
 	!print*, 'tK,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode'
 	!print*, tK,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode
 86	continue
@@ -4855,9 +4887,9 @@
 	denomSolv=0
 	do j=1,NC
 		if(j.lt.iPolyComp)then
-			denomSolv=denomSolv+y(j)/rMwPlus(j)
+			denomSolv=denomSolv+y(j)/rMw(j)
 		else
-			denomPoly=denomPoly+z(j)/rMwPlus(j)
+			denomPoly=denomPoly+z(j)/rMw(j)
 		endif
 	enddo
       IF(INIT.EQ.0)THEN
@@ -4868,16 +4900,16 @@
 	sumy=0
 	avgMwVap=0
 	do j=1,nSolvComps
-		yMol(j)=y(j)/rMwPlus(j)/denomSolv
+		yMol(j)=y(j)/rMw(j)/denomSolv
 		sumy=sumy+yMol(j)
-		avgMwVap=avgMwVap+yMol(j)*rMwPlus(j)
+		avgMwVap=avgMwVap+yMol(j)*rMw(j)
 	enddo
 	sumz=0
 	avgMwPoly=0
 	do j=iPolyComp,nc
-		z(j)=z(j)/rMwPlus(j)/denomPoly
+		z(j)=z(j)/rMw(j)/denomPoly
 		sumz=sumz+z(j)
-		avgMwPoly=avgMwPoly+z(j)*rMwPlus(j)
+		avgMwPoly=avgMwPoly+z(j)*rMw(j)
 	enddo
 	if(ABS(sumy-1).gt.1e-8)then
 		if(LOUD)pause 'psiter: sumy .ne. 1'
@@ -5777,8 +5809,8 @@
 		write(*,*)'ENTER Temperature (K). (-ve to stop) '
 		READ(*,*) tKelvin
 	enddo
-	rhoc=Pc(1)*rMwPlus(1)/( Zc(1)*8.31434*Tc(1) )
-	etac=rhoc/rMwPlus(1)*bVolCc_Mol(1)
+	rhoc=Pc(1)*rMw(1)/( Zc(1)*8.31434*Tc(1) )
+	etac=rhoc/rMw(1)*bVolCc_Mol(1)
 	write(* ,'(F8.2,1x,5F9.6)')tc(1),pc(1),rhoc,rhoc,Zc(1),etac
 	write(61,'(F8.2,1x,5F9.6)')tc(1),pc(1),rhoc,rhoc,Zc(1),etac
 	close(61) 
@@ -5795,12 +5827,12 @@
 	dimension wFrac(nComps),xMol(nComps)
 	denom=0
 	do i=1,nComps
-		denom=denom+wFrac(i)/rMwPlus(i)
+		denom=denom+wFrac(i)/rMw(i)
 	enddo
 	avgMw=0
 	do i=1,nComps
-		xMol(i)=wFrac(i)/rMwPlus(i)/denom
-		avgMw=avgMw+xMol(i)*rMwPlus(i)
+		xMol(i)=wFrac(i)/rMw(i)/denom
+		avgMw=avgMw+xMol(i)*rMw(i)
 	enddo
 	return
 	end

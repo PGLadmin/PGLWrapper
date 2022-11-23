@@ -9,6 +9,7 @@
 !C																														   C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	USE GlobConst
+	USE SpeadParms
 	IMPLICIT DOUBLEPRECISION(A-H,K,L,O-Z)
     PARAMETER(nV=6)
 	DIMENSION gmol(NMX),xFrac(NMX),FUGC(NMX),Rec_Jac(NMX,NMX)
@@ -18,7 +19,7 @@
 	common/iterC/iter
 	COMMON/ETA2/ETA
 	COMMON/NC_num_rec/NC_tqli
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
 
 	ErrMsg(1)='CP_Mixture Error - The determinant of the Jacobian matrix is equal to 0!'
@@ -233,7 +234,7 @@
 	!COMMON/ETA2/ETA
 	COMMON/BIPs_SPEAD/aBipAD,aBipDA
 	COMMON/BIPs/KIJ,KTIJ,HIJ,HTIJ,xsTau,xsTauT,xsAlpha	 !warning: dim of aBip should be maxTypes, not nmx.
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/Derv1/DFUG_DN_NUM(NMX,NMX),dP_dV,d2P_dV2,d3P_dV3,iFlagAssoc
 	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
 	!COMMON/Assoc/eHbKcal_mol(nmx,maxTypes),eDonorKcal_mol(nmx,maxTypes),eAcceptorKcal_mol(nmx,maxTypes),bondVolNm3T(nmx,maxTypes),nDegree(nmx,maxTypes),nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes),idType(nmx,maxTypes),localType(maxTypesGlobal),idLocalType(maxTypes),nTypes(NMX),nTypesTot
@@ -455,20 +456,21 @@
 !C																							 C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	SUBROUTINE eigen(isZiter,tKelvin,vTotCc,gmol,xFrac,NC,eigenVec,LambdaMin,iErrCode)
+	USE SpeadParms
 	IMPLICIT DOUBLEPRECISION(A-H,K,L,O-Z)
-	PARAMETER(NMX=55)
+	!PARAMETER(NMX=55)
 	CHARACTER*77 errMsg(2)
 	DIMENSION gmol(NMX),xFrac(NMX),FUGC(NMX),Bij(NMX,NMX)
 	DIMENSION Lambda(NMX),eigen_vec_mat(NMX),eigenVal(NMX),eigenVec(NMX)
 	DIMENSION a_tred2(NC,NC)
 	common/iterC/iter
 	COMMON/NC_num_rec/NC_tqli
-	COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
 
 	ErrMsg(1)='error eigen - v_norm is equal to zero. Check the eigen vectors...'
 	iErrCode=0
-	half=1.d0/2.d0
+	!half=1.d0/2.d0
 	call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErrVtot)
 	DO I=1,NC
 		DO J=1,NC
