@@ -850,6 +850,7 @@
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	DIMENSION X(nmx),Y(nmx),IER(12)
 	DIMENSION FUGCL(nmx),FUGCV(nmx),ierf(12),VP(nmx)
+	COMMON/ETA/ETAL,ETAV,ZL,ZV
 	
 	! CHECK INPUTS FOR ERRORS.
 	DO I=1,12
@@ -890,7 +891,8 @@
 		IF(KLIQ.NE.0)THEN
 			!C  CALCULATE LIQUID FUGACITIES.  CHECK FOR ERRORS.
 			LIQ=1
-			CALl Fugi(T,P,X,NC,LIQ,FUGCL,ZL,ierf)
+			CALL Fugi(T,P,X,NC,LIQ,FUGCL,ZL,ierf)
+			etaL=etaPass
 			IF(ierf(1).NE.0.AND.ITER.GT.1)THEN
 				DO IE=4,11
 					IF(ierf(IE).EQ.1)IER(4)=IE
@@ -951,6 +953,7 @@
 		T=1/TI
 		LIQ=0
 		if(iter.gt.1)CALl Fugi(T,P,Y,NC,LIQ,FUGCV,ZV,ierf)
+		etaV=etaPass
 		IF(DABS((ZV-ZL)/ZV).LT.1.D-4) IER(5)=1
 		IF(ierf(1).NE.0)THEN
 		DO IE=4,11

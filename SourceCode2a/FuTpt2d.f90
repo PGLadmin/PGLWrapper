@@ -72,7 +72,7 @@ END MODULE SpeadParms
 	!LOUDER=.TRUE. !COMMENT OUT FOR RELEASE
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isESD or isPcSaft.
 	isTPT=.TRUE. ! in GlobConst simplifies calls in FUGI and FuVtot
-    etaMax = 1-zeroTol ! if eta > etaMax, errors will be declared
+    etaMax = 0.99D0 ! if eta > etaMax, errors will be declared
 	iErrCode=0
 	ErrMsg(0)='GetTpt: Success!'
 	ErrMsg(1)='GetTpt: error reading ParmsTpt.txt. Path? Debug?'
@@ -561,6 +561,7 @@ end	!Subroutine QueryParPureSpead
 	COMMON/HbParms/dHkcalMol(NMX),bondVolNm3Esd(NMX)
 	COMMON/HbParms2/ND(NMX),NDS(NMX),NAS(NMX)
 	COMMON/DEPFUN/dU_RT,dA_RT,DSONK,dH_RT
+	COMMON/ETA/ETAL,ETAV,ZL,ZV
 	data initCall/1/
 	!COMMON/eta/etaL,etaV,zL,zV
 	!COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
@@ -689,7 +690,7 @@ end	!Subroutine QueryParPureSpead
 	endif
 	etaOld=eta
 	errOld=pb_rt-eta*zFactor
-	eta=etaOld*1.001D0 !set this "new" value to ideal gas value so if change < 1E-9 on first iteration, we get exactly the ideal gas result.
+	eta=etaOld/1.001D0 !set this "new" value to ideal gas value so if change < 1E-9 on first iteration, we get exactly the ideal gas result.
     !if(LIQ==1.or.LIQ==3)eta=0.8 !Take a big step for liquids to bracket answer sooner. Saves about 4/13 iterations
 	!ETA=rhoMol_Cc*bVolMix	!calculate here before entering loop, then at the end with each new rhoMol_Cc
 	change=1234

@@ -171,6 +171,7 @@
 				enddo
 			enddo
 			ERR=fAssoc-SUM
+			if( ABS((ERR-errOld)/errOld) < zeroTol .and. LouderWert)print*,'Wertheim: err~errOld=',err,errOld
 			CHANGE=ERR/(ERR-errOld)*(fAssoc-fOld)
 			fOld=fAssoc
 			errOld=ERR
@@ -188,13 +189,18 @@
 
 	!Elliott'96 Eq.35 (mod for CS or ESD rdf)
 	ZASSOC=-fAssoc*fAssoc*dAlpha
-	if(LOUD.and.initCall)print*,'Wertheim: fAssoc,zAssoc=',fAssoc,zAssoc
+	if(LOUDerWert.and.initCall)print*,'Wertheim: fAssoc,zAssoc=',fAssoc,zAssoc
+	XA=1 !set to unity means no association	          
+	XD=1 !set to unity means no association	          
+	XC=1 !set to unity means no association	          
 	DO iComp=1,nComps
 		do iType=1,nTypes(iComp)
 			XA(iComp,iType)=1/(fAssoc*ralph(iComp,iType)+1)
 			XD(iComp,iType)=XA(iComp,iType)
 		enddo
 	ENDDO
+	if(LouderWert.and.initCall) write(*,'(a,5F10.6,3F10.1)')' XA(1,2),XA(2,2),XD(2,3):',XA(1,2),XA(2,2),XD(2,3) ,deltaAlphaA(1,2),deltaAlphaD(2,2),deltaAlphaD(2,3) 
+	if(LouderWert.and.initCall)pause 'Wertheim: 96 solution'
 	aAssoc=0
 	do iComp=1,nComps
 		!aAssoc=aAssoc+xFrac(iComp)*nD(iComp)*( 2*LOG(XA(iComp))+(1-XA(iComp)) )
@@ -292,26 +298,32 @@
 			DO jComp=1,nComps
 				do jType=1,nTypes(jComp)
 					call AlphaSp(iComp,iType,jComp,jType,tKelvin,rho,rdfContact,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
-					deltaAlphaA(iComp,iType)=deltaAlphaA(iComp,iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*( alphADij-ralph(iComp,iType)*ralph(jComp,jType) )
-					deltaAlphaD(iComp,iType)=deltaAlphaD(iComp,iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*( alphDAij-ralph(iComp,iType)*ralph(jComp,jType) )
+					deltAD=0
+					if(alphADij > 0)deltAD=( alphADij-ralph(iComp,iType)*ralph(jComp,jType) )/alphADij
+					if(ABS(deltAD) < zeroTol)deltAD=0 ! if alphADij ~1E7 then roundoff is 1E-8.
+					deltDA=0
+					if(alphDAij > 0)deltDA=( alphDAij-ralph(iComp,iType)*ralph(jComp,jType) )/alphDAij
+					if(ABS(deltDA) < zeroTol)deltDA=0
+					deltaAlphaA(iComp,iType)=deltaAlphaA(iComp,iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*alphADij*deltAD
+					deltaAlphaD(iComp,iType)=deltaAlphaD(iComp,iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*alphDAij*deltDA
 					FAsolv(iComp,iType)=FAsolv(iComp,iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*XD( jComp,jType)*alphADij
 					FDsolv(iComp,iType)=FDsolv(iComp,iType)+xFrac(jComp)*nDegree(jComp,jType)*nAcceptors(jComp,jType)*XA(jComp,jType)*alphDAij
 				enddo
             enddo
             if(deltaAlphaA(iComp,iType) < 0)then
-                if(  ABS( deltaAlphaA(iComp,iType) ) < zeroTol  )deltaAlphaA(iComp,iType)=ABS(deltaAlphaA(iComp,iType))  !roundoff?
+                if(  ABS( deltaAlphaA(iComp,iType) ) < 1D-9  )deltaAlphaA(iComp,iType)=ABS(deltaAlphaA(iComp,iType))  !roundoff?
 				if(LouderWert)write(*,'(a,i3,11f8.3)')'iComp,(ralph(iComp,iType...)',iComp,(ralph(iComp,kType),kType=1,nTypes(iComp))
 				if(LouderWert)print*,'iComp,iType,deltaAlphaA()=',iComp,iType,deltaAlphaA(iComp,iType)
                 if(  LouderWert  )pause 'Wertheim: GuessCheck deltaAlphaA < 0???'  !roundoff?
             endif
             if(deltaAlphaD(iComp,iType) < 0)then
-                if(ABS( deltaAlphaD(iComp,iType) ) < zeroTol)deltaAlphaD(iComp,iType)=ABS(deltaAlphaD(iComp,iType))  !roundoff?
+                if(ABS( deltaAlphaD(iComp,iType) ) < 1D-9)deltaAlphaD(iComp,iType)=ABS(deltaAlphaD(iComp,iType))  !roundoff?
 				if(LouderWert)print*,'iComp,iType,deltaAlphaD()=',iComp,iType,deltaAlphaD(iComp,iType)
                 if(   ( deltaAlphaD(iComp,iType) ) < 0 .and. LouderWert  )pause 'Wertheim: GuessCheck deltaAlphaD < 0???'  !roundoff?
             endif
                 
 			!ssqErr=ssqErr+( FAsolv(iComp,iType)-ralph(iComp,iType)*Fassoc )**2+( FDsolv(iComp,iType)-ralph(iComp,iType)*Fassoc )**2		 ! e.g. 1/XAi = 1+sum( xj*Ndj*XDj*alphADij ) => (1/XAi-1)/sqrt(alpha) = 1+sum(xj*Ndj*XDj*sqrtAlpha  => OK ESD96
-			ssqErr=ssqErr+(( FAsolv(iComp,iType)-ralph(iComp,iType)*Fassoc )/(FAsolv(iComp,iType)+0.1))**2+(( FDsolv(iComp,iType)-ralph(iComp,iType)*Fassoc )/(FDsolv(iComp,iType)+0.1))**2		 ! e.g. 1/XAi = 1+sum( xj*Ndj*XDj*alphADij ) => (1/XAi-1)/sqrt(alpha) = 1+sum(xj*Ndj*XDj*sqrtAlpha  => OK ESD96
+			ssqErr=ssqErr+(( FAsolv(iComp,iType)-ralph(iComp,iType)*Fassoc )/(FAsolv(iComp,iType)+1D-5))**2+(( FDsolv(iComp,iType)-ralph(iComp,iType)*Fassoc )/(FDsolv(iComp,iType)+1D-5))**2		 ! e.g. 1/XAi = 1+sum( xj*Ndj*XDj*alphADij ) => (1/XAi-1)/sqrt(alpha) = 1+sum(xj*Ndj*XDj*sqrtAlpha  => OK ESD96
 		enddo
 	enddo
 	rmsErr=SQRT( ssqErr/(2*nComps) )
@@ -327,8 +339,6 @@
   	!return !Sorry. Below disagrees slightly with above for nComps=1. Needs work. JRE 20191008.
 	if(iDoSolvation==1)then  !checkup: 1E-111  ! Refine from ESD96 if necessary.
 		if(LouderWert.and.initCall) write(*,'(a,5F10.6,3F10.1)')' X(1),X(2):',xFrac(1),xFrac(2)
-		if(LouderWert.and.initCall) write(*,'(a,5F10.6,3F10.1)')' XA(1,2),XA(2,2),XD(2,3):',XA(1,2),XA(2,2),XD(2,3) ,deltaAlphaA(1,2),deltaAlphaD(2,2),deltaAlphaD(2,3) 
-		if(LouderWert.and.initCall)pause 'Wertheim: 96 solution'
 		do iComp=1,nComps
 			do iType=1,nTypes(iComp)
 				iPause=0

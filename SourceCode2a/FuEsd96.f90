@@ -404,6 +404,7 @@ end	! SetParPureEsd
 	!        7 - eta > 0.53
 	!		11 - goldenZ instead of real Z.
 	!
+	!COMMON/ETA/ETAL,ETAV,ZL,ZV
 	DATA INITIAL/1/  !Zm=9.5 since 1996, at least.  It is 9.5 in the CHEMCAD documentation, the EL text, and 2002.  It is not mentioned in ref[2,3,4,5,6]
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
@@ -498,6 +499,7 @@ end	! SetParPureEsd
 	endif
 	!One last call to get FUGC.
 	if(initial.and.LOUD)write(*,'(a,f8.5,e11.4,i3,9f8.3)')' FuEsd96 cnvrgd: eta,CHNG,niter',eta,CHNG,niter
+	etaPass=eta
 	rho=eta/bMix 
 	IF (rho < 0)THEN
 		ier(5)=1
