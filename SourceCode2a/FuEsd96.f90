@@ -569,16 +569,22 @@ end	! SetParPureEsd
 
 	!BEGIN SECANT ITERATION TO DETERMINE fAssoc
 	fAssoc=0            
-	SUM=0                        
+	FA0=0    ! cf. Elliott IECR 61:15724 Eq.18
+	!FA1=0
+	ralphMean=0                    
 	DO I=1,nC
 		iComplex=nAs(I)*nDs(I)	    !Esd96 means that all must bond or none
 		if(iComplex.ne.0)iComplex=1 ! and ralph takes care of solvation
-		SUM=SUM+X(I)*ND(I)*RALPH(I)*iComplex
+		FA0=FA0+X(I)*ND(I)*RALPH(I)*iComplex
+		!FA1=FA1+X(I)*ND(I)*RALPH(I)*iComplex/(1+ralph(i)) ! RHS of Eq.18 with FD=1
+		if(ralph(i) > ralphMean)ralphMean=ralph(i) ! Use infinity norm to estimate ralphMean initially.
 	enddo
-	ERROLD=fAssoc-SUM
+	ERROLD=fAssoc-FA0
 	IF(ABS(ERROLD).LE.1.D-8)GOTO 65 !no need to iterate if sum=0 (no hbonding)
 	fOld=fAssoc
-	fAssoc=1 
+	! FA0/(1+ralphMean*1) ~ FA1 => ralphMean ~ FA0/FA1-1, rearranged form of Eq.18
+	!if(FA1 > 0)ralphMean=FA0/FA1-1
+	fAssoc=2*FA0/( 1+DSQRT(1+4*ralphMean*FA0) )  ! Eq.23 where FD0=FA0.	This is exact for binary like benzene+methanol.
 	NITER=0
 55	NITER=NITER+1                  
 		IF(NITER.GT.111)THEN
@@ -1976,8 +1982,8 @@ end	! SetParPureEsd
 	character outFile*251
 	parameter (nEta=5)
 	common/SimData/ xFracc(23),vEffNm3(23),a0xss(20,20),A0Mix(20,20),A1Mix(20,20),A2Mix(20,20),Nps
-	dimension ks0ij(NMX,NMX),ks1ij(NMX,NMX)
-	common/ksvall/ks0ij,ks1ij
+	!dimension ks0ij(NMX,NMX),ks1ij(NMX,NMX)
+	!common/ksvall/ks0ij,ks1ij
 	!character junk*5
 	!store current values of nc,id.
 
@@ -2098,8 +2104,8 @@ end	! SetParPureEsd
 	parameter (nEta=5)
 	common/SimData/ xFracc(23),vEffNm3(23),a0xss(20,20),A0Mix(20,20),A1Mix(20,20),A2Mix(20,20),Nps
 	!common/XsProps/a0XsSs
-	dimension ks0ij(NMX,NMX),ks1ij(NMX,NMX)
-	common/ksvall/ks0ij,ks1ij
+	!dimension ks0ij(NMX,NMX),ks1ij(NMX,NMX)
+	!common/ksvall/ks0ij,ks1ij
 	DIMENSION XXFRAC(NMX)
             
 	607	FORMAT(1X,F8.4,1X,F10.4,1X,F10.8,1X,F10.8,1X,F10.4,1X,i5)      

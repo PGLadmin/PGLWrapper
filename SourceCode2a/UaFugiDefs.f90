@@ -95,17 +95,17 @@
 	if(iEosOpt==4)then ! iEosOpt==4 calls Wertheim so ... it's complicated.
 		call FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
 	elseif(iEosOpt==18)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
-		call FuEsd2Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
+		call FuEsd2Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
 	elseif(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
 		call FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
 	elseif(isTPT)then
-		call FuTptVtot(isZiter,Z,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
+		call FuTptVtot(isZiter,Z,aDep,uDep,FUGC,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
 	elseif(iEosOpt==1)then
 	    !SUBROUTINE FuPrVtot(tAbs,rhoMol_Cc,xFrac,NC,LIQ,FUGC,zFactor,aDep,uDep,IER)
-		call FuPrVtot(isZiter,tKelvin,1/vTotCc,gmol,NC,LIQ,FUGC,Z,aDep,uDep,IER)
+		call FuPrVtot(isZiter,tKelvin,1/vTotCc,gmol,NC,LIQ,FUGC,Z,Ares,Ures,IER)
 	elseif(iEosOpt==11)then
 	    !SUBROUTINE FuPrVtot(tAbs,rhoMol_Cc,xFrac,NC,LIQ,FUGC,zFactor,aDep,uDep,IER)
-		call FuPrTcVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aDep,uDep,iErr)
+		call FuPrTcVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
 	elseif(isPcSaft)then
 		!subroutine FugiPcSaftVtot(nComps,tKelvin,vTotCc,gmol,pMPa,zFactor,chemPoRes,iErr)
 		call FugiPcSaftVtot(NC,tKelvin,vTotCc,gmol,P,Z,FUGC,iErr)
@@ -113,7 +113,7 @@
 	elseif(iEosOpt==17)then
 		icon=2 ! returns fugc and T,V derivatives. See GetPrLorraine for more options. 
         call FuPrLorraine_TV(icon,iErrPRL,tKelvin,vTotCc,gmol,P,Z, &
-     &                 FUGC,ft,fv,fx,uRes_RT,aRes_RT,CvRes_R,CpRes_R,dpdRho_RT)
+     &                 FUGC,ft,fv,fx,Ures,Ares,CvRes_R,CpRes_R,dpdRho_RT)
 		if(iErrPRL.ne.0)ier(1)=1
 	else
 		if(LOUD)print*,'FuVtot: undefined iEosOpt=',iEosOpt

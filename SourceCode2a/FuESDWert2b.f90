@@ -192,7 +192,7 @@
 	DIMENSION dFUGREP_dN(NMX,NMX),dFUGATT_dN(NMX,NMX),dFUGC1_dN(NMX,NMX),dFUGC2_dN(NMX,NMX),dFUG_dN(NMX,NMX)
 	DIMENSION dh_dN(NMX),dFUGASSOC_dT(NMX),dFUGASSOC_dN(NMX,NMX),FUGREP(NMX),FUGATT(NMX)
 	DIMENSION dh_dN_num(NMX),dFUGASSOC_dN_num(NMX,NMX),fugassocLoop(NMX),gmol_old(NMX)
-	DIMENSION vMolecNm3(NMX) !for Wertheim
+	!DIMENSION vMolecNm3(NMX) !for Wertheim
 	
 	COMMON/ETA/ETAL,ETAV,ZL,ZV
 	COMMON/ETA2/ETA
@@ -252,7 +252,7 @@
 		KCSTARp(I)=KCSTAR(I)
 		VM=VM+xFrac(I)*VX(I)
 		K1YVM=K1YVM+xFrac(I)*K1(I)*Y(I,I)*VX(I) !1991 form, overwritten if applying 1990 form
-		vMolecNm3(i)=VX(I)/avoNum
+		!vMolecNm3(i)=VX(I)/avoNum
 		bondVolNm3Esd(I)=KCSTAR(I) !*vMolecNm3(I)
 		eHbKcal_mol(I,iType)=dHkcalMol(I)
 		bondVolNm3(I,iType)=bondVolNm3Esd(I)
@@ -261,7 +261,7 @@
 	!endif	!this was not working when computing vp
 	if(LOUD.and.k1yvm < zero)print*,'FuEsdVtot: 0~k1yvm=',k1yvm 
 	eta=rho*vm
-	call WERTHEIM(vMolecNm3,eta,tKelvin,xFrac,NC,zAssoc,aAssoc,uAssoc,iErrCode)
+	call WERTHEIM(isZiter,eta,tKelvin,xFrac,NC,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
 
 	IF(iErrCode.ne.0)GOTO 86
 	voidFrac=1-1.9D0*ETA
@@ -332,7 +332,7 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !Added by AFG 2010
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	!JRE: compute these derivatives for thermal props, regardless if isZiter. The are returned as part of GlobalConst
+	!JRE: compute these derivatives for thermal props, regardless of isZiter. They are returned as part of GlobalConst
 	! Mixing Rule derivatives
 	DO I=1,NC 
 		dCVM_dN(I)=0.d0
@@ -428,8 +428,8 @@
 			cpRes_R = cvRes_R-1+TdP_dT**2/cmprsblty 
         end if
 	endif
-	if (isZiter.eq.0) then
-		call WertheimFugc(xFrac,vMolecNm3,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
+	if (isZiter==0) then
+		call WertheimFugc(xFrac,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
         if(LOUD)then
 		    if(Z.le.0)pause 'FuEsdVtot: Z.le.0 for fugc calculation.'
         end if
@@ -459,8 +459,8 @@
 			enddo
 			rho=totMoles/vTotCc
 			eta=rho*vm
-			call WERTHEIM(vMolecNm3,eta,tKelvin,xFrac,NC,zAssoc,aAssoc,uAssoc,iErrCode)
-			call WertheimFugc(xFrac,vMolecNm3,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
+			call WERTHEIM(isZiter,eta,tKelvin,xFrac,NC,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
+			call WertheimFugc(xFrac,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
 			DO J=1,NC
 				fugassocLoop(J)=FUGASSOC(J)
 			ENDDO
@@ -477,8 +477,8 @@
 			enddo
 			rho=totMoles/vTotCc
 			eta=rho*vm
-			call WERTHEIM(vMolecNm3,eta,tKelvin,xFrac,NC,zAssoc,aAssoc,uAssoc,iErrCode)
-			call WertheimFugc(xFrac,vMolecNm3,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
+			call WERTHEIM(isZiter,eta,tKelvin,xFrac,NC,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
+			call WertheimFugc(xFrac,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
 			gmol(I)=gmol_old(I)
 			dh_dN_num(I)=(hLoop-h_nMichelsen)/(two*gmol(I)/moleStep)
 			DO J=1,NC
@@ -492,8 +492,8 @@
 		do ii=1,nc
 			xFrac(ii)=gmol(ii)/totMoles
 		enddo
- 		call WERTHEIM(vMolecNm3,eta,tKelvin,xFrac,NC,zAssoc,aAssoc,uAssoc,iErrCode)
-		call WertheimFugc(xFrac,vMolecNm3,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
+ 		call WERTHEIM(isZiter,eta,tKelvin,xFrac,NC,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
+		call WertheimFugc(xFrac,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
 
 		one=1.d0
 		!half=one/2.d0	!defined in GlobConst 9/24/19

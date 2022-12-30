@@ -648,7 +648,7 @@
 		iTry=0		  !EM. Check for KO bug
 		ierFugi(1)=1 !force call of fugi for vapor at least once.
 		DO WHILE(ierFugi(1).NE.0)
-			CALl Fugi(tKelvin,pMpa,yFrac,nComps,liq,fugcVap,zVap,ierFugi)
+			CALL Fugi(tKelvin,pMpa,yFrac,nComps,liq,fugcVap,zVap,ierFugi)
 			etaV=etaPass
 			if(iTry > 5)exit ! break out of the loop  
 			if(ierFugi(11)==1)then

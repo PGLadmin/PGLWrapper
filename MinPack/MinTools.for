@@ -124,7 +124,7 @@ C     THE EUCLIDEAN NORM IS COMPUTED BY ACCUMULATING THE SUM OF
       
       DOUBLE PRECISION FUNCTION SumXmY2(N,X,Y)
       INTEGER N
-      DOUBLE PRECISION X(N),Y(N),SumSq
+      DOUBLE PRECISION X(N),Y(N),DIF(N),SumSq
 C     **********
 C
 C     FUNCTION ENORM
@@ -134,9 +134,9 @@ C     EUCLIDEAN NORM OF X.
 C
 C     THE EUCLIDEAN NORM IS COMPUTED BY ACCUMULATING THE SUM OF
       DO I=1,N
-          X(I)=X(I)-Y(I)
+          DIF(I)=X(I)-Y(I)
       ENDDO
-      SumXmY2=SumSq(N,X)
+      SumXmY2=SumSq(N,DIF)
       RETURN
       END
       

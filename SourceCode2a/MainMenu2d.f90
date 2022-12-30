@@ -213,7 +213,7 @@
 		WRITE(6,*)'FO FREEZCURVE KIJ optimization'	
 		WRITE(6,*)'KS FOR Tpt State Interpolation'
 		WRITE(6,*)'EA FOR Equal Area rule calculation (vapor pressure)'
-		WRITE(6,*)'FW FOR FOR FITTING THE WHITE RG METHOD PARAMETER'
+		!WRITE(6,*)'FW FOR FOR FITTING THE WHITE RG METHOD PARAMETER'
 		WRITE(6,*)'VC FOR VIRIAL COEFFICIENTS FOR PURE COMPONENTS, EOS OPTIONS: 4 & 5'  !AFG 2011
 		WRITE(6,*)'QT TO QUIT'
 
@@ -279,7 +279,7 @@
 		IF(calcType.EQ.'TX'.OR.calcType.EQ.'tx')CALL TXYP(NC)
 		IF(calcType.EQ.'VL'.OR.calcType.EQ.'vl')CALL VLITER(NC)
 		IF(calcType.EQ.'VP'.OR.calcType.EQ.'vp')CALL VpIter(NC) !,gmol,tKelvin,Psat,vLCc,vVCc)
-		IF(calcType.EQ.'FW'.OR.calcType.EQ.'fw')CALL FitWhite(NC)				  	!AFG 2011
+		!IF(calcType.EQ.'FW'.OR.calcType.EQ.'fw')CALL FitWhite(NC)				  	!AFG 2011
 		IF(calcType.EQ.'VC'.OR.calcType.EQ.'vc')CALL VirialCoeff(NC)				!AFG 2011
 		IF(calcType=='KS'.OR.calcType=='ks')CALL RegA0A1A2TptIo(NC)
 		!IF(calcType.EQ.'IT'.OR.calcType.EQ.'it')CALL Isotherm(NC,ier,errMsnPas)

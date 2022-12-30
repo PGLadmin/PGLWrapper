@@ -9,6 +9,7 @@ C  INPUT
 C    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 C  OUTPUT
 	USE GlobConst
+	USE VpDb ! for VpCoeffs
       IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
       PARAMETER(ndb=350,numSV=20)
 	character bipFile*234
@@ -64,7 +65,7 @@ cccccPURPOSE: CALCULATION OF THERMODYNAMIC PROPERTIES WITH NRTLccccccccc
 	integer GetBIPs
 	DIMENSION idComp(nComps)
 	dimension solParmD(ndb),vLiqD(ndb),IDA(ndb)
-	common/NRTL/vLiq(nmx)
+	!common/NRTL/vLiq(nmx)
 	write(*,*)'ID  NAME       TCK   PCMPa      w     '
 	iErrCode=0
 c  note:  bips are passed back through common/BIPs/
@@ -135,14 +136,15 @@ c  note:  bips are passed back through common/BIPs/
 c  use NRTL style of EXPression
 	USE GlobConst
 	USE BIPs
+	USE VpDb ! for VpCoeffs
 	implicit doubleprecision(A-H,K,O-Z)
 	double precision moFrac(Nmx)
 	DIMENSION IER(12)
 	integer kComp
 	dimension fugc(nComps),xsGamma(nComps)
 	DIMENSION omega(Nmx,Nmx),sumDenom(Nmx),sumNumer(Nmx)
-	COMMON/NRTL/vLiq(nmx) 
-	DIMENSION vpCoeffs(NMX,5)
+	!COMMON/NRTL/vLiq(nmx) 
+	!DIMENSION vpCoeffs(NMX,5)
 	!dimension pSat(NMX)
   	do iErr=1,6
 		ier(iErr)=0
@@ -201,9 +203,9 @@ c  use NRTL style of EXPression
 	1					!(1-tc(kComp)/tK) )
 	!THE ABOVE ESTIMATION OF vp WILL CAUSE NRTL TO GOVE BAD AAD IN vp. THE FOLLOWING EQN FROM DIPPR DATABASE 
 	!IS RECOMMENDED
-				        CALL GetVp(nComps,ID,iErrCode,vpCoeffs)
-			            pSat=exp(vpCoeffs(kComp,1)+vpCoeffs
-	1					(kComp,2)/tK+vpCoeffs(kComp,3)*DLOG(tK)
+				        CALL GetVp(nComps,ID,iErrCode)
+			            pSat=exp(vpCoeffs(kComp,1)+vpCoeffs(kComp,2)/tK
+	1					+vpCoeffs(kComp,3)*DLOG(tK)
      1                    +vpCoeffs(kComp,4)*tK**vpCoeffs(kComp,5))
      1                    /1000000
 					!endif

@@ -9,15 +9,17 @@
 	!  OUTPUT
     SUBROUTINE GetFloryWert(nComps,idComp,iErrCode)
     USE GlobConst
+	USE Assoc !FloryWert calls Wertheim()
+	USE BIPs  !BIPs for physical interactions.
     IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	PARAMETER(ndb=1555)
 	character bipFile*88
 	character inFile*251
-	DIMENSION XC(nComps)
+	!DIMENSION XC(nComps)
     DIMENSION idComp(*)
-	dimension solParmD(ndb),vLiqD(ndb),IDA(ndb),bondVolA(ndb),DHA(ndb),NDSA(ndb),NASA(ndb),NDA(ndb)
-	common/FloryWert/solParm(nmx),vLiq(nmx),eHbKcalMol(NMX),bondVolNm3FH(NMX),ND(NMX),NDS(NMX),NAS(NMX)
-	!eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX) from ParmsFloryWert.txt
+	dimension IDA(ndb),bondVolA(ndb),DHA(ndb),DHD(ndb),NDSA(ndb),NASA(ndb),NDegreeA(ndb)
+	!common/FloryWert/solParm(nmx),vLiq(nmx),eHbKcalMol(NMX),bondVolNm3FH(NMX),ND(NMX),NDS(NMX),NAS(NMX)
+	!solParmD(ndb),vLiqD(ndb),eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX) from ParmsFloryWert.txt
 
 !	COMMON/BIPs/KIJ,KTIJ,aBipAD,aBipDA,xsTau,xsTauT,xsAlpha	
 !		COMMON/BIPs/KIJ(NMX,NMX),KTIJ(NMX,NMX),HIJ(NMX,NMX),HTIJ(NMX,NMX),xsTau(NMX,NMX),xsTauT(NMX,NMX),xsAlpha(NMX,NMX)
@@ -27,43 +29,7 @@
 
 	nC=nComps
 
-	  !DEBUG=.TRUE.
-	IF(DEBUG)then 
-		OPEN(50,FILE='c:\SPEAD\CalcEos\input\ParmsCrit.dta',FORM='BINARY')
-    ELSE 
-		inFile=TRIM(masterDir)//'\input\ParmsCrit.dta' ! // is the concatenation operator
-		OPEN(50,FILE=inFile,FORM='BINARY')
-	ENDIF
-
-	READ(50,ERR=861)NDECK 
-	DO I=1,NDECK
-		READ(50,ERR=861)IDA(I),tc,pc,zc,acen,rmw,solParmD(i),vLiqD(i)
-	enddo   
-	CLOSE(50)
-
-	IF(DEBUG)then 
-		OPEN(50,FILE='c:\SPEAD\CalcEos\input\parmsCrAdd.txt')
-    ELSE 
-		inFile=TRIM(masterDir)//'\input\parmsCrAdd.txt' ! // is the concatenation operator
-		OPEN(50,FILE=inFile)
-	ENDIF
-	read(50,*,ERR=863)NDECKADD
-	nTot=nDeck+nDeckAdd
-	DO I=nDeck+1,nTot
-		READ(50,*,ERR=863)IDA(I),tc,pc,zc,acen,rmw,solParmD(i),vLiqD(i)
-	enddo   
-	CLOSE(50)
-
-	DO J=1,nComps
-		XC(J)=1;
-		DO I=1,NDECK
-			IF(IDA(I).EQ.idComp(J))THEN
-			  solParm(j)=solParmD(i)
-			  vLiq(j)=vLiqD(i)
-			ENDIF
-		enddo
-	enddo
-
+	! NOTE: ParmsCrit is read elsewhere, including solParm and vLiq.
 	IF(DEBUG)then 
 	  OPEN(50,FILE='c:\SPEAD\CalcEos\input\ParmsFloryWert.TXT')
     ELSE 
@@ -73,23 +39,30 @@
 
 	READ(50,*,ERR=862)NdeckFloryWert 
 	DO I=1,NdeckFloryWert
-		READ(50,*,ERR=862)IDA(I),bondVolA(I),DHA(I),NDA(I),NASA(I),NDSA(I)
+		!nDegree(i,1)=1
+		READ(50,*,ERR=862)IDA(I),bondVolA(I),nDegreeA(I),NASA(I),NDSA(I),DHA(I),DHD(i)
+		nTypes(i)=1	! only one type per molecule in this model.
+		idType(i,1)=IDA(i)
 	enddo   
 	CLOSE(50)
 
 	DO J=1,nComps
 		iGotIt=0
-		ND(J)=0
-		NDS(J)=0
-		NAS(J)=0
-		DO I=1,NDECK
+		NDegree(J,1)=0
+		NDonors(J,1)=0
+		nAcceptors(J,1)=0
+		DO I=1,NdeckFloryWert
 			IF(IDA(I).EQ.idComp(J))THEN
 				iGotIt=1
-				bondVolNm3FH(J)=bondVolA(I)
-				eHbKcalMol(J)=DHA(I)
-				ND(J)=NDA(I)
-				NAS(J)=NASA(I)
-				NDS(J)=NDSA(I)
+				bVolCC_mol(i)=vLiq(i)*0.4d0 ! let 0.4 be the standard liquid eta.
+				nTypes(j)=1	! only one type per molecule in this model.
+				idType(j,1)=IDA(i)
+				bondVolNm3(J,1)=bondVolA(I)
+				eAcceptorKcal_Mol(J,1)=DHA(I)
+				eDonorKcal_Mol(J,1)=DHD(I)
+				NDegree(J,1)=NDegreeA(I)
+				nAcceptors(J,1)=NASA(I)
+				nDonors(J,1)=NDSA(I)
 			ENDIF
 		enddo
 		if(iGotIt.eq.0)then
@@ -100,9 +73,9 @@
 
 	write(*,*)'ID    Nd   bondVolNm3    eHbKcalMol'
 	do i=1,nComps
-	  write(*,601)idComp(i),ND(i),bondVolNm3FH(i),eHbKcalMol(i)
+	  write(*,601)idComp(i),NDegree(i,1),bondVolNm3(i,1),eAcceptorKcal_Mol(i,1),eDonorKcal_Mol(i,1)
 	enddo
-601	format(i6,1x,i4,f8.6,f8.4)
+601	format(i6,1x,i4,6E12.4)
 606	format(i6,1x,a11,f6.1,f6.3,1x,f7.2,f8.2,f6.1,f8.1,i4,f8.6,f8.4)
 
 
@@ -115,20 +88,9 @@
 	!IERRCODE=GetBIPs(bipFile,idComp,nComps)
 
 	RETURN
-861	continue
-	write(*,*)'GetFlory error - error reading ParmsCrit.txt. Path?'
-	write(*,*)'nDeck,iCompo',NDECK,i
-	if(LOUD)pause
-	return                      
 862	continue
 	write(*,*)'GetFlory error - error reading ParmsFloryWert.txt. Path?'
 	write(*,*)'nDeck,iCompo',NdeckFloryWert,j
-	if(LOUD)pause
-	return                      
-863	continue
-	write(*,*)'GetFlory error - error reading ParmsCrAdd.txt. Path?'
-	write(*,*)'nDeckAdd,iCompo',nDeckAdd,i
-	if( (i-1).gt.0)write(*,*)'last good parms',ida(i),solParmD(i),vLiqD(i)
 	if(LOUD)pause
 	return                      
 	END
@@ -137,9 +99,9 @@
 	!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	!$ FUGI
 	!
-	!   REVISION DATE:  OCTOBER 31, 1985
-	!										April 6, 2001, convert to f90
-	!   PROGRAMMED BY:  J.R. ELLIOTT, JR. (JAN. 1983)
+	!   REVISION DATE:  OCTOBER 31, 1995
+	!					April 6, 2001, convert to f90
+	!   ORIGINAL PROGRAM BY:  J.R. ELLIOTT, JR. (JAN. 1983)
 	!
 	!   PURPOSE:  CALCULATE THE FUGACITY COEFFICIENTS AND COMPRESSIBILITY
 	!      FACTOR OF EITHER A GAS OR LIQUID ACCORDING TO THE
@@ -225,25 +187,28 @@
 	!		-0.039885402	-0.036887259			0.00000	-0.01502
 	!FYI: LCST ~296K.  Amazingly sensitive to temperature.  Remarkable asymmetry in gamma's.  Gibbs-Duhem OK?
 	!****************************************************************
+	USE GlobConst !, only: avoNum,zeroTol,bVolCC_mol,etaMax,etaPure,half,ID,isTPT,isESD,iEosOpt,LOUD,DEBUG,Rgas,MasterDir,Tc,Pc,acen
 	USE Assoc !XA,XD,XC passed.
+	USE VpDb ! for VpCoeffs
+	USE BIPs
 	implicit doublePrecision(A-H,O-Z)
 
 	character bipFile*88,bipHbFile*88
 !	character*123 ErrMsg(11)
 
-	doublePrecision KIJ,KTIJ
+	!doublePrecision KIJ,KTIJ
 	DIMENSION FUGC(nComps),xFrac(nComps),IER(12),dFUGASSOC_dT(NMX),dFUGASSOC_dRHO(NMX)
-	DIMENSION volFrac(NMX),fugAssoc(NMX),vMolecNm3(NMX),KIJ(NMX,NMX),KTIJ(NMX,NMX)
-	COMMON/BIPs/KIJ,KTIJ,HIJ,HTIJ,xsTau,xsTauT,xsAlpha
-	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
-	COMMON/eta/etaL,etaV,zFactorL,zFactorV
-	common/ppVpCoeffs/vpCoeffs(NMX,5)
+	DIMENSION volFrac(NMX),fugAssoc(NMX) !,vMolecNm3(NMX) !,KIJ(NMX,NMX),KTIJ(NMX,NMX)
+	!COMMON/BIPs/KIJ,KTIJ,HIJ,HTIJ,xsTau,xsTauT,xsAlpha
+	!COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
+	!COMMON/eta/etaL,etaV,zFactorL,zFactorV
+	!common/ppVpCoeffs/vpCoeffs(NMX,5)
 	!  prBIPs are passed in from GetPrBIPs()
 
 !	COMMON/BIPs/KIJ(NMX,NMX),KTIJ(NMX,NMX),HIJ(NMX,NMX),HTIJ(NMX,NMX),xsTau(NMX,NMX),xsTauT(NMX,NMX),xsAlpha(NMX,NMX)
 
 	!eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX) from ParmsFloryWert.txt
-	common/FloryWert/solParm(nmx),vLiq(nmx),eHbKcalMol(NMX),bondVolNm3FH(NMX),ND(NMX),NDS(NMX),NAS(NMX)
+	!common/FloryWert/solParm(nmx),vLiq(nmx),eHbKcalMol(NMX),bondVolNm3FH(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 
 	!for wertheim1c: common/Assoc/eHbKcal_mol(nmx,maxTypes),bondVolNm3(nmx,maxTypes),nDegree(nmx,maxTypes),nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes),idType(nmx,maxTypes),localType(maxTypesGlobal),idLocalType(maxTypes),nTypes(NMX),nTypesTot
 	Bip(iComp,jComp)=kij(iComp,jComp)+kTij(iComp,jComp)/tKelvin
@@ -282,7 +247,7 @@
 	ENDIF
 	call GetAssocBips(bipHbFile,aBipDA,ierABip) !in WertheimVv.f90
 
-	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp,vpCoeffs)	
+	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp)	
  
   	solParmAvg=0
 	bipAvg=0
@@ -304,23 +269,24 @@
 	fugc(iComp)=1
 	etaV=0
 	if(LIQ.eq.1)then
-		etaL=0.45
+		etaL=0.4
 		zFactor=pMpa*vLiqMix/(rGas*tKelvin)
 		do kComp=1,nComps
 			delDelta=(solParm(kComp)-solParmAvg) ! cf Sandler 2ed p.341
 			bipPart=0
 			do iComp=1,nComps
-				!bip=kij(iComp,kComp)+kTij(iComp,kComp)/
-				bipPart=bipPart+volFrac(iComp)*solParm(iComp)*Bip(icomp,kComp)
+				bipTmp=kij(iComp,kComp)+kTij(iComp,kComp)/tKelvin
+				bipPart=bipPart+volFrac(iComp)*solParm(iComp)*bipTmp
 			enddo
 			actCoeff=vLiq(kComp)*( delDelta*delDelta+2*solParm(kComp)*bipPart-bipAvg )/(1.987*tKelvin)
 			fugc(kComp)= actCoeff !actCoeff is really LnGam  
-			vMolecNm3(kComp)=vLiq(kComp)*etaL/602.22
+			!vMolecNm3(kComp)=vLiq(kComp)*etaL/602.22
 		enddo
 		rhoMol_cc=1/vLiqMix
-
-		call Wertheim(vMolecNm3,etaL,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,iErrCode) !nDs,nAs,ND,
-		call WertheimFugc(xFrac,vMolecNm3,tKelvin,nComps,ETAL,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)	!NDS,NAS,ND
+		isZiter=0 ! V is assumed in FloryWert, so no need to iterate on Z.
+		!vMolecNm3(1:nComps)=bVolCC_mol(1:nComps)/avoNum
+		call Wertheim(isZiter,etaL,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode) !nDs,nAs,ND,
+		call WertheimFugc(xFrac,tKelvin,nComps,ETAL,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)	!NDS,NAS,ND
 
 		write(*,'(a,1x,2(a),a,a,a)')' Compo','  xFrac','   vFrac  ','     LnGamFH','     LnPhiAssoc','     gamma  '
 		do kComp=1,nComps

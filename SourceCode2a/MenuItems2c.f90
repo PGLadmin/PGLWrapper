@@ -2078,6 +2078,7 @@
 	!C  METHOD:   GOLDEN SECTION SEARCH ON A SINGLE PARAMETER
 	!C  REFERENCE:NUMERICAL RECIPES
 	!C
+	USE PortLib !for time()
 	USE GlobConst
 	USE BIPs  !includes nConverged,maxPts,tDat,...
 	USE EsdParms
@@ -2092,8 +2093,8 @@
 	EXTERNAL LMDevFcn
 	character*77 inFile,outFile,errMsgPas !,dumString ,name1,name2
 	character*1 tabChar
-	COMMON/eta/etaL,etaV,ZL,ZV
-	common/FloryWert/ vLiq(nmx)
+	!COMMON/eta/etaL,etaV,ZL,ZV
+	!common/FloryWert/ vLiq(nmx)
     data initial/1/
 	tabChar = char(9)
 	LOUDER=LOUD	!This provides local control if desired.
@@ -2164,15 +2165,29 @@
 !	READ(5,*)iRegOpt
 	ier=0
     iSystem=0
+	iTimeStart=time()
+	paadTot=0
+	nConvergedTot=0
 	do while(ier.eq.0) !loop over data sets in db
-        iSystem=iSystem+1
 		!READ(51,'(4i5,a,a,a77)',ioStat=ioErr)nPtsBipDat,id(1),id(2) !,iRefNum,name1,name2,dumString !,idCas(1),idCas(2)
+		!pause 'KijDb: Reading new mix'
 		READ(51,*,ioStat=ioErr)nPtsBipDat,id(1),id(2) !,iRefNum,name1,name2,dumString !,idCas(1),idCas(2)
-        if(ioErr == -1)then
-			print*,'KijDb: read error. File=',TRIM(inFile)
-			pause 'KijDb: end of file?'
+        if(ioErr /= 0)then
+			timeTot=float(time()-iTimeStart)
+			print*,'KijDb: elapsed time(sec)=',timeTot
+			if(iSystem > 0)paadTot=paadTot/iSystem
+			write(*,'(a,i9,2f10.2)')' Overall nConverged,paad=',nConvergedTot,paadTot
+			close(61)
+			close(661)
+			if(ioErr== -1)then
+				pause 'KijDb: end of file.'
+			else
+				print*,'KijDb: read error. system#,ioErr,File=',iSystem,ioErr,TRIM(inFile)
+				pause 'KijDb: check file.'
+			endif
 			exit ! end of file reached
 		endif
+        iSystem=iSystem+1
 		call IdCasLookup(NC,idCas,ierLookup,errMsgLookup)	! idDippr passed by GlobConst. This also sets the class()
 		if(iOptimize < 0)then
 			!write(661,'(i4,2i5,2i6,a)')nPtsBipDat,id(1),id(2),idTrc(1),idTrc(2),' ! Line0:nPts,idDip1,idDip2,idTrc1,idTrc2; Line1-nPts:T(K),P(MPa),x1,y1' 	
@@ -2292,6 +2307,8 @@
 		if(nParms==2)write(61,608)id(1),id(2),nConverged,(parm(i),i=1,2),PAADP,rmsErr,DstdErr,name(1),name(2)
 		if(nParms==2)write(6 ,608)id(1),id(2),nConverged,(parm(i),i=1,2),PAADP,rmsErr,DstdErr,name(1),name(2)
 		write(6 ,'( 3i5,2F10.2,11(1x,E11.4) )')iSystem,id(1),id(2),PAADP,rmsErr,(parm(i),i=1,nParms)
+		paadTot=paadTot+paadP
+		nConvergedTot=nConvergedTot+nConverged
 	enddo !while(ier.eq.0) loop over all data sets in db
 
 	close(51)
@@ -2358,9 +2375,9 @@
 	EXTERNAL LMDevLLE
 	character*77 inFile,outFile,outFilePts,errMsgPas,dumString
 	character*3 nexString
-	COMMON/eta/etaL,etaV,ZL,ZV
-	common/FloryWert/ vLiq(nmx)
-	common/bipDA/iDA,jDA
+	!COMMON/eta/etaL,etaV,ZL,ZV
+	!common/FloryWert/ vLiq(nmx)
+	!common/bipDA/iDA,jDA
 	common/DevPas/iOptimize
     data initial/1/
 	LOUDER=LOUD	!This provides local control if desired.
@@ -2671,9 +2688,9 @@
 	EXTERNAL LMDevSLE
 	character*77 inFile,outFile,outFilePts,errMsgPas,dumString
 	character*3 nexString
-	COMMON/eta/etaL,etaV,ZL,ZV
-	common/FloryWert/ vLiq(nmx)
-	common/bipDA/iDA,jDA
+	!COMMON/eta/etaL,etaV,ZL,ZV
+	!common/FloryWert/ vLiq(nmx)
+	!common/bipDA/iDA,jDA
 	common/DevPas/iOptimize
     data initial/1/
 	LOUDER=LOUD	!This provides local control if desired.
@@ -3137,6 +3154,7 @@
 	SUBROUTINE KIJVAL(nc,nParms,parm,deviate,PAADP,DstdErr,LAST)
 	USE GlobConst
 	USE BIPs ! includes nConverged,Kij(),KTij(), ...
+	USE VpDb ! for VpCoeffs
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	!CHARACTER*12 FN
 	DIMENSION X(NMX),Y(NMX) !,yy(nmx),xx(nmx),
@@ -3146,7 +3164,7 @@
 	DIMENSION GammaCalc(nmx),GammaExp(nmx),pSatExp(nmx)
 	COMMON/eta/etaL,etaV,ZL,ZV
 	!common/ppVpCoeffs/vpCoeffs(NMX,5)
-	dimension vpCoeffs(nmx,5)
+	!dimension vpCoeffs(nmx,5)
 	! DATA iOpt/1/		!JRE 20210324 iOpt=2 was previously to optmize Hij instead of Kij. I gave up on that.
 
 	errMsg(1)='KijVal Error: Number of components must equal 2.'
@@ -3284,7 +3302,7 @@
 					GammaCalc(iComp)=y(iComp)*P/(x(iComp)*pSatCalc)
 					!GexCalc=GexCalc+X(iComp)*DLOG(GammaCalc(iComp))
 				
-					CALL GetVp(NC,ID,iErrCode,vpCoeffs)
+					CALL GetVp(NC,ID,iErrCode)
 				
 					pSatExp(iComp)=exp(vpCoeffs(iComp,1)+vpCoeffs(iComp,2)/T+vpCoeffs(iComp,3)*DLOG(T)+vpCoeffs(iComp,4)*T**vpCoeffs(iComp,5))/1000000
 					if(LOUD)print*,' KijVal(afterGetVp): iComp,T(K),PsatExp',iComp,T,pSatExp(iComp)
@@ -3859,9 +3877,9 @@
 	DOUBLE PRECISION parm(nParms),deviate(maxPts)
 	character*234 ffile*251
 	character*77 errMsg(12)
+	LOGICAL LOUDER
 	COMMON/eta/etaL,etaV,ZL,ZV
 	common/ppVpCoeffs/vpCoeffs(NMX,5)
-	COMMON/SIPs/KII(NMX,NMX),KTII(NMX,NMX)
 	DATA iOpt/1/
 
 	errMsg(1)='KiiVal Error: Number of components must equal 1.'
@@ -3870,19 +3888,21 @@
 		ier=1
 		return
 	endif
+	LOUDER=LOUD
+	!LOUDER=.TRUE.
             
 
-	KII(1,1)=0
-	KTII(1,1)=0
+	KIJ(1,1)=0
+	KTIJ(1,1)=0
 	if(lastCall < 0)then !only kijOpt sets last to -1, so that is the only one that affects this.
 		write(*,*)'Enter optimization choice: 1=kii, 2=hii'
 		read(*,*)iOpt
 	endif
 	if (nParms==1)then
-		KII(1,1)=parm(1)
+		KIJ(1,1)=parm(1)
 	else
-		KII(1,1)=parm(1)
-		KTII(1,1)=parm(2)
+		KIJ(1,1)=parm(1)
+		KTIJ(1,1)=parm(2)
 	endif
 	MAXIT=1111
 	PAADP=0
@@ -3892,6 +3912,7 @@
 		X(1)=XDAT(iData)
 		P=PDAT(iData)
 		T=tDat(iData)
+		IF(LOUDER)WRITE(*,*)T,P
 		IFLAG=0
 		ITMAX=MAXIT
 		INIT=1    
@@ -3921,7 +3942,7 @@
 	rmsErr=SQRT(ssqErr/nPtsBipDat)
 	PAADP=PAADP/nPtsBipDat
 	pBias=pBias/nPtsBipDat
-	if(LOUD)write(*,'(7f10.3)')(parm(i),i=1,nparms),rmsErr,PAADP,pBias
+	write(*,'(7f10.3)')(parm(i),i=1,nparms),rmsErr,PAADP,pBias
 607	FORMAT(1X,F8.4,1X,F10.5,1X,F10.4,1X,i5)      
 	RETURN
 	END
@@ -5271,9 +5292,9 @@
 	Integer idStore(NMX)
 	EXTERNAL RegSpeadDevFcn
 	character inFile*251,outFile*251,SipFile*251
-	COMMON/eta/etaL,etaV,ZL,ZV
-	common/SIPs/KII(NMX,NMX),KTII(NMX,NMX)
-	common/FloryWert/ vLiq(nmx)
+	!COMMON/eta/etaL,etaV,ZL,ZV
+	!common/SIPs/KII(NMX,NMX),KTII(NMX,NMX)	! kii = kij(1,1) where Kij is in BIPs.
+	!common/FloryWert/ vLiq(nmx)
 
 	!store current values of nc,id.
 	ncStore=NC
@@ -5310,8 +5331,10 @@
 			ier=1 !indicates end of database
 			cycle !loop to end will terminate
 		endif
+		nPtsBipDat=NPTS	 ! passing through BIPs module
 		DO I=1,NPTS	!we only get to here if there is no error.  otherwise, cycle takes to enddo while()
 			READ(51,*)tDat(I),PDAT(I)
+			write(*,'(1x,f8.2,f11.5)')tDat(I),PDAT(I)
 			XDAT(I)=1
 			YDAT(I)=1
 			DO iComp=1,NC
@@ -5348,18 +5371,18 @@
 		!C
 		!c  factor controls the magnitude of the first step from the initial guess.
 		factor=0.01
-		if(LOUD)write(*,*)'KII,paadp,rmserr'
+		write(*,*)'KII,paadp,rmserr'
 		CALL LMDifEZ(RegSpeadDevFcn,nPts,nParms,parm,factor,deviate,TOL,iErrCode,stdErr)
 		rmsErr=SQRT( ENORM(nPts,deviate) )
-		if(LOUD)write(*,*)'iErrCode,rmsErr',iErrCode,rmsErr
-		if(LOUD)write(* ,'(2f9.4)')(parm(i),i=1,nParms)
-		if(LOUD)write(*,*)'StdErr'
-		if(LOUD)write(* ,'(2f9.4)')(stdErr(i),i=1,nParms)
-		if(LOUD)write(*,*) 'RegSpeadIo: Converged'
+		write(*,*)'iErrCode,rmsErr',iErrCode,rmsErr
+		write(* ,'(2e12.4)')(parm(i),i=1,nParms)
+		write(*,*)'StdErr'
+		write(* ,'(2e12.4)')(stdErr(i),i=1,nParms)
+		write(*,*) 'RegSpeadIo: Converged'
 		L=1
 		call KIIVAL(nc,nParms,parm,deviate,PAADP,pBias,pErrMax,L)
 		print*,'KiiVal done.'
-		if(LOUD)write(* ,607)id(1),(parm(i),i=1,nParms),(StdErr(i),i=1,nParms),PAADP,pBias,pErrMax,rmsErr,name(1)
+		write(* ,607)id(1),(parm(i),i=1,nParms),(StdErr(i),i=1,nParms),PAADP,pBias,pErrMax,rmsErr,name(1)
 		write(61,607)id(1),(parm(i),i=1,nParms),(StdErr(i),i=1,nParms),PAADP,pBias,pErrMax,rmsErr,name(1)
 		write(72,608)id(1),(parm(i),i=1,nParms),name(1)
         exit
@@ -5369,11 +5392,11 @@
 	close(61)
 	close(72)
 	print*,'Success! Output in: ', TRIM(outFile)
-	if(LOUD)pause 'These results are tabulated in KijDb.txt.'
+	pause 'These results are tabulated in the output file.'
 	!restore stored nc,id
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x )
 606	FORMAT(1X,F8.4,1X,F10.2)      
-607	FORMAT(1X,i6,1X,<nParms>F10.4,1X,<nParms>F10.4,f10.2,f10.6,f10.2,f10.2,1x,a20)
+607	FORMAT(1X,i6,1X,<nParms>F10.7,1X,<nParms>F10.7,f10.2,f10.6,f10.2,f10.2,1x,a20)
 608 FORMAT(1X,I6,1X,<nParms>F10.4,1X,A20)
   
 	RETURN

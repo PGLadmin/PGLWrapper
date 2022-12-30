@@ -1,13 +1,10 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE SpeadParms
-	USE GlobConst, only:NMX,ID,Tc,CvRes_R,etaMax,Rgas,zeroTol,etaPure,bVolCC_mol,LOUD !need most of GlobConst here  
-	USE Assoc !need all of assoc so USE SpeadParms automatically includes Assoc
+	USE GlobConst
+	USE Assoc
 	DoublePrecision zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX) !,rMwPlus(NMX)
-	DoublePrecision ks0,ks1	      ! Parameters to estimate Sxs of Vahid and Elliott (2014)
-	!Parameter(ks0= -0.04d0,ks1=0) ! best I could do based on avg of the entire system AV 11/29/08
 	Integer nTptCoeffs
 	LOGICAL bGaussEx
-	DoublePrecision GexG0(NMX),GexG1(NMX),GexEta0(NMX) ! Gaussian Extrapolation parameters
 	LOGICAL isHeNeH2(NMX) ! flag to indicate ultracryo compounds.
 	!nnx = Total number of united-atom sites in a molecule.
 END MODULE SpeadParms
@@ -54,7 +51,6 @@ END MODULE SpeadParms
 	USE GlobConst
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs
-	USE VpDb	   ! For iEosOpt=8, SpeadGamma
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	PARAMETER(ndb=1555,listPool=1000)
 	integer GetBIPs
@@ -307,7 +303,7 @@ END MODULE SpeadParms
 
 	nC=nComps
 
-!  note:  bips USE BIPs
+!  note:  bips are passed back through common/BIPs/
 	IF(DEBUG)then 
 		bipFile='c:\spead\CalcEos\input\BipSpead.txt'
 	ELSE 
@@ -334,7 +330,7 @@ END MODULE SpeadParms
 		bipHbFile=TRIM(masterDir)//'\input\BipDA.txt' ! // is the concatenation operator
 	ENDIF
 	!if(LOUDER)print*,'GetTpt: Only BipDA is needed.'
-	call GetAssocBips(bipHbFile,aBipDA,ierABip) !in WertheimVv.f90. idLocalType,nTypesTot USE Assoc 
+	call GetAssocBips(bipHbFile,aBipDA,ierABip) !in WertheimVv.f90. idLocalType,nTypesTot in common/assoc 
 	do i=1,nTypesTot
 		do j=1,nTypesTot
 			aBipAD(j,i)=aBipDA(i,j)
@@ -385,7 +381,7 @@ END MODULE SpeadParms
 
 	ENDIF ! DISPLAY RELEVANT kijAD
 
-	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp)	
+	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp,vpCoeffs)	
 	errMsgPas=Trim( ErrMsg(iErrCode) )
 	RETURN
 861	continue
@@ -440,7 +436,7 @@ END MODULE SpeadParms
 	DOUBLEPRECISION mShape(NMX)
 	DIMENSION nCarbons(NMX),nFg(NMX,maxTypes)
 	!common/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
-	!common/FileSwap/isFileSwap,isSw
+	common/FileSwap/isFileSwap,isSw
 	data initialCall/1/
 	DO iComp=1,nComps
 		nCarbons(iComp)=0
@@ -583,15 +579,15 @@ end	!Subroutine QueryParPureSpead
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	LOGICAL LOUDER
 	character*111 errMsg(22)
-	integer ier(12)	!assocFlag,
+	integer assocFlag,ier(12)
 	DIMENSION xFrac(NMX),gmol(NMX),chemPo(NMX)
 	DIMENSION zRefMix(5),bRef(NMX)!,aMixQuadPart(NMX),a1Mix(5),a2Mix(5)
-	!COMMON/Derv1/DFUG_DN_NUM(NMX,NMX),dP_dV,d2P_dV2,d3P_dV3,assocFlag
+	COMMON/Derv1/DFUG_DN_NUM(NMX,NMX),dP_dV,d2P_dV2,d3P_dV3,assocFlag
 	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
-	!COMMON/HbParms/dHkcalMol(NMX),bondVolNm3Esd(NMX)
-	!COMMON/HbParms2/ND(NMX),NDS(NMX),NAS(NMX)
-	!COMMON/DEPFUN/dU_RT,dA_RT,DSONK,dH_RT
-	!COMMON/ETA/ETAL,ETAV,ZL,ZV
+	COMMON/HbParms/dHkcalMol(NMX),bondVolNm3Esd(NMX)
+	COMMON/HbParms2/ND(NMX),NDS(NMX),NAS(NMX)
+	COMMON/DEPFUN/dU_RT,dA_RT,DSONK,dH_RT
+	COMMON/ETA/ETAL,ETAV,ZL,ZV
 	data initCall/1/
 	!COMMON/eta/etaL,etaV,zL,zV
 	!COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
@@ -856,6 +852,11 @@ end	!Subroutine QueryParPureSpead
 	endif
 	if(iErr > 9)goto 86
 	chemPo(1:nComps)=chemPo(1:nComps)-DLOG(zFactor) ! transform from TV to TP
+	!write(*,'(a,6E12.4)')' FuTpt: chemPo=',(chemPo(i),i=1,nComps)
+   	
+
+	!call ChemPoPhysNum(chemPo,eta,tKelvin,xFrac,nComps,iErrCp)
+	!if(LIQ < 2)call ChemPoCalcTpt(chemPo,eta,tKelvin,xFrac,nComps,iErrCp)
 	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: chemPo=',(chemPo(i),i=1,nComps)
 	if(LOUDER)print*,'FuTpt: ChemPoCalc done. aRes,uRes=',aRes,uRes
 	if(zFactor > zeroTol)ChemPoPure=aRes+zFactor-1-DLOG(zFactor)
@@ -878,14 +879,11 @@ end	!Subroutine QueryParPureSpead
 ! CODED BY AV 06/26/06. cf. DannerGess/SPEADCI paper. IECR08
 ! PURPOSE: DEVELOPING SpeadGamma MODEL. cf.SPEADCI paper IECR, 47:7955 (08).
 	SUBROUTINE FuSpeadGamma(tKelvin,pMPa,xFrac,nComps,LIQ,chemPo,zFactor,ier)
-	USE SpeadParms
-	USE VpDb
 	USE Assoc
-	IMPLICIT DoublePrecision(A-H,O-Z)
+	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	DIMENSION xFrac(NMX),chemPo(NMX),fugcPure(NMX),fugcL(nmx),rLnGam(nmx),x(nmx),fugc(nmx),ier(12)
-	!DoublePrecision vpCoeffs(NMX,5)
-	!common/ppVpCoeffs/vpCoeffs(NMX,5)
-	!common/eta/etaL,etaV,zL,zV
+	common/ppVpCoeffs/vpCoeffs(NMX,5)
+	common/eta/etaL,etaV,zL,zV
 	!common/EosOpt/masterDir,iEosOpt,initEos,DEBUG
 	iErr=0
 
@@ -908,8 +906,6 @@ end	!Subroutine QueryParPureSpead
 		!hPure(iPure)=DHONKT
 	enddo
 	call FuTpt(tKelvin,pMPa,xFrac,nComps,1,fugcL,zL,ier)
-	!CALL GetVp(nComps,ID,iErrVp)	
-
 
 	gIs=0
 	gE=0
@@ -952,9 +948,9 @@ end	!Subroutine QueryParPureSpead
 	!DIMENSION dEta_dN(NMX),dEtaRef_dN(NMX)
 	!COMMON/dervZ/dz0i_dN(NMX),dz1i_dN(NMX),dz2i_dN(NMX)
 	!COMMON/derva/da1i_dN(NMX),da2i_dN(NMX),da0i_dN(NMX)
-	!COMMON/dervZ2/dz0i_deta,dz1i_deta,dz2i_deta,d2z0i_deta2,d2z1i_deta2,d2z2i_deta2
-	!COMMON/dervZ3/d3z0i_deta3,d3z1i_deta3,d3z2i_deta3
-	!COMMON/derva2/da1i_deta,da2i_deta,da0i_deta,d2a1i_deta2,d3a1i_deta3,d2a2i_deta2
+	COMMON/dervZ2/dz0i_deta,dz1i_deta,dz2i_deta,d2z0i_deta2,d2z1i_deta2,d2z2i_deta2
+	COMMON/dervZ3/d3z0i_deta3,d3z1i_deta3,d3z2i_deta3
+	COMMON/derva2/da1i_deta,da2i_deta,da0i_deta,d2a1i_deta2,d3a1i_deta3,d2a2i_deta2
 
 	iErr=0
 	NC=nComps
@@ -1066,12 +1062,8 @@ end	!Subroutine QueryParPureSpead
  ! phi=sum(iComp)sum(iType) [bVol0(iComp,iType)*sum(jComp,jType)epsij*ratioA3ij]	where ratioA3=A3/A2.
  ! Since 3*A3/A2 = (g0)*exp(-g1*[(eta-eta0)^2-eta0^2]), then phi is already a Gaussian. For Ahmad, gFun=exp(phi/tKelvin)
 	Subroutine GaussFun3(tKelvin,eta,Gf,dGf_dEta,d2Gf_dEta2,cpGf,uDepGf,iErr)
-	USE SpeadParms, only:GexG0,GexG1,GexEta0
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	!common/GaussFun/G0,G1,eta0
-	G0=GexG0(1)
-	G1=GexG1(1)
-	eta0=GexEta0(1)
+	common/GaussFun/G0,G1,eta0
 	iErr=0
 	phi=G0*EXP(  -G1*( (eta-eta0)*(eta-eta0)-eta0*eta0 )  )
 	dPhi_dEta=phi*( -2*G1*(eta-eta0) )
@@ -1135,27 +1127,27 @@ end	!Subroutine QueryParPureSpead
 	!dimension cRef(NMX,3),cRefMix(3)
 	DIMENSION xFrac(NMX),aMixQuadPart(NMX),gmol(NMX)
 	DIMENSION solParEntro(NMX),solParEnerg(NMX) !,zRefMix(5), !a1Mix(5),a2Mix(5),
-	!DoublePrecision ks0ij(NMX,NMX),ks1ij(NMX,NMX) ! USE BIPs
+	DoublePrecision ks0ij(NMX,NMX),ks1ij(NMX,NMX)
 	DIMENSION bRef(NMX)
-	!DIMENSION dSPEntro_deta(NMX),dSPEnerg_deta(NMX),dEta_dN(NMX),dEtaRef_dN(NMX),dbVolMix_dN(NMX),dbRefMix_dN(NMX)
+	DIMENSION dSPEntro_deta(NMX),dSPEnerg_deta(NMX),dEta_dN(NMX),dEtaRef_dN(NMX),dbVolMix_dN(NMX),dbRefMix_dN(NMX)
 
-	!COMMON/VCoeff/B2,B3
+	COMMON/z_aComps/zRefij,aRefij,dKijDeta,z1ij,a1ij,z2ij,a2ij
 
-	!COMMON/z_aComps/zRefij,aRefij,dKijDeta,z1ij,a1ij,z2ij,a2ij
 	!COMMON/dervZ/dz0i_dN(NMX),dz1i_dN(NMX),dz2i_dN(NMX)
-	!COMMON/dervZ2/dz0i_deta,dz1i_deta,dz2i_deta,d2z0i_deta2,d2z1i_deta2,d2z2i_deta2
-	!COMMON/dervZ3/d3z0i_deta3,d3z1i_deta3,d3z2i_deta3
+	COMMON/dervZ2/dz0i_deta,dz1i_deta,dz2i_deta,d2z0i_deta2,d2z1i_deta2,d2z2i_deta2
+	COMMON/dervZ3/d3z0i_deta3,d3z1i_deta3,d3z2i_deta3
 	!COMMON/derva/da1i_dN(NMX),da2i_dN(NMX),da0i_dN(NMX)
-	!COMMON/derva2/da1i_deta,da2i_deta,da0i_deta,d2a1i_deta2,d3a1i_deta3,d2a2i_deta2
-	!COMMON/DervMix/dz0Mix_dN(NMX),da0Mix_dN(NMX),dz1Mix_dN(NMX),da1Mix_dN(NMX),dz2Mix_dN(NMX),da2Mix_dN(NMX),daMixQuadPart_dN(NMX,NMX),daMixQuadPart_deta(NMX)
-	!COMMON/DervMix2/dz0Mix_deta,da0Mix_deta,dz1Mix_deta,da1Mix_deta,dz2Mix_deta,da2Mix_deta,d2z0Mix_deta2,d2z1Mix_deta2,d2z2Mix_deta2
-	!COMMON/DervMix3/d2a1Mix_deta2,d3a1Mix_deta3,d2a2Mix_deta2
-	!COMMON/DervZMix3/d3z0Mix_deta3,d3z1Mix_deta3,d3z2Mix_deta3
+	COMMON/derva2/da1i_deta,da2i_deta,da0i_deta,d2a1i_deta2,d3a1i_deta3,d2a2i_deta2
+	COMMON/VCoeff/B2,B3
+	COMMON/DervMix/dz0Mix_dN(NMX),da0Mix_dN(NMX),dz1Mix_dN(NMX),da1Mix_dN(NMX),dz2Mix_dN(NMX),da2Mix_dN(NMX),daMixQuadPart_dN(NMX,NMX),daMixQuadPart_deta(NMX)
+	COMMON/DervMix2/dz0Mix_deta,da0Mix_deta,dz1Mix_deta,da1Mix_deta,dz2Mix_deta,da2Mix_deta,d2z0Mix_deta2,d2z1Mix_deta2,d2z2Mix_deta2
+	COMMON/DervMix3/d2a1Mix_deta2,d3a1Mix_deta3,d2a2Mix_deta2
+	COMMON/DervZMix3/d3z0Mix_deta3,d3z1Mix_deta3,d3z2Mix_deta3
 	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	!common/XsProps/a0Xs
 	!data initial/1/
 	! AGF. It should be 0 not -0.044  
-	data init/1/		! best I could do based on avg of the entire system AV 11/29/08
+	data init,ks0,ks1/1, -0.04, 0/		! best I could do based on avg of the entire system AV 11/29/08
 							! Note that polymer solutions are very sensitive to the BIPs and these values should be optimized via KD option
 	iErr=0
 	errMsg(11)=' MixRule Error: a1i or a2i > 0'
@@ -1189,6 +1181,8 @@ end	!Subroutine QueryParPureSpead
     etaRef=eta*bRefMix/bVolMix
     rhoMol_cc=eta/bVolMix
 	!if(LOUD)write(*,*)'init,ks0=',init,ks0
+		init=1  !Sorry. These values aren't being stored for some reason. Better add to Tpt Module?
+	if(init.ne.0)then
 		ks0= -0.04*18*nComps/ SUM(bRef) !ks0= -0.04*18*Nc/sum(bRef) is a crude rule so that kijS0->0 for polymer blends
 		ks1=0 ! see data statement
 		!if(LOUD)write(*,*)'Enter estimate for ks0'
@@ -1211,6 +1205,7 @@ end	!Subroutine QueryParPureSpead
 			solParEnerg(iComp)=SQRT(-a1i*1.987d0*etaStd/bVolCC_mol(iComp) )
 			!if(LOUD)write(*,'(a,i4,2(f8.2))')' i,delSi,delUi',iComp,solParEntro(iComp),solParEnerg(iComp)
 		enddo
+	endif
 
 	if(eta > etaMax .or. eta < 0)then
 		iErr=15
@@ -1294,10 +1289,10 @@ end	!Subroutine QueryParPureSpead
 			!_ASSERT( (a0i*a0j).gt.0 )
 			aRefij=SQRT( bRef(iComp)*bRef(jComp)*a0i*a0j )/bRefMix  !NOTE: genlzd value for ksij is -0.04
 			a0Mix=a0Mix+xFrac(iComp)*xFrac(jComp)*aRefij*(1.d0-ksij) !moved 1-ksij to here so dKijDeta works right for z0Mix JRE 2012-07
-			if((ABS(a0i)<1e-22 .or. ABS(a0j)<1e-22) .and. LOUD)pause 'MixRule:a0i or a0j ~ 0. Watch for divide error.' 
+			if((ABS(a0i)<1e-22 .or. ABS(a0j)<1e-22) .and. LOUD)pause 'Mixrule:a0i or a0j ~ 0. Watch for divide error.' 
 			zRefij=SQRT( bRef(iComp)*bRef(jComp)/(a0i*a0j) ) /2.d0
 			zRefij=zRefij*( z0i*a0j+a0i*z0j )/bRefMix*(1-ksij)	! check: a0j/sqrt(a0ij) and sqrt(bi*bj)/bMix cancel so units are zRef. 
-			z0Mix=z0Mix+xFrac(iComp)*xFrac(jComp)*( zRefij+kETAij(iComp,jComp)*aRefij )
+			z0Mix=z0Mix+xFrac(iComp)*xFrac(jComp)*( zRefij+dKijDeta*aRefij )
 			aMixQuadPart(iComp)=aMixQuadPart(iComp)+xFrac(jComp)*aRefij*(1-ksij)
 			!a0KijMix=a0KijMix+xFrac(iComp)*xFrac(jComp)*aRefij*dKijDeta 	!this is a new term b/c kij=kij(eta)
 			!Ref part done. Do att part.
@@ -1327,8 +1322,8 @@ end	!Subroutine QueryParPureSpead
 			if( (a1i/a1j) < 0 .and. LOUD)pause 'MixRule: a1i/a1j < 0'
 			z1ij=(1-bipKij)*( z1j*SQRT(a1i/a1j)+z1i*SQRT(a1j/a1i) )/2.d0
 			z1ij=z1ij*SQRT( bVoli*bVolj )/bVolMix !this should be same result as form for z0, but simpler connection to old molfrac basis. 
-			z1Mix=z1Mix+xFrac(iComp)*xFrac(jComp)*(z1ij+kETAij(iComp,jComp)*a1ij)
-			a1KijMix=a1KijMix+xFrac(iComp)*xFrac(jComp)*a1ij*kETAij(iComp,jComp) 	!this is a new term b/c kij=kij(eta)
+			z1Mix=z1Mix+xFrac(iComp)*xFrac(jComp)*(z1ij+dKijDeta*a1ij)
+			a1KijMix=a1KijMix+xFrac(iComp)*xFrac(jComp)*a1ij*dKijDeta 	!this is a new term b/c kij=kij(eta)
 			a2ijSq=( bVoli*bVolj * a2i*a2j )
 			if(a2ijSq < 0)then
 				if(LOUD)pause 'MixRule Error:sqArg < 0 for a2ijSq'
@@ -1345,20 +1340,150 @@ end	!Subroutine QueryParPureSpead
 			if(a2j < 0)	z2jPart=z2j*SQRT(a2i/a2j)
 			z2ij=(1-bipKij)*( z2jPart+z2iPart )/2  !jre072304  THIS IS WHY A2J CANNOT BE ZERO
 			z2ij=z2ij*SQRT( bVoli*bVolj )/bVolMix !this should be same result as form for z0, but simpler connection to old molfrac basis. 
-			z2Mix=z2Mix+xFrac(iComp)*xFrac(jComp)*(z2ij+kETAij(iComp,jComp)*a2ij)
-			a2KijMix=a2KijMix+xFrac(iComp)*xFrac(jComp)*a2ij*kETAij(iComp,jComp) 	!this is a new term b/c kij=kij(eta)
+			z2Mix=z2Mix+xFrac(iComp)*xFrac(jComp)*(z2ij+dKijDeta*a2ij)
+			a2KijMix=a2KijMix+xFrac(iComp)*xFrac(jComp)*a2ij*dKijDeta 	!this is a new term b/c kij=kij(eta)
    			aMixQuadPart(iComp)=aMixQuadPart(iComp)+xFrac(jComp)*(a1ij+a2ij/tKelvin)/tKelvin
 		enddo  !jComp
 	enddo !iComp
 	!if(LOUD.and.init)print*,'MixRule: Calling all done except derivative calcs. isZiter = ',isZiter
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!C Added by AFG 2010
-!C Deleted by JRE: See FuTpt2d20221229.f90 for old code to compute derivatives of phys terms. Deprecated in favor of NumDervs for all.																							  C
+!C Added by AFG 2010																							  C
 !C Derivatives of ref. and perturbation terms in respect to eta and N											  C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-100	if (isZiter== -1) then !compute derivatives analytically. I gave up on this...(?) JRE
-		continue
+100	if (isZiter==0) then
+		DO I=1,nComps
+			deta_dN(I)=eta*bVolCC_mol(I)/bVolMix
+			dbVolMix_dN(I)=bVolCC_mol(I)-bVolMix
+			detaRef_dN(I) =etaRef*bRef(I)/bRefMix
+			dbRefMix_dN(I)=bRef(I)-bRefMix
+		ENDDO
+		do iComp=1,nComps
+			call TptTerms(isZiter,nComps,iComp,etaStd,etaRefStd,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
+			solParEntro(iComp)=SQRT( a0i*1.987d0*298.d0*etaStd/bRef(iComp) )
+			solParEnerg(iComp)=SQRT(-a1i*1.987d0*etaStd/bVolCC_mol(iComp) )
+			dSPEntro_deta(iComp)=0.5d0*1.987d0*298.d0*etaRefStd/bRef(iComp)*da0i_deta/solParEntro(iComp)
+			dSPEnerg_deta(iComp)=-0.5d0*1.987d0*etaStd/bVolCC_mol(iComp)*da1i_deta/solParEnerg(iComp)
+		enddo
+
+		rhoMol_cc=eta/bVolMix 
+		a0KijMix=0 ! new for kij=kij(eta), maybe not necessary.
+		a1KijMix=0 ! new for kij=kij(eta)
+		a2KijMix=0 ! new for kij=kij(eta)
+		dz0Mix_deta=0.d0
+		dz1Mix_deta=0.d0
+		dz2Mix_deta=0.d0
+		da0Mix_deta=0.d0
+		da1Mix_deta=0.d0
+		da2Mix_deta=0.d0
+		do iComp=1,nComps
+			bVoli=bVolCC_mol(iComp)
+			daMixQuadPart_deta(iComp)=0.d0
+			call TptTerms(isZiter,nComps,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
+			if (nComps.eq.1) then
+				dz0Mix_deta=dz0i_deta !dz0i_dEta comes from common/derv...
+				dz1Mix_deta=dz1i_deta
+				dz2Mix_deta=dz2i_deta
+				d2z0Mix_deta2=d2z0i_deta2
+				d2z1Mix_deta2=d2z1i_deta2
+				d2z2Mix_deta2=d2z2i_deta2
+				d3z0Mix_deta3=d3z0i_deta3
+				d3z1Mix_deta3=d3z1i_deta3
+				d3z2Mix_deta3=d3z2i_deta3
+
+  				da1Mix_deta=da1i_deta
+				d2a1Mix_deta2=d2a1i_deta2
+				d3a1Mix_deta3=d3a1i_deta3 
+				
+				da2Mix_deta=da2i_deta
+				d2a2Mix_deta2=d2a2i_deta2
+				return 
+			endif
+			dz0i_old_deta=dz0i_deta
+			da0i_old_deta=da0i_deta
+			dz1i_old_deta=dz1i_deta
+			da1i_old_deta=da1i_deta
+			dz2i_old_deta=dz2i_deta
+			da2i_old_deta=da2i_deta
+			do jComp=1,nComps
+				bVolj=bVolCC_mol(jComp)
+				call TptTerms(isZiter,nComps,jComp,eta,etaRef,a0j,a1j,a2j,z0j,z1j,z2j,iErrTpt)
+				dz0j_deta=dz0i_deta
+				dz0i_deta=dz0i_old_deta
+				da0j_deta=da0i_deta
+				da0i_deta=da0i_old_deta
+
+				dz1j_deta=dz1i_deta
+				dz1i_deta=dz1i_old_deta
+				da1j_deta=da1i_deta
+				da1i_deta=da1i_old_deta
+
+				dz2j_deta=dz2i_deta
+				dz2i_deta=dz2i_old_deta
+				da2j_deta=da2i_deta
+				da2i_deta=da2i_old_deta
+
+		   		vij=(bRef(iComp)+bRef(jComp))/2.d0
+				chiS=vij*chiConst*(solParEntro(iComp)-solParEntro(jComp))**2
+				ksij=(ks0ij(iComp,jComp)+eta*ks1ij(iComp,jComp))*chiS
+				dchiS_deta=vij*chiConst*(dSPEntro_deta(iComp)-dSPEntro_deta(jComp))**2
+				dksij_deta=ks1ij(iComp,jComp)*chiS+eta*ks1ij(iComp,jComp)*dchiS_deta
+
+				aRefij=SQRT( bRef(iComp)*bRef(jComp)*a0i*a0j )*(1.d0-ksij)/bVolMix  !NOTE: genlzd value for ksij is -0.04
+				zRefij=SQRT( bRef(iComp)*bRef(jComp)/(a0i*a0j) ) /2.d0
+				daRefij_deta=(bRef(iComp)*bRef(jComp)*(da0i_deta*a0j+da0j_deta*a0i))/(2.d0*SQRT( bRef(iComp)*bRef(jComp)*a0i*a0j ))*(1.d0-ksij)/bVolMix+(-dksij_deta/bVolMix)*SQRT( bRef(iComp)*bRef(jComp)*a0i*a0j )
+				da0Mix_deta=da0Mix_deta+xFrac(iComp)*xFrac(jComp)*daRefij_deta
+				dzRef=(1/2.d0)*(-bVoli*bVolj*(da0i_deta*a0j+da0j_deta*a0i)/((a0i*a0j)*(a0i*a0j)))/(2.d0*SQRT( bVoli*bVolj/(a0i*a0j)))
+				zRefij=zRefij*( z0i*a0j+a0i*z0j )/bVolMix*(1-ksij)	! check: a0j/sqrt(a0ij) and sqrt(bi*bj)/bMix cancel so units are zRef. 
+				dzRefij_deta=dzRef*( z0i*a0j+a0i*z0j )/bVolMix*(1-ksij)+(SQRT( bRef(iComp)*bRef(jComp)/(a0i*a0j) ) /2.d0)*( ( z0i*a0j+a0i*z0j )*(-dksij_deta/bRefMix)+((1-ksij)/bRefMix)*((dz0i_deta*a0j+da0j_deta*z0i)+(da0i_deta*z0j+dz0j_deta*a0i)) )
+				dKijDeta=(-ks1ij(iComp,jComp)*eta)/(1.d0-ksij) !really this is eta*dKijDeta/(1-ksij)
+				d2KijDeta2=(-ks1ij(iComp,jComp)*(1.d0-ksij)+dksij_deta*(-ks1ij(iComp,jComp)*eta))/(1.d0-ksij)**2
+				dz0Mix_deta=dz0Mix_deta+xFrac(iComp)*xFrac(jComp)*( dzRefij_deta+d2KijDeta2*aRefij+dKijDeta*daRefij_deta )
+				dbipKij_deta=KTIJ(iComp,jComp)	! This includes KTii=KTij(1,1)
+				if(iComp==jComp.and.nComps==2)bipKij=0
+
+				a1ijSq=( bVoli*bVolj * a1i*a1j )
+				a1ij=-SQRT(a1ijSq)*(1-bipKij)/bVolMix
+				!if(LOUD)print*,'MixRule: i,j,a1ij,a2ij = ',iComp,jComp,a1ij,a2ij
+				da1ij_deta=-(bVoli*bVolj*(da1i_deta*a1j+da1j_deta*a1i))/(2.d0*SQRT(a1ijSq))*(1-bipKij)/bVolMix-SQRT(a1ijSq)*(-dbipKij_deta/bVolMix)
+				da1Mix_deta=da1Mix_deta+xFrac(iComp)*xFrac(jComp)*da1ij_deta
+				z1ij=(1-bipKij)*( z1j*SQRT(a1i/a1j)+z1i*SQRT(a1j/a1i) )/2.d0
+				dz1=(-dbipKij_deta/2.d0)*( z1j*SQRT(a1i/a1j)+z1i*SQRT(a1j/a1i) )+((1-bipKij)/2.d0)*(dz1j_deta*SQRT(a1i/a1j)+z1j*(da1i_deta*a1j-da1j_deta*a1i)/(a1j**2)/(2.d0*SQRT(a1i/a1j))+dz1i_deta*SQRT(a1j/a1i)+z1i*(da1j_deta*a1i-da1i_deta*a1j)/(a1i**2)/(2.d0*SQRT(a1j/a1i)))
+				z1ij=z1ij*SQRT( bVoli*bVolj )/bVolMix  
+				dz1ij_deta=dz1*SQRT( bVoli*bVolj )/bVolMix
+				dKijDeta=(-KTIJ(iComp,jComp)*eta)/(1-bipKij) !really this is dKijDeta/(1-bipKij)
+				d2KijDeta2=(-KTIJ(iComp,jComp)*(1-bipKij)+dbipKij_deta*(-KTIJ(iComp,jComp)*eta))/((1-bipKij)*(1-bipKij))
+				dz1Mix_deta=dz1Mix_deta+xFrac(iComp)*xFrac(jComp)*(dz1ij_deta+d2KijDeta2*a1ij+dKijDeta*da1ij_deta)
+				a1KijMix=a1KijMix+xFrac(iComp)*xFrac(jComp)*a1ij*dKijDeta 	!this is a new term b/c kij=kij(eta)
+				!if(LOUD)print*,'MixRule: i,j,dz1ij_deta = ',iComp,jComp,dz1ij_deta
+				
+				a2ijSq=( bVoli*bVolj * a2i*a2j )
+				a2ij=-SQRT(a2ijSq)*(1-bipKij)/bVolMix
+				if(a2ij .ge. 0)cycle
+				da2ij_deta=-(bVoli*bVolj*(da2i_deta*a2j+da2j_deta*a2i))/(2.d0*SQRT(a2ijSq))*(1.d0-bipKij)/bVolMix-SQRT(a2ijSq)*(-dbipKij_deta/bVolMix)
+				da2Mix_deta=da2Mix_deta+xFrac(iComp)*xFrac(jComp)*da2ij_deta
+				!if(LOUD)print*,'MixRule: i,j,a1ij,a2ij = ',iComp,jComp,a1ij,a2ij
+				z2ij=(1-bipKij)*( z2j*SQRT(a2i/a2j)+z2i*SQRT(a2j/a2i) )/2  !jre072304
+				dz2=(-dbipKij_deta/2.d0)*( z2j*SQRT(a2i/a2j)+z2i*SQRT(a2j/a2i) )+((1.d0-bipKij)/2.d0)*(dz2j_deta*SQRT(a2i/a2j)+z2j*(da2i_deta*a2j-da2j_deta*a2i)/(a2j**2)/(2.d0*SQRT(a2i/a2j))+dz2i_deta*SQRT(a2j/a2i)+z2i*(da2j_deta*a2i-da2i_deta*a2j)/(a2i**2)/(2.d0*SQRT(a2j/a2i)))
+				z2ij=z2ij*SQRT( bVoli*bVolj )/bVolMix  
+				dz2ij_deta=dz2*SQRT( bVoli*bVolj )/bVolMix
+				dz2Mix_deta=dz2Mix_deta+xFrac(iComp)*xFrac(jComp)*(dz2ij_deta+d2KijDeta2*a2ij+dKijDeta*da2ij_deta)
+				a2KijMix=a2KijMix+xFrac(iComp)*xFrac(jComp)*a2ij*dKijDeta 	!this is a new term b/c kij=kij(eta)
+				daMixQuadPart_deta(iComp)=daMixQuadPart_deta(iComp)+xFrac(jComp)*(daRefij_deta+(da1ij_deta+da2ij_deta/tKelvin)/tKelvin)
+			enddo  !jComp
+		enddo !iComp
+
+		DO I=1,nComps
+			dz0Mix_dN(I)=dz0Mix_deta*detaRef_dN(I)
+			da0Mix_dN(I)=da0Mix_deta*detaRef_dN(I)
+			dz1Mix_dN(I)=dz1Mix_deta*deta_dN(I)
+			da1Mix_dN(I)=da1Mix_deta*deta_dN(I)
+			dz2Mix_dN(I)=dz2Mix_deta*deta_dN(I)
+			da2Mix_dN(I)=da2Mix_deta*deta_dN(I)
+			DO m=1,nComps
+				daMixQuadPart_dN(I,m)=daMixQuadPart_deta(I)*deta_dN(m)  !I think this is slightly off for He and H2 mixes. JRE 20200406
+			ENDDO
+		ENDDO
 	endif
 
 	return
@@ -1378,8 +1503,8 @@ end	!Subroutine QueryParPureSpead
 	DIMENSION xFrac(NMX),aMixQuadPart(NMX),bRef(NMX)
 	DIMENSION solParEntro(NMX),solParEnerg(NMX) !,zRefMix(5), !a1Mix(5),a2Mix(5),
 	!dimension cRef(NMX,3),cRefMix(3)
-	!dimension ks0ij(NMX,NMX),ks1ij(NMX,NMX)
-	!common/ksvall/ks0ij,ks1ij
+	dimension ks0ij(NMX,NMX),ks1ij(NMX,NMX)
+	common/ksvall/ks0ij,ks1ij
 	!common/XsProps/a0XssS
 	!common/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	!data initial/1/
@@ -1573,7 +1698,7 @@ end	!Subroutine QueryParPureSpead
 	character*77 errMsg(22)
 	!doublePrecision moleStep,mShape(NMX)
 	LOGICAL LOUDER
-	!integer assocFlag
+	integer assocFlag
 	DIMENSION xFrac(NMX),aMixQuadPart(NMX),FUGASSOC(NMX),bRef(NMX),gmol(NMX),chemPo(NMX) !,gmol_old(NMX)
 
 	DIMENSION dFUGASSOC_dT(NMX),dFUGASSOC_dRHO(NMX) !,dh_dN(NMX),dFUGASSOC_dN(NMX,NMX)	  
@@ -1688,7 +1813,7 @@ end	!Subroutine QueryParPureSpead
     zAssoc=0
     aAssoc=0
     uAssoc=0
-    if(iErr < 11)call Wertheim(isZiter,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
+    if(iErr < 11)call Wertheim(isZiter,vMolecNm3,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
 !	if( ABS(zAssoc) < 1e-11 )print*,'zAssoc ~ 0???'		 !for debugging
 	IF(iErrCode)then
 		!iErr=iErrCode
@@ -1697,8 +1822,13 @@ end	!Subroutine QueryParPureSpead
 		return
 	endif
 	iDoSolvation=0 ! all of aBipDA is zero as of 20221226, so no need to do solvation. 
-	if ( ABS(zAssoc) > zeroTol .and. isZiter==0) then
-		if(iDoSolvation==1)call WertheimFugc(xFrac,tKelvin,nComps,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
+	if ( ABS(zAssoc) > zeroTol ) then
+		assocFlag=1
+		if(isZiter==0.and.iDoSolvation==1)then
+			call WertheimFugc(xFrac,vMolecNm3,tKelvin,nComps,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
+		endif
+	else
+		assocFlag=0
 	endif
 
 	if(iErr > 10)then
@@ -1786,18 +1916,97 @@ end	!Subroutine QueryParPureSpead
 	enddo
 	return
 	end
+	
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+	subroutine ChemPoCalcTpt(chemPo,eta,tKelvin,gmol,nComps,iErr)
+	!need bVolMix to get rho from eta because alpha(i) ~ rho*bondVol(i) ~ eta*bondVol(i)/bVolMix
+	!need vMolecNm3 in Wertheim	just because Marty wrote the code badly.  
+	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
+	USE BIPs
+	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
+	DoublePrecision chemPoAssoc(NMX),chemPo(NMX),xFrac(NMX),gmol(NMX)!,aAttk(NMX)
+	!DIMENSION bVolCC_mol(NMX)!,xFrac_old(NMX),dXA_dx(NMX)
+	DIMENSION aMixQuadPart(NMX),bRef(NMX) !,zRefMix(5)!,a1Mix(5),a2Mix(5)
+	DIMENSION dFUGASSOC_dT(NMX),dFUGASSOC_dRHO(NMX)!,FUGASSOC(NMX),dh_dN(NMX),dFUGASSOC_dN(NMX,NMX)
+
+	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	!COMMON/HbParms/dHkcalMol(NMX),bondVolNm3Esd(NMX)
+	!COMMON/HbParms2/ND(NMX),NDS(NMX),NAS(NMX)
+	!COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
+	!common/aRG/zNC,aDepNC
+
+	iErr=0
+	!iErr=10 => SUMX .ne. 1
+	!iErr=11 => -ve zFactor calculated
+	totMoles=SUM(gmol) ! SUM() is an intrinsic function
+	if(ABS(totMoles) < 0.001 .and. LOUD)pause 'FuTpt: totMoles ~0? Will try renormalizing, but you should check input.'
+	bVolMix=0
+	bRefMix=0
+    DO i=1,nComps
+		xFrac(i)=gmol(i)/totMoles
+        bVolMix=bVolMix+xFrac(i)*bVolCC_mol(i)
+		bRef(I)=bVolRef(i,tKelvin) !Function bVolRef()
+        bRefMix=bRefMix+xFrac(i)*bRef(i)
+	ENDDO
+	isZiter=0 ! need ChemPo's etc.
+	call MixRule(isZiter,xFrac,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
+	if(iErrMix > 10 .and. LOUD)pause 'ChemPoCalctpt: fatal error from MixRule.'
+	aAtt=(a1Mix+a2Mix/tKelvin)/tKelvin  
+	zAtt=(z1Mix+z2Mix/tKelvin)/tKelvin
+	Gf=1
+	dGf_dEta=0
+	if(nComps==1)call GaussFun3(tKelvin,eta,Gf,dGf_dEta,d2Gf_dEta2,cpGf,uDepGf,iErr)
+	aAtt=( a1Mix+ a2Mix/tKelvin*Gf)/tKelvin 	 !
+	zAtt=( z1Mix+ z2Mix/tKelvin*Gf+a2Mix/tKelvin*eta*dGf_dEta)/tKelvin	 ! 
+	uAtt=(a1Mix+ 2.d0*a2Mix/tKelvin*Gf+a2Mix/tKelvin*uDepGf )/tKelvin 
+	rhoMol_Cc=eta/bVolMix
+	call Wertheim(isZiter,vMolecNm3,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,chemPoAssoc,iErrCode) !NDS,NAS,ND,
+	IF(iErrCode.ne.0)then
+		iErr=iErrCode
+		if(LOUD)pause ' FuTpt: Wertheim gave error.'
+		return
+	endif
+! The last term is the nonClassical part of Z, omitted as of 20221227.
+	zFactor=(1+z0Mix+zAtt+zAssoc) !+zNC
+	
+	if(zFactor < zeroTol)then
+		if(LOUD)write(*,*)'zFactor=',zFactor 
+		if(LOUD)pause 'ChemPoCalcTpt: zFactor < zeroTol. LOG(Z)?'
+		iErr=11
+		return
+	endif
+	call WertheimFugc(xFrac,vMolecNm3,tKelvin,nComps,eta,chemPoAssoc,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)! ,NDS,NAS,ND
+	DO kComp=1,nComps
+		bVolk=bVolCC_mol(kComp) 
+		bRefk=bVolRef(kComp,tKelvin) !Function bVolRef()...
+		FUGREP=bRefk/bRefMix*(z0Mix-a0Mix)
+		FUGATT=bVolk/bVolMix*(zAtt - aAtt)
+		!aAttQuadPart=aAttQuadPart+etaPow*aMixQuadPart(kComp,iCoeff)
+		FUGQUAD=2.d0*aMixQuadPart(kComp) !we lump all the quadparts together in the current version.  
+		FUGBON=chemPoAssoc(kComp)
+		
+! The last two terms comprise the nonClassical part of Fugacity
+		chemPo(kComp)=FUGREP+FUGATT+FUGQUAD+FUGBON-DLOG(zFactor) !+(zNC-aDepNC)*bVolk/bVolMix+2.d0*aDepNC 
+		if(LOUD)write(*,'(a,6E12.4)')' ChemPo:fugrep,fugatt,fugquad,fugbon,Z',fugrep,fugatt,fugquad,fugbon,zFactor
+	enddo
+	!print*,'a0mix,aAtt,z0mix,zAtt',a0mix,aAtt,z0mix,zAtt
+	!print*,'gRes,ChemPo',(a0mix+aAtt+z0mix+zAtt),(fugrep+fugAtt+fugQuad)
+	!pause 'check parts.'
+	return
+	end
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	DoublePrecision Function bVolRef(i,tKelvin)
-	USE GlobConst !, only:ID 
-	USE SpeadParms, only:isHeNeH2
+	USE GlobConst !id()
     Implicit DoublePrecision(A-H,O-Z)
 	!Purpose: Enable softening of the reference contribution using the E&D FPE'86 correlation.
 	DoublePrecision nEff ! simplifies the equations while accurately conveying the name.
     dEhs_sigmaCube=1
-    if(isHeNeH2(i))then  !isHeNeH2(i) is part of GlobConst
-        nEff=9	 ! H2(902),D2(925),Ne(919)
-		if(id(i)==913.or.id(i)==923)nEff = 15	  !He3,He4
+    if(id(i)==913 .or. id(i)==902)then  !id(i) is part of GlobConst
+        nEff=9
+		if(id(i)==913)nEff = 15
 		p2 = (.0093d0*nEff-.0592d0)*nEff !E&D(1986)
 		p2 = ( (nEff-6)/6 )**2 /exp(  gammln( (nEff-3)/nEff )  )**(2*nEff/3) ! ESK(2019)
 		!print*,'bVolRef: p2 = ', p2
@@ -1805,7 +2014,7 @@ end	!Subroutine QueryParPureSpead
 		p1 = (nEff-1)  
 		p1 = 1.13*nEff-3.28 !ESK(2019) 
 		eps_kB=2	!Helium
-		if(id(i)==902.or.id(i)==925.or.id(i)==919)eps_kB=15	 ! H2,D2,Ne
+		if(id(i)==902)eps_kB=15
         Tstar=tKelvin/eps_kB !eps/kB for softness correction.
 		rMin_sigmaCube=(nEff/6)**(3/(nEff-6)) 
 		E0=1  !E&D
@@ -1846,9 +2055,10 @@ end	!Subroutine QueryParPureSpead
 	!DIMENSION XA(NMX),XD(NMX),chemPoAssoc(NMX)!,aAttk(NMX)
 	dimension xFracPert(NMX),chemPo(NMX),xFrac(NMX),gmol(NMX),bRef(NMX)
 	DIMENSION aMixQuadPart(NMX) !,zRefMix(5)!,a1Mix(5),a2Mix(5)
-	!common/HbParms/dHkcalMol(NMX),bondVolNm3Esd(NMX)
-	!COMMON/HbParms2/ND(NMX),NDS(NMX),NAS(NMX)
-	!common/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
+	!common/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
+	common/HbParms/dHkcalMol(NMX),bondVolNm3Esd(NMX)
+	COMMON/HbParms2/ND(NMX),NDS(NMX),NAS(NMX)
+	common/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 
 	iErr=0
 	totMoles=SUM(gmol) ! SUM() is an intrinsic function

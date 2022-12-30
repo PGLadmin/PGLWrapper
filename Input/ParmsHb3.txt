@@ -1,16 +1,16 @@
-56	nDs	nAs	bondVNm3	bVolSlo	eHbKcal_mol 	
+54	nDs	nAs	bondVNm3	bVolSlo	eHbKcal_mol 	
  0 2	0	0	0.000200	0	0	CO2
  0 3	1	1	0.001000	0	1.8	NH3
  0 4	2	2	0.000200	0	1	H2S
 0 15	1	1	0.0003000	0	1	NO
- 3 8	1	0	0.000100	0	4.36	Proton on >CH-h where h is halogen.
+3 10	1	0	0.000100	0	4.36	Proton on >CH-h where h is halogen.
  7 1	1	0	0.000003 	0	0.5	Butadiene solvation with ACN/DMF
  7 2	1	0	0.000003 	0	0.5	Butadiene solvation with ACN/DMF
  8 2	1	0	0.000003 	0	0.5	Butadiene solvation with ACN/DMF
  8 2	1	0	0.000003 	0	0.5	Butadiene solvation with ACN/DMF
 11 1	1	0	0.000003 	0	0.5	cis/transButene solvation with ACN/DMF
 11 2	1	0	0.000800 	0	2	H<CN> in Hydrogen Cyanide
-12 2	1	0	0.000800	0	2	C of <CN> in acetonitrile (with 2302)
+12 2	1	1	0.000800	1	1	C of <CN> in acetonitrile (with 2302)
 12 3	1	0	0.000003 	0	.5	Butadiene solvation with ACN/DMF
 12 4	1	0	0.000800 	0	2	Butadiene solvation with ACN/DMF
 13 1	2	2	0.001070	0	2.8	H2O
@@ -23,18 +23,17 @@
 14 7	0	1	0.000500	0	4.0	EtLactate(?)intrabonding
 14 8	1	1	0.001500	0	5	OH- attached to non-aromatic ring, e.g. cyclohexanol
 14 9	1	1	0.000400	0	4.7	glycerol
-14 10	1	1	0.000200	0	2.5	NO2 (dimerizes to N2O4)
+14 10	1	1	0.000200	0	2.5	NO2 (dimerizes to N2O4), carbinol (e.g., 2ButoxyEthanol)
 14 11	1	1	0.002500	0	5	Glycol
-14 12	1	1	0.000200	0	0.5	HO in carboxy acid
 15 1	0	1	0.000700	0	1.3	>O aliphatic ether
 15 4	0	1	0.000700	0	1.3	>O 6ring ether
-16 0	1	1	0.002500	0	1.3	O= 3.2 Acetone
-16 1	1	1	0.002500	0	1.3	O= 2butanone?
+16 0	0	1	0.002500	0	1.3	O= 3.2 Acetone
+16 1	0	1	0.002500	0	1.3	O= 2butanone, 
 16 2	0	1	0.000800	0	5	O= Ester
-16 3	0	1	0.000000053	-10	7.5	O= in carboxy acid !same bondVol used for C-C (dimer) site on this interaction, eHbCC=3*eHbAD.
+16 3	1	1	0.000000053	-10	7.5	O= in carboxy acid !same bondVol used for C-C (dimer) site on this interaction, eHbCC=3*eHbAD.
 16 5	0	1	0.000800	0	4.5	O= Amide (incl DMF)
 16 6	1	1	0.000100	123	1.5	O= Aldehyde(.0005,53,2),formate
-16 10	1	1	0.004300	0	1.8	O= middle -ketones & ring-ones?
+16 10	0	1	0.004300	0	1.8	O= middle -ketones & ring-ones, cyclopentanone
 18 1	1	1	0.000700	0	2	HS- nPrSH
 19 1	1	1	0.000800	0	2.2	NH2- in 1' amine, e.g. nPrNH2
 19 2	1	1	0.000800	0	3.2	NH2- in aniline, e.g. PphenylDiAmine
@@ -46,7 +45,6 @@
 21 1	0	1	0.000100	0	4.7	>N- in tri- amine, amide, e.g. TriEtAmine, DMF
 21 3	1	1	0.000033	422	2.2	>N- in Nitro, eg nitroethane.  We treat the N as associating even though it islike one O is +ve and the other is -ve.  But the O's have the same id and we can't put 1 donor and one acceptor on each O b/c that would be a 4Bsite model.
 22 1	0	1	0.000300	0	5.0	=AN- imine (pyridine) (=> 4.1 with water)
-23 2	0	1	0.000800	0	2	N of <CN> in acetonitrile (with 1202)
 24 0	1	1	0.012000	0	1	Cl- in HCl
 24 4	1	0	0.000300	0	3	triCl- in chloroform
 24 6	2	0	0.000700	0	1.65	diCl- in dichloromethane
@@ -58,3 +56,4 @@
 
 10 1	1	0	0.000003 	0	0.5	12Butadiene solvation with ACN/DMF
 19 1	1	1	0.000400	35	2.2	NH2- in 1' amine e.g. nPrNH2
+14 12	1	1	0.000200	0	0.5	HO in carboxy acid

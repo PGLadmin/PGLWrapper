@@ -355,7 +355,161 @@ end	! SetParPureEsd
 	!	bMix	cshapemix	cbMix	qYbMix	k1YbMix	etaLiq	zRep	zAtt	zAssoc	sqrt(alpha1)	fAssoc	kbe(1)
 	!	34.044	1.883551	64.1246	107.349	71.1151	0.30995	5.68055	-5.6358	-1.0410		4.701303	0.65418	998.0017
 
-	SUBROUTINE FugiESD2(T,P,X,nC,LIQ,FUGC,zFactor,ier)
+	SUBROUTINE FugiESD2(tKelvin,pMPa,xFrac,NC,LIQ,FUGC,zFactor,ier)
+	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS	  + GlobConst{rGas,Tc,Pc,...}
+	USE BIPs
+	IMPLICIT DoublePrecision(A-H,K,O-Z)
+	DoublePrecision xFrac(NMX),FUGC(NMX) !,chemPoAssoc(nmx)
+	Integer ier(12) 
+	LOGICAL LOUDER
+	!  ND IS THE DEGREE OF POLYMERIZATION OF EACH SPECIES
+	!  eokP IS THE DISPERSE ATTRACTION OVER BOLTZ k FOR PURE SPECIES
+	!  KCSTAR IS THE BONDING VOLUME IN NM^3 
+	!  DH IS THE BONDING ENERGY /RTC 
+	!  C,Q,bVol ARE THE PURE COMPONENT EOS PARAMETERS
+	!  KIJ IS THE BINARY INTERACTION COEFFICIENT 
+	!  zFactor IS PV/NoKT HERE  
+	!  ier = 1 - AT LEAST ONE ERROR
+	!        2 - NOT USED
+	!        3 - NOT USED
+	!        4 - ERROR IN ALPHA CALCULATION, SQRT(ALPHA) OR ITERATIONS
+	!        5 - rho IS -VE
+	!        6 - TOO MANY Z ITERATIONS
+	!        7 - eta > 0.53
+	!		11 - goldenZ instead of real Z.
+	!
+	!COMMON/ETA/ETAL,ETAV,ZL,ZV
+	DATA INITIAL/1/  !Zm=9.5 since 1996, at least.  It is 9.5 in the CHEMCAD documentation, the EL text, and 2002.  It is not mentioned in ref[2,3,4,5,6]
+	LOUDER=LOUD
+	!LOUDER=.TRUE.
+	ier=0 !vector initialization
+
+	iErrTmin=0
+	TminTot=.01
+	TrVolatile=0.1
+	if(LOUDER)call QueryParMix(1,checkKij12,iErrBip)
+	if(LOUDER)print*,'FugiEsd2: Kij(1,2)= ',checkKij12
+	DO I=1,NC
+		rLogPr=DLOG10( 0.0001/Pc(i) )	! ESD not recommended below 0.0001 MPa for pure fluids. For mixes, ensure most volatile comp has Psat > 0.0001 MPa. Think about polymers.
+		aScvp=7*(1+acen(i))/3	 !SCVP: log10(Pr)=7(1+w)/3*(1-1/Tr) = a*(1-x) 
+		xt1= 1-rLogPr/aScvp  ! x = 1/Tr at Psat=0.0001 MPa, first approximation of x = x1 + dx
+		xt = xt1 -0.178*acen(i)*acen(i)*(1-xt1)*(1-xt1)  ! This crude empirical correlation was developed for nonadecanol.  cf. PGL6Samples.xlsx(nC19oh).
+		if( xt > 2.222)xt = 2.2222	!1/2.2222 = 0.45. If 
+		if( xt < 1 .and. LOUD)pause 'FugiEsd: TrMin > Tc???'
+		TrMin = 1/xt ! = min( Tr@Psat=0.0001 or 0.45 )
+		if(initial .and. LOUD)print*,'xt1,xt,TrMin',xt1,xt,TrMin
+		if( tKelvin/ Tc(i) < TrMin .and. NC==1)iErrTmin=iErrTmin+1
+		if( tKelvin/Tc(i) > TrVolatile) TrVolatile=tKelvin/Tc(i)  ! The largest TrVolatile is the Tr of the compd with lowest Tc. 
+		if( Tc(i)*TrMin > TminTot) TminTot=Tc(i)*TrMin	 ! The largest Tmin is the weakest link. 
+		if( Tc(i)*TrMin > TminTot .and. LOUD) print*,'i,Tmin(i): ', i,Tc(i)*TrMin
+		IF(xFrac(I) < 0 .and. LOUD)PAUSE 'FugiEsd: ERROR - Xi<0'
+	enddo 
+	if(TrVolatile < 0.44d0)iErrTmin =2 ! it's only a problem if the most volatile compound has Tr < 0.45 or Psat < 0.0001.
+	if(iErrTmin > 0) then
+		ier(1)=5
+		ier(2)=iErrTmin
+		if(LOUD)print*,'FugiEsd: T(K) < Tmin(all i)',tKelvin,TminTot
+		!if(LOUD) pause 'FugiEsd: at least one compound has Tr < TrMin'
+		!return  !! make this a warning for Vex,Hex etc.  
+	endif
+	sumx=SUM( xFrac(1:NC) )
+	if(ABS(sumx-1) > 1e-8)then
+		if(LOUDER)pause 'FugiEsd: sumx .ne. 1'
+	endif
+	!INITIATE SECANT ITERATION ON rho
+	bMix=SUM( xFrac(1:NC)*bVolCC_mol(1:NC) )
+	Pb_RT=pMPa*bMix/(Rgas*tKelvin)
+	!GUESS FOR rho
+	eta=Pb_RT/1.05D0  !NOTE: Pb_RT > 1 can happen when Z >>1, like at GPa.
+	IF(LIQ==1 .or. LIQ==3 .or. eta>etaMax)eta=etaMax/1.15d0
+	rho=eta/bMix
+	if(eta > 1/1.9 .and. LOUDER)print*,'FugiEsd:etaInit > etaMax. P,T=',pMPa,tKelvin 
+	isZiter=1 ! FUGC calculations are skipped for isZiter=1
+	Call FuEsd2Vtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
+	IF(iErr > 10)GOTO 86
+	etaOld=eta
+	ERROLD=Pb_RT-eta*zFactor
+
+	eta=etaOld/1.15D0
+	IF (eta < 0 .and. LOUD) WRITE(6,31)LIQ
+	rho=eta/bMix
+	if(initial.and.LOUD)print*,'FugiEsd2: initial eta,err',etaOld,errOld
+	itMax=77
+	errBestEta=1234
+	do nIter=1,itMax
+		Call FuEsd2Vtot(isZiter,tKelvin,bMix/eta,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
+		IF(iErr > 10)EXIT
+		ERR=Pb_RT-eta*zFactor
+		CHNG=ERR/(ERR-ERROLD)*(eta-etaOld)
+		if(initial.and.LOUDER)write(*,'(a,2e11.4,3f10.5)')'FugiEsd2 eta,Z', eta,zFactor
+		if(initial.and.LOUDER)write(*,'(a,f8.5,e11.4,i3,9f8.3)')'FugiEsd2 eta,CHNG,niter',eta,CHNG,niter 
+		etaOld=eta
+		ERROLD=ERR
+		!  LIMIT THE CHANGE IN Density for liquid..
+		IF(liq==1.and.DABS(CHNG/etaOld) > 0.1D0)CHNG=DSIGN(0.1D0,CHNG)*etaOld
+		IF(liq==3.and.DABS(CHNG/etaOld) > 0.1D0)CHNG=DSIGN(0.1D0,CHNG)*etaOld
+		!  Low eta must move from zero, so you can't limit its % change
+		IF(liq==0.and.DABS(CHNG) > 0.02d0)CHNG=DSIGN(0.02D0,CHNG)
+		IF(liq==2.and.DABS(CHNG) > 0.02d0)CHNG=DSIGN(0.02D0,CHNG)
+ 		eta=eta-CHNG
+		if(ABS(CHNG) < errBestEta)then
+			etaBest=eta
+			errBestEta=ABS(CHNG)
+		endif
+		if(eta < 0 .or. eta > 1/1.9)eta=etaOld-DSIGN(0.1D0,CHNG)*etaOld
+		IF(DABS(CHNG) < 1.D-9 .and. eta > 0)EXIT  ! Don't use CHNG/eta here. Converge quickly to ideal gas if P->0, still ~9 sigfigs if liquid.
+	enddo !nIter=1,itMax
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!   Iteration Concluded    !!!!!!!!!!!!!!!!!!!!!!!!!
+	if(eta < 0 .or. eta > 1.9)then
+		if(LOUDER)pause 'eta < 0 or > 1.9 on final iteration in FugiESD.'
+		continue
+	endif
+	!One last call to get FUGC.
+	if(initial.and.LOUD)write(*,'(a,f8.5,e11.4,i3,9f8.3)')' FuEsd2 cnvrgd: eta,CHNG,niter',eta,CHNG,niter
+	etaPass=eta
+	rho=eta/bMix 
+	IF (rho < 0)THEN
+		ier(5)=1
+        ier(1)=15
+		if(LOUDER)WRITE(6,31)LIQ
+		GOTO 86
+	ENDIF
+!  ITERATION ON rho HAS CONCLUDED.  DEPARTURES PASSED THROUGH GlobConst.
+	if(eta > 0.43)write(*,'(a,i3,F8.2,2F8.5)')' FugiESD2: converged. nIter,eta,T,x1=',nIter,tKelvin,xFrac(1),eta
+	if(ABS(eta-rho*bMix) > 1E-11 .and. LOUDER)pause 'eta.ne.(rho*bMix)?'
+	if(pMPa==0 .and. LOUDER)print*,' FugiEsd2: P=0? LIQ,P=',LIQ,pMPa
+	!zFactor=P/(rho*rGas*T)  ! add this to improve precision when computing rho from Z after return.   
+	if(zFactor.le.0)then
+		ier(1)=11
+		if(LOUDER)print*,'FugiEsd2: converged Z <= 0. eta,Z=',eta,zFactor
+	endif
+	isZiter=0
+	rho=eta/bMix
+	Call FuEsd2Vtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
+	if(iErr > 0.or.nIter > itMax-1 .or. eta < 0)then ! if iErr still > 0 on last iteration, then declare error.
+		ier(4)=iErr
+		eta=etaBest
+		ier(11)=1
+		ier(1)=11
+	endif
+	FUGC(1:NC)=FUGC(1:NC)-DLOG(zFactor)	 !Must subtract ln(Z) when given Vtot as independent variable.
+	if(LOUDER)write(*,'(a,f8.5,e11.4,i3,9f8.3)')' FuEsd2: eta,CHNG,niter,FUGC',eta,CHNG,niter,(FUGC(i),i=1,NC) 
+	initial=0
+	return
+86	if(LOUDER)WRITE(6,*)' ERROR IN FuEsd96.  '
+31	FORMAT(1X,'LIQ=',1X,I1,2X,',','WARNING! rho -VE IN FUGI')
+	IF(NITER.GE.ITMAX)THEN
+		if(LOUDER)write(*,*)'TOO MANY Z ITERATIONS'
+		ier(6)=1
+        ier(1)=16
+	END IF
+	IF(ier(4)==1.and.LOUDER) WRITE(*,*)'ERROR IN FuEsd2Vtot'
+	if(ier(1) < 10)ier(1)=11
+	initial=0
+	RETURN
+	END	!FugiESD()
+	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+	SUBROUTINE FugiESD2a(T,P,X,nC,LIQ,FUGC,zFactor,ier)
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS	  + GlobConst{rGas,Tc,Pc,...}
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
@@ -759,113 +913,141 @@ end	! SetParPureEsd
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (fAssoc) AND zAssoc given rho,VM
 	Implicit DoublePrecision(A-H,K,O-Z)
 	!PARAMETER(NMX=55)
-	DoublePrecision X(NMX),RALPHA(NMX),RALPHD(NMX),XA(NMX),XD(NMX),rLnPhiAssoc(NMX) !,KVE(NMX)
+	DoublePrecision X(NMX),RALPHA(NMX),RALPHD(NMX),XA(NMX),XD(NMX),rLnPhiAssoc(NMX)
+	DoublePrecision KVEA(NMX),KVED(NMX) !,ralphTest(NMX)	!store and reuse values until ID's change.
+	dimension xOld(NMX),IDold(NMX) !,KVE(NMX)
 	!DoublePrecision ralphMatch(NMX)
     Integer ier(12)	 !NAS(NMX),NDS(NMX),ND(NMX),
-	LOGICAL LOUDER 
+	LOGICAL LOUDER
+	!data xOld/0,0,0,0,0,0,0,0,0,0,0/ 
 	!  NDi     = THE DEGREE OF POLYMERIZATION OF COMPO i
 	!  fAssoc  = THE CHARACTERISTIC ASSOCIATION = 1/RALPHi(1/XAi-1)
 	!  RALPHi  = ROOT OF ALPHA WHERE ALPHAi=rho*bVoli*KADi*Ei/(1-1.9eta)
-	!  ier     = 4  eta > 0.53
+	!  ier(1)     = 1   Warning: FA iteration failed to converge.
+	!  ier(1)     = 11  ralph calculation failed.
+	!  ier(1)     = 14  eta > 0.53
 	LOUDER=LOUD	! from GlobConst
 	!LOUDER = .TRUE. ! for local debugging.
+	picard=0.83D0
 
 	eta=rho*VM
 	voidFrac=1-1.9d0*eta
+	rdfContact=1/voidFrac
 	zAssoc=0
+	aAssoc=0
+	uAssoc=0
 	rLnPhiAssoc(1:Nc)=0
-      
-	DO I=1,6
-		ier(I)=0
-	ENDDO                                  
+	ier=0 !vector initialization.
+	if(LOUDER)print*,'eta,rho,x1=',eta,rho,x(1)
 
-	DO I=1,nC           
-		SQARGA=rho*KadNm3(I)*AvoNum*( EXP(epsA_kB(I)/tKelvin)-1 )/voidFrac
-		SQARGD=rho*KadNm3(I)*AvoNum*( EXP(epsD_kB(I)/tKelvin)-1 )/voidFrac
-		IF(SQARGA < 0 .or. SQARGD < 0)THEN
-			if(LOUDER)write(*,*)'SQARG < 0 IN ALPSOL '
-			ier(4)=1
-			RETURN
-		ENDIF
-		RALPHA(I)=DSQRT( SQARGA )
-		RALPHD(I)=DSQRT( SQARGD )
-	ENDDO
+	if(  SUM( ABS(ID(1:NC)-IDold(1:NC)) )>0  .or. ABS(tKelvin-tOld) > zeroTol  )then ! use stored values of KVE unless IDs change.
+		DO I=1,NC           
+			KVEA(I)=KadNm3(I)*AvoNum*( EXP(epsA_kB(I)/tKelvin)-1 )
+			KVED(I)=KadNm3(I)*AvoNum*( EXP(epsD_kB(I)/tKelvin)-1 )
+		ENDDO
+	endif
 
+	do i=1,NC
+		RALPHA(I)=DSQRT( rho*rdfContact*KVEA(i) )
+		RALPHD(I)=DSQRT( rho*rdfContact*KVED(i) )
+		if(LOUDER)write(*,'(a,i3,2F12.4)')' i,ralphA,ralphD=',i,ralphA(i),ralphD(i)
+	enddo
 	FA0=SUM( x(1:Nc)*NDS(1:Nc)*ralphD(1:Nc) )                       
 	FD0=SUM( x(1:Nc)*NAS(1:Nc)*ralphA(1:Nc) )
-	FA0=0
-	FD0=0
-	ralphAmean=0
-	ralphDmean=0
-	do i=1,Nc
-		FA0=FA0+x(i)*NDS(i)*ralphD(i)	
-		FD0=FD0+x(i)*NAS(i)*ralphA(i)
-		ralphAmean=ralphAmean+ralphA(i)*NAS(i)	
-		ralphDmean=ralphDmean+ralphD(i)*NDS(i)	
-	enddo 
-	if(FA0==0 .or. FD0==0)return ! no need to calculate if either no donors or no acceptors
-	if(LOUDER)print*,'NDS=',(NDS(i),i=1,Nc)
-	if(LOUDER)print*,'NAS=',(NDS(i),i=1,Nc)
-	NDStot=SUM(NDS(1:Nc))
-	NAStot=SUM(NAS(1:Nc))                       
-	ralphAmean=ralphAmean/NAStot	! crude initial guess
-	ralphDmean=ralphDmean/NDStot
-	ralphAmean=SUM( ralphA(1:Nc)*NAS(1:Nc) )/NAStot
-	ralphDmean=SUM( ralphD(1:Nc)*NDS(1:Nc) )/NDStot
-	FAold =0 ! low guess
-	FA    =FA0/(1+ralphDmean*FD0) ! ~result based on FA=0 for computing FD, but using ralphDmean to estimate FA.
-	FD    =FD0/(1+ralphAmean*FA0) ! ~result based on FA=0 for computing FD, but using ralphDmean to estimate FA.
-	error=FA-FAold
-	errOld=error
-	FAold=FA ! save FA to compare with next best estimate.
+	if(  sumxmy2(NC,X,xOld) > 1.D-5 .or. SUM( ABS(ID(1:NC)-IDold(1:NC)) )>0  )then ! keep old guesses for ralphMeans unless	composition changes.
+		avgNAS=SUM(x(1:NC)*NAS(1:NC))
+ 		avgNDS=SUM(x(1:NC)*NDS(1:NC))
+		moreDonors=1
+		if(avgNAS > avgNDS)moreDonors=0
+		ralphAmean=( MAXVAL(ralphA) )  ! MAXVAL is perfect if only one compound with A sites.
+		ralphDmean=( MAXVAL(ralphD) )
+		!ralphTest(1:NC) = ralphA(1:NC)-ralphAmean
+		if(avgNAS==0 .or. avgNDS==0)return ! that's all folks!
+		if(FD0/avgNAS /= ralphAmean)ralphAmean=FD0/avgNAS ! if only one compound with A sites, then avg=MAX. 
+		if(FA0/avgNDS /= ralphDmean)ralphDmean=FA0/avgNDS ! if only one compound with D sites, then avg=MAX. 
+		if(moreDonors)then
+			ralphDmean=ralphDmean*avgNAS/avgNDS
+		else
+			ralphAmean=ralphAmean*avgNDS/avgNAS
+		endif
+	else
+		if(etaOld>0)then ! adapt old values.to accelerate Z iterations.
+			ralphAmean=ralphAmean*SQRT(eta/etaOld*rdfContact/rdfOld)
+			ralphDmean=ralphDmean*SQRT(eta/etaOld*rdfContact/rdfOld)
+		endif
+	endif
+	if(FA0==0 .or. FD0==0)return ! no need to calculate solvation if either no donors or no acceptors
+	if(LOUDER)then
+		do i=1,NC
+			print*,'i,NAS,NDS',i,NAS(i),NDS(i)
+		enddo
+	endif
+
+	FDold = 0       ! low guess
+	errOld= -FD0	! sumA= FD0 when FD=0.
+	FAold = 0
+	errOld= -FA0
+		                       
 	NITER=0
-	ITMAX=55
-	do while(ABS(error)>1D-8.and.NITER<ITMAX)
+	ITMAX=44
+	avgFo=(ralphDmean*FD0+ralphAmean*FA0)/2
+	delFo=(ralphDmean*FD0-ralphAmean*FA0)
+	delFA=1+delFo
+	FA = 2*FA0/( delFA+DSQRT(delFA*delFA+4*ralphAmean*FA0) )
+	delFD=1-delFo
+	FD = 2*FD0/( delFD+DSQRT(delFD*delFD+4*ralphDmean*FD0) )	! How good is this quadratic estimate vs. secant?
+	if(ABS(delFo/avgFo)	< 0.1D0)picard=1.1 ! accelerate for symmetric solvation.
+	error=1234 !must initialize before while.
+	if(LOUDER)write(*,'(a,i3,2f8.3,2f12.6,4E12.4)')' ralphAmean,ralphDmean,FA,FD,FA0,FD0',nIter,ralphAmean,ralphDmean,FA,FD,FA0,FD0
+	Ftol=1.D-7
+	do while(ABS(error)>Ftol.and.ABS(FA-FAold)>Ftol.and.NITER<ITMAX)
 		NITER=NITER+1
-		ralphAold=ralphAmean !the point of this loop is to compute the new values and compare to old.
-		ralphDold=ralphDmean
+		!Solve quadratic
+		!delFA=1+(ralphDmean*FD0-ralphAmean*FA0)
+		!FA = 2*FA0/( delFA+DSQRT(delFA*delFA+4*ralphAmean*FA0) )
+		delFo=(ralphDmean*FD0-ralphAmean*FA0) !FYI:I tried setting FD=FA when delFo<Ftol, but it made things worse...?
+		delFD=1-delFo
+		FD = 2*FD0/( delFD+DSQRT(delFD*delFD+4*ralphDmean*FD0) )
+		delFA=1+delFo
+		FA = 2*FA0/( delFA+DSQRT(delFA*delFA+4*ralphAmean*FA0) ) ! This quadratic estimate is much better than secant.
 		sumA=0
 		do j=1,Nc
-			sumA=sumA+x(j)*NAS(j)*ralphA(j)/( 1+FA*ralphA(j) )
+			sumA=sumA+x(j)*NAS(j)*ralphA(j)/( 1+FA*ralphA(j) ) ! using best current estimate of FA=sumD(FD)
 		enddo
-		!FD=sumA
+		errD=(FD-sumA) ! If FD is right, then ralphMeans are right and FD=sumA. 
 		sumD=0
 		do j=1,Nc
 			sumD=sumD+x(j)*NDS(j)*ralphD(j)/( 1+FD*ralphD(j) )
 		enddo
-		ralphDmean= (-1+FA0/sumD)/(FD+1D-9) !add 1D-9 to avoid possible zero divide if FA->0
-		ralphAmean= (-1+FD0/sumA)/(FA+1D-9) !add 1D-9 to avoid possible zero divide if FD->0
-		!Solve quadratic
-		delFA=1+(ralphDmean*FD0-ralphAmean*FA0)
-		delFD=1-(ralphDmean*FD0-ralphAmean*FA0)
-		SQARG= delFA*delFA+4*ralphAmean*FA0
-		if(SQARG < 0)then
-			print*,'AlpsolEz2: SQARG(A)<0'
-		else
-			FA = 2*FA0/( delFA+SQRT(SQARG) )
-		endif
-		SQARG= delFD*delFD+4*ralphDmean*FD0
-		if(SQARG < 0)then
-			print*,'AlpsolEz2: SQARG(D)<0'
-		else
-			FD = 2*FD0/( delFD+SQRT(SQARG) )
-		endif
-		error=(FA-FAold) !+ABS(ralphDmean-ralphDold)
+		errA=FA-sumD
+		error=MAX(ABS(errA),ABS(errD))
+		!Prepare for next iteration.
+		if(LOUDER)write(*,'(a,i3,2f8.3,2F12.6,4E12.4)')' ralphAmean,ralphDmean,FA,FD,erA,erD',nIter,ralphAmean,ralphDmean,FA,FD,errA,errD
+		ralphAold=ralphAmean !the point of this loop is to compute the new values and compare to old.
+		ralphDold=ralphDmean
+		ralphDmean= picard*(-1+FA0/sumD)/(FD+1D-9)+(1-picard)*ralphDmean !Using new sumD to compute new ralphMeans.
+		ralphAmean= picard*(-1+FD0/sumA)/(FA+1D-9)+(1-picard)*ralphAmean !add 1D-9 to avoid possible zero divide if FD->0
 		if(NITER==1)FA1=FA
-		if(ABS(error-errOld) < zeroTol)pause 'AlpSolEz2: error=errOld???'
-		CHANGE=error/(error-errOld)*(FA-FAold)
-		FAold=FA
-		errOld=error
-		FA=FA-CHANGE !*0.5D0
-		if(LOUDER)write(*,'(a,2f8.3,2f10.5)')' ralphAmean,ralphDmean,FA,FD',ralphAmean,ralphDmean,FA,FD
+		if(NITER==1)FD1=FD
+		!set default in case error~errOld crashes. This uses the new ralphMeans so should be ~improvement.
+		!delFD=1-(ralphDmean*FD0-ralphAmean*FA0)
+		!FD = 2*FD0/( delFD+DSQRT(delFD*delFD+4*ralphDmean*FD0) )	
+		!Store current values as old values before updating FA.
 	enddo !while
 	if(NITER>ITMAX-1)then
-		ier(4)=1
+		if(ABS(FA-FAold) > Ftol)ier(1)=1 ! Leave this as a warning.
 		if(LOUDER)write(*,*)'ERROR - NO CNVRG. NITER,FA1,FA=',NITER,FA1,FA
 		!GOTO 86
 	ENDIF
-	IF(NITER > 25)write(*,'(a,i4,2F8.4)')' AlpsolEz2: NITER,FA1,FA=',NITER,FA1,FA
+	if(LOUDER)write(*,'(a,6E12.4,2i6)')' AlpsolEz2: errA,errD',errA,errD
+	IF(NITER > itMax-1.and.eta<0.43)write(*,'(a,3i5,1x,3F8.4,2E12.4)')' AlpsolEz2: NITER,T,x1,eta,erA,erD=',NITER,ID(1),ID(2),tKelvin,x(1),eta,errA,errD
+	!write(*,'(a,3i5,1x,3F8.4,2E12.4)')' AlpsolEz2: NITER,T,x1,eta,erA,erD=',NITER,ID(1),ID(2),tKelvin,x(1),eta,errA,errD
 	!  fAssoc ITERATION HAS CONCLUDED
+	tOld=tKelvin
+	xOld(1:NC)=x(1:NC)
+	IDold(1:NC)=ID(1:NC)
+	etaOld=eta
+	rdfOld=rdfContact ! from computation of ralphA(),ralphD()
 	zAssoc= -FA*FD/voidFrac
 	if(isZiter==1)return
 	uFA= 0
@@ -893,8 +1075,8 @@ end	! SetParPureEsd
 	enddo
 	aAssoc=(aFA+aFD)
 	uAssoc=(FD*uFA+FA*uFD)/2
-	if(ABS(Abonds-Dbonds) > 1.d-5)then
-		print*,'Abonds,Dbonds',Abonds,Dbonds
+	if(ABS(Abonds-Dbonds) > 1.d-5 .and. eta<0.43)then
+		write(*,'(a,2E12.4,F8.2,2F8.5)')' Abonds,Dbonds,T,x1,eta',Abonds,Dbonds,tKelvin,x(1),eta
 		pause 'Check bond site balance.'
 	endif
 
@@ -1023,7 +1205,7 @@ end	! SetParPureEsd
 		ier(i)=0
 	enddo
 	INITIAL=1
-	if(LIQ==1.and.eta < 0.1 .and. LOUD)print*,'FuEsd2Vtot: eta < 0.1 for LIQ=1?'
+	if(LIQ==1.and.eta < 0.1 .and. LOUD)print*,'FugiEtaEsd2: eta < 0.1 for LIQ=1?'
 	sumx=SUM(x(1:Nc))
 	if(ABS(sumx-1) > 1e-8)then
 		if(LOUD)pause 'FugiEsd2: sumx .ne. 1'
@@ -1031,7 +1213,7 @@ end	! SetParPureEsd
 	bMix=SUM( bVolCC_mol(1:Nc)*x(1:Nc) )
 	vTotCc=bMix/eta	 ! assume 1 mol basis
 
-	CALL FuEsd2Vtot(isZiter,tKelvin,vTotCc,x,Nc,FUGC,zFactor,iErr)
+	CALL FuEsd2Vtot(isZiter,tKelvin,vTotCc,x,Nc,FUGC,zFactor,Ares,Ures,iErr)
 	if(iErr > 0)ier(1)=1
 	RETURN
 86	WRITE(6,*)' ERROR IN FuEsd96.  '
@@ -1046,13 +1228,13 @@ end	! SetParPureEsd
 !C	With Having T,V and nMols, this routine calculates the Z factor and all derivatives needed in 			C
 !C	critical point,	flash and bubble point calculations.													C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	SUBROUTINE FuEsd2Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
+	SUBROUTINE FuEsd2Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
 	USE Assoc !includes GlobConst {Tc,Pc,...} + XA,XD,XC...
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	DoublePrecision gmol(NMX),xFrac(NMX),FUGC(NMX),KCSTARp(NMX)
-	integer IER(12),iera(12)
+	integer iera(12) !IER(12),
 	DoublePrecision YQVIJ(NMX,NMX),KVE(NMX),YQVI(NMX),Y(NMX,NMX),EOK(NMX,NMX)
 	DoublePrecision CVI(NMX),CVIJ(NMX,NMX),QV(NMX,NMX)
 	DoublePrecision k1(NMX) !,RALPHA(NMX),RALPHD(NMX)
@@ -1086,33 +1268,22 @@ end	! SetParPureEsd
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
 	  
-	iErr=0
-	!zeroTol=1D-11  !zeroTol is now global
+	iErr=0 !1=warning from AlpSolEz2, 11=input nonsense, 12=xFrac<0, 13=critical error from AlpSol, 14=voidFrac<0..
 	totMoles=sum(gmol)
 	if( tKelvin	   < zeroTol .or. totMoles < zeroTol .or. vTotCc < zeroTol)then
 		if(LOUD)print*,'FuEsdVtot: nonsense T(K),totMoles,vTotCc=',tKelvin,totMoles,vTotCc
-		iErr=1
+		iErr=11
 	endif
 	bMix=0
-	iErrTmin=0
 	do i=1,nc
 		xFrac(i)=gmol(i)/totMoles
-		rLogPr=DLOG10( 0.0001/Pc(i) )	! ESD not recommended below 0.0001 MPa.
-		aScvp=7*(1+acen(i))/3	 !SCVP: log10(Pr)=7(1+w)/3*(1-1/Tr) = a*(1-x) 
-		x= 1-rLogPr/aScvp  ! x = 1/Tr, first approximation of x = x1 + dx
-		x = x -0.178*acen(i)**2*(1-x)*(1-x)  ! This crude empirical correlation was developed for nonadecanol.  cf. PGL6Samples.xlsx(nC19oh).
-		if( x > 2.222)x = 2.2222
-		if( x < 1 .and. LOUD)pause 'FugiEsd: TrMin > Tc???'
-		TrMin = 1/x
-		if( tKelvin/ Tc(i) < TrMin)iErrTmin=iErrTmin+1
 		IF(xFrac(i) < 0)then
 			if(LOUD)PAUSE 'ERROR IN FuEsdVtot, Xi<0'
-			iErr=1
+			iErr=12
 		endif
 		bMix=bMix+xFrac(i)*bVolCC_mol(i)
 	enddo
-	if(iErrTmin > 0)iErr=2
-	if(iErr)return
+	if(iErr > 0)return
 	rho=totMoles/ vTotCc
 	eta=rho*bMix 
 	if(LOUD.and.initCall)print*,'FuEsdVtot: bMix,eta=',bMix,eta
@@ -1151,9 +1322,9 @@ end	! SetParPureEsd
 	if(LOUD.and.k1yvm < zeroTol)print*,'FuEsdVtot: 0~k1yvm=',k1yvm 
 	eta=rho*vm
 	CALL AlpSolEz2(isZiter,tKelvin,xFrac,Nc,VM,rho,zAssoc,aAssoc,uAssoc,FUGASSOC,iera)
-	IF(iera(1).ne.0)then
-        ier(1)=14
-        GOTO 86
+	IF(iera(1) > 0)then
+        if(iera(1)>10)iErr=13 ! This is a warning level for iErr when AlpSol did not converge.
+		if(iera(1)==1)iErr=1
     endif
 	voidFrac=1-1.9D0*ETA
 	denom=voidFrac
@@ -1162,11 +1333,11 @@ end	! SetParPureEsd
 	ZATT= -ZM*YQVM*RHO/(1+K1YVM*RHO)
 	Z=(1+ZREP+ZATT+ZASSOC)
 	PMpa=Z*rGas*RHO*tKelvin
-    if(LOUD)then
-	    IF (voidFrac < 0 .and. LOUD)print*, 'FuEsd96Vtot:Error! (1-1.9*ETA) IS -VE. eta,rho=',eta,rho
+    if(voidFrac < 0)then
+	    IF(LOUD)print*, 'FuEsd2Vtot:Error! (1-1.9*ETA) IS -VE. eta,rho=',eta,rho
+		iErr=14
     end if
-	IF (IER(2).NE.0 .and. LOUD)WRITE(6,*)'ERROR IN LIQUID PHASE IN ALPSOL'
-	IF (IER(3).NE.0 .and. LOUD)WRITE(6,*)'ERROR IN VAPOR PHASE IN ALPSOL'
+	if(iErr > 10)return
 
 
 
@@ -1204,6 +1375,8 @@ end	! SetParPureEsd
 	!print*,'aRes_RT=',aRes_RT
 	sRes_R =UATT+UASSOC-aRes_RT
 	hRes_RT=UATT+UASSOC+Z-1
+	Ares=DAONKT
+	Ures=DUONKT
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !Added by AFG 2010
@@ -2042,8 +2215,8 @@ end	! SetParPureEsd
 	parameter (nEta=5)
 	common/SimData/ xFracc(23),vEffNm3(23),a0xss(20,20),A0Mix(20,20),A1Mix(20,20),A2Mix(20,20),Nps
 	!common/XsProps/a0XsSs
-	dimension ks0ij(NMX,NMX),ks1ij(NMX,NMX)
-	common/ksvall/ks0ij,ks1ij
+	!dimension ks0ij(NMX,NMX),ks1ij(NMX,NMX)
+	!common/ksvall/ks0ij,ks1ij
 	DIMENSION XXFRAC(NMX)
             
 	607	FORMAT(1X,F8.4,1X,F10.4,1X,F10.8,1X,F10.8,1X,F10.4,1X,i5)      

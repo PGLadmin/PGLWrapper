@@ -1,3 +1,4 @@
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE CritParmsDb
 	Integer ndb
@@ -6,54 +7,14 @@ MODULE CritParmsDb
 	Integer IDNUM(ndb),CrIndex(9999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
 	DoublePrecision TCD(ndb),PCD(ndb),ACEND(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) ! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
 END MODULE CritParmsDb
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-MODULE GlobConst
-	!IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	!SAVE
-	!PUBLIC
-	Implicit NONE
-	DoublePrecision pi,twoPi,fourPi,AvoNum,rGas,kB,half,zeroTol
-	Integer NMX 
-	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0)
-	PARAMETER (AvoNum=602.214076d0,kB=0.01380649D0,Rgas=AvoNum*kB,zeroTol=1.D-12)!kB[=]MPa.nm3/K) AvoNum[=]cm3/(nm3*mol), 
-	!          https://www.nist.gov/si-redefinition 
-    !nmx is the max allowed number of Comps
-	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
-	!integer :: nComps, nsTypesTot,iTPT,iFlagFF,nNormGrid
 
-	DoublePrecision :: TC(nmx), PC(nmx), ACEN(nmx), ZC(nmx), rMw(nmx), bVolCC_mol(NMX)
-	DoublePrecision uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)	= Z+rho*dZ/dRho
-	character*234 masterDir
-	character*30 NAME(NMX)
-	character*5 class(NMX) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. Ch06CompoundsList.xls, PGL6edClasses.xls)
-    Logical LOUD   !LOUD=.TRUE. means writing debug info to the screen.
-	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
-	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos 
-	DoublePrecision etaPass !A hard lesson: rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).
-    DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS
-	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS !!!!!!!!!!!!!
-	!LOUD = .FALSE.
-contains
-	integer function SetNewEos(newEosOpt)
-	!returns 0 if no error.
-	!USE GlobConst ! eliminated because GlobConst contains SetNewEos.
-	implicit none
-	integer newEosOpt
-	SetNewEos=0
-	isESD=.FALSE.
-	isTPT=.FALSE.
-	isPcSaft=.FALSE.
-	iEosOpt=newEosOpt
-	return
-	end function SetNewEos
-END MODULE GlobConst
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE BIPs
 	USE GlobConst, only: NMX 
 	integer nConverged,maxPts,nPtsBipDat
 	parameter(maxPts=1777) ! this defines the max allowed # of experimental data points in a single binary system.
-	DoublePrecision KIJ(NMX,NMX),KTIJ(NMX,NMX) !usual dispersive BIPs
+	DoublePrecision KIJ(NMX,NMX),KTIJ(NMX,NMX),kETAij(NMX,NMX) !usual dispersive BIPs & k^eta_ij
+	DoublePrecision KS0IJ(NMX,NMX),KS1IJ(NMX,NMX)              !entropic BIPs & k^eta_ij
 	DoublePrecision HIJ(NMX,NMX),HTIJ(NMX,NMX) !molecular hBonding BIPs for ESD. (Spead aBipAd,aBipDa are site based.)
 	DoublePrecision Lij(NMX,NMX) !covolume adjustment.  bVolMix=sum(sum(xi*xj*bij)); bij=(1-Lij)*(bi+bj)/2
 	DoublePrecision xsTau(NMX,NMX),xsTauT(NMX,NMX),xsAlpha(NMX,NMX)	!this is for the PRWS/xsNRTL mixing rule.
@@ -61,33 +22,19 @@ MODULE BIPs
 	DoublePrecision pDatMin,pDatMax
 	Integer iDat(maxPts)  ! sometimes need to indicate whether the data are for comp1 or comp2. e.g. SLE.
 END MODULE BIPs
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE VpDb
-	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
-	PARAMETER(nVpDb=1975)
-	DIMENSION IDNUM(nVpDb),rMINTD(nVpDb) ,VALMIND(nVpDb) ,rMAXTD(nVpDb),VALMAXD(nVpDb),AVGDEVD(nVpDb),NUMCOEFFD(nVpDb) ,vpCoeffsd(nVpDb,5),indexVpDb(9999)
+	USE GlobConst, only:NMX
+	IMPLICIT NONE !DoublePrecision(A-H,O-Z)
+	Integer nVpDb
+	PARAMETER(nVpDb=2475)
+	Integer IDNUM(nVpDb),NUMCOEFFD(nVpDb) ,indexVpDb(9999)
+	DoublePrecision rMINTD(nVpDb) ,VALMIND(nVpDb) ,rMAXTD(nVpDb),VALMAXD(nVpDb),AVGDEVD(nVpDb),vpCoeffsd(nVpDb,5)
+	DoublePrecision vpCoeffs(NMX,5)
 END MODULE VpDb
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). Sums are over sites per molecule then over molecules.
-	USE GlobConst
-	implicit NONE
-	integer maxTypes,nsx,maxTypesGlobal,localPool	
-	PARAMETER (maxTypes=44,nsx=maxTypes,maxTypesGlobal=999) 
-    parameter(localPool=9999) !this must be long enough to cover all SpeadMd site types (e.g. 1401=methanol hydroxy)
-	!maxTypes is the max # of site types for all molecules. maxTypes > sum^NC(count(Types))	!nsx = maxTypes (dunno why redundant), nbx=Max Bonds, 
-	DoublePrecision eHbKcal_mol(nmx,maxTypes),eDonorKcal_mol(nmx,maxTypes),eAcceptorKcal_mol(nmx,maxTypes)
-	DoublePrecision bondVolNm3(nmx,maxTypes)
-	Integer idType(NMX,maxTypes),nTypes(NMX),nTypesTot !nTypesTot is really the sum of nTypes(i) because the same type on a different molecule is treated distinctly (?)
-	Integer nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes),nDegree(nmx,maxTypes)
-	Integer localType(localPool),idLocalType(maxTypes)	!these are to accumulate site lists in Wertheim so the aBipAd,aBipDa arrays don't get too large. cf. AlphaSp
-	DoublePrecision aBipAD(maxTypes,maxTypes),aBipDA(maxTypes,maxTypes) !association bips
-	DoublePrecision XA(NMX,maxTypes),XD(NMX,maxTypes),XC(NMX,maxTypes),cvAssoc
-	LOGICAL LouderWert 
-	!localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
-	!idLocalType points back to localType for double-linking. E.g. idLocalType(1)=101.
-END MODULE Assoc
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine ReadNext(inUnit,nexString3,maxLines,maxVars,bHeader,header77,nVars,var,nLines,iErr)
 	! Purpose: Read uncounted data with "next" character string between data sets.
 	! Notes:   inFile for inUnit must be opened before calling.
@@ -326,8 +273,8 @@ END MODULE Assoc
 	character*251 infile,dumString
 	DIMENSION IDNUM(ndb),TCD(ndb),PCD(ndb),ACEND(ndb),NAMED(ndb)
 	DIMENSION ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb)
-	common/FloryWert/solParm(nmx),vLiq(nmx),vMolec(NMX),&
-		eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
+	!common/FloryWert/solParm(nmx),vLiq(nmx),vMolec(NMX),&
+	!	eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 	iErrCode=0
 !	inFile=TRIM(masterDir)//'\input\ParmsCrit.dta' ! // is the concatenation operator
 	inFile=TRIM(masterDir)//'\input\ParmsCrit.txt' ! // is the concatenation operator
@@ -476,7 +423,7 @@ END MODULE Assoc
     end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	SUBROUTINE GetVp(NC,ID,iErrCode,VpCoeffs) !returns VpCoeffs(NC,5)
+	SUBROUTINE GetVp(NC,ID,iErrCode) !returns VpCoeffs(NC,5)
 	!	PROGRAMMED BY: AV 06/22/06
 	!THIS SUBROUTINE GIVES VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
 	!INPUT:
@@ -486,9 +433,8 @@ END MODULE Assoc
 	!VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
 	USE GlobConst, only:DEBUG,NMX
 	USE VpDb
-	IMPLICIT DoublePrecision(A-H,O-Z)
 	LOGICAL notFound
-	DoublePrecision vpCoeffs(NMX,5)
+	!DoublePrecision vpCoeffs(NMX,5)
 	Integer ID(NMX)   
 	iErrCode=0
 
@@ -524,8 +470,8 @@ END MODULE Assoc
 	!integer GetBIPs
 	dimension idBinarY(listPool),idComp(NC),alphaDB(listPool),KIJDB(listPool),KTIJDB(listPool),&
 	wsTAUij (listPool),wsTAUji (listPool),wsTauTij(listPool),wsTauTji(listPool)
-	common/ksvall/ks0ij,ks1ij
-	dimension ks0ij(nmx,nmx),ks1ij(nmx,nmx)
+	!common/ksvall/ks0ij,ks1ij
+	!dimension ks0ij(nmx,nmx),ks1ij(nmx,nmx)
 	!data initial/0/
 	initial=0 !just assume that the database needs to be reloaded if being called
 
@@ -778,9 +724,9 @@ END MODULE Assoc
 	PARAMETER(ndb=1555)
 	character infile*251
 	DIMENSION IDNUM(ndb),TCD(ndb),PCD(ndb),ACEND(ndb),NAMED(ndb),iCasd(ndb)
-	DIMENSION ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb)
-	common/FloryWert/solParm(nmx),vLiq(nmx),vMolec(NMX),&
-		eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
+	DIMENSION ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) !,vLiq(NMX)
+	!common/FloryWert/solParm(nmx),vLiq(nmx),vMolec(NMX),&
+	!	eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 	iErrCode=0
 	inFile=TRIM(masterDir)//'\input\ParmsCrit.txt' ! // is the concatenation operator
 	IF(DEBUG)inFile='c:\SPEAD\CalcEos\input\ParmsCrit.txt' 
