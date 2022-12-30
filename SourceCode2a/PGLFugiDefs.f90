@@ -92,9 +92,9 @@
 		call FuPrVtot(isZiter,tKelvin,1/vTotCc,gmol,NC,LIQ,FUGC,Z,aDep,uDep,IER)
 	!elseif(iEosOpt==4)then ! unused for now.
 	elseif(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
-		call FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
+		call FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aDep,uDep,iErr)
 	elseif(isTPT)then
-		call FuTptVtot(isZiter,Z,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
+		call FuTptVtot(isZiter,Z,aDep,uDep,FUGC,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
 	elseif(iEosOpt==11)then
 	    !SUBROUTINE FuPrVtot(tAbs,rhoMol_Cc,xFrac,NC,LIQ,FUGC,zFactor,aDep,uDep,IER)
 		call FuPrTcVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aDep,uDep,iErr)

@@ -470,7 +470,7 @@
 
 	ErrMsg(1)='error eigen - v_norm is equal to zero. Check the eigen vectors...'
 	iErrCode=0
-	half=1.d0/2.d0
+	!half=1.d0/2.d0
 	call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErrVtot)
 	DO I=1,NC
 		DO J=1,NC
