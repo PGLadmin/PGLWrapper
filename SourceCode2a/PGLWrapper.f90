@@ -17,7 +17,7 @@
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
 	!CHARACTER*1 ANSWER
 	!CHARACTER*2 calcType
-	CHARACTER*77 errMsgPas,readString
+	CHARACTER*77 errMsgPas,readString,Property(22)
 	CHARACTER*251 outFile
 	CHARACTER*3 aPhase
 
@@ -40,7 +40,7 @@
 	DEBUG=.TRUE.
 	DEBUG=.FALSE.
     LOUD = .TRUE.
-    LOUD = .FALSE.
+    !LOUD = .FALSE.
 	OPEN(UNIT=52,FILE=outFile,RECL=8192)
     open(UNIT=51,FILE='input.txt')
     NC=1 !assume one component for all calculations (as of 1/1/2020 this is all we need).
@@ -61,6 +61,15 @@
     !iProperty = 6: sound speed
     !iProperty = 7: Hres/RT,CpRes_R/R,CvResR,cmprsblty given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
 	!iProperty = 11: Vex (cc/g),Hex(J/mo)
+    Property(1)='  vapor pressure (kPa) given tKelvin '
+    Property(2)='  saturated liquid density (g/cc) given tKelvin '
+    Property(3)='  vapor fluid density (g/cc) given tKelvin, pKPa, iPhase (=0 for vapor) '
+    Property(4)='  liquid fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid) '
+    Property(5)='  critical fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)'
+    Property(6)='  sound speed '
+    Property(7)='  Hres/RT,CpRes_R/R,CvResR,cmprsblty given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)	'
+	Property(11)='  Vex (cc/g),Hex(J/mo) '
+	if(LOUD)print*,TRIM(Property(iProperty))
 
     !iEosOpt=10 !Temporary for testing
 

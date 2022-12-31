@@ -14,7 +14,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!  OUTPUT
 	USE GlobConst !is implied by USE ASSOC. GlobConst includes ID,Tc,Pc,Zc,acen,...
-	USE Assoc !nTypes(=1 for ESD), nDegree, nDonors, nAcceptors, bondRate(?), includes GlobConst{Tc,Pc,...}
+	USE Assoc ! ESD has it's own Parms. !nTypes(=1 for ESD), nDegree, nDonors, nAcceptors, bondRate(?), includes GlobConst{Tc,Pc,...}
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
@@ -536,12 +536,12 @@ end	! SetParPureEsd
 	!  REVISED  9/94 FOR POLYSEGMENTED MOLECULES LIKE GLUTARAL
 	!  REVISED 10/94 FOR ANY # OF ASSOCIATING SPECIES
 	SUBROUTINE AlpSolEz(X,NC,KVE,ND,VM,NAS,NDS,rho,zAssoc,XAPas,RALPH,fAssoc,ier)
-	USE ASSOC !GlobConst+XA+XD+XC
 	USE GlobConst
+	USE ASSOC !GlobConst+XA+XD+XC
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (fAssoc) AND zAssoc given rho,VM
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	!PARAMETER(NMX=55)
-	DOUBLEPRECISION X(NMX),KVE(NMX),RALPH(NMX),XAPas(NMX,maxTypes),rLnPhiAssoc(NMX)
+	DOUBLEPRECISION X(NMX),KVE(NMX),RALPH(NMX),rLnPhiAssoc(NMX),XAPas(NMX,maxTypes)
     Integer ND(NMX),NAS(NMX),NDS(NMX),ier(12)
 	LOGICAL LOUDER 
 	!  NDi     = THE DEGREE OF POLYMERIZATION OF COMPO i
@@ -623,9 +623,11 @@ end	! SetParPureEsd
 !**************************************************************************
 	SUBROUTINE GoldenZesd(X,nC,KVE,ND,bMix,NAS,NDS,CbMix,YqbMix,k1YbMix,&
                        PoRT,LIQ,zFactor,rho,zAssoc,XA,RALPH,fAssoc,ier)
+	USE GlobConst, only:NMX
+	USE Assoc, only:maxTypes
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	DIMENSION X(*),XA(*),KVE(*),RALPH(*),ier(*)
-	dimension ND(*),NAS(*),NDS(*)
+	DoublePrecision X(NMX),XA(NMX,maxTypes),KVE(NMX),RALPH(NMX)
+	Integer ND(NMX),NAS(NMX),NDS(NMX),ier(*)
 	data rgold,cgold,zM/0.61803399,0.38196602,9.5/
 	etaLo = 1.e-5
 	etaHi = 0.1
@@ -707,14 +709,15 @@ end	! SetParPureEsd
     
 	SUBROUTINE FugiEtaESD(tKelvin,eta,X,nC,LIQ,FUGC,zFactor,ier)
 	!Purpose: get fugacity coeff and misc for activity coeff/GibbsXs at const eta
+	USE Assoc !XA
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS	  + GlobConst{rGas,Tc,Pc,...}
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	integer kComp
 	dimension X(NMX),FUGC(NMX),ier(12),chemPoAssoc(nmx)
 	dimension YQVIJ(NMX,NMX),KVE(NMX),YQVI(NMX),Y(NMX,NMX),eok(NMX,NMX)
-	dimension CVI(NMX),CVIJ(NMX,NMX),QV(NMX,NMX),XA(NMX),dXsYbN(NMX)
-	Dimension RALPH(NMX),k1(NMX)
+	dimension CVI(NMX),CVIJ(NMX,NMX),QV(NMX,NMX),dXsYbN(NMX)
+	Dimension RALPH(NMX),k1(NMX) !,XA(NMX)
 	COMMON/eta/etaL,etaV,ZL,ZV
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	!      COMMON/xsGibbs/xsBIP(NMX,NMX),xsNrtlAl(NMX,NMX)
@@ -824,7 +827,7 @@ end	! SetParPureEsd
 	   CVI(I)=0.D0
 	enddo     
 
-	ASSOC=0
+	aASSOC=0
 	uDenom=1
 	uSum =0 !cf Michelsen&Hendriks(2001) analogy to Eq 10.
 	cvSum=0 !cf Michelsen&Hendriks(2001) analogy to Eq 10.
@@ -832,8 +835,8 @@ end	! SetParPureEsd
 	dYbB=0
 	dYqbB=0
 	DO I=1,nC
-		ASSOC=ASSOC+X(I)*ND(I)*( 2*LOG(XA(I))+1-XA(I) )
-        UDENOM=UDENOM+X(I)*ND(I)*(RALPH(I)*XA(I))**2 ! =1+sum(xi*Ndi*alpha*XAi^2)   
+		aASSOC=aASSOC+X(I)*ND(I)*( 2*LOG(XA(I,1))+1-XA(I,1) )
+        UDENOM=UDENOM+X(I)*ND(I)*(RALPH(I)*XA(I,1))**2 ! =1+sum(xi*Ndi*alpha*XAi^2)   
 		!this is just the linear part of dYbB.  dXsYbB is added below. 
 		dYbB=dYbB+X(I)*Vx(I)*eok(I,I)/tKelvin*(Y(I,I)+K2)
 		do jComp=1,nC
@@ -853,8 +856,8 @@ end	! SetParPureEsd
 			bepsAiDj=LOG( 1+SQRT(exp(bepsAiDi)-1)*SQRT(exp(bepsAjDj)-1) ) !if one is zero then bepsAiDj=0. No need for iComplex.                         
 			QIJ = 0
 			if(bepsAiDj > 0)QIJ=bepsAiDj*EXP(bepsAiDj)/( exp(bepsAiDj)-1 ) ! denom cancels the [exp(beps)-1] in ralph's. 
-			uSum =uSum+X(I)*X(J)*ND(i)*ND(J)*RALPH(i)*XA(i)*RALPH(J)*XA(J)*QIJ !Michelsen-Hendriks Eq10 adapted for Uassoc/RT.
-			cvSum=uSum+X(I)*X(J)*ND(i)*ND(J)*RALPH(i)*XA(i)*RALPH(J)*XA(J)*QIJ*bepsAiDj
+			uSum =uSum+X(I)*X(J)*ND(i)*ND(J)*RALPH(i)*XA(i,1)*RALPH(J)*XA(J,1)*QIJ !Michelsen-Hendriks Eq10 adapted for Uassoc/RT.
+			cvSum=uSum+X(I)*X(J)*ND(i)*ND(J)*RALPH(i)*XA(i,1)*RALPH(J)*XA(J,1)*QIJ*bepsAiDj
 			YQVI(I)=YQVI(I)+YQVIJ(I,J)*X(J)
 			CVI(I)=CVI(I) + CVIJ(I,J)*X(J)
 		enddo
@@ -913,7 +916,7 @@ end	! SetParPureEsd
 		rNdF_dNk=rNdF_dNk/uDenom
 		f2factor=(rNdF_dNk+0.5*rnNdLnAlph_dNk)*uDenom
 		FUGASN=fAssoc*fAssoc*(uDenom-rnNdLnAlph_dNk)
-		FUGBON=2*ND(kComp)*LOG( XA(kComp) )+FUGASN
+		FUGBON=2*ND(kComp)*LOG( XA(kComp,1) )+FUGASN
 		chemPoAssoc(kComp)=fugBon
 		IF (zFactor.LT.0.0)WRITE(6,*)'WARNING! Z NEGATIVE IN FUGI!'
 		FUGC(kComp)=FUGREP+FUGATT+FUGBON-LOG(zFactor)
@@ -921,11 +924,11 @@ end	! SetParPureEsd
 
 	pMPa=zFactor*rGas*tKelvin*rho
 	DUONKT=uAtt+UASSOC
-	DAONKT=FREP+FATT+ASSOC-LOG(zFactor)
+	DAONKT=FREP+FATT+aASSOC-LOG(zFactor)
 	DSONK =DUONKT-DAONKT
 	DHONKT=DUONKT+zFactor-1
 	DGONKT=DAONKT+zFactor-1  !=sum[xi*fugc(i)]. note that bVol(i)/bMix -> 1 for pure i, so these terms sum to zRep+zAtt=Z-1.
-	gAssoc=Assoc+zAssoc
+	gAssoc=aAssoc+zAssoc
 	uRes_RT = DUONKT
 	hRes_RT = DHONKT
 	sRes_R  = DSONK
@@ -934,13 +937,13 @@ end	! SetParPureEsd
 	cvRes_R = 0
 	CpRes_R = 0
 	if(Nc>1)return
-	cmprsblty=zFactor+zRep/(1-1.9*eta)+zAtt/(1+1.7745*etaYmix)+zAssoc*( 2.9+XA(1)*fAssoc*ralph(1) ) !cf. EsdDerivatives.jnt
+	cmprsblty=zFactor+zRep/(1-1.9*eta)+zAtt/(1+1.7745*etaYmix)+zAssoc*( 2.9+XA(1,1)*fAssoc*ralph(1) ) !cf. EsdDerivatives.jnt
 	beps=eok(1,1)/tKelvin
 	bepsAD=DH(1)/tKelvin*TC(J)
 	alpha=ralph(1)*ralph(1)
 	bepsDalpha=alpha*bepsAD*exp(bepsAD)/( exp(bepsAD)-1  +1D-8 ) !add 1D-8 to avoid zero divide.
-	bepsDxa = -XA(1)*XA(1)*bepsDalpha/SQRT(1+4*alpha)
-	CvAssoc= -uAssoc*(  bepsAD+( 1/XA(1)-1/(2-XA(1)) )*bepsDxa  ) 
+	bepsDxa = -XA(1,1)*XA(1,1)*bepsDalpha/SQRT(1+4*alpha)
+	CvAssoc= -uAssoc*(  bepsAD+( 1/XA(1,1)-1/(2-XA(1,1)) )*bepsDxa  ) 
 	cvRes_R = uAtt*( 1.7745*eta*beps*exp(beps)/(1+1.7745*etaYmix) - beps ) + CvAssoc 
 	!CpRes_R =  cvDep_R -1 +  
 	!
@@ -958,6 +961,7 @@ end	! SetParPureEsd
 !C	critical point,	flash and bubble point calculations.													C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	SUBROUTINE FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,zFactor,Ares,Ures,iErr)
+	USE GlobConst
 	USE Assoc !includes GlobConst {Tc,Pc,...} + XA,XD,XC...
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS
 	USE BIPs

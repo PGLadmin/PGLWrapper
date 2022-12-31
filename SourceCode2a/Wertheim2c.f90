@@ -153,7 +153,7 @@ END MODULE Assoc
 	errMsg(14)=' MEM2: XC < 0' 
 	LOUDER=LOUD	! from GlobConst
 	LOUDER=LouderWert
-	!LOUDER = .TRUE. ! for local debugging.
+	LOUDER = .TRUE. ! for local debugging.
 	picard=0.83D0
 	Ftol=1.D-6
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
