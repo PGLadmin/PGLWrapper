@@ -1,5 +1,118 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+MODULE GlobConst
+	!SAVE
+	!PUBLIC
+	Implicit NONE
+	DoublePrecision pi,twoPi,fourPi,AvoNum,rGas,kB,half,zeroTol
+	Integer NMX 
+	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0)
+	PARAMETER (AvoNum=602.214076d0,kB=0.01380649D0,Rgas=AvoNum*kB,zeroTol=1.D-12)!kB[=]MPa.nm3/K) AvoNum[=]cm3/(nm3*mol), 
+	!          https://www.nist.gov/si-redefinition 
+    !nmx is the max allowed number of Compounds
+	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
+	!integer :: nComps, nsTypesTot,iTPT,iFlagFF,nNormGrid
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	DoublePrecision :: TC(nmx), PC(nmx), ACEN(nmx), ZC(nmx), rMw(nmx), bVolCC_mol(NMX),solParm(NMX),vLiq(NMX)
+	DoublePrecision uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)	= Z+rho*dZ/dRho
+	character*234 masterDir
+	character*30 NAME(NMX)
+	character*5 class(NMX) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. Ch06CompoundsList.xls, PGL6edClasses.xls)
+    Logical LOUD   !LOUD=.TRUE. means writing debug info to the screen.
+	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
+	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos 
+	DoublePrecision etaPass !TODO:Consider if rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).
+    DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS
+	DoublePrecision etaPure(NMX) !store eta for each compound at P=0 and Tmin(K). 
+	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS !!!!!!!!!!!!!
+	!LOUD = .FALSE.
+contains
+	integer function SetNewEos(newEosOpt)
+	!returns 0 if no error.
+	!USE GlobConst ! eliminated because GlobConst contains SetNewEos.
+	implicit none
+	integer newEosOpt
+	SetNewEos=0
+	isESD=.FALSE.
+	isTPT=.FALSE.
+	isPcSaft=.FALSE.
+	iEosOpt=newEosOpt
+	return
+	end function SetNewEos
+END MODULE GlobConst
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). Sums are over sites per molecule then over molecules.
+	USE GlobConst, only:nmx,isTPT,isESD,iEosOpt,LOUD ! nmx is the maximum number of compounds, typically 55. 
+	implicit NONE
+	integer maxTypes,nsx,maxTypesGlobal,localPool	
+	PARAMETER (maxTypes=44,nsx=maxTypes,maxTypesGlobal=999) 
+    parameter(localPool=9999) !this must be long enough to cover all SpeadMd site types (e.g. 1401=methanol hydroxy)
+	!maxTypes is the max # of site types for all molecules. maxTypes > sum^NC(count(Types))	!nsx = maxTypes (dunno why redundant), nbx=Max Bonds, 
+	DoublePrecision eDonorKcal_mol(nmx,maxTypes),eAcceptorKcal_mol(nmx,maxTypes)
+	DoublePrecision eHbKcal_mol(nmx,maxTypes) ! eHbKcal_mol=(eDonorKcal_mol+eAcceptorKcal_mol)/2
+	DoublePrecision bondVolNm3(nmx,maxTypes)
+	Integer idType(NMX,maxTypes),nTypes(NMX),nTypesTot !nTypesTot is really the sum of nTypes(i) because the same type on a different molecule is treated distinctly (?)
+	Integer nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes),nDegree(nmx,maxTypes)
+	Integer localType(localPool),idLocalType(maxTypes)	!these are to accumulate site lists in Wertheim so the aBipAd,aBipDa arrays don't get too large. cf. AlphaSp
+	DoublePrecision aBipAD(maxTypes,maxTypes),aBipDA(maxTypes,maxTypes) !association bips
+	DoublePrecision XA(NMX,maxTypes),XD(NMX,maxTypes),XC(NMX,maxTypes),cvAssoc
+	LOGICAL LouderWert 
+	!localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
+	!idLocalType points back to localType for double-linking. E.g. idLocalType(1)=101.
+contains
+	Subroutine RdfCalc(rdfContact,dAlpha,eta)
+	DoublePrecision denom,eta,denom2,void,void2,void4,dLng,rdfContact,d2Lng,d2g,dAlpha,dg_dEta,dAlph_dEta
+	Integer iRdfOpt,iErrCode
+	! alpha=eta*rdf*kAD*yHB => (eta/alpha)*(dAlpha/dEta) = 1+(eta/rdf)*(dRdf/dEta)
+	! dLng = (eta/rdf)*(dRdf/dEta)     
+	! iRdfOpt	- option for characterizing the radial distribution funciton at contact.	
+	!			= 0, not specified => error
+	!			= 1, ESD form
+	!			= 2, Carnahan-Starling form
+	!			= 3, activity coefficient model form (rdf=universal constant=g(eta=0.4)
+	!			= 4, ESD form, geometric association rule.
+	iRdfOpt=0					!ESD non-geometric form
+	if(iEosOpt==4)then
+		iRdfOpt=3
+	elseif(isESD)then
+		iRdfOpt=4	!ESD geometric form
+	elseif(isTpt)then
+		iRdfOpt=2	!CS form
+	elseif(iEosOpt==6)then
+		iRdfOpt=3	!activity model
+	endif
+
+	if(iRdfOpt.eq.0)then
+		iErrCode=11
+		if(LOUD)write(*,*) 'Error in RdfCalc: iRdfOpt not specified'
+		if(LOUD)pause '1=ESD form, 2=CS form, 3=activity coeff form, 4=ESD+geometric association'
+		return
+	endif
+	!alpha=eta*rdf*kAD*yHB => (eta/alpha)*(dAlpha/dEta) = 1+(eta/rdf)*(dRdf/dEta)
+	!dLng = (eta/rdf)*(dRdf/dEta) = dLng/dLnEta
+	denom=1.d0-1.9d0*eta 
+	denom2=denom*denom
+	void=1.d0-eta
+	void2=void*void
+	void4=void2*void2    
+
+	dLng=1.9d0*eta/denom
+	if(iRdfOpt==2)dLng=eta*( 3.d0/void-1.d0/(2.d0-eta) )
+	if(iRdfOpt==3)dLng= -1.d0
+	rdfContact=1/denom
+	if(iRdfOpt==2)rdfContact=(1.d0-eta/2.d0)/void/void2
+	if(iRdfOpt==3)rdfContact=1.d0
+	d2Lng=1.9d0*eta/denom2
+	d2g=d2Lng-dLng
+	dAlpha=1+dLng
+	dg_deta=1.9d0/denom2
+	dAlph_deta=dg_deta
+	if(iRdfOpt==2)dg_deta=(2.5d0-eta)/void4
+  	if(iRdfOpt==2)dAlph_deta=3.d0/void2-2.d0/((2.d0-eta)*(2.d0-eta))
+	return
+	END	Subroutine RdfCalc
+END MODULE Assoc
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE CritParmsDb
 	Integer ndb
 	Parameter (ndb=3000)

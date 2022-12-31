@@ -1,3 +1,4 @@
+	!Subroutine PGLWrapper()
 	!MAIN PROGRAM FOR CALLING EOS SUBROUTINES. Includes GetCrit, GetBips, BipIo.
 	!	SETS UP THE CRITS, EOSPARMS, bips, DEBUG status, FUGI(iEosOpt)
 	!	Echoes user IO to Output.txt, and reports error checks. 

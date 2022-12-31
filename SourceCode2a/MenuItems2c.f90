@@ -4566,6 +4566,8 @@
 				pOld=pSatRazavi
 			else
 				if(LOUD)print*,'PsatChemPo: pSatRazavi > pMax?'
+				pOld=zeroTol*10
+				if(pMax > zeroTol)pOld=pMax/2
 			endif
 		else
 			print*,'PsatChemPo: Error from call to fugi for Razavi. ier=',ier 

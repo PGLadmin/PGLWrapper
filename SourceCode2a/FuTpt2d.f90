@@ -703,7 +703,7 @@ end	!Subroutine QueryParPureSpead
 	pb_rt=P_RT*bVolMix
 
 	!  GUESS FOR eta
-	eta=pb_rt/1.001D0 ! Make "old" value imprecise, so "new" value (below) will be ideal gas result at low rho. => precision when P -> 1E-11.
+	eta=pb_rt/3.0 ! Make "old" value imprecise, so "new" value (below) will be ideal gas result at low rho. => precision when P -> 1E-11.
 	etaHi=1.2D0*bVolMix/Vmix+0.24d0*( exp(-PMPa/100) ) !increase the initial guess for high pressure. etaMax might be less than 1 for some compounds.
 	if(etaHi < 0.65d0)etaHi=0.65d0
 	if(etaHi > etaMax)etaHi=etaMax/1.1d0
@@ -718,7 +718,7 @@ end	!Subroutine QueryParPureSpead
 	rhoMol_cc=eta/bVolMix
 	vTotCc=totMoles/rhoMol_cc
 	isZiter=1
-	if(initCall.and.LOUDER)print*,'FuTpt: first call to FuVtot. T(K),eta=',tKelvin,eta
+	if(initCall.and.LOUDER)write(*,'(a,6E12.4)')' FuTpt: first call to FuVtot. T(K),eta=',tKelvin,eta
 	call FuTptVtot(isZiter,zFactor,aDep,uDep,chemPo,vTotCc,tKelvin,gmol,nComps,iErrZ)
 	if(iErrZ > 10)then
 		iErr=13
@@ -738,7 +738,7 @@ end	!Subroutine QueryParPureSpead
 	pMin=1.d11
 	isZiter=1
     iterGold=0
-	if(LOUDER.and.initCall)print*,'FuTpt init: liq,eta', liq,eta
+	if(LOUDER.and.initCall)write(*,'(a,i4,6E12.4)')' FuTpt init: liq,eta', liq,eta
 100 continue
 	do while(ABS(change) > 1.e-9 .and. iErr < 11)	! using change as criterion, instead of change/eta, means ~9 sig figs on liquid density, while ideal gas is exactly returned for vapor density, even when P-> 1E-11.
 		NITER=NITER+1
@@ -766,7 +766,7 @@ end	!Subroutine QueryParPureSpead
 			cycle
 		endif
 		error=pb_rt-eta*zFactor
-		if(initCall.and.LOUDER)write(*,'(a,i3,F9.5,2(1PE12.4))')' FuTpt: From FuVtot. iter,eta,Z,error=',NITER,eta,zFactor,error
+		if(LOUDER)write(*,'(a,i3,F9.5,2(E12.4))')' FuTpt: After FuVtot. iter,eta,Z,error=',NITER,eta,zFactor,error
 		if(eta*zFactor > pMax .and. eta < 0.15)then
 			pMax=eta*zFactor
 			etaAtPmax=eta	 !for crude goldenz. ~randomly searches for lo eta max in p
@@ -839,7 +839,7 @@ end	!Subroutine QueryParPureSpead
     uRes_RT=dU_RT
     Ares_RT=dA_RT
     Sres_R =dU_RT-dA_RT
-	if(LOUDER)print*,'FuTpt: calling ChemPoCalc. T(K),eta=',tKelvin,eta
+	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: getting chemPo(T,P). T,eta,Z=',tKelvin,eta,zFactor
 	initCall=0
     if(LIQ > 1)return
 	!  ITERATION ON RHO HAS CONCLUDED.  GET DEPARTURES AND FUGACITY COEFFS.
@@ -857,13 +857,13 @@ end	!Subroutine QueryParPureSpead
 	if(iErr > 9)goto 86
 	chemPo(1:nComps)=chemPo(1:nComps)-DLOG(zFactor) ! transform from TV to TP
 	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: chemPo=',(chemPo(i),i=1,nComps)
-	if(LOUDER)print*,'FuTpt: ChemPoCalc done. aRes,uRes=',aRes,uRes
+	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: ChemPoCalc done. aRes,uRes=',aRes,uRes
 	if(zFactor > zeroTol)ChemPoPure=aRes+zFactor-1-DLOG(zFactor)
-	if(nComps==1 .and. LOUDER .and. initCall)print*,'fugc(1),Gdep1',chemPo(1),ChemPoPure
+	if(nComps==1 .and. LOUDER .and. initCall)write(*,'(a,6E12.4)')' FuTpt: fugc(1),Gdep1',chemPo(1),ChemPoPure
 	initCall=0
 	RETURN
 
-86	if(LOUDER)WRITE(6,'(a)')' FuTpt: error.  '
+86	if(LOUDER)WRITE(6,'(a,i4)')' FuTpt: error= ',iErr
 	IER(1)=iErr
 	RETURN
 867 continue
