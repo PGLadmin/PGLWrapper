@@ -388,6 +388,7 @@
 	  etaL=BIGB/zFactor
 	  zFactorL=zFactor
 	ENDIF
+	etaPass=eta
 	!if(LIQ.gt.1)return !for spinodal, don't need fugc's
 
 

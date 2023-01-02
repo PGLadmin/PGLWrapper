@@ -10817,7 +10817,6 @@ end subroutine GetPcSaft
 	if(LOUDER)print*,'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
 	uRes_RT = hRes_RT-(zFactor-1)
 	aRes_RT = uRes_RT - sRes_R
-	if(LOUDER)print*,'FugiPcSaft Done!'
 	if(LOUDER)print*,'FugiPcSaftVtot Done!'
 	!pause 'check output'
 	!JRE end
@@ -10827,7 +10826,7 @@ end subroutine FugiPcSaftVtot
 subroutine FugiPcSaft(nComps,tKelvin,pMPa,xFrac,LIQ,zFactor,chemPoRes,iErr)
     use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
     use PARAMETERS, only: dp, nsite, NAV, RGAS
-    use GlobConst, only: LOUD, uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty
+    use GlobConst, only: LOUD, uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty,etaPass
 	use properties !JRE add
 	use stability, only: get_eta  !JRE add
 	use eos_constants
@@ -10877,10 +10876,11 @@ subroutine FugiPcSaft(nComps,tKelvin,pMPa,xFrac,LIQ,zFactor,chemPoRes,iErr)
 	if(LOUDER)print*,'fugacity(MPa):',fugacity( 1:ncomp )
 	!print*,'calling state_trho'
 	call state_trhoJre ( t_input, rhoiJre, pcalc, molar_rho, eta, zFactor, sRes_R, hRes_RT, cmprsblty, cvRes_R, cpRes_R )
-	if(ABS(pcalc-p_input)/p_input > 1.D-3) iErr=3
+	if(ABS(pcalc-p_input)/p_input > 1.D-3) iErr=13
 	if(LOUDER)print*,'pcalc,eta,Z',pcalc,eta,zFactor
 	if(LOUDER)print*,'rho_mol,S,H:',molar_rho, sRes_R,hRes_RT
 	if(LOUDER)print*,'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
+	etaPass=eta !Needed for PsatEar.
     uRes_RT = hRes_RT-(zFactor-1)
     aRes_RT = uRes_RT - sRes_R
     if(LOUDER)print*,'FugiPcSaft Done!'

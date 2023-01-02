@@ -5798,11 +5798,18 @@
 	common/GaussFun/G0,G1,eta0
 	LOUDER=LOUD
 	LOUDER=.TRUE.
-	if(NC.ne.1 .and. LOUDER)write(*,*)'VpIter: Only works for a single component.'
-	gmol(1)=1
+	iComp=1
+	if(NC > 1 .and. LOUDER)then
+		write(*,*)'VpIter: Only works for a single component. Comp1 or Comp2?'
+		read*,iComp
+	endif
+	gmol(1:NC)=0
+	gmol(iComp)=1
 	write(*,*)'First calculate curve from TrMin-Tr=0.95, then user input.' 
 	write(*,'(a,f7.2,a)')' Tc=',TC(1),'K. Enter TrMin (e.g. 0.45)'
 	read(*,*) TrMin
+	nSteps=10
+	delTr=(0.95d0-TrMin)/nSteps
 	iTrMin=INT(TrMin*100/5)*5
 	outFile=TRIM(masterDir)//'\output\Binodal.txt'
 	open(61,file=outFile)
@@ -5810,8 +5817,8 @@
 	if(isTPT)write(61,'(a,3F9.3)')'G0,G1,e0 ',G0,G1,eta0
 	write(*,*)'  T(K)     PsatMPa     rhoVap(g/cc)    rhoLiq(g/cc)'
 	write(61,*)'  T(K)    PsatMPa   rhoVap    rhoLiq(g/cc)'
-	do iTr=iTrMin,95,5
-		tKelvin=iTr*Tc(1)/100
+	do iStep=1,nSteps
+		tKelvin=(TrMin+delTr*(iStep-1))*Tc(1)
 		call PsatEar(tKelvin,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode)
 		if(ierCode.ne.0)then
 			if(LOUDER)pause 'Psat returned error code'

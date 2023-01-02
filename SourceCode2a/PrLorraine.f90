@@ -2691,7 +2691,7 @@ end module
       use comflash
       implicit none
       integer :: icon,ntyp,mtyp,ierr
-      real(8) :: tKelvin,pMPa,zn(ncomax),rho,zFactor,uRes_RT,denom
+      real(8) :: tKelvin,pMPa,zn(ncomax),rho,zFactor,uRes_RT,denom,etaPass !,xFrac(ncomax)
       real(8) :: aRes_RT,CvRes_R,CpRes_R,dpdRho_RT
       real(8) :: fg(ncomax),ft(ncomax),fp(ncomax),fx(ncomax,ncomax),aux(15)
 	  LOGICAL FORT	! JRE20210615
@@ -2714,6 +2714,8 @@ end module
 		if(FORT)pause 'Check denom'
 	  endif
       rho = pMPa/(zFactor * rgas * tKelvin) !mol/cm3
+	  etaPass=eta ! eta is USEd from comflash, needed for PsatEar
+
       uRes_RT = aux(3)
       aRes_RT = aux(4)
 

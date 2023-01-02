@@ -39,9 +39,9 @@
 	masterDir=TRIM(curDir)
 	outFile=TRIM(masterDir)//'\output.txt' ! // is the concatenation operator
 	DEBUG=.TRUE.
-	DEBUG=.FALSE.
+	DEBUG=.FALSE. ! read input files from c:\Projects\...\input dir.
     LOUD = .TRUE.
-    !LOUD = .FALSE.
+    LOUD = .FALSE.
 	OPEN(UNIT=52,FILE=outFile,RECL=8192)
     open(UNIT=51,FILE='input.txt')
     NC=1 !assume one component for all calculations (as of 1/1/2020 this is all we need).
@@ -77,7 +77,7 @@
 	INITIAL=0
 	ierCode=8686 ! Initialize to failure in the iEosOpt write slot to make it easier to terminate if any Get_ functions fail.
 	call LoadCritParmsDb(iErrCrit)
-	if(iErrCrit > 0 .and. LOUD)print*,'UaWrapperMain: From LoadCritParmsDb, iErrCrit=',iErrCrit
+	if(iErrCrit > 0 .and. LOUD)print*,'PGLWRapperMain: From LoadCritParmsDb, iErrCrit=',iErrCrit
 	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
 	if(LOUD)print*,'localCas,idDippr=',(localCas(i),id(i), i=1,NC)
 	if(iErrCas)then
@@ -115,8 +115,8 @@
 		write(52,*)ierCode,' Error in Main: failed to get required dbase props.'
 		goto 86
 	endif
-    if(LOUD)write(*,*)'UaWrapperMain: Success so far... Got EOS Parms for iEosOpt=',iEosOpt
-	if(LOUD)pause 'UaWrapperMain: starting calcs'
+    if(LOUD)write(*,*)'PGLWRapperMain: Success so far... Got EOS Parms for iEosOpt=',iEosOpt
+	if(LOUD)pause 'PGLWRapperMain: starting calcs'
 	if(iProperty==1)then
 		write(52,'(2i4,i11,a)')iEosOpt, 1, localCas(1),' = iEosOpt, iProp, localCas: T, P,expVal,pSatKPa,ierCode '
 	elseif(iProperty > 1 .and. iProperty < 6)then
@@ -161,7 +161,7 @@
     notDone=1
     line=0  !read statement	debugging
 	if( ABS(Zc(1)) > 1E-11)rhoCritG_cc = Pc(1)*rMw(1)/( Zc(1)*rGas*Tc(1) )
-	if(LOUD)print*,'UaWrapper:MW,rhoCrit',rMw(1),rhoCritG_cc
+	if(LOUD)print*,'PGLWRapper:MW,rhoCrit',rMw(1),rhoCritG_cc
 	if(iProperty < 11)then ! calculate density, departure functions, and derivative properties given T,P
 		do while(notDone)
 			read(51,*,ioStat=ioErr)tKelvin,pKPa,expRho,iPhase
@@ -175,7 +175,7 @@
 			!iPhase=1 !set as default
 			!if(expRho/1000 < rhoCritG_cc)iPhase=0
 			pMPa=pKPa/1000
-			if(LOUD)write(*,'(a,f7.2,1x,3f9.5,i4)')'UaWrapper: calling fugi. T,P,rhoc,expRho,iPhase:',tKelvin,pMPa,rhoCritG_cc,expRho/1000,iPhase
+			if(LOUD)write(*,'(a,f7.2,1x,3f9.5,i4)')'PGLWRapper: calling fugi. T,P,rhoc,expRho,iPhase:',tKelvin,pMPa,rhoCritG_cc,expRho/1000,iPhase
 			call FUGI(tKelvin,pMPa,xFrac,NC,iPhase,FUGC,zFactor,ier)
 	!        if(ier(1) .or. zFactor <= 0)then
 	!            write(52,*)'Unexpected error from Psat calculation. iErrCode,tKelvin,line=',ierCode,tKelvin,line
@@ -183,7 +183,7 @@
 	!        endif
 			ierCode=0
 			if(ier(1) > 10)ierCode=sum(ier)*10+ier(1)
-			if(LOUD.and.ierCode.ne.0)print*,'UaWrapper: ier()=',(ier(i),i=1,11)
+			if(LOUD.and.ierCode.ne.0)print*,'PGLWRapper: ier()=',(ier(i),i=1,11)
 			if(ierCode > 10)then
 				vpt=errDummy
 				rhoG_cc=errDummy
@@ -224,7 +224,7 @@
 			aPhase='VAP'
 			if(iPhase==1)aPhase='LIQ'
 			xFrac(2) = 1-xFrac(1)
-			if(LOUD .and. xFrac(2) < 0)pause 'UaWrapper: Error xFrac(1) > 1  ??? '
+			if(LOUD .and. xFrac(2) < 0)pause 'PGLWRapper: Error xFrac(1) > 1  ??? '
 			if(ioErr < 0)then   !this means we reached the end of the file
 				exit            !break the loop and return to remaining execution 
 			elseif(ioErr > 0)then  
@@ -235,17 +235,17 @@
 			iErr=0
 			pMPa=pKPa/1000
 			if( ABS(tKelvin-tPrevious) > 0.1 .or. ABS(pKPa-pPrevious) > 0.1 )then
-				if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure1(1)
-				if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure2(1)
+				if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' PGLWRapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure1(1)
+				if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' PGLWRapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure2(1)
 				call FUGI(tKelvin,pMPa,xPure2,NC,iPhase,FUGC,zFactor,ier)
-				if(LOUD)print*,'UaWrapperMain: Check output from fugi()pure2 call. ier(1) = ',ier(1)
+				if(LOUD)print*,'PGLWRapperMain: Check output from fugi()pure2 call. ier(1) = ',ier(1)
 				if(ier(1) > 10)iErr=iErr+10*(ier(1)-10)
 				vPure2=rGas*tKelvin*zFactor/pMPa
 				chemPoPure2=FUGC(2) ! = ln(fPure2/P)
 				hRes2 = hRes_RT*rGas*tKelvin ! from module
 				NC1 = 1 ! for pure compound1, we can ignore compound2. This may reduce error indications e.g. when T < Tmin for compound2 but OK for compound1. Too much trouble for compound2.
 				call FUGI(tKelvin,pMPa,xPure1,NC,iPhase,FUGC,zFactor,ier)
-				if(LOUD)print*,'UaWrapperMain: Check output from fugi()pure1 call. ier(1) = ',ier(1)
+				if(LOUD)print*,'PGLWRapperMain: Check output from fugi()pure1 call. ier(1) = ',ier(1)
 				if(ier(1) > 10)iErr=ier(1)-10
 				vPure1=rGas*tKelvin*zFactor/pMPa
 				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
@@ -255,9 +255,9 @@
 			endif
 			!iPhase=1 !set as default
 			!if(expRho/1000 < rhoCritG_cc)iPhase=0
-            if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
+            if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' PGLWRapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
 			call FUGI(tKelvin,pMPa,xFrac,NC,iPhase,FUGC,zFactor,ier)
-            if(LOUD)print*,'UaWrapperMain: Check output from fugi()mix call. ier(1) = ',ier(1)
+            if(LOUD)print*,'PGLWRapperMain: Check output from fugi()mix call. ier(1) = ',ier(1)
 			if(ier(1) > 10)iErr=iErr+100*(ier(1)-10)
 			!iWarn=0
 			!if(iErr==5 .or. iErr==500 .or. iErr==50 .or. iErr==55 .or. iErr==550 .or. iErr==505 .or. iErr==555)iWarn=1
@@ -283,7 +283,7 @@
 		do while(notDone)
 			read(51,*,ioStat=ioErr)tKelvin,rhoMol_cc,xFrac(1)
 			xFrac(2) = 1-xFrac(1)
-			if(LOUD .and. xFrac(2) < 0)pause 'UaWrapper: Error xFrac(1) > 1  ??? '
+			if(LOUD .and. xFrac(2) < 0)pause 'PGLWRapper: Error xFrac(1) > 1  ??? '
 			if(ioErr < 0)then   !this means we reached the end of the file
 				exit            !break the loop and return to remaining execution 
 			elseif(ioErr > 0)then  
@@ -314,7 +314,7 @@
 			if(iPhase==1)aPhase='LIQ'
 			xFrac(3) = 1-xFrac(1)-xFrac(2)
 			if(xFrac(3) < 0)ioErr=123 !Use existing error traps in this case.
-			if(LOUD .and. xFrac(2) < 0)pause 'UaWrapper: Error xFrac(1) > 1  ??? '
+			if(LOUD .and. xFrac(2) < 0)pause 'PGLWRapper: Error xFrac(1) > 1  ??? '
 			if(ioErr < 0)then   !this means we reached the end of the file
 				exit            !break the loop and return to remaining execution 
 			elseif(ioErr > 0)then  
@@ -325,17 +325,17 @@
 			iErr=0
 			pMPa=pKPa/1000
 			if( ABS(tKelvin-tPrevious) > 0.1 .or. ABS(pKPa-pPrevious) > 0.1 )then
-				if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure1(1)
-				if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure2(1)
+				if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' PGLWRapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure1(1)
+				if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' PGLWRapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure2(1)
 				call FUGI(tKelvin,pMPa,xPure2,NC,iPhase,FUGC,zFactor,ier)
-				if(LOUD)print*,'UaWrapperMain: Check output from fugi()pure2 call. ier(1) = ',ier(1)
+				if(LOUD)print*,'PGLWRapperMain: Check output from fugi()pure2 call. ier(1) = ',ier(1)
 				if(ier(1) > 10)iErr=iErr+10*(ier(1)-10)
 				vPure2=rGas*tKelvin*zFactor/pMPa
 				chemPoPure2=FUGC(2) ! = ln(fPure2/P)
 				hRes2 = hRes_RT*rGas*tKelvin ! from module
 				NC1 = 1 ! for pure compound1, we can ignore compound2. This may reduce error indications e.g. when T < Tmin for compound2 but OK for compound1. Too much trouble for compound2.
 				call FUGI(tKelvin,pMPa,xPure1,NC,iPhase,FUGC,zFactor,ier)
-				if(LOUD)print*,'UaWrapperMain: Check output from fugi()pure1 call. ier(1) = ',ier(1)
+				if(LOUD)print*,'PGLWRapperMain: Check output from fugi()pure1 call. ier(1) = ',ier(1)
 				if(ier(1) > 10)iErr=ier(1)-10
 				vPure1=rGas*tKelvin*zFactor/pMPa
 				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
@@ -345,9 +345,9 @@
 			endif
 			!iPhase=1 !set as default
 			!if(expRho/1000 < rhoCritG_cc)iPhase=0
-            if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
+            if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' PGLWRapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
 			call FUGI(tKelvin,pMPa,xFrac,NC,iPhase,FUGC,zFactor,ier)
-            if(LOUD)print*,'UaWrapperMain: Check output from fugi()mix call. ier(1) = ',ier(1)
+            if(LOUD)print*,'PGLWRapperMain: Check output from fugi()mix call. ier(1) = ',ier(1)
 			if(ier(1) > 10)iErr=iErr+100*(ier(1)-10)
 			!iWarn=0
 			!if(iErr==5 .or. iErr==500 .or. iErr==50 .or. iErr==55 .or. iErr==550 .or. iErr==505 .or. iErr==555)iWarn=1

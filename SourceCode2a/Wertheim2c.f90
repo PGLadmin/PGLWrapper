@@ -36,7 +36,7 @@
 	errMsg(11)=' MEM2: rdfContact<1'
 	errMsg(12)=' MEM2: sqArg for ralphMean update.'
 	errMsg(13)=' MEM2: sqArg(A or D)'
-	errMsg(14)=' MEM2: XC < 0' 
+	errMsg(14)=' MEM2: XA,XD, or XC < 0' 
 	LOUDER=LOUD	! from GlobConst
 	LOUDER=LouderWert
 	!LOUDER = .TRUE. ! for local debugging.
@@ -185,8 +185,10 @@
 		if(LOUDER)write(*,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,ralphAmean,ralphDmean,FA,FD,errA,errD
 		ralphDmean= picard*(-1+FA0/sumD)/(FD+1D-9)+(1-picard)*ralphDmean !Using new sumD to compute new ralphMeans.
 		if(ralphDmean < 0)ralphDmean=(-1+FA0/sumD)/(FD+1D-9)
+		if(ralphDmean < 0)ralphDmean=zeroTol
 		ralphAmean= picard*(-1+FD0/sumA)/(FA+1D-9)+(1-picard)*ralphAmean !add 1D-9 to avoid possible zero divide if FD->0
 		if(ralphAmean < 0)ralphAmean=(-1+FD0/sumA)/(FA+1D-9)
+		if(ralphAmean < 0)ralphAmean=zeroTol
 		if(NITER==1)FA1=FA
 	enddo !while abs(error) > 1.D-9. 
 	if(NITER>ITMAX-1)then
@@ -201,14 +203,20 @@
 		XCtemp=1/(1+FC*ralphC)
 		if(XCtemp < zeroTol)then
 			iErr=14
-			write(*,'(a,2f12.4,2F10.4)')' MEM2:ralphC,FC0,FC,XC',ralphC,FC0_ralphC*ralphC,FC,XCtemp 
+			if(LOUDER)write(*,'(a,2f12.4,2F10.4)')' MEM2:ralphC,FC0,FC,XC',ralphC,FC0_ralphC*ralphC,FC,XCtemp 
 			if(LOUDER)write(*,'(a,E12.4)')' MEM2: XC=',XCtemp
 		endif
+	endif
+	if(FA < zeroTol .or.FD < zeroTol .or.FC < zeroTol )then
+		if(LOUDER)write(*,601)' MEM2: FB < 0? FA,FD,FC=',FA,FD,FC
+		if(LOUDER)write(*,601)' MEM2: ralphMeans=',ralphAmean,ralphDmean
+		if(LOUDER)pause 'MEM2: Check this out!'
 	endif
 	hAD=0
 	hDA=0
 	hCC=0
 	do i=1,nComps  ! XA and XD USE Assoc.
+		sumLnXi=0
 		do j=1,nTypes(i)
 			XA(i,j)= 1/(1+ralphA(i,j)*FA)
 			XD(i,j)= 1/(1+ralphD(i,j)*FD)
@@ -220,8 +228,9 @@
 				hCC=hCC+xFrac(i)*nDegree(i,j) * (1-XC(i,j))
 			endif
 		enddo
-		if(LOUDER)write(*,'(a,i3,4F10.7)')' MEM2: i,XA(i,j)=',i,(XA(i,j),j=1,nTypes(i))
+		if(LOUDER)write(*,'(a,i3,8F10.7)')' MEM2: i,XA(i,j)=',i,(XA(i,j),j=1,nTypes(i))
 	enddo
+601	format(1x,a,8E12.4)
 
 	zAssoc= -dAlpha*(hAD+hDA+hCC)/2
 	if(LOUDER)write(*,'(a,8f10.4)')' MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid',FA,FD,zAssoc,dAlpha,hAD+hDA+hCC,-dAlpha*hCC/2
@@ -235,10 +244,14 @@
 	betadFD_dBeta=0
 	betadFC_dBeta=0
 	do i=1,nComps  ! XA and XD USE Assoc.
+		sumLnXi=0.d0
 		do j=1,nTypes(i)
-			XA(i,j)= 1/(1+ralphA(i,j)*FA)
-			XD(i,j)= 1/(1+ralphD(i,j)*FD)
-			XC(i,j)= 1
+			if( XA(i,j) < zeroTol .or.XD(i,j) < zeroTol .or.XC(i,j) < zeroTol )then
+				if(LOUDER)write(*,'(a,2i3,3E12.4)')' MEM2: XBij < 0? i,j,XA,D,C=',i,j,XA(i,j),XD(i,j),XC(i,j)
+				iErr=14
+				return
+			endif
+			sumLnXi=sumLnXi+nDegree(i,j)*(  nAcceptors(i,j)*DLOG( XA(i,j) )+nDonors(i,j)*DLOG( XD(i,j) )+ DLOG( XC(i,j) )  )	! 
 			bepsA=(eAcceptorKcal_mol(i,j)/1.987D-3/tKelvin)
 			beta_alphadAlpha_dBeta=DEXP(bepsA)	! Eqs. 44,45
 			if(bepsA > 1.D-4)beta_alphadAlpha_dBeta=beta_alphadAlpha_dBeta*(bepsA)/(beta_alphadAlpha_dBeta-1)
@@ -248,29 +261,18 @@
 			if(bepsD > 1.D-4)beta_alphadAlpha_dBeta=beta_alphadAlpha_dBeta*(bepsD)/(beta_alphadAlpha_dBeta-1)
 			betadFD_dBeta=betadFD_dBeta+xFrac(i)*nDegree(i,j) * nDonors(i,j) *XD(i,j)*ralphD(i,j)*beta_alphadAlpha_dBeta
 			if(idType(i,j)==1603)then
-				XC(i,j)=XCtemp
 				bepsC=3*(eDonorKcal_mol(i,j)+eDonorKcal_mol(i,j))/(2*1.987D-3*tKelvin)
 				beta_alphadAlpha_dBeta=DEXP(bepsC)
 				if(bepsC > 1.D-4)beta_alphadAlpha_dBeta=beta_alphadAlpha_dBeta*(bepsC)/(beta_alphadAlpha_dBeta-1)
 				betadFC_dBeta=betadFC_dBeta+xFrac(i) *nDegree(i,j) *XC(i,j)*ralphC*beta_alphadAlpha_dBeta
 			endif
 		enddo
-	enddo
-
-	!aAssoc= 0 	!already initialized
-	do i=1,nComps  ! XA and XD USE Assoc.
-		sumLnXi=0.d0
-		do j=1,nTypes(i)
-			sumLnXi=sumLnXi+nDegree(i,j)*(  nAcceptors(i,j)*DLOG( XA(i,j) )+nDonors(i,j)*DLOG( XD(i,j) )+ DLOG( XC(i,j) )  )	! 
-		enddo
 		aAssoc=aAssoc+xFrac(i)*sumLnXi	! ln(XD)=ln(XA) so *2.
 		rLnPhiAssoc(i)=sumLnXi-(hAD+hDA+hCC)/2*(dAlpha-1)*bVolCC_mol(i)/bVolMix !*( 1+(dAlpha-1)*rhoMol_cc*bVolCC_mol(1:nComps) )	! Eq. 42
-		!write(*,'(a,i3,6E12.4)')' MEM1: iComp,sumLnXi,lnPhi=',i,sumLnXi,rLnPhiAssoc(i)
 	enddo
-	if(LOUDER)write(*,'(a,6E12.4)')' MEM2: aAssoc,fugAssoc= ',aAssoc,(rLnPhiAssoc(i),i=1,nComps)
-
 	aAssoc=  aAssoc+(hAD+hDA+hCC)/2  ! Eqs. 1 & 40
 	uAssoc= -( FA*betadFD_dBeta+FD*betadFA_dBeta+FC*betadFC_dBeta )/2 ! Eq. 43
+	if(LOUDER)write(*,'(a,6E12.4)')' MEM2: aAssoc,fugAssoc= ',aAssoc,(rLnPhiAssoc(i),i=1,nComps)
 	if(ABS(hAD-hDA) > Ftol)then
 		iErr=2 !Warning
 		if(LOUDER)print*,'MEM2: Failed bond site balance.'
@@ -319,13 +321,13 @@
     iErr=0  
 	!Note: 1st approximation assumes equal donors and acceptors on each site.
 	nSitesTot=0
+	isAcid=0
 	DO iComp=1,nComps
 		do iType=1,nTypes(iComp)		
 			nSitesTot=nSitesTot+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) !ndHb(iType) should be zero if iType does not hBond.
+			if(idType(iComp,iType)==1603)isAcid=1
 			iComplex=nDonors(iComp,iType)*nAcceptors(iComp,iType)
-			IF( isTpt ) THEN
-				eHbKcal_mol(iComp,iType)=( eDonorKcal_mol(iComp,iType)+eAcceptorKcal_mol(iComp,iType) )/2.d0 
-			ENDIF		
+			eHbKcal_mol(iComp,iType)=( eDonorKcal_mol(iComp,iType)+eAcceptorKcal_mol(iComp,iType) )/2.d0 
 			if(iComplex.ne.0)iComplex=1  !in general, nDs or nAs could be 2, 3,... (e.g. water).  But complexation is either true or false.
 			bigYhb=iComplex*(EXP(eHbKcal_mol(iComp,iType)/tKelvin/1.987D-3)-1) !the iComplex factor permits eHb to be non-zero, but still have zero complexation.  e.g. acetone+chloroform: nDs1=0, nAs1=1, nDs2=1, nAs2=0.  So complexation can occur between nAs1*nDs2, but not nDs1*nAs2.
 
@@ -390,6 +392,10 @@
 	endif
 
 	!fAssoc ITERATION HAS CONCLUDED
+	if(fAssoc < zeroTol)then
+		if(LOUDER)write(*,601)' MEM1: 0 > FA=',fAssoc
+	endif
+601 format(1x,a,8E12.4)
 
 	!Elliott'96 Eq.35 (mod for CS or ESD rdf)
 	ZASSOC= -fAssoc*fAssoc*dAlpha
@@ -416,6 +422,11 @@
 	do i=1,nComps  ! XA and XD USE Assoc.
 		sumLnXi=0.d0
 		do j=1,nTypes(i)
+			if( XA(i,j) < zeroTol)then
+				if(LOUDER)write(*,'(a,2i3,8E12.4)')' MEM1: XAij < 0? i,j,XA=',i,j,XA(i,j)
+				iErr=14
+				return
+			endif
 			sumLnXi=sumLnXi+nDegree(i,j)*(  nAcceptors(i,j)*DLOG( XA(i,j) )*2  )	! ln(XD)=ln(XA) so *2.
 		enddo
 		aAssoc=aAssoc+xFrac(i)*sumLnXi	! ln(XD)=ln(XA) so *2.

@@ -578,7 +578,8 @@ end	!Subroutine QueryParPureSpead
 !C																												  C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	SUBROUTINE FuTpt(tKelvin,pMPa,gmol,nComps,LIQ,chemPo,zFactor,ier)
-	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
+	USE GlobConst  !aRes_RT,uRes_RT etc
+	USE SpeadParms !GlobConst(some)+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	LOGICAL LOUDER
@@ -703,9 +704,9 @@ end	!Subroutine QueryParPureSpead
 	pb_rt=P_RT*bVolMix
 
 	!  GUESS FOR eta
-	eta=pb_rt/3.0 ! Make "old" value imprecise, so "new" value (below) will be ideal gas result at low rho. => precision when P -> 1E-11.
+	eta=pb_rt/1.5d0 ! keep initial guess on the low side to avoid metastable region. 
 	etaHi=1.2D0*bVolMix/Vmix+0.24d0*( exp(-PMPa/100) ) !increase the initial guess for high pressure. etaMax might be less than 1 for some compounds.
-	if(etaHi < 0.65d0)etaHi=0.65d0
+	if(etaHi < 0.6d0)etaHi=0.6d0
 	if(etaHi > etaMax)etaHi=etaMax/1.1d0
 	IF(LIQ==1.or.LIQ==3.or.eta > etaMax)eta=etaHi
 	etaRef=eta*bRefMix/bVolMix
@@ -835,10 +836,6 @@ end	!Subroutine QueryParPureSpead
 	dU_RT=uDep
 	dH_RT=uDep+zFactor-1
 	dA_RT=aDep
-    hRes_RT=dH_RT
-    uRes_RT=dU_RT
-    Ares_RT=dA_RT
-    Sres_R =dU_RT-dA_RT
 	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: getting chemPo(T,P). T,eta,Z=',tKelvin,eta,zFactor
 	initCall=0
     if(LIQ > 1)return
@@ -848,18 +845,24 @@ end	!Subroutine QueryParPureSpead
 	rhoMol_cc=eta/bVolMix
 	vTotCc=totMoles/rhoMol_cc
 	call FuTptVtot(isZiter,zFactor,aRes,uRes,chemPo,vTotCc,tKelvin,gmol,nComps,iErrZ)
+	if(iErrZ > 9)iErr=iErr+iErrZ*10
 	IF (zFactor < zeroTol)then
 		iErr=14
-        if(LOUDER)pause'FuTpt: zFactor < 0 after converged.'
-        return
+		if(LOUDER)write(*,'(a,8E12.4)')' FuTpt: eta,Z=',eta,zFactor
+        if(LOUDER)pause 'FuTpt: zFactor < 0 after converged.'
+        goto 86
 		!IF(LOUDER)call BeepMsg(errMsg(iErr))
 	endif
 	if(iErr > 9)goto 86
+    Ares_RT=aRes
+    uRes_RT=uREs
+    hRes_RT=uRes+zFactor-1
+    Sres_R =uRes-aRes
 	chemPo(1:nComps)=chemPo(1:nComps)-DLOG(zFactor) ! transform from TV to TP
-	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: chemPo=',(chemPo(i),i=1,nComps)
+	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: FuVtot=>chemPo=',(chemPo(i),i=1,nComps)
 	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: ChemPoCalc done. aRes,uRes=',aRes,uRes
 	if(zFactor > zeroTol)ChemPoPure=aRes+zFactor-1-DLOG(zFactor)
-	if(nComps==1 .and. LOUDER .and. initCall)write(*,'(a,6E12.4)')' FuTpt: fugc(1),Gdep1',chemPo(1),ChemPoPure
+	if(nComps==1 .and. LOUDER)write(*,'(a,6E12.4)')' FuTpt: fugc(1),Gdep1',chemPo(1),ChemPoPure
 	initCall=0
 	RETURN
 
@@ -1566,6 +1569,7 @@ end	!Subroutine QueryParPureSpead
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	subroutine FuTptVtot(isZiter,zFactor,aRes,uRes,ChemPo,vTotCc,tKelvin,gmol,nComps,iErr)
 	! isZiter = 1 (omit aDep,uDep,lnPhi,derivatives), 0 (omit derivatives), -1 (compute derivatives and all) 
+	USE GlobConst, only: aRes_RT,uRes_RT,HRes_RT,Sres_R
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs !NOTE: USE Assoc is not here because no assoc is computed.
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)

@@ -314,6 +314,7 @@ C
 	CALL CUBIC(AZ,ZR)
 	Z = ZR(2)
 	if(liq.eq.1)Z=ZR(1)
+	if(Z > 0)etaPass=BMX/Z
 C                        CALCULATE FUGACITIES
 C
 	QUEST=Z-BMX

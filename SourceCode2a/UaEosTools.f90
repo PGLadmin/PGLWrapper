@@ -3,7 +3,8 @@
 	!COMPUTE VAPOR PRESSURE GIVEN tK AND INITIAL GUESS (IE.pMPa)
 	!Ref: Eubank et al, IECR 31:942 (1992)
 	!AU:  JRE Aug2010
-	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
+	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,..., etaPass, ...
+	!USE Assoc ! temporary for checking assoc parms
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	!character tabChar*1
 	DIMENSION fugc(NMX),xFrac(NMX) 
@@ -22,7 +23,7 @@
     errMsg(7)='PsatEar: Calculated Psat < 0.0001 MPa error'
 	LOUDER=LOUD
 	LOUDER=.TRUE.
-	!LOUDER=.FALSE.
+	LOUDER=.FALSE.
 	if(LOUDER.and.initCall)write(*,*)'EAR method'
 	tMin=TC(1)*0.25
 	xFrac(1)=1
@@ -41,110 +42,138 @@
         endif
 	    write(67,*)' T(K)    rho(mol/cc)   P(MPA)        Z     DA_NKT    DU_NKT    eta'
     endif
-	if(LOUDER.and.initCall)print*,'Psat: calling spinodal for vapor.'
-	call Spinodal(NC,xFrac,tK,0,rhoVap,zVap,aDepVap,dU_NkT,iErrVap)
-    if(iErrVap==3)then !first definite call to fuVtot suffices to check for T < Tmin.
-        ierCode=6
-        goto 86
-    endif
-	rhoLiq=rhoVap !-ve value on input means use default value for etaLo
-	if(LOUDER.and.initCall)print*,'Psat: calling spinodal for Liquid.'
-	call Spinodal(NC,xFrac,tK,1,rhoLiq,zLiq,aDepLiq,dU_NkT,iErrLiq)
-	if(LOUDER)close(67)
-	pMax=rGas*tK*(rhoVap*zVap) 
-	pMin=rGas*tK*(rhoLiq*zLiq)
-	if(LOUDER.and.pMax < 1e-11)print*,'Psat: 0~pMax=',pMax
-    relDiffP=ABS(pMax-pMin)/pMax
-	if(iErrVap.ne.0 .or. iErrLiq.ne.0 .or. relDiffP < 1D-3)then
-		ierCode=1
-		if(LOUDER)write(*,'(a,f8.1,a)')' PsatEar: Spinodal error at T = ',tK,' T > Tc?'
-		!if(LOUD)pause 
-		goto 86
-	endif
-    !if(pMin < 0)pMin=0
-	etaLiq=rhoLiq*bVolCC_mol(1)
-	etaVap=rhoVap*bVolCC_mol(1)
-	if(LOUD.and.initCall)Write(*,'(a,3f11.4)')' Psat after spinodal: pMin,pMax= ',pMin,pMax
-	if(LOUD.and.initCall)write(*,'(a,6E12.4)')' Psat: etaLiq,etaVap=',etaLiq,etaVap
-	pOld=(pMin+pMax)/2 !when approaching critical, this works well.
-	if( (rhoVap/rhoLiq) < 0 .and. LOUDER)pause 'Psat error after spinodals: rhoVap/rhoLiq < 0'
-	pEuba=rGas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995), assuming 1.2x shifts on V&L relative to spinodals.
-	!pOld=pEubank/10  !JRE: I find Eubank overestimates P sometimes. It even get higher than pMax
-	
-	if(pMin < 0)then !Pmin < 0 means liquid root exists at p=0. Then Razavi works well.
+	Tr=tK/Tc(1)
+	if(Tr > 0.85)then
+		if(LOUDER)print*,'Psat: calling spinodal for vapor.'
+		call Spinodal(NC,xFrac,tK,0,rhoVap,zVap,aDepVap,dU_NkT,iErrVap)
+		if(iErrVap==3)then !first definite call to fuVtot suffices to check for T < Tmin.
+			ierCode=6
+			goto 86
+		endif
+		rhoLiq=rhoVap !-ve value on input means use default value for etaLo
+		if(LOUDER)print*,'Psat: calling spinodal for Liquid.'
+		call Spinodal(NC,xFrac,tK,1,rhoLiq,zLiq,aDepLiq,dU_NkT,iErrLiq)
+		if(LOUDER)close(67)
+		pMax=rGas*tK*(rhoVap*zVap) 
+		pMin=rGas*tK*(rhoLiq*zLiq)
+		if(LOUDER.and.pMax < 1e-11)print*,'Psat: 0~pMax=',pMax
+		relDiffP=ABS(pMax-pMin)/pMax
+		if(iErrVap.ne.0 .or. iErrLiq.ne.0 .or. relDiffP < 1D-3)then
+			ierCode=1
+			if(LOUDER)write(*,'(a,f8.1,a)')' PsatEar: Spinodal error at T = ',tK,' T > Tc?'
+			!if(LOUD)pause 
+			goto 86
+		endif
+		!if(pMin < 0)pMin=0
+		etaLiq=rhoLiq*bVolCC_mol(1)
+		etaVap=rhoVap*bVolCC_mol(1)
+		pOld=(pMin+pMax)/2 !when approaching critical, this works well.
+		if(pOld < zerotol)pOld=Pc(1)/2 ! OK for Tr > 0.85(?)
+		if(LOUDER)Write(*,'(a,4f11.4)')' Psat: after spinodal: pMin,pMax,pInit= ',pMin,pMax,pOld
+		if(LOUDER)write(*,'(a,6E12.4)')' Psat: spinodal=>etaLiq,etaVap=',etaLiq,etaVap
+		if( (rhoVap/rhoLiq) < 0 .and. LOUDER)pause 'Psat error after spinodals: rhoVap/rhoLiq < 0'
+		pEuba=rGas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995), assuming 1.2x shifts on V&L relative to spinodals.
+		!pOld=pEubank/10  !JRE: I find Eubank overestimates P sometimes. It even get higher than pMax
+	else ! compute Razavi estimate
+601 format(1x,a,6E12.4)
+	!if(pMin < 0)then !Pmin < 0 means liquid root exists at p=0. Then Razavi works well.
 		pOld=1D-5 !If p < 0, then the vapor density goes negative and log(rhoLiq/rhoVap) is indeterminate.
         !NOTE: Don't use pOld=0 when pOld > 0. You might get Golden Error because vdw loop doesn't cross zero!
-		if(LOUDER)print*,'calling fugi for liquid to construct Razavi initial guess.'
-		call FUGI(tK,pOld,xFrac,NC,3,FUGC,zLiq,ier) !LIQ=3=>liquid root with no fugc calculation
+		if(LOUDER)print*,'PsatEar:calling liquid fugi for Razavi initial guess. ID,Tc=',ID(1),Tc(1)
+		!if(LOUDER)write(*,601)'PsatEar:eAcc,eDon',(eAcceptorKcal_mol(1,j),j=1,nTypes(1)),(eDonorKcal_mol(1,j),j=1,nTypes(1))
+
+		call FUGI(tK,pOld,xFrac,NC,1,FUGC,zLiq,ier) !LIQ=1=>liquid root with fugc calculation so we get Ares.
+		if(zLiq < zeroTol)then
+			if(LOUDER)write(*,601)' PsatEar: Initial call to fugi. 0 > zLiq=',zLiq
+			ier(1)=17
+			return
+		endif
         if(ier(1)==0)then
-			AresLiq=Ares_RT
-			rhoLiq=pOld/(zLiq*rGas*tK)			 !AresVap  +  Zvap-1 -ln(Zvap) =AresLiq+ZLiq-1-ln(ZLiq) 
-			!rhoLiq=etaL/bVolCC_mol(1)		 =>  !B2*rhoVap+B2*rhoVap+ln(rhoVap/rhoLiq) =AresLiq+0-1
-			if(iEosOpt==11)rhoLiq=etaPass/bVolCC_mol(1) ! crazy precision is required when etaLiq > 0.98 (and Z->0). e.g. pentanoic acid (1258)
+			AresLiq=Ares_RT						!AresVap  +  Zvap-1 -ln(Zvap) =AresLiq+ZLiq-1-ln(ZLiq)							 
+			!rhoLiq=pOld/(zLiq*rGas*tK)		!=>	!B2*rhoVap+B2*rhoVap+ln(rhoVap/rhoLiq) =AresLiq+0-1  
+			rhoLiq=etaPass/bVolCC_mol(1) ! crazy precision is required for acids (ZL < 1D-7) or when etaLiq > 0.98 (and Z->0). e.g. pentanoic acid (1258)
 			eta=rhoLiq*bVolCC_mol(1)
 			if(eta < 0.15D0 .and. LOUDER)print*,'PsatEar: etaLiq < 0.15? pOld,etaLiq,tK=',pOld,eta,tK
             rhoVap=rhoLiq*EXP( AresLiq-1 ) !Razavi, FPE, 501:112236(19), Eq 19. Ares_RT from GlobConst
 			pSatRazavi=rhoVap*rGas*tK
-			call FUGI(tK,pSatRazavi,xFrac,NC,0,FUGC,zVap,ier) !LIQ=0=>vapor root with fugc calculation. zVap far from zero.
-			B2cc_mol=(zVap-1)*(zVap*rGas*tK)/pSatRazavi
-			rhoVap=rhoVap*exp(-2*B2cc_mol*rhoVap)! => rhoVap=rhoLiq*EXP(Ares_RT-1-2*B2*rhoVap), but Ares-RT changes with FUGI call, so reuse like this.
-			pSatRazavi=rhoVap*rGas*tK*(1+B2cc_mol*rhoVap)
-			zLiq=pSatRazavi/(rhoLiq*rGas*tK)
-			FugcLiq=AresLiq+zLiq-1-LOG(zLiq)
-			if(LOUDER)write(*,'(a,6E12.4)')' PsatEar: Init-zVap,zLiq,Psat,FugcVap,FugcLiq=',zVap,zLiq,pSatRazavi,Fugc(1),FugcLiq
-			if(pSatRazavi < pMax)then
+			etaVap=rhoVap*bVolCC_mol(1)
+			!call FuVtot(1,tK,pSatRazavi,xFrac,NC,0,FUGC,zVap,ier)
+			if(LOUDER)write(*,601)' PsatEar: Calling init FuVtot. T,etaLiq,etaVap,aResLiq=',tK,eta,etaVap,aResLiq    
+			call FuVtot(1,tK,1/rhoVap,xFrac,NC,FUGC,zVap,iErrF)		!isZiter=1=>vapor Z with no fugc calculation. zVap far from zero.
+			if(iErrF > 9)then
+				if(LOUDER)write(*,'(a,i4)')' PsatEar: Initial Vapor FuVtot Error=',iErrF
+				ierCode=19
+				return
+			endif
+			!B2cc_mol*rhoVap=(zVap-1)
+			rhoVap=rhoVap*exp( -2*(zVap-1) )! => rhoVap=rhoLiq*EXP(AresLiq-1-2*B2*rhoVap), but Ares_RT changes with FUGI call, so reuse like this.
+			pSatRazavi=rhoVap*rGas*tK*zVap
+			if(pSatRazavi > zeroTol)then
 				pTest=pSatRazavi
+				zLiq=pSatRazavi/(rhoLiq*rGas*tK)
+				FugcLiq=AresLiq+zLiq-1-LOG(zLiq)
+				if(LOUDER)write(*,601)' PsatEar: Init-zVap,zLiq,Psat,FugcVap,FugcLiq=',zVap,zLiq,pSatRazavi,Fugc(1),FugcLiq
 			else
-				if(LOUDER)write(*,'(a,6E12.4)')' PsatEar: pMax < pSatRazavi,= ?',pSatRazavi
+				if(LOUDER)write(*,601)' PsatEar: 0 > pSatRazavi = ?',pSatRazavi
 				pTest=zeroTol*10
-				if(pMax > zeroTol)pTest=pMax/2
 			endif
 			if(LOUDER)write(*,'(a,2f8.4,e11.4)')' PsatEar: Razavi Psat,eta,rhoLiqG/cc',pTest,eta,rhoLiq*rMw(1)
 	        !pEuba2=rGas*tK/(1/rhoVap-1/rhoLiq)*( Ares_RT- 0 +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
             !NOTE: When 1/rhoVap >> 1/rhoLiq, pEuba2=rGas*tK*rhoVap*( Ares_RT-ln(rhoVap/rhoLiq) )=pTest*( Ares_RT - (Ares_RT-1) )
-            if(pTest < pMax)pOld=pTest
+            pOld=pTest
 		elseif(ier(2).ne.0)then
 			if(LOUDER)print*,'PsatEar:T < Tmin? Sorry.'
-			ierCode=6
+			ierCode=16
 			return
 		else
-			if(LOUD)write(*,'(a,i12)')' PsatEar: Error from Razavi call to fugi. ier=',(ier(i),i=1,7)
+			if(LOUDER)write(*,'(a,i12)')' PsatEar: Error from Razavi call to fugi. ier=',(ier(i),i=1,7)
+			ierCode=18
+			return
         endif
-	endif
+	endif ! Tr > 0.85
 	etaLiq=rhoLiq*bVolCC_mol(1)
-	if(pOld < zeroTol)write(*,*)' PsatEar: zeroTol > pInit = ?',pOld
+	if(pOld < zeroTol)then
+		pOld=zeroTol
+		if(LOUDER)write(*,*)' PsatEar: zeroTol > pInit = ?',pOld
+	endif
 	!if(LOUD .and. ABS(etaL-etaLiq)/etaLiq > 0.0001 .and. LOUD)pause 'Psat: warning lost precision in rhoLiq'
 	pBest=1234
 	fBest=1234
-	if(LOUDER.and.initCall)print*,'Psat:Initial pSat,etaL=',pOld,etaLiq
+	if(LOUDER.and.initCall)print*,'PsatEar:Initial pSat,etaL=',pOld,etaLiq
 	if(LOUDER.and.initCall)pause 'Check initial guess for Psat.'
-	itMax=66
+	itMax=33
 	do iter=1,itMax !iterate on pOld according to Eubank criterion
 		!print*,'calling fugi for liquid iteration.'
-		call FUGI(tK,pOld,xFrac,NC,3,FUGC,zLiq,ier) !LIQ=3=>liquid root with no fugc calculation
+		call FUGI(tK,pOld,xFrac,NC,1,FUGC,zLiq,ier) !LIQ=3=>liquid root with no fugc calculation
 		!chemPotL=fugc(1)
 		aDepLiq=aRes_RT
-		rhoLiq=pOld/(zLiq*rGas*tK)
-		if(iEosOpt==11)rhoLiq=etaPass/bVolCC_mol(1) ! crazy precision is required when etaLiq > 0.98 (and Z->0). e.g. pentanoic acid (1258)
+		!rhoLiq=pOld/(zLiq*rGas*tK)
+		rhoLiq=etaPass/bVolCC_mol(1) ! crazy precision is required when etaLiq > 0.98 (and Z->0). e.g. pentanoic acid (1258)
 		if(ier(1).ne.0)ierCode=3 !declare error but don't stop. if future iterations give valid fugi(), then no worries
 		!print*,'calling fugi for liquid iteration.'
-		call Fugi(tK,pOld,xFrac,NC,2,FUGC,zVap,ier) !LIQ=2=>vapor root with no fugc calculation
+		call Fugi(tK,pOld,xFrac,NC,0,FUGC,zVap,ier) !LIQ=2=>vapor root with no fugc calculation
 		!chemPotV=fugc(1)
 		aDepVap=aRes_RT
-		rhoVap=pOld/(zVap*rGas*tK)
-		if(ier(1).ne.0)ierCode=4 !declare error but don't stop. if future iterations give valid fugi(), then no worries.
-		if( (rhoVap/rhoLiq) < 0 .and. LOUDER)pause 'Psat error : rhoVap/rhoLiq < 0'
+		rhoVap=etaPass/bVolCC_mol(1)
+		if(ier(1).ne.0)ierCode=4 !declare warning error but don't stop. if future iterations give valid fugi(), then no worries.
+		if( (rhoVap/rhoLiq) < 0 )then
+			write(6,601)' PsatEar: rho < 0? rhoVap,Liq=',rhoVap,rhoLiq
+			If(LOUDER)pause 'Psat error : rhoVap/rhoLiq < 0'
+			ierCode=19
+			goto 86
+		endif
 		if(ABS(zVap-zLiq) < 1e-3)then
 			if(LOUDER)write(*,*)'rho,zLiq,zVap',rhoLiq,zVap,zLiq
 			if(LOUDER)pause 'PsatEar: zVap=zLiq'
-			ierCode=5
+			ierCode=15
 			goto 86
 		endif
-        if(pOld < 1E-6 .and. iter > 2)then
-			eta=rhoLiq*bVolCC_mol(1)
-			if(eta < 0.15D0 .and. LOUDER)print*,'Psat: etaLiq < 0.15? pOld,zLiq,tK=',pOld,zLiq,tK
-            rhoVap=rhoLiq*EXP( aDepLiq-aDepVap-1 ) !Razavi, FPE, 501:112236(19), Eq 19.  aDepVap might be significant for carbo acids.
-            pTest=rhoVap*rGas*tK
+        if(pOld < 1E-8 .and. iter > 2)then
+			etaLiq=rhoLiq*bVolCC_mol(1)
+			if(eta < 0.15D0 .and. LOUDER)write(*,601)'Psat: etaLiq < 0.15? pOld,zLiq,tK,etaLiq=',pOld,zLiq,tK,etaLiq
+            rhoVap=rhoLiq*EXP( aDepLiq+zLiq-1-aDepVap+zVap-1 ) !Razavi, FPE, 501:112236(19), Eq 19.  aDepVap might be significant for carbo acids.
+            pTest=rhoVap*rGas*tK*zVap
+
 			exit
         endif
 		!rLogRhoRat=DLOG(rhoVap/rhoLiq)	!for debugging
@@ -156,9 +185,8 @@
 			pBest=pTest
 		endif
 		change=pTest-pOld
-		if(initCall.and.LOUDER)print*,'Psat:iter,pOld,pTest',iter,pOld,pTest
-		if(initCall.and.LOUDER)print*,'Psat:aResLiq,aResVap',aDepLiq,aDepVap
-		if(initCall.and.LOUDER)print*,'Psat:zLiq,zVap',zLiq,zVap
+		if(LOUDER)write(*,'(a,i3,8E12.4)')' PsatEar:iter,pOld,pTest',iter,pOld,pTest
+		if(LOUDER)write(*,601)'PsatEar:aResLiq,aResVap,zLiq,zVap',aDepLiq,aDepVap,zLiq,zVap
 		tol=1D-6
 		if(pTest > 0)then
 			pOld=pTest
@@ -171,7 +199,7 @@
 	pMPa=pOld
 	if(ABS(change/pMPa) > tol .or. iter.ge.itMax)then
 		ierCode=2
-		if(LOUDER)write(*,'(a,i3,a,f7.2)')' Psat error: exceeded max iterations = ',itMax,' at T = ',tK
+		if(LOUDER)write(*,'(a,i3,8E12.4)')' PsatEar:tolerance not met. iter,T,etaL,etaV,relDev',itMax,tK,etaLiq,etaVap,change/pMPa
 		pMPa=pBest
 		goto 86
 	endif
@@ -180,7 +208,7 @@
 	uSatV=DUONKT
 86	continue
 	if(LOUDER.and.initCall)print*, 'Psat: P,rhoV,rhoL',pMPa,rhoVap,rhoLiq
-	if(LOUDER.and.initCall)write(*,'(a,3f9.5)') ' Psat: P,etaV,etaL',pMPa,rhoVap*bVolCc_mol(1),rhoLiq*bVolCc_mol(1)
+	if(LOUDER)write(*,'(a,3f9.5)') ' Psat: P,etaV,etaL',pMPa,rhoVap*bVolCc_mol(1),rhoLiq*bVolCc_mol(1)
 	isZiter=0
 	!if(ierCode==0) call FuVtot(isZiter,tK,1/rhoLiq,xFrac,NC,FUGC,ZLiq,iErrFu) !one last call to fugi for chemPo and debugging. We know the density so use it.
 	fugc(1)=86.86
@@ -199,11 +227,11 @@
 	if( (isTPT .or. isESD) .and. pMPa < 1.D-4 .and. LOUDER)print*,'Psat: 1.D-4 > pMpa = ',pMPa
 	if( (isTPT .or. isESD) .and. pMPa < 1.D-4)ierCode=7
 	if(iEosOpt==22 .and. pMPa < 1.D-2)ierCode=7
-    if(LOUDER.and.initCall)write(*,'(f10.2,3f14.10,i2)')tK,pMPa,rhoVap,rhoLiq,ierCode
-	if(LOUDER.and.initCall)pause 'check Psat'
+    if(LOUDER)write(*,'(f10.2,3f14.10,i2)')tK,pMPa,rhoVap,rhoLiq,ierCode
+	if(LOUDER)pause 'check final Psat'
 	initCall=0
 	RETURN
-	END
+	END	! subroutine PsatEar()
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111

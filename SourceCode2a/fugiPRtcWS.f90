@@ -163,6 +163,7 @@
 	CALL CUBIC(AZ,ZR)
 	Z = ZR(2)
 	if(liq==1 .or. liq==3)Z=ZR(1)
+	if(Z > 0)etaPass=BMX/Z
 !C                        CALCULATE FUGACITIES
 !C
 	QUEST=Z-BMX
@@ -180,8 +181,8 @@
 	  dn2adni=bigD*dnbdni+BMX*dnDdni
 		fugc(I)=dnbdni*TMP1+TMP2+TMP3*(dn2adni/AMX-dnbdni/BMX)
 100	CONTINUE
-      RETURN
-      END
+    RETURN
+    END
 
 	subroutine xsPRtcWS( fugXS,xsFreeEn,moFrac,tK,nComps)
 !c  compute the excess mixture value by the PR Wong-Sandler mixture rule
