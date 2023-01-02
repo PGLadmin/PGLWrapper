@@ -388,17 +388,17 @@
 	  etaL=BIGB/zFactor
 	  zFactorL=zFactor
 	ENDIF
-	etaPass=eta
 	!if(LIQ.gt.1)return !for spinodal, don't need fugc's
 
 
 	!
 	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS
 	!
-	if(zFactor.lt.BIGB)then
+	if(zFactor < BIGB)then
 		ier(4)=1
 		goto 861
 	endif
+	if(zFactor > 0)etaPass=BIGB/zFactor	! PsatEar needs eta directly.
 
 	BIGMES=BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
 	dU_NKT= BIGMES*(-1+daMixDt/aMix)	!EL2ed Eq. 8.35, 8.37
