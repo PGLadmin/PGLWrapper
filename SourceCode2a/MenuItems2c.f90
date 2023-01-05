@@ -2084,7 +2084,7 @@
 	USE EsdParms
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	CHARACTER*44 FN
-	character*77 errMsgLookup
+	character*77 errMsgSub
 	!PARAMETER (RGOLD=.61803399,CGOLD=.38196602)
 	!character*77 errMsgLookup !errMsg(11),
 	DoublePrecision deviate(maxPts),parm(5),stdErr(5),temParm(5),TR(NMX)
@@ -2188,7 +2188,8 @@
 			exit ! end of file reached
 		endif
         iSystem=iSystem+1
-		call IdCasLookup(NC,idCas,ierLookup,errMsgLookup)	! idDippr passed by GlobConst. This also sets the class()
+		call IdCasLookup(NC,idCas,iErrLookup,errMsgSub)	! idDippr passed by GlobConst. This also sets the class()
+		if(iErrLookup > 0)write(*,*)'KijDB: Error from IdCasLookup=',TRIM(errMsgSub)
 		if(iOptimize < 0)then
 			!write(661,'(i4,2i5,2i6,a)')nPtsBipDat,id(1),id(2),idTrc(1),idTrc(2),' ! Line0:nPts,idDip1,idDip2,idTrc1,idTrc2; Line1-nPts:T(K),P(MPa),x1,y1' 	
 		endif !iOptimize < 0
@@ -2221,16 +2222,17 @@
 		iErrGet=SetNewEos(iEosOpt) !wipe out any instance of other eos.
 		iErrGet=1 !should be set to zero by Get__(), so something went wrong if iErrGet>0 after calls.
 		if(iEosOpt==1)CALL GetPR(NC,iErrGet)
-		if(iEosOpt==2)CALL GetEsdCas(NC,idCas,iErrGet)
+		if(iEosOpt==2)CALL GetEsd96Cas(NC,idCas,iErrGet)
 		if(iEosOpt==3)CALL GetPRWS(NC,iErrGet)
+		if(iEosOpt==4)CALL GetEsdCas(NC,idCas,iErrGet)
 		if(iEosOpt==5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!AFG 2011 , Added EOS Opt. 9
 		if(iEosOpt==6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
 		if(iEosOpt==7)CALL GetNRTL (NC,ID,iErrGet)
 		if(iEosOpt==10)CALL GetPcSaft(NC,idCas,iErrGet)
 		if(iEosOpt==11)CALL GetPrtc(NC,iErrGet)
 		if(iEosOpt==17)CALL GetPrLorraine(NC,iErrGet)
-		if(iEosOpt==18)CALL GetEsd2Cas(NC,idCas,iErrGet)
-		if(iErrGet > 0 .or. iErrCrit.ne.0 .or. ierLookup > 0 .or. iOptimize < 0)then
+		if(iEosOpt==18)CALL GetEsdCas(NC,idCas,iErrGet)
+		if(iErrGet > 0 .or. iErrCrit.ne.0 .or. iErrLookup > 0 .or. iOptimize < 0)then
 			write(*,*)'KijDB Error: failed to get required pure props.'
 			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)								 
 			write(61,607)id(1),id(2),0,zero,eightySix
@@ -2320,19 +2322,20 @@
 		id(i)=idStore(i)
 	enddo
 	CALL GETCRIT(NC,iErrCrit)
-	call IdCasLookup(NC,idCas,ier,errMsgLookup)	! idDippr comes from GlobConst. This also resets the class(). .
+	call IdCasLookup(NC,idCas,ier,errMsgSub)	! idDippr comes from GlobConst. This also resets the class(). .
 	if(iErrCrit.ne.0)then
 		if(LOUDER)write(*,*)'Error in Main: ErrorCode from GetCrit = ',iErrCrit
 		if(LOUDER)pause
 		stop
 	endif 
 	if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
+	if(iEosOpt==2)CALL GetEsd96Cas(NC,idCas,iErrGet)
 	if(isESD)CALL GetEsdCas(NC,idCas,iErrGet)
-	if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet)
+	if(iEosOpt==3)CALL GetPRWS(NC,iErrGet)
 	if(isTPT)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!AFG 2011 , Added EOS Opt. 9
-	if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
-	if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
-	if(iErrGet.gt.0)then
+	if(iEosOpt==6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
+	if(iEosOpt==7)CALL GetNRTL (NC,ID,iErrGet)
+	if(iErrGet >0)then
 		if(LOUDER)write(*,*)'KijDB Error: failed to restore required pure props.'
 		if(LOUDER)write(*,*)'id1,id2',id(1),id(2)
 		if(LOUDER)pause
@@ -5255,7 +5258,7 @@
 	USE Assoc
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	PARAMETER(nPtMx=222)
-	dimension ier(12)
+	!dimension ier(12)
 	dimension PARM(nParms),deviate(maxPts),fugc(NMX),xFrac(NMX)
 	common/ RegXaXdData /xFracX(nPtMx,nMx),tKelvinX(nPtMx),xAiAcceptor(nPtMx),nComps,iAcceptor,jDonor
 
@@ -5267,7 +5270,7 @@
 			xFrac(iComp)=xFracX(iPt,iComp)
 		enddo
 		LIQ=1
-		call FuEsdTp(tK,pMPa,xFrac,nComps,LIQ,FUGC,Z,IER)
+		call FugiESD(tK,pMPa,xFrac,nComps,LIQ,FUGC,rho,Z,aRes,uRes,iErrF)
 		deviate(iPt)=xA(1,iAcceptor)-xAiAcceptor(iPt)
 	enddo
 	if(iflag.eq.0)iflag=0 !dummy to avoid warning

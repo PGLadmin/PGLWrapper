@@ -39,6 +39,14 @@ contains
 	return
 	end function SetNewEos
 END MODULE GlobConst
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+MODULE EsdParms
+	USE GlobConst
+	DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
+	DoublePrecision mShape(NMX),KadNm3(NMX),epsA_kB(NMX),epsD_kB(NMX) !for ESD2
+	Integer         ND(NMX),NDS(NMX),NAS(NMX)
+	LOGICAL         isMEM2
+END MODULE EsdParms
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). Sums are over sites per molecule then over molecules.
 	USE GlobConst, only:nmx,isTPT,isESD,iEosOpt,LOUD ! nmx is the maximum number of compounds, typically 55. 
@@ -60,6 +68,7 @@ MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) ba
 	!idLocalType points back to localType for double-linking. E.g. idLocalType(1)=101.
 contains
 	Subroutine RdfCalc(rdfContact,dAlpha,eta)
+	USE GlobConst
 	DoublePrecision denom,eta,denom2,void,void2,void4,dLng,rdfContact,d2Lng,d2g,dAlpha,dg_dEta,dAlph_dEta
 	Integer iRdfOpt,iErrCode
 	! alpha=eta*rdf*kAD*yHB => (eta/alpha)*(dAlpha/dEta) = 1+(eta/rdf)*(dRdf/dEta)
@@ -71,9 +80,7 @@ contains
 	!			= 3, activity coefficient model form (rdf=universal constant=g(eta=0.4)
 	!			= 4, ESD form, geometric association rule.
 	iRdfOpt=0					!ESD non-geometric form
-	if(iEosOpt==4)then
-		iRdfOpt=3
-	elseif(isESD)then
+	if(isESD)then
 		iRdfOpt=4	!ESD geometric form
 	elseif(isTpt)then
 		iRdfOpt=2	!CS form

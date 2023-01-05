@@ -30,7 +30,7 @@
 	COMMON/KVALUES/S
 	!common/FloryWert/vLiq(nmx)
 	!              1     2       3     4      5        6         7        8           9        10       11      12       13          14         15           16            17            18
-	data EosName/'PR','Esd96','PRWS','Esd','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD-MEM2'/
+	data EosName/'PR','Esd96','PRWS','EsdMEM2','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
 
 	LOUD =.FALSE.
 	!LOUD = .TRUE.
@@ -104,7 +104,7 @@
 	pause 'Main: Getting EOS parameters.'
 	iErrGet=0 
 	if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	if(iEosOpt.eq.2)CALL GetEsdCas(NC,idCas,iErrGet)	 !Results placed in USE EsdParms				!Diky model 12
+	if(iEosOpt.eq.2)CALL GetEsd96Cas(NC,idCas,iErrGet)	 !Results placed in USE EsdParms				!Diky model 12
 	if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
 	if(iEosOpt.eq.4)CALL GetEsdCas(NC,idCas,iErrGet)
 	if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms			  !Diky model 6
@@ -121,7 +121,7 @@
 	if(iEosOpt.eq.15)CALL GetPcSaft(NC,idCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters   !Diky model 21
 	if(iEosOpt.eq.16)CALL GetPcSaft(NC,idCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters   !Diky model 2_
 	if(iEosOpt.eq.17)CALL GetPrLorraine(NC,iErrGet)		!JRE 20210510 : Reads Jaubert's tcPR parameters including BIPs for GE mixing rule.   !Diky model 
-	if(iEosOpt.eq.18)CALL GetEsd2Cas(NC,idCas,iErrGet)	 !Results placed in USE EsdParms				!Diky model 12
+	if(iEosOpt.eq.18)CALL GetEsdCas(NC,idCas,iErrGet)	 !Results placed in USE EsdParms				!Diky model 12
 	!NewEos: Add here for initializing parms.
 	if(iErrGet > 0)then
 		if(LOUD)pause  'Error in Main: failed to get required dbase props.'

@@ -1,12 +1,5 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-MODULE EsdParms
-	USE GlobConst
-	DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
-	DoublePrecision mShape(NMX),KadNm3(NMX),epsA_kB(NMX),epsD_kB(NMX) !for ESD2
-	Integer         ND(NMX),NDS(NMX),NAS(NMX)
-END MODULE EsdParms
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
+Subroutine GetEsd96Cas(nC,idCasPas,iErr) !ID is passed through GlobConst
 	!
 	!  PURPOSE:  LOOKS UP THE ESD PARAMETERS AND STORES THEM IN COMMON EsdParms
 	!
@@ -36,11 +29,11 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 	isESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI 
 	etaMax=1/1.9D0-zeroTol
 	IF(DEBUG)then  !DEBUG is part of GlobConst
-		inFILE='c:\Spead\CalcEos\input\ParmsEsd.TXT'
+		inFILE='c:\Spead\CalcEos\input\ParmsEsd96.TXT'
 		if(iEosOpt==12)inFILE='c:\Spead\CalcEos\input\ParmsEsdEmami.TXT'
 		if(iEosOpt==13)inFILE='c:\Spead\CalcEos\input\ParmsEsdEmamiTb.TXT'
 	ELSE
-		inFile=TRIM(masterDir)//'\input\ParmsEsd.txt' ! ESD96(MEM1) with optimized compound parameters for associating compounds
+		inFile=TRIM(masterDir)//'\input\ParmsEsd96.txt' ! ESD96(MEM1) with optimized compound parameters for associating compounds
 		if(iEosOpt==12)inFILE=TRIM(masterDir)//'\input\ParmsEsdEmami.txt' ! // ESD96 with group contribution parameter estimates
 		if(iEosOpt==13)inFILE=TRIM(masterDir)//'\input\ParmsEsdEmamiTb.txt' ! // ESD96 with group contribution parameter estimates except EOK is varied to match Tb760
 	ENDIF
@@ -78,7 +71,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 		ierCompExact=1 ! Set error for all comps. Declare error because iEosOpt=12,13 means using only GC parameters from one of ParmsEsdEmami__
 	else
 		if(Tc(1) < 4)call GetCritCas(nC,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
-		call ExactEsd(nC,VX,C,Q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc or Asso+. Wait to see if Parms are in ParmsEsd before failing.
+		call ExactEsd96(nC,VX,C,Q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc or Asso+. Wait to see if Parms are in ParmsEsd before failing.
 		if(LOUDER.and.iErrExact/=0)print*,'GetESDWarning: iErrExact=',iErrExact,' Checking database for iComp='	,( ierCompExact(iComp),iComp=1,NC)
 	endif
 	nTypes(1:NC)=1	 !all esd versions use nTypes=1. Multifunctional molecules require SPEADMD. 
@@ -193,7 +186,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 end	!GetEsdCas
 !------------------------------------------------------------------------------------
 !------------------------------------------------------------------------------------  
-subroutine ExactEsd(nC,VX,c,q,eokP,iErr,ierComp)
+subroutine ExactEsd96(nC,VX,c,q,eokP,iErr,ierComp)
 	USE GlobConst
 	Implicit DoublePrecision(A-H,K,O-Z)
 	!  compute ESD parameters for hydrocarbons based on the more exact solution
@@ -260,74 +253,6 @@ end	!subroutine ExactEsd
 !------------------------------------------------------------------------------ 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-subroutine QueryParPureEsd(iComp,iParm,value,iErr)
-	USE EsdParms      !Just for ESD
-	IMPLICIT NONE
-	DoublePrecision value
-	integer iComp,iParm,iErr
-	!-----------------------------------------------------------------------------
-	! pure component parameters
-	!-----------------------------------------------------------------------------
-	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
-	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
-	iErr=0
-	if(iParm==1)then
-		value=c(iComp)
-	elseif(iParm==2)then
-		value=vx(iComp)
-	elseif(iParm==3)then
-		value=eokp(iComp)
-	elseif(iParm==4)then
-		value=KcStar(iComp)
-	elseif(iParm==5)then
-		value=DH(iComp)
-	elseif(iParm==6)then
-		value=ND(iComp)
-	elseif(iParm==7)then
-		value=NAS(iComp)
-	elseif(iParm==8)then
-		value=NDS(iComp)
-	else
-		iErr=1
-	endif
-	return
-end	!Subroutine QueryParPureEsd
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-subroutine SetParPureEsd(iComp,iParm,value,iErr)
-	USE EsdParms      !Just for ESD
-	IMPLICIT NONE
-	DoublePrecision value
-	integer iComp,iParm,iErr
-	!-----------------------------------------------------------------------------
-	! pure component parameters
-	!-----------------------------------------------------------------------------
-	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
-	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
-	iErr=0
-	if(iParm==1)then
-		c(iComp)=value
-		q(iComp)=1+(value-1)*1.9076D0
-	elseif(iParm==2)then
-		vx(iComp)=value
-	elseif(iParm==3)then
-		eokp(iComp)=value
-	elseif(iParm==4)then
-		KcStar(iComp)=value
-	elseif(iParm==5)then
-		DH(iComp)=value
-	elseif(iParm==6)then
-		ND(iComp)=value
-	elseif(iParm==7)then
-		NAS(iComp)=value  ! Not used for ESD96
-	elseif(iParm==8)then
-		NDS(iComp)=value  ! Not used for ESD96
-	else
-		iErr=1
-	endif
-	return
-end	! SetParPureEsd
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !------------------------------------------------------------------------------ 
 	!	FugiESD
@@ -381,7 +306,7 @@ end	! SetParPureEsd
 	!	bMix	cshapemix	cbMix	qYbMix	k1YbMix	etaLiq	zRep	zAtt	zAssoc	sqrt(alpha1)	fAssoc	kbe(1)
 	!	34.044	1.883551	64.1246	107.349	71.1151	0.30995	5.68055	-5.6358	-1.0410		4.701303	0.65418	998.0017
 
-	SUBROUTINE FugiESD(tKelvin,pMPa,xFrac,NC,LIQ,FUGC,zFactor,ier)
+	SUBROUTINE FugiESD96(tKelvin,pMPa,xFrac,NC,LIQ,FUGC,zFactor,ier)
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS	  + GlobConst{rGas,Tc,Pc,...}
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)

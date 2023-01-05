@@ -38,7 +38,7 @@
 	errMsg(13)=' MEM2: sqArg(A or D)'
 	errMsg(14)=' MEM2: XA,XD, or XC < 0' 
 	LOUDER=LOUD	! from GlobConst
-	LOUDER=LouderWert
+	!LOUDER=LouderWert
 	!LOUDER = .TRUE. ! for local debugging.
 	picard=0.83D0
 	Ftol=1.D-6
@@ -303,7 +303,7 @@
 	!  RALPHi  = ROOT OF ALPHA WHERE ALPHAi=rho*bVoli*KADi*Ei/(1-1.9eta)
 	!  ier     = 4  eta > 0.53
 	LOUDER=LOUD	! from GlobConst
-	LOUDER=LouderWert
+	!LOUDER=LouderWert
 	!LOUDER = .TRUE. ! for local debugging.
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
 	eta=rhoMol_cc*bVolMix
@@ -311,7 +311,7 @@
 	voidFrac3=voidFrac*voidFrac*voidFrac
 	Call RdfCalc(rdfContact,dAlpha,eta)
 	if(rdfContact < 1)then
-		if(Louder)write(*,'(a,3f9.4)')' MEM1: eta,rdfContact(<1)=',eta,rdfContact
+		if(Louder)write(*,'(a,3f9.4)')' MEM1: Returning zero. eta,rdfContact(<1)=',eta,rdfContact
 		if(Louder)pause
 		return
 	endif
@@ -350,7 +350,7 @@
 		do iType=1,nTypes(iComp)      
 			iComplex=nAcceptors(iComp,iType)*nDonors(iComp,iType)
 			if(iComplex.ne.0)then !only apply symmetric rule when acceptors AND donors on a site.
-				FA0=FA0+xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)*ralph(iComp,iType)/(1+fAssoc*ralph(iComp,iType))
+				FA0=FA0+xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)*ralph(iComp,iType) !/(1+fAssoc*ralph(iComp,iType))
 				if(LOUDER)print*,'MEM1: iComp,iType,ralph',iComp,iType,ralph(iComp,iType)
 				if(ralph(iComp,iType) > ralphMean)ralphMean=ralph(iComp,iType) ! Infinity norm for initial estimate.
 			endif
@@ -358,12 +358,13 @@
 	enddo
 	errOld=fAssoc-FA0
 	fOld=fAssoc
-	IF(ABS(errOld) > 1.D-9)then
+	IF(ABS(errOld) < 1.D-9)write(*,601)' MEM1: No assoc? FA0=',FA0	!don't iterate if errOld < 1D-9
+	IF(ABS(errOld) > 1.D-9)then	!don't iterate if errOld < 1D-9
 		fAssoc1=2*FA0/( 1+DSQRT(1+4*ralphMean*FA0) )  ! Eq.23 where FD0=FA0. This is exact for binary like benzene+methanol.
 		fAssoc=fAssoc1 
 		NITER=0
 		ERR=1111
-		itMax=113
+		itMax=123
 		do while(ABS(ERR) > 1.D-9.AND.NITER < itMax) ! Don't use ERR/fAssoc because:(1)fAssoc~0 sometimes (2) max(fAssoc) ~ 1 which isn't "large."
 			NITER=NITER+1                  
 			SUMA=0
@@ -377,16 +378,18 @@
 			enddo
 			ERR=fAssoc-SUMA
 			!checkSum=FA0/(1+fAssoc*ralphMean)
-			if( ABS((ERR-errOld)/errOld) < zeroTol .and. LouderWert)print*,'Wertheim: err~errOld=',err,errOld
+			if( ABS((ERR-errOld)/errOld) < zeroTol .and. Louder)print*,'MEM1: err~errOld=',err,errOld
 			CHANGE=ERR/(ERR-errOld)*(fAssoc-fOld)
+			if(LOUDER)write(*,601)' MEM1: FA,SUMA',fAssoc,SUMA 
 			fOld=fAssoc
 			errOld=ERR
 			fAssoc=fAssoc-CHANGE
+			!ralphMean=(-1+FA0/sumA)/(fAssoc+1D-9)
 		ENDDO
 		IF(NITER > itMax-1)THEN
 			if(LouderWert)write(*,*)'ERROR - NO CNVRG ON fAssoc'
 			iErrCode=4
-			if(LouderWert)pause
+			if(Louder)pause
 			return
 		ENDIF
 	endif
@@ -399,7 +402,7 @@
 
 	!Elliott'96 Eq.35 (mod for CS or ESD rdf)
 	ZASSOC= -fAssoc*fAssoc*dAlpha
-	if(LOUDER)print*,'MEM1: eta,Zassoc=',eta,Zassoc
+	if(LOUDER)print*,'MEM1: eta,fAssoc,Zassoc=',eta,fAssoc,Zassoc
 	if(isZiter==1)return
 	!XA=1 !set to unity means no association !Setting the entire array to 1 is slow.	          
 	!XD=1 !set to unity means no association	          

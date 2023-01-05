@@ -391,9 +391,9 @@
 	!if(LIQ.gt.1)return !for spinodal, don't need fugc's
 
 
-	!
-	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS
-	!
+!
+!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS
+!
 	if(zFactor < BIGB)then
 		ier(4)=1
 		goto 861
