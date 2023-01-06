@@ -395,35 +395,10 @@ end	! SetParPureEsd
 	DATA INITIAL/1/  !Zm=9.5 since 1996, at least.  It is 9.5 in the CHEMCAD documentation, the EL text, and 2002.  It is not mentioned in ref[2,3,4,5,6]
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
-	ier=0 !vector initialization
-	iErrTmin=0
-	TminTot=.01
-	TrVolatile=0.1
 	if(LOUDER)call QueryParMix(1,checkKij12,iErrBip)
 	if(LOUDER)print*,'FugiEsd: Kij(1,2)= ',checkKij12
-	DO I=1,NC
-		rLogPr=DLOG10( 0.0001/Pc(i) )	! ESD not recommended below 0.0001 MPa for pure fluids. For mixes, ensure most volatile comp has Psat > 0.0001 MPa. Think about polymers.
-		aScvp=7*(1+acen(i))/3	 !SCVP: log10(Pr)=7(1+w)/3*(1-1/Tr) = a*(1-x) 
-		xt1= 1-rLogPr/aScvp  ! x = 1/Tr at Psat=0.0001 MPa, first approximation of x = x1 + dx
-		xt = xt1 -0.178*acen(i)*acen(i)*(1-xt1)*(1-xt1)  ! This crude empirical correlation was developed for nonadecanol.  cf. PGL6Samples.xlsx(nC19oh).
-		if( xt > 2.222)xt = 2.2222	!1/2.2222 = 0.45. If 
-		if( xt < 1 .and. LOUD)pause 'FugiEsd: TrMin > Tc???'
-		TrMin = 1/xt ! = min( Tr@Psat=0.0001 or 0.45 )
-		if(initial .and. LOUD)print*,'xt1,xt,TrMin',xt1,xt,TrMin
-		if( tKelvin/ Tc(i) < TrMin .and. NC==1)iErrTmin=iErrTmin+1
-		if( tKelvin/Tc(i) > TrVolatile) TrVolatile=tKelvin/Tc(i)  ! The largest TrVolatile is the Tr of the compd with lowest Tc. 
-		if( Tc(i)*TrMin > TminTot) TminTot=Tc(i)*TrMin	 ! The largest Tmin is the weakest link. 
-		if( Tc(i)*TrMin > TminTot .and. LOUD) print*,'i,Tmin(i): ', i,Tc(i)*TrMin
-		IF(xFrac(I) < 0 .and. LOUD)PAUSE 'FugiEsd: ERROR - Xi<0'
-	enddo 
-	if(TrVolatile < 0.44d0)iErrTmin =2 ! it's only a problem if the most volatile compound has Tr < 0.45 or Psat < 0.0001.
-	if(iErrTmin > 0) then
-		ier(1)=5
-		ier(2)=iErrTmin
-		if(LOUD)print*,'FugiEsd: T(K) < Tmin(all i)',tKelvin,TminTot
-		!if(LOUD) pause 'FugiEsd: at least one compound has Tr < TrMin'
-		!return  !! make this a warning for Vex,Hex etc.  
-	endif
+	ier(1:6)=0 !vector initialization
+	!NOTE: iErrTmin is checked in FuVtot
 	sumx=SUM( xFrac(1:NC) )
 	if(ABS(sumx-1) > 1e-8)then
 		if(LOUDER)pause 'FugiEsd: sumx .ne. 1'
@@ -569,15 +544,41 @@ end	! SetParPureEsd
 	  
 	iErr=0 !1=warning from AlpSolEz2, 11=input nonsense, 12=xFrac<0, 13=critical error from AlpSol, 14=voidFrac<0..
 	totMoles=sum( gmol(1:NC) )
+	xFrac(1:NC)=gmol(1:NC)/totMoles
+
 	if( tKelvin	   < zeroTol .or. totMoles < zeroTol .or. vTotCc < zeroTol)then
 		if(LOUD)print*,'FuEsdVtot: nonsense T(K),totMoles,vTotCc=',tKelvin,totMoles,vTotCc
 		iErr=11
+	endif
+	iErrTmin=0
+	TminTot=.01
+	TrVolatile=0.1
+	DO I=1,NC
+		rLogPr=DLOG10( 0.0001/Pc(i) )	! ESD not recommended below 0.0001 MPa for pure fluids. For mixes, ensure most volatile comp has Psat > 0.0001 MPa. Think about polymers.
+		aScvp=7*(1+acen(i))/3	 !SCVP: log10(Pr)=7(1+w)/3*(1-1/Tr) = a*(1-x) 
+		xt1= 1-rLogPr/aScvp  ! x = 1/Tr at Psat=0.0001 MPa, first approximation of x = x1 + dx
+		xt = xt1 -0.178*acen(i)*acen(i)*(1-xt1)*(1-xt1)  ! This crude empirical correlation was developed for nonadecanol.  cf. PGL6Samples.xlsx(nC19oh).
+		if( xt > 2.222)xt = 2.2222	!1/2.2222 = 0.45. If 
+		if( xt < 1 .and. LOUD)pause 'FugiEsd: TrMin > Tc???'
+		TrMin = 1/xt ! = min( Tr@Psat=0.0001 or 0.45 )
+		if(LOUDER)print*,'xt1,xt,TrMin',xt1,xt,TrMin
+		if( tKelvin/ Tc(i) < TrMin .and. NC==1)iErrTmin=iErrTmin+1
+		if( tKelvin/Tc(i) > TrVolatile) TrVolatile=tKelvin/Tc(i)  ! The largest TrVolatile is the Tr of the compd with lowest Tc. 
+		if( Tc(i)*TrMin > TminTot) TminTot=Tc(i)*TrMin	 ! The largest Tmin is the weakest link. 
+		if( Tc(i)*TrMin > TminTot .and. LOUDER) print*,'i,Tmin(i): ', i,Tc(i)*TrMin
+		IF(xFrac(I) < 0 .and. LOUDER)PAUSE 'FugiEsd: ERROR - Xi<0'
+	enddo 
+	if(TrVolatile < 0.4d0)iErrTmin =2 ! it's only a problem if the most volatile compound has Tr < 0.45 or Psat < 0.0001.
+	if(iErrTmin > 0) then
+		iErr=5 ! warning level because functions like Vxs or Hxs might be insensitive to this issue.
+		if(LOUDER)print*,'FuEsdVtot: T(K) < Tmin(all i)',tKelvin,TminTot
+		!if(LOUD) pause 'FugiEsd: at least one compound has Tr < TrMin'
 	endif
 	bMix=0
 	do i=1,nc
 		xFrac(i)=gmol(i)/totMoles
 		IF(xFrac(i) < 0)then
-			if(LOUD)PAUSE 'ERROR IN FuEsdVtot, Xi<0'
+			if(LOUDER)PAUSE 'ERROR IN FuEsdVtot, Xi<0'
 			iErr=12
 		endif
 		bMix=bMix+xFrac(i)*bVolCC_mol(i)

@@ -17,6 +17,7 @@
 	!C
 	SUBROUTINE FUGI( T,P,X,NC,LIQ,FUGC,Z,ier )
 	USE GlobConst
+	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
 	USE comflash, only:ncomax ! PrLorraine's module for many constants. ncomax needed to dimension properly
 	IMPLICIT DOUBLEPRECISION( A-H,O-Z )
 	DoublePrecision X(*),fugc(*)
@@ -27,7 +28,7 @@
 	if(iEosOpt==1)then
 		call FugiPR( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(isESD)then ! iEosOpt=2, 
-		call FugiESD( T,P,X,NC,LIQ,FUGC,Z,ier )
+		call FugiESD96( T,P,X,NC,LIQ,FUGC,Z,ier )
 	!elseif(iEosOpt==4)then	!unused
 	elseif(iEosOpt==3)then
 	    call FugiPRWS( T,P,X,NC,LIQ,FUGC,Z,ier )
@@ -81,6 +82,7 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC         	          
 	SUBROUTINE FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
 	USE GlobConst !iEosOpt
+	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
     integer ier(12)
 	DIMENSION gmol(NC),FUGC(NC) !,dHkcalMol(NMX),KCSTARp(NMX),IER(12)
@@ -167,6 +169,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine QueryParPure(iComp,iParm,value,iErr)
 	USE GlobConst      ! iEosOpt,
+	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
 	DoublePrecision value
 	Integer iComp,iParm,iErr
 	iErr=0
@@ -187,6 +190,7 @@ end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine SetParPure(iComp,iParm,value,iErr)
 	USE GlobConst      ! iEosOpt,
+	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
 	DoublePrecision value
 	Integer iComp,iParm,iErr
 	iErr=0
