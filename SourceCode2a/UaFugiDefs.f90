@@ -24,9 +24,9 @@
     integer ier(12) !,ier2(11)
     ier(1)=0 !required if EOS uses iErr instead of ier().
 	if(iEosOpt==0)iEosOpt=1
-	if(iEosOpt==2)then !all other ESD is ESD96.  
-		call FugiESD96( T,P,X,NC,LIQ,FUGC,Z,ier )
-	elseif(isESD)then !all other ESD is ESD96.  
+	!if(iEosOpt==2)then !all other ESD is ESD96.  
+!		call FugiESD96( T,P,X,NC,LIQ,FUGC,Z,ier )
+	if(isESD)then !all other ESD is ESD96.  
 		call FugiESD( T,P,X,NC,LIQ,FUGC,rho,Z,aRes,uRes,ier )
 	elseif(iEosOpt==1)then
 		call FugiPR( T,P,X,NC,LIQ,FUGC,Z,ier )
@@ -90,9 +90,9 @@
 	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
 	COMMON/ETA2/ETA
 	nComps=NC
-	if(iEosOpt==2)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
-		call FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
-	elseif(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
+!	if(iEosOpt==2)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
+!		call FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
+	if(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
 		call FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
 	elseif(isTPT)then
 		call FuTptVtot(isZiter,Z,aDep,uDep,FUGC,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
@@ -171,6 +171,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine QueryParPure(iComp,iParm,value,iErr)
 	USE GlobConst      ! iEosOpt,
+	USE ESDParms
 	DoublePrecision value
 	Integer iComp,iParm,iErr
 	iErr=0
@@ -191,6 +192,7 @@ end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine SetParPure(iComp,iParm,value,iErr)
 	USE GlobConst      ! iEosOpt,
+	USE ESDParms
 	DoublePrecision value
 	Integer iComp,iParm,iErr
 	iErr=0

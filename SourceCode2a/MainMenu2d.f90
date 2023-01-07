@@ -104,7 +104,7 @@
 	pause 'Main: Getting EOS parameters.'
 	iErrGet=0 
 	if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	if(iEosOpt.eq.2)CALL GetEsd96Cas(NC,idCas,iErrGet)	 !Results placed in USE EsdParms				!Diky model 12
+	if(iEosOpt.eq.2)CALL GetEsdCas(NC,idCas,iErrGet)	 !Results placed in USE EsdParms				!Diky model 12
 	if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
 	if(iEosOpt.eq.4)CALL GetEsdCas(NC,idCas,iErrGet)
 	if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms			  !Diky model 6

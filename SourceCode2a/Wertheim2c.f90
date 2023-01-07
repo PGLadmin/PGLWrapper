@@ -37,6 +37,7 @@
 	errMsg(12)=' MEM2: sqArg for ralphMean update.'
 	errMsg(13)=' MEM2: sqArg(A or D)'
 	errMsg(14)=' MEM2: XA,XD, or XC < 0' 
+	errMsg(15)=' MEM2: etaOld < 0?' 
 	LOUDER=LOUD	! from GlobConst
 	!LOUDER=LouderWert
 	!LOUDER = .TRUE. ! for local debugging.
@@ -60,13 +61,14 @@
 	uAssoc=0
 	rLnPhiAssoc(1:nComps)=0
     iErr=0  
-	if(LOUDER)write(*,'(a,6E12.4)')' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
+	if(LOUDER)write(*,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
 	!XA=1  !				   ! initializing the entire array is slow.
 	!XD=1
 	ralphAmax=0
 	ralphDmax=0
 	isAcid=0
 	do iComp=1,nComps
+		if(nTypes(iComp)==0 .and.LOUDER)print*,'MEM2: nTypes=0 for iComp=',iComp
 		do iType=1,nTypes(iComp)
 			XA(iComp,iType)=1  ! initializing the entire array is slow.
 			XD(iComp,iType)=1
@@ -90,7 +92,7 @@
 			!if(sqArg < 0)write(*,'(a,2i3,f8.2,f8.4)')' MEM2: iComp,iType,T,eDonor',iComp,iType,tKelvin,eDonorKcal_Mol(iComp,iType)
 			ralphD(iComp,iType)=isDonor*   SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eDonorKcal_Mol(iComp,iType)   /tKelvin/1.987D-3)-1.d0 )  )
 			if(ralphD(iComp,iType) > ralphDmax)ralphDmax=ralphD(iComp,iType)
-			if(LOUDER)write(*,'(a,2i3,2F10.4)')' iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType) 
+			if(LOUDER)write(*,'(a,2i3,2F10.4)')' MEM2:iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType) 
 		enddo
 	enddo
 	FA0=0
@@ -128,10 +130,8 @@
 		else
 			ralphAmean=ralphAmean*avgNDS/avgNAS
 		endif
-	elseif( ABS(FA0-FD0) < Ftol)then !use the MEM1 result to initiate FA,FD but enable the isAcid=1 option
-					 		
 	else
-		if(etaOld>0)then ! adapt old values.to accelerate Z iterations
+		if(etaOld.ge.0)then ! adapt old values.to accelerate Z iterations
 			sqArg=eta/etaOld*rdfContact/rdfOld
 			if(sqArg < zeroTol)then
 				iErr=12
@@ -140,7 +140,9 @@
 			ralphAmean=ralphAmean*SQRT(sqArg)
 			ralphDmean=ralphDmean*SQRT(sqArg)
 		else
-			if(LOUDER)write(*,'(a,6E12.4)')' MEM2: etaOld < 0???',etaOld
+			if(LOUDER)write(*,601)' MEM2: etaOld < 0???',etaOld
+			iErr=15
+			return
 		endif
 	endif
 	FAold =0 ! low guess
@@ -207,7 +209,7 @@
 			if(LOUDER)write(*,'(a,E12.4)')' MEM2: XC=',XCtemp
 		endif
 	endif
-	if(FA < zeroTol .or.FD < zeroTol .or.FC < zeroTol )then
+	if(FA < zeroTol .or.FD < zeroTol .or.FC < 0 )then
 		if(LOUDER)write(*,601)' MEM2: FB < 0? FA,FD,FC=',FA,FD,FC
 		if(LOUDER)write(*,601)' MEM2: ralphMeans=',ralphAmean,ralphDmean
 		if(LOUDER)pause 'MEM2: Check this out!'
@@ -229,6 +231,7 @@
 			endif
 		enddo
 		if(LOUDER)write(*,'(a,i3,8F10.7)')' MEM2: i,XA(i,j)=',i,(XA(i,j),j=1,nTypes(i))
+		if(LOUDER)write(*,'(a,i3,8F10.7)')' MEM2: i,XD(i,j)=',i,(XD(i,j),j=1,nTypes(i))
 	enddo
 601	format(1x,a,8E12.4)
 
@@ -351,14 +354,14 @@
 			iComplex=nAcceptors(iComp,iType)*nDonors(iComp,iType)
 			if(iComplex.ne.0)then !only apply symmetric rule when acceptors AND donors on a site.
 				FA0=FA0+xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)*ralph(iComp,iType) !/(1+fAssoc*ralph(iComp,iType))
-				if(LOUDER)print*,'MEM1: iComp,iType,ralph',iComp,iType,ralph(iComp,iType)
+				if(LOUDER)write(*,'(a,2i3,8E12.4)')' MEM1: iComp,iType,ralph',iComp,iType,ralph(iComp,iType)
 				if(ralph(iComp,iType) > ralphMean)ralphMean=ralph(iComp,iType) ! Infinity norm for initial estimate.
 			endif
 		enddo
 	enddo
 	errOld=fAssoc-FA0
 	fOld=fAssoc
-	IF(ABS(errOld) < 1.D-9)write(*,601)' MEM1: No assoc? FA0=',FA0	!don't iterate if errOld < 1D-9
+	IF(ABS(errOld) < 1.D-9.and.LOUDER)write(*,601)' MEM1: No assoc? FA0=',FA0	!don't iterate if errOld < 1D-9
 	IF(ABS(errOld) > 1.D-9)then	!don't iterate if errOld < 1D-9
 		fAssoc1=2*FA0/( 1+DSQRT(1+4*ralphMean*FA0) )  ! Eq.23 where FD0=FA0. This is exact for binary like benzene+methanol.
 		fAssoc=fAssoc1 
@@ -378,7 +381,7 @@
 			enddo
 			ERR=fAssoc-SUMA
 			!checkSum=FA0/(1+fAssoc*ralphMean)
-			if( ABS((ERR-errOld)/errOld) < zeroTol .and. Louder)print*,'MEM1: err~errOld=',err,errOld
+			if( ABS((ERR-errOld)/errOld) < zeroTol .and. Louder)write(*,601)'MEM1: err~errOld=',err,errOld
 			CHANGE=ERR/(ERR-errOld)*(fAssoc-fOld)
 			if(LOUDER)write(*,601)' MEM1: FA,SUMA',fAssoc,SUMA 
 			fOld=fAssoc
@@ -402,7 +405,7 @@
 
 	!Elliott'96 Eq.35 (mod for CS or ESD rdf)
 	ZASSOC= -fAssoc*fAssoc*dAlpha
-	if(LOUDER)print*,'MEM1: eta,fAssoc,Zassoc=',eta,fAssoc,Zassoc
+	if(LOUDER)write(*,601)'MEM1: eta,fAssoc,Zassoc=',eta,fAssoc,Zassoc
 	if(isZiter==1)return
 	!XA=1 !set to unity means no association !Setting the entire array to 1 is slow.	          
 	!XD=1 !set to unity means no association	          
@@ -440,8 +443,8 @@
 	if(LOUDER)write(*,'(a,6E12.4)')' MEM1:         fugAssocBefore=',(rLnPhiAssoc(i),i=1,nComps)
 	
 	betadFA_dBeta=0	!cf E'96(19)
-	do iComp=1,nComps !cf E'96(19)	 TODO: rewrite this in terms of ralph.
-		do iType=1,nTypes(iComp)
+	do i=1,nComps !cf E'96(19)	 TODO: rewrite this in terms of ralph.
+		do j=1,nTypes(iComp)
 			bepsA=(eAcceptorKcal_mol(i,j)/1.987D-3/tKelvin)
 			beta_alphadAlpha_dBeta=DEXP(bepsA)	! Eqs. 44,45
 			if(bepsA > 1.D-4)beta_alphadAlpha_dBeta=beta_alphadAlpha_dBeta*(bepsA)/(beta_alphadAlpha_dBeta-1)
@@ -454,7 +457,7 @@
 	IDold(1:nComps)=ID(1:nComps)
 	etaOld=eta
 	rdfOld=rdfContact
-	if(LOUDER)write(*,'(a,I4,2F10.6,2E12.4)')' Wertheim:F1,fAssoc,zAssoc,rmsErr,nIter=',NITER,fAssoc1,fAssoc,zAssoc
+	if(LOUDER)write(*,'(a,I4,2F10.6,2E12.4)')' MEM1:F1,fAssoc,zAssoc,rmsErr,nIter=',NITER,fAssoc1,fAssoc,zAssoc
 	return
 	end	!subroutine MEM1()
 

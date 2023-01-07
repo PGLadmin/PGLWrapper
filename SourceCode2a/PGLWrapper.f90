@@ -95,7 +95,7 @@
 	if(LOUD)print*,'calling GetEOS'
 	iErrGet=0 
 	if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	if(iEosOpt.eq.2)CALL GetEsd96Cas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
+	if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
 	if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
 	if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
 	if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
@@ -103,8 +103,8 @@
 	if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms
 	if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
 	if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	if(iEosOpt.eq.12)CALL GetEsd96Cas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	if(iEosOpt.eq.13)CALL GetEsd96Cas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
+	if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
+	if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
 	if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms				    !Diky model 18
 	if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's PcSaft parameters			!Diky model 26
 	if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's(Tb) PcSaft parameters			!Diky model 27

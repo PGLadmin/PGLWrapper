@@ -2222,7 +2222,7 @@
 		iErrGet=SetNewEos(iEosOpt) !wipe out any instance of other eos.
 		iErrGet=1 !should be set to zero by Get__(), so something went wrong if iErrGet>0 after calls.
 		if(iEosOpt==1)CALL GetPR(NC,iErrGet)
-		if(iEosOpt==2)CALL GetEsd96Cas(NC,idCas,iErrGet)
+		if(iEosOpt==2)CALL GetEsdCas(NC,idCas,iErrGet)
 		if(iEosOpt==3)CALL GetPRWS(NC,iErrGet)
 		if(iEosOpt==4)CALL GetEsdCas(NC,idCas,iErrGet)
 		if(iEosOpt==5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!AFG 2011 , Added EOS Opt. 9
@@ -2329,7 +2329,7 @@
 		stop
 	endif 
 	if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	if(iEosOpt==2)CALL GetEsd96Cas(NC,idCas,iErrGet)
+	if(iEosOpt==2)CALL GetEsdCas(NC,idCas,iErrGet)
 	if(isESD)CALL GetEsdCas(NC,idCas,iErrGet)
 	if(iEosOpt==3)CALL GetPRWS(NC,iErrGet)
 	if(isTPT)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!AFG 2011 , Added EOS Opt. 9

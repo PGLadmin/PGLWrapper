@@ -87,11 +87,18 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 		if(LOUDER.and.iErrExact)print*,'GetESDWarning: iErrExact=',iErrExact,' Checking database for iComp='	,( ierCompExact(iComp),iComp=1,NC)
 	endif
 
+	nTypes(1:NC)=1	 !all esd versions use nTypes=1. Multifunctional molecules require SPEADMD.
 	DO J=1,nC
         bVolCC_mol(j)=Vx(j) !Copy ExactEsd value first. Replaced below if in dbase.
 		ND(J)=0
 		NDS(J)=0
 		NAS(J)=0
+		nDegree(J,1)=0
+		nDonors(J,1)=0
+		nAcceptors(J,1)=0
+		eAcceptorKcal_mol(j,1)=0
+		eDonorKcal_mol(j,1)=0
+		bondVolNm3(j,1)=0
 		iGotIt(J)=0
 		DO I=1,NDECK
 			IF(IDCASA(I).EQ.IDCas(J))THEN
@@ -109,18 +116,18 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 				NAS(J)=NASA(I)
 				NDS(J)=NDSA(I)
 				KadNm3(j)=KcStar(j) !KcStar[=] nm^3 since 2021.
-				nTypes(j)=1
 				nDegree(j,1)=NDA(i)
 				nAcceptors(j,1)=NASA(i)
 				nDonors(j,1)=NDSA(i)
-				eAcceptorKcal_mol(j,1)=eAccEpsK(I)/1000*Rgas/4.184d0	! cf. Table 6.1 of PGL6ed
-				eDonorKcal_mol(j,1)=eDonEpsK(I)/1000*Rgas/4.184d0
+				eAcceptorKcal_mol(j,1)=eAccEpsK(I)/1000/(Rgas/4.184d0)	! cf. Table 6.1 of PGL6ed
+				eDonorKcal_mol(j,1)=eDonEpsK(I)/1000/(Rgas/4.184d0)
 				bondVolNm3(j,1)=KcSta(i) !*bVolCC_mol(j)/avoNum
 				!iComplex=0
 				!if(NAS(j)*NDS(j) > 0)iComplex=1
 				!if(iComplex==0 .and. iEosOpt==2)KCSTAR(j)=0 !ParmsEsd may contain parameters for compounds that solvate but do not associate (for iEosOpt==4). These need to be killed for iEosOpt==2.
 				!if(iComplex==0 .and. iEosOpt==2 .and. LOUDER)pause 'iComplex=0 for assoc???' !ParmsEsd may contain parameters for compounds that solvate but do not associate (for iEosOpt==4). These need to be killed for iEosOpt==2.
 				if(LOUDER)write(*,602)'GetEsdCAS:iGotIt! id,bVol,eAcc=',ID(j),Vx(J),eAccEpsK(I)
+				if(louder)print*,'GetEsdCas: nTypes,nDegree,nAcc,nDon=',nTypes(j),nDegree(j,1),nAcceptors(j,1),nDonors(j,1)
 				exit !exits this do loop, not the outer one.
 			ENDIF
 		enddo
@@ -248,74 +255,6 @@ end	!subroutine ExactEsd
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-subroutine QueryParPureEsd(iComp,iParm,value,iErr)
-	USE EsdParms      !Just for ESD
-	IMPLICIT NONE
-	DoublePrecision value
-	integer iComp,iParm,iErr
-	!-----------------------------------------------------------------------------
-	! pure component parameters
-	!-----------------------------------------------------------------------------
-	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
-	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
-	iErr=0
-	if(iParm==1)then
-		value=c(iComp)
-	elseif(iParm==2)then
-		value=vx(iComp)
-	elseif(iParm==3)then
-		value=eokp(iComp)
-	elseif(iParm==4)then
-		value=KcStar(iComp)
-	elseif(iParm==5)then
-		value=DH(iComp)
-	elseif(iParm==6)then
-		value=ND(iComp)
-	elseif(iParm==7)then
-		value=NAS(iComp)
-	elseif(iParm==8)then
-		value=NDS(iComp)
-	else
-		iErr=1
-	endif
-	return
-end	!Subroutine QueryParPureEsd
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-subroutine SetParPureEsd(iComp,iParm,value,iErr)
-	USE EsdParms      !Just for ESD
-	IMPLICIT NONE
-	DoublePrecision value
-	integer iComp,iParm,iErr
-	!-----------------------------------------------------------------------------
-	! pure component parameters
-	!-----------------------------------------------------------------------------
-	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
-	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
-	iErr=0
-	if(iParm==1)then
-		c(iComp)=value
-		q(iComp)=1+(value-1)*1.9076D0
-	elseif(iParm==2)then
-		vx(iComp)=value
-	elseif(iParm==3)then
-		eokp(iComp)=value
-	elseif(iParm==4)then
-		KcStar(iComp)=value
-	elseif(iParm==5)then
-		DH(iComp)=value
-	elseif(iParm==6)then
-		ND(iComp)=value
-	elseif(iParm==7)then
-		NAS(iComp)=value  ! Not used for ESD96
-	elseif(iParm==8)then
-		NDS(iComp)=value  ! Not used for ESD96
-	else
-		iErr=1
-	endif
-	return
-end	! SetParPureEsd
 
 !------------------------------------------------------------------------------ 
 	!	FugiESD
@@ -467,13 +406,13 @@ end	! SetParPureEsd
 	if(ABS(eta-rho*bMix) > 1E-11 .and. LOUDER)pause 'eta.ne.(rho*bMix)?'
 	if(pMPa==0 .and. LOUDER)print*,' FugiEsd: P=0? LIQ,P=',LIQ,pMPa
 	!zFactor=P/(rho*rGas*T)  ! add this to improve precision when computing rho from Z after return.   
+	isZiter=0
+	Call FuEsdVtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
 	if(zFactor.le.0)then
 		ier(1)=11
 		if(LOUDER)print*,'FugiEsd: converged Z <= 0. eta,Z=',eta,zFactor
+		goto 86
 	endif
-	isZiter=0
-	rho=eta/bMix
-	Call FuEsdVtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
 	if(iErr > 0.or.nIter > itMax-1 .or. eta < 0)then ! if iErr still > 0 on last iteration, then declare error.
 		ier(4)=iErr
 		eta=etaBest
@@ -495,7 +434,7 @@ end	! SetParPureEsd
 	if(ier(1) < 10)ier(1)=11
 	initial=0
 	RETURN
-	END	!FugiESD()
+	END	!Subroutine FugiESD()
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !C	Written originally by JRE, Oct. 2019																				C
 !C	Given T,V and gmol(), this routine calculates rho, Zfactor, Ares_RT, Ures_RT, lnPhi 
@@ -559,9 +498,9 @@ end	! SetParPureEsd
 		xt1= 1-rLogPr/aScvp  ! x = 1/Tr at Psat=0.0001 MPa, first approximation of x = x1 + dx
 		xt = xt1 -0.178*acen(i)*acen(i)*(1-xt1)*(1-xt1)  ! This crude empirical correlation was developed for nonadecanol.  cf. PGL6Samples.xlsx(nC19oh).
 		if( xt > 2.222)xt = 2.2222	!1/2.2222 = 0.45. If 
-		if( xt < 1 .and. LOUD)pause 'FugiEsd: TrMin > Tc???'
+		if( xt < 1 .and. LOUDER)pause 'FugiEsd: TrMin > Tc???'
 		TrMin = 1/xt ! = min( Tr@Psat=0.0001 or 0.45 )
-		if(LOUDER)print*,'xt1,xt,TrMin',xt1,xt,TrMin
+		if(LOUDER)write(*,601)' xt1,xt,TrMin',xt1,xt,TrMin
 		if( tKelvin/ Tc(i) < TrMin .and. NC==1)iErrTmin=iErrTmin+1
 		if( tKelvin/Tc(i) > TrVolatile) TrVolatile=tKelvin/Tc(i)  ! The largest TrVolatile is the Tr of the compd with lowest Tc. 
 		if( Tc(i)*TrMin > TminTot) TminTot=Tc(i)*TrMin	 ! The largest Tmin is the weakest link. 
@@ -572,7 +511,7 @@ end	! SetParPureEsd
 	if(iErrTmin > 0) then
 		iErr=5 ! warning level because functions like Vxs or Hxs might be insensitive to this issue.
 		if(LOUDER)print*,'FuEsdVtot: T(K) < Tmin(all i)',tKelvin,TminTot
-		!if(LOUD) pause 'FugiEsd: at least one compound has Tr < TrMin'
+		!if(LOUDER) pause 'FugiEsd: at least one compound has Tr < TrMin'
 	endif
 	bMix=0
 	do i=1,nc
@@ -619,7 +558,7 @@ end	! SetParPureEsd
 		!eHbKcal_mol(I,iType)=dHkcalMol(I)
 		!bondVolNm3(I,iType)=bondVolNm3Esd(I)
 	enddo
-	if( ABS(VX(1) - bVolCC_mol(1)) > zeroTol .and. LOUD ) print*,'FuEsdVtot: VX.ne.bVol=',VX(1),bVolCC_mol(1)
+	if( ABS(VX(1) - bVolCC_mol(1)) > zeroTol .and. LOUD ) write(*,601)' FuEsdVtot: VX.ne.bVol=',VX(1),bVolCC_mol(1)
 	if(LOUD.and.k1yvm < zeroTol)print*,'FuEsdVtot: 0~k1yvm=',k1yvm 
 	eta=rho*vm
 	if(isMEM2)then
@@ -695,7 +634,7 @@ end	! SetParPureEsd
 			iErr=3	  ! warning level because another call might produce Z > 0.
 			goto 86
         endif
-		if(LOUDER)write(*,'(a,f10.5)')' i,lnGamRep,lnGamAtt,lnGamBon,ralph.  F=',Fassoc
+		if(LOUDER)write(*,'(a,f10.5)')' i,lnGamRep,lnGamAtt,lnGamBon.'
 		DO I=1,NC
 			FUGREP(I)=FREP*( 2.d0*C(I)/Cmix-VX(I)/VM ) + ZREP*VX(I)/VM
 			FUGREP(I)=FREP*( C(I)/Cmix ) + ZREP*VX(I)/VM ! For pure i, FugRepi= -4ci/1.9*ln(1-1.9eta) + 4ci*eta/(1-1.9eta) 
@@ -710,5 +649,5 @@ end	! SetParPureEsd
 	endif
 	if(LOUDER)pause 'FuEsdVtot: Check results before returning.'
 86	return
-	end
+	end !subroutine FuEsdVtot
 

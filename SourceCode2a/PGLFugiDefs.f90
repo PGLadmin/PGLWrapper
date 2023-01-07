@@ -28,7 +28,8 @@
 	if(iEosOpt==1)then
 		call FugiPR( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(isESD)then ! iEosOpt=2, 
-		call FugiESD96( T,P,X,NC,LIQ,FUGC,Z,ier )
+		call FugiESD(T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr)
+		!call FugiESD( T,P,X,NC,LIQ,FUGC,Z,ier )
 	!elseif(iEosOpt==4)then	!unused
 	elseif(iEosOpt==3)then
 	    call FugiPRWS( T,P,X,NC,LIQ,FUGC,Z,ier )
@@ -94,7 +95,7 @@
 		call FuPrVtot(isZiter,tKelvin,1/vTotCc,gmol,NC,LIQ,FUGC,Z,aDep,uDep,IER)
 	!elseif(iEosOpt==4)then ! unused for now.
 	elseif(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
-		call FuEsd96Vtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aDep,uDep,iErr)
+		call FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aDep,uDep,iErr)
 	elseif(isTPT)then
 		call FuTptVtot(isZiter,Z,aDep,uDep,FUGC,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
 	elseif(iEosOpt==11)then
