@@ -56,7 +56,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 			if(LOUDER)write(*,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
 			if(NASA(I).ne.NDSA(I))NASA(I)=0	 ! ESD96 requires that NAS=NDS for all compounds.
 			NDSA(I)=NASA(I)
-			eAccEpsK(i)=DHA(I)*1000*RgasCal
+			eAccEpsK(i)=DHA(I)*1000/RgasCal
 			eDonEpsK(i)=eAccEpsK(i)
 			NDSA(I)=NASA(I)
 		endif
@@ -125,8 +125,8 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 				nDegree(j,1)=NDA(i)
 				nAcceptors(j,1)=NASA(i)
 				nDonors(j,1)=NDSA(i)
-				eAcceptorKcal_mol(j,1)=eAccEpsK(I)/1000/(RgasCal)	! cf. Table 6.1 of PGL6ed
-				eDonorKcal_mol(j,1)=eDonEpsK(I)/1000/(RgasCal)
+				eAcceptorKcal_mol(j,1)=eAccEpsK(I)/1000*(RgasCal)	! cf. Table 6.1 of PGL6ed
+				eDonorKcal_mol(j,1)=eDonEpsK(I)/1000*(RgasCal)
 				bondVolNm3(j,1)=KcSta(i) !*bVolCC_mol(j)/avoNum
 				!iComplex=0
 				!if(NAS(j)*NDS(j) > 0)iComplex=1
@@ -546,9 +546,9 @@ end	!subroutine ExactEsd
 			kIJbip=KIJ(I,J)+KTIJ(I,J)/tKelvin 
 			EOK(I,J)=DSQRT(EOKP(I)*EOKP(J))*(1.d0-kIJbip)
 			Y(I,J)=DEXP(EOK(I,J)/tKelvin)-K2
-			QV(I,J) = (Q(I)*VX(J) + Q(J)*VX(I)) / 2.d0
+			QV(I,J) = (Q(I)*bVolCC_mol(J) + Q(J)*bVolCC_mol(I)) / 2.d0
 			YQVIJ(I,J)=QV(I,J)*Y(I,J)
-			CVIJ(I,J) = (C(I)*VX(J) + C(J)*VX(I)) / 2.d0 ! e.g. (x1*c1+x2*c2)*(x1*b1+x2*b2) = x1^2*c1*b1+x1*x2*(c1*b2+c2*b1)+x2^2*b2^2
+			CVIJ(I,J) = (C(I)*bVolCC_mol(J) + C(J)*bVolCC_mol(I)) / 2.d0 ! e.g. (x1*c1+x2*c2)*(x1*b1+x2*b2) = x1^2*c1*b1+x1*x2*(c1*b2+c2*b1)+x2^2*b2^2
 			YQVM=YQVM+YQVIJ(I,J)*xFrac(I)*xFrac(J)	   
 			CVM = CVM + CVIJ(I,J)*xFrac(I)*xFrac(J)	   !note: above means <c>=sum(xi*ci) and <b>=sum(xj*bj) 
 		enddo
@@ -557,8 +557,8 @@ end	!subroutine ExactEsd
 		!	if(initCall.and.LOUD)print*,'FuESDVtot: KcStar=',KcStar(i)
 		!if(initCall.and.LOUD)pause 'Right?'
 		!KCSTARp(I)=KCSTAR(I)
-		VM=VM+xFrac(I)*VX(I)
-		K1YVM=K1YVM+xFrac(I)*K1(I)*Y(I,I)*VX(I) !1991 form, overwritten if applying 1990 form
+		VM=VM+xFrac(I)*bVolCC_mol(I)
+		K1YVM=K1YVM+xFrac(I)*K1(I)*Y(I,I)*bVolCC_mol(I) !1991 form, overwritten if applying 1990 form
 		!vMolecNm3(i)=VX(I)/avoNum
 		!bondVolNm3Esd(I)=KCSTAR(I) !*vMolecNm3(I)
 		!eHbKcal_mol(I,iType)=dHkcalMol(I)
@@ -566,7 +566,7 @@ end	!subroutine ExactEsd
 	enddo
 	if( ABS(VX(1) - bVolCC_mol(1)) > zeroTol .and. LOUD ) write(*,601)' FuEsdVtot: VX.ne.bVol=',VX(1),bVolCC_mol(1)
 	if(LOUD.and.k1yvm < zeroTol)print*,'FuEsdVtot: 0~k1yvm=',k1yvm 
-	eta=rho*vm
+	!eta=rho*vm
 	if(isMEM2)then
 		CALL MEM2(isZiter,tKelvin,xFrac,NC,rho,zAssoc,aAssoc,uAssoc,FUGASSOC,iErrMEM )!,ier)
 	else

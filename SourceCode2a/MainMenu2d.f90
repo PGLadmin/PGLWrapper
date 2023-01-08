@@ -18,7 +18,7 @@
 	CHARACTER*2 calcType
 	CHARACTER*77 errMsgPas
 	CHARACTER*251 outFile
-	CHARACTER*12 EosName(nEOSs)
+	CHARACTER*15 EosName(nEOSs)
 
 	DIMENSION BIPTMP(NMX)
 	DIMENSION ZFEED(NMX),S(NMX)
@@ -29,8 +29,8 @@
 	COMMON/FEED/ZFEED
 	COMMON/KVALUES/S
 	!common/FloryWert/vLiq(nmx)
-	!              1     2       3     4      5        6         7        8           9        10       11      12       13          14         15           16            17            18
-	data EosName/'PR','Esd96','PRWS','EsdMEM2','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
+	!              1     2       3       4          5          6         7           8              9        10       11      12       13          14         15           16            17        18
+	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
 
 	LOUD =.FALSE.
 	!LOUD = .TRUE.
