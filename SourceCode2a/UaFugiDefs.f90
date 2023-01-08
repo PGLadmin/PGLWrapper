@@ -24,7 +24,7 @@
     integer ier(12) !,ier2(11)
     ier(1)=0 !required if EOS uses iErr instead of ier().
 	if(iEosOpt==0)iEosOpt=1
-	!if(iEosOpt==2)then !all other ESD is ESD96.  
+!	if(iEosOpt==2)then !all other ESD is ESD96.  
 !		call FugiESD96( T,P,X,NC,LIQ,FUGC,Z,ier )
 	if(isESD)then !all other ESD is ESD96.  
 		call FugiESD( T,P,X,NC,LIQ,FUGC,rho,Z,aRes,uRes,ier )

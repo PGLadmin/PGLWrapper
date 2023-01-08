@@ -14,7 +14,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 	PARAMETER(ndb=3000,listPool=1000)
 	Character*222 bipFile,inFile,dumString !,dumString,ParmsTptFile*50 !,bipHbFile*50
 	Integer iGotIt(NC),idCasPas(NC),idCasa(ndb),GetBIPs,ierCompExact(NC)  !,idStore(NC) 
-	DoublePrecision QA(ndb),KCSTA(ndb),eDonEpsK(ndb),eAccEpsK(ndb),bVolA(ndb),eokA(ndb) !,NDA(ndb)
+	DoublePrecision QA(ndb),KCSTA(ndb),eDonEpsK(ndb),eAccEpsK(ndb),bVolA(ndb),eokA(ndb),DHA(ndb) 
 	Integer IDA(ndb),NDSA(ndb),NASA(ndb),NDA(ndb)
 	!doublePrecision bondRate(nmx,maxTypes)
 	!iErr=1 !Parms missing and iErrExact.ne.0 for at least one component
@@ -50,11 +50,13 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 		if(isMEM2)then
 			READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I),NDA(i),NDSA(I),NASA(I),idCasa(i)
 			if(LOUDER)write(*,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)
-		else
-			READ(dumString,*,ioStat=ioErr)IDA(I),CAi,QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHAi,NASA(I),NDSA(I) ,idCasa(i)
+		else ! iEosOpt=2,11,13 all use ESD96.
+			READ(dumString,*,ioStat=ioErr)IDA(I),CAi,QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I) ,idCasa(i)
 			!READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I),NDA(I),NASA(I),idCasa(i)
 			if(LOUDER)write(*,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
-			eAccEpsK(i)=DHAi*1000*Rgas/4.184d0
+			if(NASA(I).ne.NDSA(I))NASA(I)=0	 ! ESD96 requires that NAS=NDS for all compounds.
+			NDSA(I)=NASA(I)
+			eAccEpsK(i)=DHA(I)*1000*RgasCal
 			eDonEpsK(i)=eAccEpsK(i)
 			NDSA(I)=NASA(I)
 		endif
@@ -110,17 +112,21 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 				Vx(J)=bVolA(I)
 				bVolCC_mol(J)=Vx(J) !need bVol generally for every EOS. Included in GlobConst
 				KCSTAR(J)=KCSTA(I) ! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
-				!DH(J)=DHA(I)*1000/1.987/ Tc( j)			! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
 				epsA_kB(J)=eAccEpsK(I)
 				epsD_kB(J)=eDonEpsK(I)
+				ND(J)=NDA(i)
+				DH(J)=DHA(I)*1000/RgasCal/ Tc( j)			! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
 				NAS(J)=NASA(I)
 				NDS(J)=NDSA(I)
+				iComplex=0
+				if(NAS(j)*NDS(j) > 0)iComplex=1
+				if(iComplex==0 .and. iEosOpt==2)KCSTAR(j)=0 !ParmsEsd may contain parameters for compounds that solvate but do not associate (for iEosOpt==4). These need to be killed for iEosOpt==2.
 				KadNm3(j)=KcStar(j) !KcStar[=] nm^3 since 2021.
 				nDegree(j,1)=NDA(i)
 				nAcceptors(j,1)=NASA(i)
 				nDonors(j,1)=NDSA(i)
-				eAcceptorKcal_mol(j,1)=eAccEpsK(I)/1000/(Rgas/4.184d0)	! cf. Table 6.1 of PGL6ed
-				eDonorKcal_mol(j,1)=eDonEpsK(I)/1000/(Rgas/4.184d0)
+				eAcceptorKcal_mol(j,1)=eAccEpsK(I)/1000/(RgasCal)	! cf. Table 6.1 of PGL6ed
+				eDonorKcal_mol(j,1)=eDonEpsK(I)/1000/(RgasCal)
 				bondVolNm3(j,1)=KcSta(i) !*bVolCC_mol(j)/avoNum
 				!iComplex=0
 				!if(NAS(j)*NDS(j) > 0)iComplex=1
