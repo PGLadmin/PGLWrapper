@@ -90,18 +90,8 @@ END MODULE SpeadParms
 	ErrMsg(4)='GetTpt: nTypesTot > maxTypes'
 	ErrMsg(5)='GetTpt: a1 > 0 for at least one component when 0 < eta < 0.85'
 	ErrMsg(6)='GetTpt: a2 > 0 for at least one component when 0 < eta < 0.85'
-	!if(LOUD)print*,'Debug=', DEBUG
-	IF(DEBUG)then 
-		ParmsTptFile='c:\SPEAD\CalcEos\input\ParmsTpt.txt'	 !use this form internal dev since spead\ParmsTpt is most reliable.
-		if(iEosOpt==14)ParmsTptFile='c:\SPEAD\CalcEos\input\ParmsTptTransPGL6ed.txt'	 !use this form internal dev since spead\ParmsTpt is most reliable.
-	ELSE 
-		ParmsTptFile=TRIM(masterDir)//'\input\ParmsTpt.txt' ! // is the concatenation operator
-		if(iEosOpt==14)ParmsTptFile=TRIM(masterDir)//'\input\ParmsTptTransPGL6ed.txt' ! // is the concatenation operator
-		!ParmsTptFile='G:\My Drive\MYPROJEX\UaWrapper\UaWrapper'//'\input\ParmsTpt.txt' ! // is the concatenation operator
-		!if(iEosOpt==13)ParmsTptFile='G:\My Drive\MYPROJEX\UaWrapper\UaWrapper'//'\input\ParmsTptTransPGL6ed.txt' ! // is the concatenation operator
-		!ParmsTptFile='ParmsTpt.txt' !use this when preparing a release version.
-	ENDIF
-
+		ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTpt.txt' ! // is the concatenation operator
+		if(iEosOpt==14)ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTptTransPGL6ed.txt' ! // is the concatenation operator
 	if(LOUDER)write(*,*)'ParmsTptFile=',TRIM(ParmsTptFile)
 	OPEN(40,FILE=ParmsTptFile,ERR=861)
 
@@ -204,13 +194,7 @@ END MODULE SpeadParms
  
  	!ref part done.  do att part.
 				
-	IF(DEBUG)then 
-		!ParmsHbFile='c:\Spead\CalcEos\Input\ParmsHb3.txt'
-		ParmsHbFile='c:\Spead\CalcEos\Input\ParmsHb4.txt'
-	ELSE 
-		!ParmsHbFile=TRIM(masterDir)//'\input\ParmsHb3.txt' ! // is the concatenation operator
-		ParmsHbFile=TRIM(masterDir)//'\input\ParmsHb4.txt' ! // is the concatenation operator
-	ENDIF
+		ParmsHbFile=TRIM(PGLinputDir)//'\ParmsHb4.txt' ! // is the concatenation operator
     inHbFile=40
 	if(LOUDER)write(*,*)'ParmsHbFile=',TRIM(ParmsHbFile)
 	OPEN(inHbFile,FILE=ParmsHbFile)
@@ -308,11 +292,7 @@ END MODULE SpeadParms
 	nC=nComps
 
 !  note:  bips USE BIPs
-	IF(DEBUG)then 
-		bipFile='c:\spead\CalcEos\input\BipSpead.txt'
-	ELSE 
-		bipFile=TRIM(masterDir)//'\input\BipSpead.txt' ! // is the concatenation operator
-	ENDIF
+		bipFile=TRIM(PGLinputDir)//'\BipSpead.txt' ! // is the concatenation operator
 	iErrCode=GetBIPs(bipFile,ID,nC)
 	!Note: no need to check for switching because kij and ktij are symmetric
 	if(iErrCode > 10)then
@@ -328,11 +308,7 @@ END MODULE SpeadParms
     end if
 
 	!load aBipAD matrix
-	IF(DEBUG)then 
-		bipHbFile='c:\Spead\CalcEos\Input\BipDA.txt'
-	ELSE 
-		bipHbFile=TRIM(masterDir)//'\input\BipDA.txt' ! // is the concatenation operator
-	ENDIF
+		bipHbFile=TRIM(PGLinputDir)//'\BipDA.txt' ! // is the concatenation operator
 	!if(LOUDER)print*,'GetTpt: Only BipDA is needed.'
 	call GetAssocBips(bipHbFile,aBipDA,ierABip) !in WertheimVv.f90. idLocalType,nTypesTot USE Assoc 
 	do i=1,nTypesTot
@@ -342,12 +318,6 @@ END MODULE SpeadParms
 	enddo
 
 	!load aBipDA matrix
-!	IF(DEBUG)then 
-!		BipHbFile='c:\Spead\CalcEos\Input\BipDA.txt'
-!	ELSE 
-!		BipHbFile=TRIM(masterDir)//'\input\BipDA.txt' ! // is the concatenation operator
-!	ENDIF
-!	call GetAssocBips(bipHbFile,aBipDA,ierABip) !in WertheimVv.f90
 
 	if(LOUDER)THEN ! DISPLAY RELEVANT kijAD
 		write(*,*)'bipHbFile=',TRIM(bipHbFile)
@@ -474,7 +444,7 @@ END MODULE SpeadParms
 	!added by JRE20161010 for Sai Venkata Ramana to help with PrismTpt
 	isSW=0
 	isFileSwap=0
-	write(*,*)'Enter 1 to swap coeffs from ...calceos\input\PrismTptAcoeffs.txt or 0 to use AFG Spead11'
+	write(*,*)'Enter 1 to swap coeffs from ...input\PrismTptAcoeffs.txt or 0 to use AFG Spead11'
 	read(*,*)isFileSwap
 	write(*,*)'Enter 1 if this is a SW potential or 0 otherwise'
 	if(isFileSwap)read(*,*)isSW
@@ -886,10 +856,6 @@ end	!Subroutine QueryParPureSpead
 	USE Assoc
 	IMPLICIT DoublePrecision(A-H,O-Z)
 	DIMENSION xFrac(NMX),chemPo(NMX),fugcPure(NMX),fugcL(nmx),rLnGam(nmx),x(nmx),fugc(nmx),ier(12)
-	!DoublePrecision vpCoeffs(NMX,5)
-	!common/ppVpCoeffs/vpCoeffs(NMX,5)
-	!common/eta/etaL,etaV,zL,zV
-	!common/EosOpt/masterDir,iEosOpt,initEos,DEBUG
 	iErr=0
 
 	do index=1,12

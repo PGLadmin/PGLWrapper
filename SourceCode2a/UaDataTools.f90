@@ -14,7 +14,7 @@ MODULE GlobConst
 
 	DoublePrecision :: TC(nmx), PC(nmx), ACEN(nmx), ZC(nmx), rMw(nmx), bVolCC_mol(NMX),solParm(NMX),vLiq(NMX)
 	DoublePrecision uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)	= Z+rho*dZ/dRho
-	character*234 masterDir
+	character*234 masterDir,PGLinputDir
 	character*30 NAME(NMX)
 	character*5 class(NMX) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. Ch06CompoundsList.xls, PGL6edClasses.xls)
     Logical LOUD   !LOUD=.TRUE. means writing debug info to the screen.
@@ -112,13 +112,12 @@ END MODULE VpDb
 	end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine GetTmHfus(id,Tm,Hfus,iErr)
-	USE GlobConst, Only:DEBUG,masterDir,LOUD 
+	USE GlobConst, Only:DEBUG,PGLInputDir,LOUD 
 	! Purpose: Read Tm(K) and Hfus(J/mol) from input file.
 	Implicit DoublePrecision(a-h,o-z)
 	Character*77 HfusFile,FN !,inFile77
     FN="Hfus.txt"
-	HfusFile=TRIM(masterDir)//'\input\'//TRIM(FN)
-	if(DEBUG)HfusFile='c:\spead\calceos\input\'//TRIM(FN)
+	HfusFile=TRIM(PGLInputDir)//'\'//TRIM(FN)
 	if(LOUD)print*,'HfusFile=',TRIM(HfusFile)
 	inUnitHfus=51
 	open(inUnitHfus,file=HfusFile)
@@ -207,9 +206,7 @@ END MODULE VpDb
 	character*251 infile,dumString
 	iErrCode=0
 	CrIndex=ndb ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
-!	inFile=TRIM(masterDir)//'\input\ParmsCrit.dta' ! // is the concatenation operator
-	inFile=TRIM(masterDir)//'\input\ParmsCrit.txt' ! // is the concatenation operator
-	IF(DEBUG)inFile='c:\SPEAD\CalcEos\input\ParmsCrit.txt' 
+	inFile=TRIM(PGLInputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
 	if(LOUD)print*,'LoadCritParmsDb: CritFile=',TRIM(inFile)
 !	OPEN(40,FILE=inFile,FORM='BINARY')
 	OPEN(40,FILE=inFile)
@@ -240,12 +237,9 @@ END MODULE VpDb
 	CLOSE(40)
 	!if((nDeck1).gt.ndb)pause 'GetCrit: too much data in file'
 	if(LOUD)print*,'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Trying ParmsCrAdd.'
-	IF(DEBUG)THEN
-		OPEN(40,FILE='c:\spead\calceos\input\ParmsCrAdd.TXT')
-	ELSE
-		inFile=TRIM(masterDir)//'\input\ParmsCrAdd.TXT' ! // is the concatenation operator
+		inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
 		OPEN(40,FILE=inFile)
-	ENDIF
+	!ENDIF
 	READ(40,*,ERR=862)dumText
 
 	nDeck2=0
@@ -316,9 +310,7 @@ END MODULE VpDb
 	!common/FloryWert/solParm(nmx),vLiq(nmx),vMolec(NMX),&
 	!	eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 	iErrCode=0
-!	inFile=TRIM(masterDir)//'\input\ParmsCrit.dta' ! // is the concatenation operator
-	inFile=TRIM(masterDir)//'\input\ParmsCrit.txt' ! // is the concatenation operator
-	IF(DEBUG)inFile='c:\SPEAD\CalcEos\input\ParmsCrit.txt' 
+	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
 	if(LOUD)write(*,'(2a)')' CritFile=',TRIM(inFile)
 	OPEN(40,FILE=inFile)
 	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
@@ -355,12 +347,8 @@ END MODULE VpDb
 	CLOSE(40)
 	!if((nDeck1).gt.ndb)pause 'GetCrit: too much data in file'
 
-	IF(DEBUG)THEN
-		OPEN(40,FILE='c:\spead\calceos\input\ParmsCrAdd.TXT')
-	ELSE
-		inFile=TRIM(masterDir)//'\input\ParmsCrAdd.TXT' ! // is the concatenation operator
-		OPEN(40,FILE=inFile)
-	ENDIF
+	inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
+	OPEN(40,FILE=inFile)
 	READ(40,*,ERR=862)dumText
 
 	nDeck2=0
@@ -431,13 +419,12 @@ END MODULE VpDb
 	!	   ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!OUTPUT:
 	!VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
-    USE GlobConst, only: masterDir,DEBUG,LOUD
+    USE GlobConst, only: PGLinputDir,LOUD
     USE VpDb ! Stores all the coefficients.
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
     character*255 inFile
 	iErrCode=0
-    inFile=TRIM(masterDir)//'\input\CoeffsVp2a.TXT'
-	IF(DEBUG)INFILE='c:\spead\calceos\input\CoeffsVp2a.TXT'
+    inFile=TRIM(PGLinputDir)//'\CoeffsVp2a.TXT'
     OPEN(662,FILE=inFile,ioStat=ioErr)
     if(ioErr.and.LOUD)pause 'GetVpDb: error opening CoeffsVp2a.txt'
     !open(662,file='junk.txt')
@@ -600,12 +587,8 @@ END MODULE VpDb
 	character inFile*251
 	dimension idcc(NC)
 	dimension idCcDb(maxDb),idDb(maxDb)
-	IF(DEBUG)THEN
-		OPEN(50,FILE='c:\spead\calceos\input\idTrcDipCas.TXT')
-	ELSE
-		inFile=TRIM(masterDir)//'\input\idTrcDipCas.TXT' ! // is the concatenation operator
+		inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
 		OPEN(50,FILE=inFile)
-	ENDIF
 	errMsg(0)='No Problem'
 	errMsg(1)='IdCcLookup Error: at least one id not found'
 	ier=0
@@ -649,7 +632,7 @@ END MODULE VpDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	subroutine IdCasLookup(NC,idCas,ier,errMsgPas)
-    USE GlobConst, only:ID,idTrc,nmx,class,DEBUG,LOUD,masterDir
+    USE GlobConst, only:ID,idTrc,nmx,class,DEBUG,LOUD,PGLinputDir
 	parameter(maxDb=3000)
 	character*77 errMsg(0:11),errMsgPas,dumString
 	character*251 inFile
@@ -658,11 +641,7 @@ END MODULE VpDb
 	integer idCas(nmx)
 	integer idCasDb(maxDb),idDb(maxDb),idTrcDb(maxDb)
     !OPEN(50,FILE='c:\spead\idTrcDipCas.TXT')
-	IF(DEBUG)THEN
-		inFile='c:\spead\calceos\input\idTrcDipCas.TXT'
-	ELSE
-		inFile=TRIM(masterDir)//'\input\idTrcDipCas.TXT' ! // is the concatenation operator
-	ENDIF
+		inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
 	if(LOUD)print*,'idCasLookup: inFile=',TRIM(inFile)
 	OPEN(50,FILE=inFile)
 	errMsg(0)='No Problem'
@@ -768,8 +747,7 @@ END MODULE VpDb
 	!common/FloryWert/solParm(nmx),vLiq(nmx),vMolec(NMX),&
 	!	eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 	iErrCode=0
-	inFile=TRIM(masterDir)//'\input\ParmsCrit.txt' ! // is the concatenation operator
-	IF(DEBUG)inFile='c:\SPEAD\CalcEos\input\ParmsCrit.txt' 
+	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
 	!print*,'CritFile=',TRIM(inFile)
 	!OPEN(40,FILE=inFile)
 	OPEN(40,FILE=inFile)
@@ -805,12 +783,8 @@ END MODULE VpDb
 	CLOSE(40)
 	!if((nDeck).gt.ndb)pause 'GetCrit: too much data in file'
 
-	IF(DEBUG)THEN
-		OPEN(40,FILE='c:\spead\calceos\input\ParmsCrAdd.TXT')
-	ELSE
-		inFile=TRIM(masterDir)//'\input\ParmsCrAdd.TXT' ! // is the concatenation operator
+		inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
 		OPEN(40,FILE=inFile)
-	ENDIF
 	READ(40,*,ERR=862)readText	! clear the header
 
 	nDeck2=0

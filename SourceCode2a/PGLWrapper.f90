@@ -14,7 +14,7 @@
 	USE EsdParms
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 
-	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
+	CHARACTER($MAXPATH) CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
 	!CHARACTER*1 ANSWER
 	!CHARACTER*2 calcType
 	CHARACTER*77 errMsgPas,readString,Property(22)
@@ -40,6 +40,7 @@
 	!if(iChange.eq.0 .or. iChange.gt.26)DEBUG=.TRUE.
 	masterDir=TRIM(curDir)
 	outFile=TRIM(masterDir)//'\output.txt' ! // is the concatenation operator
+	PGLinputDir='c:\PGLWrapper\input'
 	DEBUG=.TRUE.
 	DEBUG=.FALSE. ! read input files from c:\Projects\...\input dir.
     LOUD = .TRUE.
@@ -120,7 +121,7 @@
     if(LOUD)write(*,*)'PGLWRapperMain: Success so far... Got EOS Parms for iEosOpt=',iEosOpt
 	if(LOUD)pause 'PGLWRapperMain: starting calcs'
 	if(iProperty==1)then
-		write(52,'(2i4,i11,a)')iEosOpt, 1, localCas(1),' = iEosOpt, iProp, localCas: T, P,expVal,pSatKPa,ierCode '
+		write(52,'(2i4,i11,1x,a,1x,a)')iEosOpt, 1, localCas(1),TRIM(EosName(iEosOpt)),' = iEosOpt, iProp, idCas: T, P(expVal),pSatKPa,ierCode '
 	elseif(iProperty > 1 .and. iProperty < 6)then
 		write(52,*)iEosOpt,' = iEosOpt: T, P,expVal,rho(g/cc),ierCode '
 	elseif(iProperty>5 .and. iProperty < 11)then
@@ -377,4 +378,26 @@
 	close(51)
 	stop
 	END
+
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!ccccc PROGRAMED BY AV 06/26/06cccccccccccccccccccccccccccccccccccccccccccccc
+!ccccc PURPOSE: CALCULATION OF THERMODYNAMIC PROPERTIES WITH NRTLccccccccc
+
+	SUBROUTINE GetNRTL (nComps,idComp,iErrCode)
+	USE GlobConst
+	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
+	PARAMETER(ndb=1555)
+	character bipFile*234 !,inFile*234
+	integer GetBIPs
+	DIMENSION idComp(nComps)
+	!common/NRTL/vLiq(nmx)
+	iErrCode=0
+!c  note:  bips are passed back through common/BIPs/
+	bipFile=TRIM(PGLinputDir)//'\input\BipNRTL.txt' ! // is the concatenation operator
+      iErrCode=GetBIPs(bipFile,idComp,nComps)
+	return                      
+	END
+
+
 

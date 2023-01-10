@@ -30,17 +30,12 @@ subroutine GetPrTc(nComps,iErrCode)
     iErrCode=0
 	etaMax=1-zeroTol
 	! note:  bips are passed back through module /BIPs/
-	IF(DEBUG) THEN
-		inFile='c:\SPEAD\CalcEos\input\ParmsPrTcJaubert.txt'
-		bipFile='c:\SPEAD\CalcEos\input\BipPRtc.txt'
-	ELSE
-		inFile=TRIM(masterDir)//'\input\ParmsPrTcJaubert.txt' ! // is the concatenation operator
-		bipFile=TRIM(masterDir)//'\input\BipPRtc.txt' ! // is the concatenation operator
-	ENDIF
+		inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
+		bipFile=TRIM(PGLinputDir)//'\BipPRtc.txt' ! // is the concatenation operator
 	if(LOUD)write(*,*)'GetPrTc: inFile= ',TRIM(inFile)
 	open(40,file=inFile,ioStat=ioErr)
 	if(ioErr.and.LOUDER)then
-		print*,'GetPrTc: MasterDir= ',TRIM(masterDir) 
+		print*,'GetPrTc: PGLinputDir= ',TRIM(PGLinputDir) 
 		print*,'GetPrTc: Error opening: ', TRIM(inFile)
 		if(LOUDER)pause 'Check that the parms file is in the right dir.'
 	endif

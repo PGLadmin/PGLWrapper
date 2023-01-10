@@ -24,11 +24,7 @@ C           Stryjek and Vera, can j chem eng, 64:323 (1986).
 8	continue
 606	format(i4,1x,a11,f6.1,f6.3,1x,f6.3,f8.2,f6.1,f8.1,i4,f8.6,f8.4)
 	GetPRSVWS=0
-	IF(DEBUG)THEN
-		bipFile='c:\spead\CalcEos\input\ParmsPrws.txt'
-	ELSE
-		bipFile=TRIM(masterDir)//'\input\ParmsPrws.txt' ! // is the concatenation operator
-	ENDIF
+		bipFile=TRIM(PGLinputDir)//'\ParmsPrws.txt' ! // is the concatenation operator
 	open(55,file=bipFile)
 	do iComp=1,NC
 		svKappa1(iComp)=0
@@ -42,91 +38,11 @@ c		idArray(iComp)=idDippr((iComp))
 	enddo
 	close(55)
 c  note:  bips are passed back through common/BIPs/
-	IF(DEBUG)THEN
-		bipFile='c:\spead\CalcEos\input\BipWongSand.txt'
-	ELSE
-		bipFile=TRIM(masterDir)//'\input\BipWongSand.txt' ! // is the concatenation operator
-	ENDIF
+	bipFile=TRIM(PGLinputDir)//'\BipWongSand.txt' ! // is the concatenation operator
       IERRCODE=GetBIPs(bipFile,ID,NC)
 
       RETURN
       END
-
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-ccccc PROGRAMED BY AV 06/26/06cccccccccccccccccccccccccccccccccccccccccccccc
-cccccPURPOSE: CALCULATION OF THERMODYNAMIC PROPERTIES WITH NRTLccccccccc
-
-	SUBROUTINE GetNRTL (nComps,idComp,iErrCode)
-	USE GlobConst
-	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	PARAMETER(ndb=1555)
-	character bipFile*234,inFile*234
-	integer GetBIPs
-	DIMENSION idComp(nComps)
-	dimension solParmD(ndb),vLiqD(ndb),IDA(ndb)
-	!common/NRTL/vLiq(nmx)
-	write(*,*)'ID  NAME       TCK   PCMPa      w     '
-	iErrCode=0
-c  note:  bips are passed back through common/BIPs/
-	IF(DEBUG)then 
-		OPEN(50,FILE='c:\SPEAD\CalcEos\input\ParmsCrit.dta',
-	1	FORM='BINARY')
-      ELSE 
-		inFile=TRIM(masterDir)//'\input\ParmsCrit.dta' ! // is the concatenation operator
-		OPEN(50,FILE=inFile,FORM='BINARY')
-	ENDIF
-
-	READ(50,ERR=861)NDECK 
-	DO I=1,NDECK
-	READ(50,ERR=861)IDA(I),tcd,pcd,zcd,acend,rmwd,solParmD(i),vLiqD(i)
-	enddo   
-	CLOSE(50)
-
-	IF(DEBUG)then 
-		OPEN(50,FILE='c:\SPEAD\CalcEos\input\parmsCrAdd.txt')
-      ELSE 
-		inFile=TRIM(masterDir)//'\input\parmsCrAdd.txt' ! // is the concatenation operator
-		OPEN(50,FILE=inFile)
-	ENDIF
-	read(50,*,ERR=863)NDECKADD
-	nTot=nDeck+nDeckAdd
-	DO I=nDeck+1,nTot
-		READ(50,*,ERR=863)IDA(I),tcd,pcd,zcd,acend,rmwd,solParmD(i),
-	1	vLiqD(i)
-	enddo   
-	CLOSE(50)
-
-	DO J=1,nComps
-		DO I=1,NDECK
-			IF(IDA(I).EQ.idComp(J))THEN
-			  vLiq(j)=vLiqD(i)
-			ENDIF
-		enddo
-	enddo
-		
-	IF(DEBUG)THEN
-		bipFile='c:\spead\CalcEos\input\BipWongSand.txt'
-	ELSE
-		bipFile=TRIM(masterDir)//'\input\BipWongSand.txt' ! // is the concatenation operator
-	ENDIF
-      IERRCODE=GetBIPs(bipFile,idComp,nComps)
-
-      RETURN
-861	continue
-	write(*,*)'GetNRTL error - error reading ParmsCrit.txt. Path?'
-	write(*,*)'nDeck,iCompo',NDECK,i
-	if(LOUD)pause
-	return                      
-863	continue
-	write(*,*)'NRTL error - error reading ParmsCrAdd.txt. Path?'
-	write(*,*)'nDeckAdd,iCompo',nDeckAdd,i
-	if( (i-1).gt.0)write(*,*)'last good parms',ida(i),solParmD(i),
-	1vLiqD(i)
-	if(LOUD)pause
-	return                      
-	END
-
       
 
 	!PROGRAMED BY AV 06/22

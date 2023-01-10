@@ -105,17 +105,11 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 	etaMax=1/1.9D0-zeroTol
 	isMEM2=.FALSE.
 	if(iEosOpt==4)isMEM2=.TRUE.
-	IF(DEBUG)then 
-		inFILE='c:\Spead\CalcEos\input\ParmsEsd96.TXT'
-		if(iEosOpt==12)inFILE='c:\Spead\CalcEos\input\ParmsEsdEmami.TXT'
-		if(iEosOpt==13)inFILE='c:\Spead\CalcEos\input\ParmsEsdEmamiTb.TXT'
-		if(isMEM2)inFILE='c:\Spead\CalcEos\input\ParmsEsdMEM2.TXT'
-	ELSE
-		inFILE=TRIM(masterDir)//'\input\ParmsEsd96.TXT'
-		if(iEosOpt==12)inFILE=TRIM(masterDir)//'\input\ParmsEsdEmami.txt' ! // is the concatenation operator
-		if(iEosOpt==13)inFILE=TRIM(masterDir)//'\input\ParmsEsdEmamiTb.txt' ! // is the concatenation operator
-		if(isMEM2)inFile=TRIM(masterDir)//'\input\ParmsEsdMEM2.txt' ! // is the concatenation operator
-	ENDIF
+	
+	inFILE=TRIM(PGLinputDir)//'\ParmsEsd96.TXT'
+	if(iEosOpt==12)inFILE=TRIM(PGLinputDir)//'\ParmsEsdEmami.txt' ! // is the concatenation operator
+	if(iEosOpt==13)inFILE=TRIM(PGLinputDir)//'\ParmsEsdEmamiTb.txt' ! // is the concatenation operator
+	if(isMEM2)inFile=TRIM(PGLinputDir)//'\ParmsEsdMEM2.txt' ! // is the concatenation operator
 	OPEN(31,FILE=inFile)
 	if(LOUDER)print*,'GetEsd:inFile=',TRIM(inFile)
 	if(LOUDER)pause 'Check the ESD parms file location.'
@@ -241,13 +235,8 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 606	format(i9,1x,a11,f9.3,f8.2,f8.2,2i3,1x,f8.6,2f8.0)
 
 	!note:  bips are passed back through common/BIPs/
-	IF(DEBUG)then 
-		bipFile='c:\SPEAD\CalcEos\input\BipEsd96.txt'
-		if(isMEM2)bipFile='c:\SPEAD\CalcEos\input\BipEsdMEM2.txt'
-	ELSE 
-		bipFile=TRIM(masterDir)//'\input\BipEsd96.txt' ! // is the concatenation operator
-		if(isMEM2)bipFile=TRIM(masterDir)//'\input\BipEsdMEM2.txt' ! // is the concatenation operator
-	ENDIF
+		bipFile=TRIM(PGLinputDir)//'\BipEsd96.txt' ! // is the concatenation operator
+		if(isMEM2)bipFile=TRIM(PGLinputDir)//'\BipEsdMEM2.txt' ! // is the concatenation operator
 	if(nC > 1)iErrCode=GetBIPs(bipFile,ID,nC) !not necessary for pure fluids
 	if(iErrCode > 10)iErr=11 ! 
     if(LOUDER)then

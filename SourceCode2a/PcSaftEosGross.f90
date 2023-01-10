@@ -11149,7 +11149,7 @@ end subroutine jacobi_eigenvalue
 subroutine GetPcSaft(nComps,casrn,iErr)
 	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	!use input_output, only: read_problem_definition
-	use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos !JRE LOUD=.FALSE. to silence I/O feedback.
+	use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos, PGLinputDir !JRE LOUD=.FALSE. to silence I/O feedback.
 	use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
 	use PARAMETERS, only: dp, nsite
 	use eos_constants
@@ -11158,8 +11158,7 @@ subroutine GetPcSaft(nComps,casrn,iErr)
 	use pcsaft_pure_and_binary_parameters, only: load_pure_and_binary_parameters
     !use PARAMETERS, only: dp, KBOL, machine_eps
     implicit none
-    integer nComps, casrn(nComps),iErr,iStat,i,L
-	CHARACTER*128 masterDir
+    integer nComps, casrn(nComps),iErr,i,L
     character(16) aString
     logical :: parameter_assigned
     integer :: read_info
@@ -11179,7 +11178,7 @@ subroutine GetPcSaft(nComps,casrn,iErr)
     !real(dp), dimension(nsite)                 :: r_nhb_no
     !real(dp)                                   :: r_kap_hb
     !real(dp), dimension(nsite,nsite)           :: r_eps_hb
-	CHARACTER($MAXPATH)  CURDIR,parmFile,readFile !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
+	CHARACTER($MAXPATH)  parmFile,readFile !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
 	integer line
 	!-----------------------------------------------------------------------------
 	! read definition of problem
@@ -11187,10 +11186,7 @@ subroutine GetPcSaft(nComps,casrn,iErr)
 	!call read_problem_definition - already done
 	!  Get current directory
     if(LOUD)print*,'GetPcSaft: nComps,casrn=',nComps,casrn
-	CURDIR = FILE$CURDRIVE
-	iStat = GETDRIVEDIRQQ(CURDIR)
-	masterDir=TRIM(curDir)
-	parmFile=TRIM(masterDir)//'\Input\PcSaft_database\pcsaft_pure_parameters.txt' 
+	parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parameters.txt' 
 	if(LOUD)print*,'parmFile=',TRIM(parmFile)
 	isPcSaft=.FALSE.
     iErr=0
@@ -11199,9 +11195,9 @@ subroutine GetPcSaft(nComps,casrn,iErr)
 	if(iErr==1)return
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or other similar.
 	isPcSaft=.TRUE.
-	if(iEosOpt==10)readFile=TRIM(masterDir)//'\input\PcSaft_database\pcsaft_pure_parametersGross.txt' 
-	if(iEosOpt==15)readFile=TRIM(masterDir)//'\input\PcSaft_database\pcsaft_pure_parametersGc.txt' 
-	if(iEosOpt==16)readFile=TRIM(masterDir)//'\input\PcSaft_database\pcsaft_pure_parametersGcTb.txt'
+	if(iEosOpt==10)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGross.txt' 
+	if(iEosOpt==15)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGc.txt' 
+	if(iEosOpt==16)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGcTb.txt'
 	open(551,file=readFile)
 	open(661,file=parmFile)
 	read_info=0 

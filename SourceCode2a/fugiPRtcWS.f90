@@ -32,11 +32,7 @@
 		return
 	endif
 !c  note:  bips are passed back through common/BIPs/
-	IF(DEBUG)THEN
-		bipFile='c:\spead\CalcEos\input\BipPRtcWS.txt'
-	ELSE
-		bipFile=TRIM(masterDir)//'\input\BipPRtcWS.txt' ! // is the concatenation operator
-	ENDIF
+		bipFile=TRIM(PGLinputDir)//'\BipPRtcWS.txt' ! // is the concatenation operator
 	iErrGet=GetBIPs(bipFile,ID,NC)
 	if(iErrGet.ne.0)then
 		iErrCode=2

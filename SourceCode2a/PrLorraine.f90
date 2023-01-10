@@ -1309,12 +1309,12 @@ end module
 !c*****************************************************************************
 !   SETUP SUBROUTINES/FUNCTIONS
 !c*****************************************************************************
-      subroutine setup(err0)
+      subroutine setup(PRLinputDir,err0)
         use comflash
         implicit none
         integer :: err0,i
         real(8) :: etac,zc
-        character(60) :: fileName
+        character*234 :: fileName,PRLinputDir
 !C--------------------------------------------------------------------
         err0 = 0
 !C      Load model definition and parameters
@@ -1335,7 +1335,7 @@ end module
 !C      Load Gauss coefficients for Gauss_Legendre integration
         err0 = 1
         fileName = "gauss_legendre.dat"
-        fileName =".\input\PrLorraineEtcFiles\" // trim(fileName)
+        fileName =TRIM(PRLinputDir)//"\PrLorraineEtcFiles\" // trim(fileName)
         OPEN(20,FILE=fileName,status='old',err=10)
         err0 = 0
         READ(20,*)
@@ -1363,7 +1363,7 @@ end module
 !c
 !c ----------------------------------------------------------------------------
 !c
-      subroutine setfluid(fluids,err0)
+      subroutine setfluid(PRLinputDir,fluids,err0)
         use comflash
         implicit none
         integer :: i,j,k,id1,id2,ioErr ! JRE 20210604 - for case when BIPs not found.
@@ -1371,13 +1371,13 @@ end module
         integer :: prop(n_prop),typec
         integer,parameter :: n_pts = 10
         real(8) :: rtsp,calc_c,BIP(2)
-        character(100) :: fluidFile
+        character*234 :: fluidFile,PRLinputDir
         character(70) :: str
 
         do i = 1,nco
             write(str,'(i5)') fluids(i)
             fluidFile = 'CHEM' // trim(adjustl(str))//'.fld'
-            fluidFile = ".\input\PrLorraineEtcFiles\fluids\" //  &
+            fluidFile = TRIM(PRLinputDir)//"\PrLorraineEtcFiles\fluids\" //  &
      &                  trim(fluidFile)
             prop = 0
             err0 = 1
@@ -1515,7 +1515,7 @@ end module
       bgE0 = 0.0d0
       cgE0 = 0.0d0
 
-      gE_file = '.\input\PrLorraineEtcFiles\' // trim(gE_file)
+      gE_file = TRIM(PRLinputDir)//'\PrLorraineEtcFiles\' // trim(gE_file)
       open(5001,file=(gE_file),status='old',err=10)
       do i = 1,nco-1
         do j = i+1,nco
@@ -7078,7 +7078,7 @@ end module
 !c  JRE20210513: Restricting GlobConst with "only" avoids conflicts with other GlobConst variables (e.g. Rgas).
 !c               FYI, SetNewEos is a function "contain"ed in GlobConst.
 Subroutine GetPrLorraine(nComps,iErr)
-	USE GlobConst, only:SetNewEos,LOUD,bVolCc_mol,zeroTol,etaMax,ID,iEosOpt
+	USE GlobConst, only:SetNewEos,PGLInputDir,LOUD,bVolCc_mol,zeroTol,etaMax,ID,iEosOpt
 	USE comflash
     integer :: i,fluids(ncomax),err0,ierr
 	LOGICAL LOUDER
@@ -7093,14 +7093,14 @@ Subroutine GetPrLorraine(nComps,iErr)
 		iErr=1
 		return
 	endif
-    call setup(err0) ! COMPUTES OMEGAa, OMEGAb, Zc, 
+    call setup(PGLinputDir,err0) ! COMPUTES OMEGAa, OMEGAb, Zc, 
 	!FYI: setup calls READ_OPTION() which hard codes choix_ge=2, meaning the "HV-uniquac/wilson" model. 
 	if(err0 > 0)then
 		iErr=2
 		return
 	endif
 	fluids(1:2)=ID(1:2)
-    call setfluid(fluids,err0)
+    call setfluid(PGLinputDir,fluids,err0)
 	if(err0 > 0)then
 		iErr=3
 		return

@@ -21,11 +21,7 @@
 	enddo
 
 	! note:  bips are passed back through common/BIPs/
-	IF(DEBUG)THEN
-		bipFile='c:\SPEAD\CalcEos\input\BipPengRob.txt'
-	ELSE
-		bipFile=TRIM(masterDir)//'\input\BipPengRob.txt' ! // is the concatenation operator
-	ENDIF
+		bipFile=TRIM(PGLinputDir)//'\BipPengRob.txt' ! // is the concatenation operator
 	IERRCODE=GetBIPs(bipFile,ID,NC)
 
 	RETURN
