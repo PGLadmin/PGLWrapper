@@ -4542,38 +4542,38 @@
 	if(LOUD)print*,'Psat after spinodal: etaLiq,etaVap= ',etaLiq,etaVap
 	pOld=(pMin+pMax)/2 !when approaching critical, this works well.
 	if( (rhoVap/rhoLiq) < 0 .and. LOUD)pause 'Psat error after spinodals: rhoVap/rhoLiq < 0'
-	pEuba=rGas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995), assuming 1.2x shifts on V&L relative to spinodals.
+	pEubank=rGas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995), assuming 1.2x shifts on V&L relative to spinodals.
 	!pOld=pEubank/10  !JRE: I find Eubank overestimates P sometimes. It even get higher than pMax
-	if(pMin < 0)then ! if rhoLiq exists at p~0, then Razavi works.
+	if(pMin < 0)then ! if rhoLiq exists at p~0, then ITIC works.FPE,501:112236(19), JCP,110:3043(99)
 		if(pOld < 0)pOld=1D-5 !If p < 0, then the vapor density goes negative and log(rhoLiq/rhoVap) is indeterminate.
 		!NOTE: Don't use pOld=0 when pOld > 0. You might get Golden Error because vdw loop doesn't cross zero!
-		print*,'calling fugi for liquid to construct Razavi initial guess.'
+		print*,'calling fugi for liquid to construct ITIC initial guess.'
 		call FUGI(tK,pOld,xFrac,NC,1,FUGC,zLiq,ier) !LIQ=3=>liquid root with no fugc calculation
 		if(ier(1)==0)then
 			AresLiq=Ares_RT
 			rhoLiq=pOld/(zLiq*rGas*tK)			 !AresVap  +  Zvap-1 -ln(Zvap) =AresLiq+ZLiq-1-ln(ZLiq) 
 			!rhoLiq=etaL/bVolCC_mol(1)		 =>  !B2*rhoVap+B2*rhoVap+ln(rhoVap/rhoLiq) =AresLiq+0-1
-			rhoVap=rhoLiq*EXP(AresLiq-1) !Razavi, FPE, 501:112236(19), Eq 19. Ares_RT from GlobConst
-			pSatRazavi=rhoVap*rGas*tK
+			rhoVap=rhoLiq*EXP(AresLiq-1) !ITIC, FPE, 501:112236(19), Eq 19. Ares_RT from GlobConst
+			pSatItic=rhoVap*rGas*tK
 			!zLiq=pTest/(rhoLiq*rGas*tK) !this takes some of the imprecision off zLiq
 			!pEuba2=rGas*tK/(1/rhoVap-1/rhoLiq)*( Ares_RT- 0 +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
 			!NOTE: When 1/rhoVap >> 1/rhoLiq, pEuba2=rGas*tK*rhoVap*( Ares_RT-ln(rhoVap/rhoLiq) )=pTest*( Ares_RT - (Ares_RT-1) )
-			call FUGI(tK,pSatRazavi,xFrac,NC,0,FUGC,zVap,ier)
-			B2cc_mol=(zVap-1)*(zVap*rGas*tK)/pSatRazavi
+			call FUGI(tK,pSatItic,xFrac,NC,0,FUGC,zVap,ier)
+			B2cc_mol=(zVap-1)*(zVap*rGas*tK)/pSatItic
 			rhoVap=rhoVap*exp(-2*B2cc_mol*rhoVap)! => rhoVap=rhoLiq*EXP(Ares_RT-1-2*B2*rhoVap), but Ares-RT changes with FUGI call, so reuse like this.
-			pSatRazavi=rhoVap*rGas*tK*(1+B2cc_mol*rhoVap)
-			zLiq=pSatRazavi/(rhoLiq*rGas*tK)
+			pSatItic=rhoVap*rGas*tK*(1+B2cc_mol*rhoVap)
+			zLiq=pSatItic/(rhoLiq*rGas*tK)
 			FugcLiq=AresLiq+zLiq-1-LOG(zLiq)
 			if(LOUD)print*,'PsatEar: FugcVap,FugcLiq=',Fugc(1),FugcLiq
-			if(pSatRazavi < pMax)then
-				pOld=pSatRazavi
+			if(pSatItic < pMax)then
+				pOld=pSatItic
 			else
-				if(LOUD)print*,'PsatChemPo: pSatRazavi > pMax?'
+				if(LOUD)print*,'PsatChemPo: pSatITIC > pMax?'
 				pOld=zeroTol*10
 				if(pMax > zeroTol)pOld=pMax/2
 			endif
 		else
-			print*,'PsatChemPo: Error from call to fugi for Razavi. ier=',ier 
+			print*,'PsatChemPo: Error from call to fugi for ITIC. ier=',ier 
 		endif ! ier(1)==0
 	endif  ! pMax < 0
 
@@ -4647,8 +4647,8 @@
 		if(LOUD)print*,'Psat: iterations exceeded. P,fErr=',pMPa,fBest
 		ierCode=9
 	endif
-	if(ierCode.ne.0 .and. pSatRazavi < 0.01)then
-		pMPa=pSatRazavi
+	if(ierCode.ne.0 .and. pSatItic < 0.01)then
+		pMPa=pSatItic
 		ierCode=0 ! At P < 0.01 MPa, pSatRazavi must be pretty good. 
 	endif
 	!check that FugiTpt did not give warning on last calls

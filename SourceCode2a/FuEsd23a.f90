@@ -1,4 +1,82 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+MODULE EsdParms
+	USE GlobConst
+	DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
+	DoublePrecision mShape(NMX),KadNm3(NMX),epsA_kB(NMX),epsD_kB(NMX) !for ESD2
+	Integer         ND(NMX),NDS(NMX),NAS(NMX)
+	LOGICAL         isMEM2
+contains
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine QueryParPureEsd(iComp,iParm,value,iErr)
+	!USE EsdParms      !Just for ESD
+	IMPLICIT NONE
+	DoublePrecision value
+	integer iComp,iParm,iErr
+	!-----------------------------------------------------------------------------
+	! pure component parameters
+	!-----------------------------------------------------------------------------
+	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
+	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
+	iErr=0
+	if(iParm==1)then
+		value=c(iComp)
+	elseif(iParm==2)then
+		value=vx(iComp)
+	elseif(iParm==3)then
+		value=eokp(iComp)
+	elseif(iParm==4)then
+		value=KcStar(iComp)
+	elseif(iParm==5)then
+		value=DH(iComp)
+	elseif(iParm==6)then
+		value=ND(iComp)
+	elseif(iParm==7)then
+		value=NAS(iComp)
+	elseif(iParm==8)then
+		value=NDS(iComp)
+	else
+		iErr=1
+	endif
+	return
+end	Subroutine QueryParPureEsd
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine SetParPureEsd(iComp,iParm,value,iErr)
+	!USE EsdParms      !Just for ESD
+	IMPLICIT NONE
+	DoublePrecision value
+	integer iComp,iParm,iErr
+	!-----------------------------------------------------------------------------
+	! pure component parameters
+	!-----------------------------------------------------------------------------
+	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
+	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
+	iErr=0
+	if(iParm==1)then
+		c(iComp)=value
+		q(iComp)=1+(value-1)*1.9076D0
+	elseif(iParm==2)then
+		vx(iComp)=value
+	elseif(iParm==3)then
+		eokp(iComp)=value
+	elseif(iParm==4)then
+		KcStar(iComp)=value
+	elseif(iParm==5)then
+		DH(iComp)=value
+	elseif(iParm==6)then
+		ND(iComp)=value
+	elseif(iParm==7)then
+		NAS(iComp)=value  ! Not used for ESD96
+	elseif(iParm==8)then
+		NDS(iComp)=value  ! Not used for ESD96
+	else
+		iErr=1
+	endif
+	return
+end	Subroutine SetParPureEsd
+
+END MODULE EsdParms
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 	!
 	!  PURPOSE:  LOOKS UP THE ESD PARAMETERS AND STORES THEM IN COMMON EsdParms
@@ -50,7 +128,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 		if(isMEM2)then
 			READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I),NDA(i),NDSA(I),NASA(I),idCasa(i)
 			if(LOUDER)write(*,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)
-		else ! iEosOpt=2,11,13 all use ESD96.
+		else ! iEosOpt=2,12,13 all use ESD96.
 			READ(dumString,*,ioStat=ioErr)IDA(I),CAi,QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I) ,idCasa(i)
 			!READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I),NDA(I),NASA(I),idCasa(i)
 			if(LOUDER)write(*,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)

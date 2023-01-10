@@ -7,7 +7,6 @@
 	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
 	!	LmDifEzCov2.for, Mintools.for
 	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
-	!data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
 	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	USE PORTLIB
 	USE GlobConst
@@ -26,6 +25,9 @@
 	!DIMENSION ZFEED(NMX),S(NMX)
     DoublePrecision xFrac(NMX),FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER ier(12), localCas(NMX)
+	Character*15 EosName(18) 
+	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
+	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
 	
 	COMMON/eta/etaL,etaV,ZL,ZV
 
