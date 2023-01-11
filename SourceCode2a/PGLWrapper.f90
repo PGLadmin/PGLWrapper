@@ -379,25 +379,5 @@
 	stop
 	END
 
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!ccccc PROGRAMED BY AV 06/26/06cccccccccccccccccccccccccccccccccccccccccccccc
-!ccccc PURPOSE: CALCULATION OF THERMODYNAMIC PROPERTIES WITH NRTLccccccccc
-
-	SUBROUTINE GetNRTL (nComps,idComp,iErrCode)
-	USE GlobConst
-	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	PARAMETER(ndb=1555)
-	character bipFile*234 !,inFile*234
-	integer GetBIPs
-	DIMENSION idComp(nComps)
-	!common/NRTL/vLiq(nmx)
-	iErrCode=0
-!c  note:  bips are passed back through common/BIPs/
-	bipFile=TRIM(PGLinputDir)//'\input\BipNRTL.txt' ! // is the concatenation operator
-      iErrCode=GetBIPs(bipFile,idComp,nComps)
-	return                      
-	END
-
 
 
