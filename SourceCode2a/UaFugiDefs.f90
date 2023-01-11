@@ -15,44 +15,48 @@
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	!C
 	!C
-	SUBROUTINE FUGI( T,P,X,NC,LIQ,FUGC,Z,ier )
+	!SUBROUTINE FUGI( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErrCode )
+	SUBROUTINE FUGI( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,zFactor,ier )
 	USE GlobConst
 	USE comflash, only:ncomax ! PrLorraine's module for many constants. ncomax needed to dimension properly
 	IMPLICIT DOUBLEPRECISION( A-H,O-Z )
-	DoublePrecision X(*),fugc(*)
+	DoublePrecision Xfrac(*),fugc(*)
 	DoublePrecision fg(ncomax) ,ft(ncomax) , fp(ncomax) , fx(ncomax,ncomax)	!for PrLorraine
     integer ier(12) !,ier2(11)
-    ier(1)=0 !required if EOS uses iErr instead of ier().
+    ier(1)=0 !required if EOS uses iErr instead of ier()
+	iErrCode=0.
 	if(iEosOpt==0)iEosOpt=1
 !	if(iEosOpt==2)then !all other ESD is ESD96.  
 !		call FugiESD96( T,P,X,NC,LIQ,FUGC,Z,ier )
 	if(isESD)then !all other ESD is ESD96.  
-		call FugiESD( T,P,X,NC,LIQ,FUGC,rho,Z,aRes,uRes,ier )
+		call FugiESD( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErrF )
 	elseif(iEosOpt==1)then
-		call FugiPR( T,P,X,NC,LIQ,FUGC,Z,ier )
+		call FugiPR( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,ier )
 	elseif(iEosOpt==3)then
 	    call FugiPRWS( T,P,X,NC,LIQ,FUGC,Z,ier )
+		aRes=Ares_RT
+		uRes=Ures_RT
 	elseif(iEosOpt.eq.8)then
 		call FuSpeadGamma( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(isTPT)then
- 	    call FuTpt( T,P,X,NC,LIQ,FUGC,Z,ier )	  !AUG 10
+ 	    call FuTpt( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErrF )	  !AUG 10
 	elseif(iEosOpt.eq.6)then
 	    call FuFloryWert( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(iEosOpt.eq.7)then
 		call FuNRTL( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(isPcSaft)then 
-		call FugiPcSaft(NC,T,P,X,LIQ,Z,FUGC,iErr)
-		if( iErr.ne.0)ier(1)=1
+		call FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErrF)
+		if( iErrF.ne.0)ier(1)=1
  	    !if(LOUD)print*,'Sorry: PcSaft not available at this time'!call FugiPcSaft(T,P,X,NC,LIQ,FUGC,Z,ier)	 ! Need to define this
 	elseif(iEosOpt.eq.11)then
-		call FugiPrTc( T,P,X,NC,LIQ,FUGC,Z,ier )	  ! JRE 2020
+		call FugiPrTc( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,ier )	  ! JRE 2020
 	elseif(iEosOpt.eq.17)then
 		icon=2 ! returns fugc and T,V derivatives. See GetPrLorraine for more options. 
 		ntyp= -1 !vapor. Note: ntyp=0 returns the min fugacity phase.
 		if(LIQ==1)ntyp=1
 		iErrPRL=0
-		call FuPrLorraine_TP(icon,ntyp,mtyp,iErrPRL,T,P,X,rho,Z, &	 ! JRE 20210510
-		&                fg,ft,fp,fx,uRes_RT,aRes_RT,CvRes_R,CpRes_R,dpdRho_RT)
+		call FuPrLorraine_TP(icon,ntyp,mtyp,iErrPRL,tKelvin,pMPa,xFrac,rhoMol_cc,zFactor, &	 ! JRE 20210510
+		&                fg,ft,fp,fx,uRes,aRes,CvRes_R,CpRes_R,dpdRho_RT)
 		FUGC(1:NC)=fg(1:NC)
 		!c     mtyp:     (o):      indicator for phase type; ic returns
 		!c                       1:   if called with mt = 1/-1 and phase is found
@@ -69,8 +73,9 @@
 		if(mtyp  ==   3)ier(4)=1 ! real part of the imaginary solution
 	else
 	  if(LOUD)pause 'Error in Fugi: unexpected iEosOpt'
-	  ier(1)=1
+	  iErrCode=1
 	endif
+	iErrCode=iErrF+10*iErrCode
 	return
 	end
 

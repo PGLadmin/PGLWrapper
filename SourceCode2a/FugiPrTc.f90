@@ -504,7 +504,8 @@ end	!Subroutine SetParPurePrTc
 	RETURN
 	END
 
-	SUBROUTINE FugiPrTc(tKelvin,pMPa,gMol,NC,LIQ,FUGC,zFactor,IER)
+	!SUBROUTINE FugiPrTc(tKelvin,pMPa,gMol,NC,LIQ,FUGC,zFactor,IER)
+	Subroutine FugiPrTc( tKelvin,pMPa,gmol,NC,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,ier )	  ! JRE 2020
 	!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	!$ FUGI
 	!
@@ -741,8 +742,8 @@ end	!Subroutine SetParPurePrTc
 	Sres_R=uDep-aDep					  ! A = U - TS => Sres_R = Ures/RT - Ares/RT
 	if(Loud.and.initCall)print*,'Sres,hRes',Sres_R,hRes_RT
 	isZiter=0
-	call FuPrTcVtot(isZiter,tKelvin,1/rhoMol_Cc,xFrac,NC,FUGC,zFactor,aDep,uDep,iErrZ)
-	if(LOUD.and.initCall)print*,'aRes,uDep',aDep,uDep
+	call FuPrTcVtot(isZiter,tKelvin,1/rhoMol_Cc,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrZ)
+	if(LOUD.and.initCall)print*,'aRes,uDep',aRes,uRes
 	if(iErrZ>10)then
 		iErr=13
 	elseif(iErrZ.ne.0)then

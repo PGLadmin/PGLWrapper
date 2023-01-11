@@ -6,6 +6,7 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
+ MEM2: SUM(deltaIDs),SUM(deltaXs)    0   .0000E+00
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1097E-01   .1920E-01
  iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1206E-12   .3694E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000

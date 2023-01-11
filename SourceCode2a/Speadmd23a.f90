@@ -561,7 +561,8 @@ end	!Subroutine QueryParPureSpead
 !C Modified by AFG 2011 : isZiter is redefined																							  C
 !C																												  C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	SUBROUTINE FuTpt(tKelvin,pMPa,gmol,nComps,LIQ,chemPo,zFactor,ier)
+ 	SUBROUTINE FuTpt( tKelvin,pMPa,gmol,nComps,LIQ,chemPo,rhoMol_cc,zFactor,aRes,uRes,iErr )	  !AUG 10
+	!SUBROUTINE FuTpt(tKelvin,pMPa,gmol,nComps,LIQ,chemPo,zFactor,ier)
 	USE GlobConst  !aRes_RT,uRes_RT etc
 	USE SpeadParms !GlobConst(some)+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs
@@ -855,6 +856,7 @@ end	!Subroutine QueryParPureSpead
 	RETURN
 867 continue
 	if(LOUDER)write(*,*)'Exiting FuTpt: Please correct xFrac'
+	iErr=17
 	ier(1)=17
 	ier(7)=1
 	return
@@ -886,11 +888,13 @@ end	!Subroutine QueryParPureSpead
 		enddo
 		x(iPure)=1-sum
 		nc=2
-		call FuTpt(tKelvin,pMPa,x,nc,1,fugcL,zL,ier)
+ 		call FuTpt( tKelvin,pMPa,xFrac,nComps,1,fugcL,rhoMol_cc,zL,aRes,uRes,iErr )	  
+		!call FuTpt(tKelvin,pMPa,x,nc,1,fugcL,zL,ier)
 		fugcPure(iPure)=fugcL(iPure)
 		!hPure(iPure)=DHONKT
 	enddo
-	call FuTpt(tKelvin,pMPa,xFrac,nComps,1,fugcL,zL,ier)
+	!call FuTpt(tKelvin,pMPa,xFrac,nComps,1,fugcL,zL,ier)
+ 	call FuTpt( tKelvin,pMPa,xFrac,nComps,1,fugcL,rhoMol_cc,zL,aRes,uRes,iErr )	  
 	!CALL GetVp(nComps,ID,iErrVp)	
 
 

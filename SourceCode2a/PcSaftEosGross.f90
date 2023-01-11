@@ -11346,7 +11346,7 @@ end subroutine GetPcSaft
 	return
 end subroutine FugiPcSaftVtot
 
-subroutine FugiPcSaft(nComps,tKelvin,pMPa,xFrac,LIQ,zFactor,chemPoRes,iErr)
+subroutine FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,chemPoRes,rhoMol_cc,zFactor,aRes,uRes,iErr)
     use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
     use PARAMETERS, only: dp, nsite, NAV, RGAS
     use GlobConst, only: LOUD, uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty,etaPass
@@ -11360,8 +11360,9 @@ subroutine FugiPcSaft(nComps,tKelvin,pMPa,xFrac,LIQ,zFactor,chemPoRes,iErr)
 	!JRE add
 	implicit none
 	integer nComps,iErr,LIQ
-	DoublePrecision tKelvin,pMPa,zFactor !,rGasJre
+	DoublePrecision tKelvin,pMPa 
 	DoublePrecision xFrac(nComps),chemPoRes(nComps)
+	DoublePrecision rhoMol_cc,zFactor,aRes,uRes
 	!integer i
 	!real(dp)                                        :: sRes_R	 !these are declared in GlobConst
 	!real(dp)                                        :: hRes_RT
@@ -11376,6 +11377,7 @@ subroutine FugiPcSaft(nComps,tKelvin,pMPa,xFrac,LIQ,zFactor,chemPoRes,iErr)
 	logical LOUDER  !JRE This can be set to LOUD in order to facilitate debugging if desired.
     LOUDER=.FALSE.
     LOUDER=LOUD
+	!LOUDER=.TRUE.
     ncomp=nComps
     t_input=tKelvin
     p_input=pMPa*1.D6
@@ -11406,6 +11408,9 @@ subroutine FugiPcSaft(nComps,tKelvin,pMPa,xFrac,LIQ,zFactor,chemPoRes,iErr)
 	etaPass=eta !Needed for PsatEar.
     uRes_RT = hRes_RT-(zFactor-1)
     aRes_RT = uRes_RT - sRes_R
+	aRes=aRes_RT
+	uRes=uRes_RT
+	rhoMol_cc=molar_rho*1.D6 ! convert from mol/m^3 to mol/cm^3
     if(LOUDER)print*,'FugiPcSaft Done!'
 	!pause 'check output'
 	!JRE end

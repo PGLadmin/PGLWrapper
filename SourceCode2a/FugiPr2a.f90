@@ -229,7 +229,8 @@
 	RETURN
 	END
 
-	SUBROUTINE FugiPR(tAbs,pAbs,xFrac,NC,LIQ,FUGC,zFactor,IER)
+	Subroutine FugiPR( tKelvin,pMPa,xFrac,NC,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,IER )
+	!SUBROUTINE FugiPR(tKelvin,pMPa,xFrac,NC,LIQ,FUGC,zFactor,IER)
 	!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	!$ FUGI
 	!
@@ -248,8 +249,8 @@
 	!        PC       VECTOR CRITICAL PRESSURES OF THE COMPONENTS
 	!        ACEN     VECTOR ACENTRIC FACTORS OF THE COMPONENTS
 	!        RGAS     GAS CONSTANT ( EG. 8.31434 CC-MPA/(GMOL-K) ) IN PHASE LIQ
-	!        tAbs     ABSOLUTE TEMPERATURE
-	!        pAbs     ABSOLUTE PRESSURE
+	!        tKelvin     ABSOLUTE TEMPERATURE
+	!        pMPa     ABSOLUTE PRESSURE
 	!        xFrac    VECTOR MOLE FRACTIONS OF COMPONENTS IN PHASE LIQ
 	!        NC       NUMBER OF COMPONENTS
 	!        LIQ      PARAMETER SPECIFYING DESIRED PHASE TO BE CONSIDERED
@@ -322,9 +323,9 @@
 	COMMON/eta/etaL,etaV,zFactorL,zFactorV
 	!  prBIPs are passed in from GetPrBIPs()
 	DATA initKALL/0/
-	IF(initKALL.EQ.0)then
+	IF(initKALL==0)then
 		initKALL=1
-		THIRD=1.D0/3
+		THIRD=1.D0/3.D0
 		IDDum=ID(nc)
 		sqrt2=DSQRT(2.D0)
 		sqrt8=2.D0*sqrt2
@@ -339,7 +340,7 @@
 	do iComp = 1,NC
 		aCrit = OMA*RGAS*RGAS*TC(iComp)*TC(iComp)/PC(iComp)
 		sTmp = 0.37464 + 1.54226*ACEN(iComp) - 0.26993*ACEN(iComp)*ACEN(iComp)
-		Tr = tAbs/TC(iComp)
+		Tr = tKelvin/TC(iComp)
 		ALPHA = (  1 + sTmp*( 1-DSQRT( Tr) )  )**2
 		DLALDT(iComp)= -sTmp*SQRT( Tr/ ALPHA) ! dAlp/dT = 2*sqrt(alp)*S*(-0.5/sqrt(Tr)) = -sqrt(alp)*S/sqrt(Tr); (T/alp)*dAlp/dT= -S*sqrt(Tr/Alp)	 EL2ed Eq.7.18,8.35
 		ALA(iComp,iComp) = aCrit*ALPHA
@@ -360,8 +361,8 @@
  	!FATT= -BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
 	!dU_NKT= FATT*(1-daMixDt/aMix)	!EL2ed Eq.8.35
 
-	BIGA = aMix*pAbs/(RGAS*RGAS*tAbs*tAbs)
-	BIGB = bMix*pAbs/(RGAS*tAbs)
+	BIGA = aMix*pMPa/(RGAS*RGAS*tKelvin*tKelvin)
+	BIGB = bMix*pMPa/(RGAS*tKelvin)
 
 	!	qCoeff = BIGA - BIGB - BIGB*BIGB	!for SRK
 	!	rCoeff = BIGA*BIGB
@@ -404,6 +405,9 @@
 	uRes_RT= dU_NKT
 	hRes_RT= dH_NKT
 	dS_NK=dU_NKT-dA_NKT !+LOG(zFactor)
+	aRes= dA_NKT
+	uRes= dU_NKT
+	rhoMol_cc=pMPa/(zFactor*Rgas*tKelvin)
 
 	DO iComp = 1,NC
 		SUMXA = 0

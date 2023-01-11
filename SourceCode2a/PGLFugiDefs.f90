@@ -26,7 +26,7 @@
     ier(1)=0 !required if EOS uses iErr instead of ier().
 	if(iEosOpt.eq.0)iEosOpt=1
 	if(iEosOpt==1)then
-		call FugiPR( T,P,X,NC,LIQ,FUGC,Z,ier )
+		call FugiPR( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,ier )
 	elseif(isESD)then ! iEosOpt=2, 
 		call FugiESD(T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr)
 		!call FugiESD( T,P,X,NC,LIQ,FUGC,Z,ier )
@@ -36,23 +36,23 @@
 	elseif(iEosOpt.eq.8)then
 		call FuSpeadGamma( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(isTPT)then ! 
- 	    call FuTpt( T,P,X,NC,LIQ,FUGC,Z,ier )	  !AUG 10
+ 	    call FuTpt( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr )	  !AUG 10
 	!elseif(iEosOpt.eq.6)then  ! unused
 	elseif(iEosOpt.eq.7)then
 		call FuNRTL( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(isPcSaft)then !iEosOpt=11,13
-		call FugiPcSaft(NC,T,P,X,LIQ,Z,FUGC,iErr)
+		call FugiPcSaft(T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr)
 		if( iErr.ne.0)ier(1)=1
  	    !if(LOUD)print*,'Sorry: PcSaft not available at this time'!call FugiPcSaft(T,P,X,NC,LIQ,FUGC,Z,ier)	 ! Need to define this
 	elseif(iEosOpt.eq.11)then
-		call FugiPrTc( T,P,X,NC,LIQ,FUGC,Z,ier )	  ! JRE 2020
+		call FugiPrTc( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,ier )	  ! JRE 2020
 	elseif(iEosOpt.eq.17)then
 		icon=2 ! returns fugc and T,V derivatives. See GetPrLorraine for more options. 
 		ntyp= -1 !vapor. Note: ntyp=0 returns the min fugacity phase.
 		if(LIQ==1)ntyp=1
 		iErrPRL=0
 		call FuPrLorraine_TP(icon,ntyp,mtyp,iErrPRL,T,P,X,rho,Z, &	 ! JRE 20210510
-		&                fg,ft,fp,fx,uRes_RT,aRes_RT,CvRes_R,CpRes_R,dpdRho_RT)
+		&                fg,ft,fp,fx,uRes,aRes,CvRes_R,CpRes_R,dpdRho_RT)
 		FUGC(1:NC)=fg(1:NC)
 		!c     mtyp:     (o):      indicator for phase type; ic returns
 		!c                       1:   if called with mt = 1/-1 and phase is found

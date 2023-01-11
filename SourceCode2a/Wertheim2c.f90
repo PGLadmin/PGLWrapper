@@ -86,6 +86,7 @@ END MODULE Assoc
 	LOGICAL LOUDER,CheckDLL
 	Character*77 errMsg(22)
 	Character*234 outFile
+	data initCall/1/
 	!  Reference: Elliott, IECR, 61:15724 (2022).
 	!  INPUT:
 	!  isZiter = 1 if only zAssoc is required (for zFactor iterations), 0 for lnPhiAssoc,aAssoc,uAssoc, -1 if derivatives are required, integer
@@ -116,6 +117,13 @@ END MODULE Assoc
 	!LOUDER = .TRUE. ! for local debugging.
 	CheckDLL=.FALSE.
 	CheckDLL=.TRUE.
+	if(initCall==1)then
+		initCall=0
+		etaOld=0
+		xOld(1:nComps)=0
+		IDold(1:nComps)=0
+		rdfOld=1
+	endif
 	picard=0.83D0
 	Ftol=1.D-6
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
@@ -215,6 +223,7 @@ END MODULE Assoc
 		if(isAcid==0)return
 	endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	if(CheckDLL)write(6198,'(a,i4,6E12.4)')' MEM2: SUM(deltaIDs),SUM(deltaXs) ',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
 	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. sumxmy2(nComps,xFrac,xOld) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 		if(LOUDER)write(*,'(a,i4,6E12.4)')' MEM2:New IDs or X',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )

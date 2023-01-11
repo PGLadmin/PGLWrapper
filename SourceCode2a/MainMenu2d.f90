@@ -18,7 +18,7 @@
 	CHARACTER*2 calcType
 	CHARACTER*77 errMsgPas
 	CHARACTER*251 outFile
-	CHARACTER*15 EosName(nEOSs)
+	!CHARACTER*15 EosName(nEOSs) ! moved to GlobConst
 
 	DIMENSION BIPTMP(NMX)
 	DIMENSION ZFEED(NMX),S(NMX)
@@ -30,7 +30,7 @@
 	COMMON/KVALUES/S
 	!common/FloryWert/vLiq(nmx)
 	!              1     2       3       4          5          6         7           8              9        10       11      12       13          14         15           16            17        18
-	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
+	!data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
 
 	LOUD =.FALSE.
 	!LOUD = .TRUE.
@@ -43,6 +43,7 @@
 	if(iChange==0 .or. iChange > 26)DEBUG=.TRUE.
 	DEBUG=.FALSE.   !setting to true mostly directs input from c:\spead...	 Logic above automatically updates to TRUE if CURDIR=c:\msdev\Projects\calceos
 	DEBUG=.TRUE.    ! Logic not working JRE 20200407
+	PGLInputDir='c:\PGLWrapper\input'
 														   
 	masterDir=TRIM(curDir)
 	outFile=TRIM(masterDir)//'\output\KijOut.txt'
