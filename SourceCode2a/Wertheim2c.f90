@@ -118,12 +118,23 @@ END MODULE Assoc
 	CheckDLL=.FALSE.
 	CheckDLL=.TRUE.
 	if(initCall==1)then
-		initCall=0
 		etaOld=0
 		xOld(1:nComps)=0
 		IDold(1:nComps)=0
 		rdfOld=1
 	endif
+	if(CheckDLL)then
+		outFile=TRIM(PGLinputDir)//'\CheckSpeadmdDLL.txt'
+		if(initCall==1)open(6198,file=outFile)
+		if(initCall==0)open(6198,file=outFile,ACCESS='APPEND')
+		write(6198,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
+		do i=1,nComps
+			do j=1,nTypes(i)
+				write(6198,610)i,j,id(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
+			enddo
+		enddo ! i=1,nComps
+	endif
+	initCall=0
 	picard=0.83D0
 	Ftol=1.D-6
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
@@ -144,16 +155,6 @@ END MODULE Assoc
 	uAssoc=0
 	rLnPhiAssoc(1:nComps)=0
     iErr=0  
-	if(CheckDLL)then
-		outFile=TRIM(PGLinputDir)//'\CheckSpeadmdDLL.txt'
-		open(6198,file=outFile)
-		write(6198,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
-		do i=1,nComps
-			do j=1,nTypes(i)
-				write(6198,610)i,j,id(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
-			enddo
-		enddo ! i=1,nComps
-	endif
 610	format(1x,2i5,i12,i8,i11,i8,2E14.4)
 	if(CheckDLL)write(6198,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
 	if(LOUDER)write(*,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
@@ -223,10 +224,10 @@ END MODULE Assoc
 		if(isAcid==0)return
 	endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	if(CheckDLL)write(6198,'(a,i4,6E12.4)')' MEM2: SUM(deltaIDs),SUM(deltaXs) ',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
-	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
+	if(CheckDLL)write(6198,'(a,2i6,1x,6E12.4)')' MEM2: ID1,IDold1,x1,x1old ',ID(1),IDold(1),xFrac(1),xOld(1)
+	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. sumxmy2(nComps,xFrac,xOld) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
-		if(LOUDER)write(*,'(a,i4,6E12.4)')' MEM2:New IDs or X',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
+		if(LOUDER)write(*,'(a,i6,1x,6E12.4)')' MEM2:New IDs or X ',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
 		if(CheckDLL)write(6198,'(a,i4,6E12.4)')' MEM2:New IDs or X',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
 		ralphAmean=ralphAmax
 		ralphDmean=ralphDmax
@@ -235,8 +236,10 @@ END MODULE Assoc
 		else
 			ralphAmean=ralphAmean*avgNDS/avgNAS
 		endif
-	else
-		if(etaOld.ge.0)then ! adapt old values.to accelerate Z iterations
+	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
+		continue
+	elseif( SUM(xFrac(1:nComps)) < 0)then
+		if(etaOld.ge.zeroTol)then ! adapt old values.to accelerate Z iterations
 			sqArg=eta/etaOld*rdfContact/rdfOld
 			if(sqArg < zeroTol)then
 				iErr=12
