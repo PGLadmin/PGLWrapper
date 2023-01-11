@@ -12,7 +12,7 @@ MODULE SpeadParms
 	!nnx = Total number of united-atom sites in a molecule.
 END MODULE SpeadParms
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	SUBROUTINE GetTptCas(nComps,idCas,iErrCode,errMsgPas)
+	SUBROUTINE GetTptCas(nComps,idCasPas,iErrCode,errMsgPas)
 	!  Purpose:	load up the parms for tpt, including HbParms. We only load hbonding parameters for types that actually hbond.  This makes the 
 	!			summations and arrays more compact in the Wertheim functions.
 	!  
@@ -24,26 +24,17 @@ END MODULE SpeadParms
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!  OUTPUT
-	USE GlobConst,  only: PGLinputDir
+	USE GlobConst,  only: PGLinputDir,idCas,ID
 	USE Assoc
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	PARAMETER(ndb=1555,listPool=1000)
 	character*77 errMsgPas
-	character*234 outFile
 	!	integer GetBIPs
-	integer idComp(nComps),idCas(nComps) !localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
-	call IdDipprLookup(nComps,idCas,ier,errMsgPas)
+	integer idComp(nComps),idCasPas(nComps) !localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
+	idCas(1:nComps)=idCasPas(1:nComps)
+	call IdDipprLookup(nComps,idCasPas,ier,errMsgPas) ! ID is USEs GlobConst
+	idComp(1:nComps)=ID(1:nComps)
 	call GetTpt(nComps,idComp,iErrCode,errMsgPas)
-	outFile=PGLinputDir//'CheckSpeadmdReading.txt'
-	open(61,file=outFile)
-	write(61,*)'iComp,jType,   idCas,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
-	do i=1,nComps
-		do j=1,nTypes(i)
-			write(61,601)i,j,idCas(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
-		enddo
-	enddo ! i=1,nComps
-	close(61)
-601	format(1x,2i5,i12,i8,i11,i8,2E14.4)
 
 	return
 	end
@@ -79,6 +70,7 @@ END MODULE SpeadParms
 	character*88 bipFile*88,bipHbFile*88,ParmsHbFile*88,ParmsTptFile*88
 	character*333 dumString*333
 	character*77 ErrMsg(0:11),errMsgPas
+	character*234 outFile
 	logical LOUDER
 	!integer nFg(nmx,maxTypes) !not in common because we transcribe these into HbParms and they do not need to be passed otherwise.
 	!common/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
@@ -368,6 +360,16 @@ END MODULE SpeadParms
 	ENDIF ! DISPLAY RELEVANT kijAD
 
 	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp)	
+	outFile=TRIM(PGLinputDir)//'\CheckSpeadmdReading.txt'
+	open(61,file=outFile)
+	write(61,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
+	do i=1,nComps
+		do j=1,nTypes(i)
+			write(61,601)i,j,id(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
+		enddo
+	enddo ! i=1,nComps
+	close(61)
+601	format(1x,2i5,i12,i8,i11,i8,2E14.4)
 	errMsgPas=Trim( ErrMsg(iErrCode) )
 	RETURN
 861	continue

@@ -1,0 +1,3 @@
+ iComp,jType,   idCas,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal
+ _mol	
+     1    1           0       1          2       2     .1800E+01     .3800E+01
