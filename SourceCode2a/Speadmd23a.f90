@@ -24,15 +24,27 @@ END MODULE SpeadParms
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!  OUTPUT
-	!USE GlobConst,  !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
-	!USE BIPs
+	USE GlobConst,  only: PGLinputDir
+	USE Assoc
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	PARAMETER(ndb=1555,listPool=1000)
-	character errMsgPas*77
+	character*77 errMsgPas
+	character*234 outFile
 	!	integer GetBIPs
 	integer idComp(nComps),idCas(nComps) !localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
 	call IdDipprLookup(nComps,idCas,ier,errMsgPas)
 	call GetTpt(nComps,idComp,iErrCode,errMsgPas)
+	outFile=PGLinputDir//'CheckSpeadmdReading.txt'
+	open(61,file=outFile)
+	write(61,*)'iComp,jType,   idCas,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
+	do i=1,nComps
+		do j=1,nTypes(i)
+			write(61,601)i,j,idCas(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
+		enddo
+	enddo ! i=1,nComps
+	close(61)
+601	format(1x,2i5,i12,i8,i11,i8,2E14.4)
+
 	return
 	end
 
