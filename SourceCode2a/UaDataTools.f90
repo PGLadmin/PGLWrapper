@@ -23,7 +23,10 @@ MODULE GlobConst
 	DoublePrecision etaPass !TODO:Consider if rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).
     DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS
 	DoublePrecision etaPure(NMX) !store eta for each compound at P=0 and Tmin(K). 
-	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS !!!!!!!!!!!!!
+	Character*15 EosName(18) 
+	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
+	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
+	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS AND DATA !!!!!!!!!!!!!
 	!LOUD = .FALSE.
 contains
 	integer function SetNewEos(newEosOpt)
