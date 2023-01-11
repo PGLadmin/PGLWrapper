@@ -1,0 +1,12 @@
+ iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
+     1    1        1051       2          0       0     .0000E+00     .0000E+00
+     1    2        1051       1          0       0     .0000E+00     .0000E+00
+     1    3        1051       1          1       1     .1600E+01     .1000E+01
+  MEM2: T,rho,eta,g^c   .3090E+03   .1948E-04   .7012E-03   .1002E+01
+ MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
+ MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
+ MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
+ iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1097E-01   .1920E-01
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1206E-12   .3694E-12
+ MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
+ MEM2: aAssoc,fugAssoc=   -.2105E-03  -.4214E-03

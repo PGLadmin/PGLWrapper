@@ -74,7 +74,7 @@ END MODULE Assoc
 	!  ELLIOTT'S SUBROUTINE 
 	!  20221202 Initial adaptation MEM2 for speadmd: IECR,61(42):15725. Started as accelerator for initial guesses of SS method. Found SS no longer necessary. 90 minutes->63 seconds for regression of Jaubert database.
 	SUBROUTINE MEM2(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErr )!,ier)
-	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID
+	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID,PGLinputDir
 	!USE SpeadParms
 	USE Assoc ! XA,XD,XC,NAcceptors(NMX),NDonors(NMX),NDegree(NMX),...
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (FA,FD) AND properties (zAssoc, lnPhiAssoc,...) given T,rho,x
@@ -83,8 +83,9 @@ END MODULE Assoc
 	Integer IDold(NMX)
 	!DoublePrecision ralphMatch(NMX)
     
-	LOGICAL LOUDER
+	LOGICAL LOUDER,CheckDLL
 	Character*77 errMsg(22)
+	Character*234 outFile
 	!  Reference: Elliott, IECR, 61:15724 (2022).
 	!  INPUT:
 	!  isZiter = 1 if only zAssoc is required (for zFactor iterations), 0 for lnPhiAssoc,aAssoc,uAssoc, -1 if derivatives are required, integer
@@ -113,6 +114,8 @@ END MODULE Assoc
 	LOUDER=LOUD	! from GlobConst
 	!LOUDER=LouderWert
 	!LOUDER = .TRUE. ! for local debugging.
+	CheckDLL=.FALSE.
+	CheckDLL=.TRUE.
 	picard=0.83D0
 	Ftol=1.D-6
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
@@ -133,6 +136,18 @@ END MODULE Assoc
 	uAssoc=0
 	rLnPhiAssoc(1:nComps)=0
     iErr=0  
+	if(CheckDLL)then
+		outFile=TRIM(PGLinputDir)//'\CheckSpeadmdDLL.txt'
+		open(6198,file=outFile)
+		write(6198,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
+		do i=1,nComps
+			do j=1,nTypes(i)
+				write(6198,610)i,j,id(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
+			enddo
+		enddo ! i=1,nComps
+	endif
+610	format(1x,2i5,i12,i8,i11,i8,2E14.4)
+	if(CheckDLL)write(6198,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
 	if(LOUDER)write(*,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
 	!XA=1  !				   ! initializing the entire array is slow.
 	!XD=1
@@ -165,6 +180,7 @@ END MODULE Assoc
 			ralphD(iComp,iType)=isDonor*   SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eDonorKcal_Mol(iComp,iType)   /tKelvin/1.987D-3)-1.d0 )  )
 			if(ralphD(iComp,iType) > ralphDmax)ralphDmax=ralphD(iComp,iType)
 			if(LOUDER)write(*,'(a,2i3,2F10.4)')' MEM2:iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType) 
+			if(CheckDLL)write(6198,'(a,2i3,2F10.4)')' MEM2:iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType) 
 		enddo
 	enddo
 	FA0=0
@@ -182,19 +198,27 @@ END MODULE Assoc
 		enddo	
 	enddo
 	moreDonors=0
-	if(avgNAS < avgNDS)moreDonors=1 
-	if(FA0==0 .or. FD0==0)return ! no need to calculate if either no donors or no acceptors
+	if(avgNAS < avgNDS)moreDonors=1
+	if(FA0==0 .or. FD0==0)then
+		if(LOUDER)write(6198,601)' MEM2: No assoc. FA0,FD0=',FA0,FD0
+		if(CheckDLL)write(6198,601)' MEM2: No assoc. FA0,FD0=',FA0,FD0
+		return ! no need to calculate if either no donors or no acceptors
+	endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	if( ABS(FA0-FD0) < Ftol)then ! All we need is MEM1 if FA0=FD0
 		Call MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,FA,rLnPhiAssoc,iErrMEM1 )!,rLnPhiAssoc,ier)
-		if(iErrMEM1 > 0)iErr=12
-		if(LOUDER)print*,'MEM2: error from MEM1=',iErrMEM1
+		if(iErrMEM1 > 0)then
+			iErr=12
+			if(LOUDER)write(*,*)'MEM2: error from MEM1=',iErrMEM1
+			if(CheckDLL)write(6198,*)'MEM2: error from MEM1=',iErrMEM1
+		endif
 		if(isAcid==0)return
 	endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. sumxmy2(nComps,xFrac,xOld) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 		if(LOUDER)write(*,'(a,i4,6E12.4)')' MEM2:New IDs or X',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
+		if(CheckDLL)write(6198,'(a,i4,6E12.4)')' MEM2:New IDs or X',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
 		ralphAmean=ralphAmax
 		ralphDmean=ralphDmax
 		if(moreDonors)then
@@ -213,6 +237,7 @@ END MODULE Assoc
 			ralphDmean=ralphDmean*SQRT(sqArg)
 		else
 			if(LOUDER)write(*,601)' MEM2: etaOld < 0???',etaOld
+			if(CheckDLL)write(6198,601)' MEM2: etaOld < 0???',etaOld
 			iErr=15
 			return
 		endif
@@ -227,6 +252,7 @@ END MODULE Assoc
 	error=1234
 	ITMAX=44
 	if(LOUDER)write(*,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0  ',nIter,ralphAmean,ralphDmean,FA,FD,FA0,FD0
+	if(CheckDLL)write(6198,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0  ',nIter,ralphAmean,ralphDmean,FA,FD,FA0,FD0
 	do while(ABS(error)>Ftol.and.NITER<ITMAX)
 		NITER=NITER+1
 		!if(NITER > 33)picard=0.5D0
@@ -237,6 +263,7 @@ END MODULE Assoc
 		sqArgD=delFD*delFD+4*ralphDmean*FD0
 		if(sqArgA < zeroTol .or. sqArgD < zeroTol)then
 			if(LOUDER)write(*,'(a,i3,4E12.4)')' MEM2: sqArg(A or D). iter,ralphAmean,FA0,ralphDmean,FD0',nIter,ralphAmean,FA0,ralphDmean,FD0
+			if(CheckDLL)write(6198,'(a,i3,4E12.4)')' MEM2: sqArg(A or D). iter,ralphAmean,FA0,ralphDmean,FD0',nIter,ralphAmean,FA0,ralphDmean,FD0
 			iErr=13
 			return
 		endif 
@@ -257,6 +284,7 @@ END MODULE Assoc
 		FDold=FD
 		!Compute new ralphMeans.
 		if(LOUDER)write(*,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,ralphAmean,ralphDmean,FA,FD,errA,errD
+		if(CheckDLL)write(6198,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,ralphAmean,ralphDmean,FA,FD,errA,errD
 		ralphDmean= picard*(-1+FA0/sumD)/(FD+1D-9)+(1-picard)*ralphDmean !Using new sumD to compute new ralphMeans.
 		if(ralphDmean < 0)ralphDmean=(-1+FA0/sumD)/(FD+1D-9)
 		if(ralphDmean < 0)ralphDmean=zeroTol
@@ -308,11 +336,13 @@ END MODULE Assoc
 601	format(1x,a,8E12.4)
 
 	zAssoc= -dAlpha*(hAD+hDA+hCC)/2
-	if(LOUDER)write(*,'(a,8f10.4)')' MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid',FA,FD,zAssoc,dAlpha,hAD+hDA+hCC,-dAlpha*hCC/2
+	if(LOUDER)  write(*   ,'(a,8f10.4)')' MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid',FA,FD,zAssoc,dAlpha,hAD+hDA+hCC,-dAlpha*hCC/2
+	if(CheckDLL)write(6198,'(a,8f10.4)')' MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid',FA,FD,zAssoc,dAlpha,hAD+hDA+hCC,-dAlpha*hCC/2
 	xOld(1:nComps)=xFrac(1:nComps)
 	IDold(1:nComps)=ID(1:nComps)
 	etaOld=eta
 	rdfOld=rdfContact
+	if(isZiter==1.and.CheckDLL)close(6198)
 	if(isZiter==1)return 
 	!aAssoc= 0 !already initialized at the top.
 	betadFA_dBeta=0
@@ -348,6 +378,7 @@ END MODULE Assoc
 	aAssoc=  aAssoc+(hAD+hDA+hCC)/2  ! Eqs. 1 & 40
 	uAssoc= -( FA*betadFD_dBeta+FD*betadFA_dBeta+FC*betadFC_dBeta )/2 ! Eq. 43
 	if(LOUDER)write(*,'(a,6E12.4)')' MEM2: aAssoc,fugAssoc= ',aAssoc,(rLnPhiAssoc(i),i=1,nComps)
+	if(CheckDLL)write(6198,'(a,6E12.4)')' MEM2: aAssoc,fugAssoc= ',aAssoc,(rLnPhiAssoc(i),i=1,nComps)
 	if(ABS(hAD-hDA) > Ftol)then
 		iErr=2 !Warning
 		if(LOUDER)print*,'MEM2: Failed bond site balance.'
@@ -357,6 +388,7 @@ END MODULE Assoc
 		write(*,'(a,8F9.6,3f7.3)')' XAs&XDs2,...',(XA(2,i),i=1,4),(XD(2,i),i=1,4)
 		if(isAcid==1)write(*,'(a,3E12.4)')' MEM2: ralphC,XC= ',ralphC,XCtemp
 	endif
+	if(CheckDLL)close(6198)
 	return
 	end	!subroutine MEM2()
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
