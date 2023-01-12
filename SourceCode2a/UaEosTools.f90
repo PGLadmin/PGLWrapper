@@ -107,7 +107,7 @@
 		etaVap=rhoVap*bVolCC_mol(1)
 		!call FuVtot(1,tK,pSatItic,xFrac,NC,0,FUGC,zVap,ier)
 		if(LOUDER)write(*,601)' PsatEar: Calling init FuVtot. T,etaLiq,etaVap,aResLiq=',tK,eta,etaVap,aResLiq    
-		call FuVtot(1,tK,1/rhoVap,xFrac,NC,FUGC,zVap,iErrF)		!isZiter=1=>vapor Z with no fugc calculation. zVap far from zero.
+		call FuVtot(1,tK,1/rhoVap,xFrac,NC,FUGC,zVap,aRes,uRes,iErrF)		!isZiter=1=>vapor Z with no fugc calculation. zVap far from zero.
 		if(iErrF > 9)then
 			if(LOUDER)write(*,'(a,i4)')' PsatEar: Initial Vapor FuVtot Error=',iErrF
 			ierCode=19
@@ -298,7 +298,7 @@
 	rho2=rhoLo+rgold*(rhoHi-rhoLo);
 
     if(LOUD .and. rhoLo < 1E-11)print*,'Spinodal: nonsense rhoLo =',rhoLo    
-	call FuVtot(isZiter,tKelvin,1/rhoLo,xFrac,NC,FUGC,zFactor,iErrFu)
+	call FuVtot(isZiter,tKelvin,1/rhoLo,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 	if(iErrFu)then
         if(LOUD)pause 'Spinodal: error in initial calls to FuVtot'
         iErr=3
@@ -307,13 +307,13 @@
 	pLo = minimax*rhoLo*zFactor*rGas*tKelvin
 	if(LOUD.and.initCall)write(*,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,DUONKT,DAONKT,rhoLo*bMix
 	if(LOUD)write(67,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,DUONKT,DAONKT,rhoLo*bMix
-	call FuVtot(isZiter,tKelvin,1/rho1,xFrac,NC,FUGC,zFactor,iErrFu)
+	call FuVtot(isZiter,tKelvin,1/rho1,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 	p1 = minimax*rho1*zFactor*rGas*tKelvin
 	if(LOUD)write(67,601)tKelvin,1/rho1,minimax*p1,zFactor,DUONKT,DAONKT,rho1*bMix
-	call FuVtot(isZiter,tKelvin,1/rho2,xFrac,NC,FUGC,zFactor,iErrFu)
+	call FuVtot(isZiter,tKelvin,1/rho2,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 	p2 = minimax*rho2*zFactor*rGas*tKelvin
 	if(LOUD)write(67,601)tKelvin,1/rho2,minimax*p2,zFactor,DUONKT,DAONKT,rho2*bMix
-	call FuVtot(isZiter,tKelvin,1/rhoHi,xFrac,NC,FUGC,zFactor,iErrFu)
+	call FuVtot(isZiter,tKelvin,1/rhoHi,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 	pHi = minimax*rhoHi*zFactor*rGas*tKelvin
 	if(LOUD)write(67,601)tKelvin,1/rhoHi,minimax*pHi,zFactor,DUONKT,DAONKT,rhoHi*bMix
 	!NOTE: iErrFu=1 for liquid because -ve Z values will cause error in fugacity calculation.
@@ -329,7 +329,7 @@
 			pLo = p1;
 			p1  = p2;
 			if(rho2 < 1D-33 .and. LOUD)print*,'Spinodal: 0~rho2=',rho2
-			call FuVtot(isZiter,tKelvin,1/rho2,xFrac,NC,FUGC,zFactor,iErr)
+			call FuVtot(isZiter,tKelvin,1/rho2,xFrac,NC,FUGC,zFactor,aRes,uRes,iErr)
 			p2 = minimax*rho2*zFactor*rGas*tKelvin
 			if(LOUD)write(67,601)tKelvin,1/rho2,minimax*p2,zFactor,DUONKT,DAONKT,rho2*bMix
 		else
@@ -339,7 +339,7 @@
 			pHi = p2;
 			p2  = p1;
 			if(rho2 < 1D-33 .and. LOUD)print*,'Spinodal: 0~rho1=',rho1
-			call FuVtot(isZiter,tKelvin,1/rho1,xFrac,NC,FUGC,zFactor,iErr)
+			call FuVtot(isZiter,tKelvin,1/rho1,xFrac,NC,FUGC,zFactor,aRes,uRes,iErr)
 			p1 = minimax*rho1*zFactor*rGas*tKelvin
 			if(LOUD)write(67,601)tKelvin,1/rho1,minimax*p1,zFactor,DUONKT,DAONKT,rho1*bMix
 		endif
@@ -402,7 +402,7 @@
 	isZiter=1 !we don't need the fugacity. If you can compute the compressibility analytically, then why are you calling this routine?
 	rhoPlus  =rhoMol_cc*(1+step)
 	rhoMinus=rhoMol_cc*(1-step)
-	CALL FuVtot(isZiter,tKelvin,1/rhoPlus,xFrac,NC,FUGC,zPlus,iErrFu)
+	CALL FuVtot(isZiter,tKelvin,1/rhoPlus,xFrac,NC,FUGC,zPlus,aRes,uRes,iErrFu)
 	if( iErrFu.ne.0 )then
 		if(iEosOpt .ne. 5 .or. iErrFu >10)then !ignore warnings for speadmd
 			if(LOUD)print*,'NUMDERVS: error from FuVtot on first call.'
@@ -410,7 +410,7 @@
 			return
 		endif
 	endif
-	CALL FuVtot(isZiter,tKelvin,1/rhoMinus,xFrac,NC,FUGC,zMinus,iErrFu)
+	CALL FuVtot(isZiter,tKelvin,1/rhoMinus,xFrac,NC,FUGC,zMinus,aRes,uRes,iErrFu)
 	rhoDZ_dRho=rhoMol_cc*(zPlus-zMinus)/(rhoPlus-rhoMinus)
 	cmprsblty=zFactor+rhoDZ_dRho ! = (dP/dRho)/RT
 	if(initCall.and.Loud)then
@@ -424,10 +424,10 @@
 	RHOD2PDRHO2_RT=2*rhoDZ_dRho+rho2DZ_dRho2
 	TPlus  =tKelvin*(1+step)
 	TMinus=tKelvin*(1-step)
-	CALL FuVtot(isZiter,TPlus,1/rhoMol_cc,xFrac,NC,FUGC,zPlus,iErrFu)
+	CALL FuVtot(isZiter,TPlus,1/rhoMol_cc,xFrac,NC,FUGC,zPlus,aRes,uRes,iErrFu)
 	uResPlus=uRes_RT*TPlus	!uRes_RT passed through GlobConst
 	if(initCall.and.Loud)print*,'NUMDERVS: 1-step,Tminus',1-step,Tminus
-	CALL FuVtot(isZiter,TMinus,1/rhoMol_cc,xFrac,NC,FUGC,zMinus,iErrFu)
+	CALL FuVtot(isZiter,TMinus,1/rhoMol_cc,xFrac,NC,FUGC,zMinus,aRes,uRes,iErrFu)
 	uResMinus=uRes_RT*TMinus
 	TdZ_dT=tKelvin*(zPlus-zMinus)/( TPlus-TMinus )
 	CvRes_R=(uResPlus-uResMinus)/( TPlus-TMinus )
@@ -480,22 +480,22 @@
 	isZiter=1 !we don't need the fugacity. If you can compute the compressibility analytically, then why are you calling this routine?
 	rhoPlus  =rhoMol_cc*(1+step)
 	rhoMinus=rhoMol_cc*(1-step)
-	CALL FuVtot(isZiter,tKelvin,1/rhoPlus,xFrac,NC,FUGC,zPlus,iErrFu)
+	CALL FuVtot(isZiter,tKelvin,1/rhoPlus,xFrac,NC,FUGC,zPlus,aRes,uRes,iErrFu)
 	if( iErrFu.ne.0 )then 
 		if(LOUD)print*,'NUMDERVS: error from FuVtot on first call.'
 		iErr=1
 		return
 	endif
-	CALL FuVtot(isZiter,tKelvin,1/rhoMinus,xFrac,NC,FUGC,zMinus,iErrFu)
+	CALL FuVtot(isZiter,tKelvin,1/rhoMinus,xFrac,NC,FUGC,zMinus,aRes,uRes,iErrFu)
 	rhoDZ_dRho=rhoMol_cc*(zPlus-zMinus)/(rhoPlus-rhoMinus)
 	cmprsblty=zFactor+rhoDZ_dRho ! = (dP/dRho)/RT
 	rho2DZ_dRho2=(zPlus+zMinus-2*zFactor)/(rhoMol_cc*step)**2
 	RHOD2PDRHO2_RT=2*rhoDZ_dRho+rho2DZ_dRho2
 	TPlus  =tKelvin*(1+step)
 	TMinus=tKelvin*(1-step)
-	CALL FuVtot(isZiter,TPlus,1/rhoMol_cc,xFrac,NC,FUGC,zPlus,iErrFu)
+	CALL FuVtot(isZiter,TPlus,1/rhoMol_cc,xFrac,NC,FUGC,zPlus,aRes,uRes,iErrFu)
 	uResPlus=uRes_RT*TPlus	!uRes_RT passed through GlobConst
-	CALL FuVtot(isZiter,TMinus,1/rhoMol_cc,xFrac,NC,FUGC,zMinus,iErrFu)
+	CALL FuVtot(isZiter,TMinus,1/rhoMol_cc,xFrac,NC,FUGC,zMinus,aRes,uRes,iErrFu)
 	uResMinus=uRes_RT*TMinus
 	TdZ_dT=tKelvin*(zPlus-zMinus)/( TPlus-TMinus )
 	CvRes_R=(uResPlus-uResMinus)/( TPlus-TMinus )

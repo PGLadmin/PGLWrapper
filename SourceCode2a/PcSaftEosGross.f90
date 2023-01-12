@@ -11273,7 +11273,7 @@ end subroutine GetPcSaft
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 !JRE The Fugi routines provide the primary interface..
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
- subroutine FugiPcSaftVtot(nComps,tKelvin,vTotCc,gmol,pMPa,zFactor,chemPoRes,iErr)
+ subroutine FugiPcSaftVtot(nComps,tKelvin,vTotCc,gmol,pMPa,zFactor,aRes,uRes,chemPoRes,iErr)
     use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
     use PARAMETERS, only: dp, nsite, NAV , RGAS
     use GlobConst, only: LOUD, uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty
@@ -11301,7 +11301,7 @@ end subroutine GetPcSaft
 	real(dp), dimension(ncomp)                      :: mu,mu_res ![=] J/mol
 	real(dp), dimension(ncomp)                      :: rhoiJre ![=] molecules/Angst^3
 	!real(dp), dimension(ncomp,ncomp)                :: w_rkrl, wig_rkrl  !JRE These are optional in chemical_potential_trho and not needed for Fugi at this time.
-	real(dp)                                        :: molar_rho,totMol,vTotCc
+	real(dp)                                        :: molar_rho,totMol,vTotCc,aRes,uRes
 	real(dp)                                        :: pcalc
 	logical LOUDER
 	LOUDER=.FALSE.
@@ -11340,6 +11340,8 @@ end subroutine GetPcSaft
 	if(LOUDER)print*,'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
 	uRes_RT = hRes_RT-(zFactor-1)
 	aRes_RT = uRes_RT - sRes_R
+	uRes = hRes_RT-(zFactor-1)
+	aRes = uRes_RT - sRes_R
 	if(LOUDER)print*,'FugiPcSaftVtot Done!'
 	!pause 'check output'
 	!JRE end

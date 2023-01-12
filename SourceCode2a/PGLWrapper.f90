@@ -294,7 +294,7 @@
 			iErr=0
 			NC=2
 			isZiter=0
-			call FuVtot(isZiter,tKelvin,1/rhoMol_cc,xFrac,NC,FUGC,zFactor,iErr)
+			call FuVtot(isZiter,tKelvin,1/rhoMol_cc,xFrac,NC,FUGC,zFactor,aRes,uRes,iErr)
 			if(ier(1) > 10)iErr=iErr+100*(ier(1)-10)
 			!iWarn=0
 			!if(iErr==5 .or. iErr==500 .or. iErr==50 .or. iErr==55 .or. iErr==550 .or. iErr==505 .or. iErr==555)iWarn=1
