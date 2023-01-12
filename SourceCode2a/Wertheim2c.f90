@@ -227,7 +227,7 @@ END MODULE Assoc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	if(CheckDLL)write(6198,'(a,2E12.4,1x,8i6,1x)')' MEM2: x1,x1old,ID,IDold ',xFrac(1),xOld(1),(ID(i),i=1,nComps),(IDold(i),i=1,nComps)
 	if(CheckDLL)write(6198,601)' MEM2: etaOld,rdfOld ',etaOld,rdfOld
-	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
+	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10.or.etaOld.le.0  )then	!Only use default estimate if compounds or composition have changed.
 	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. sumxmy2(nComps,xFrac,xOld) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 		if(LOUDER)write(*,'(a,i6,1x,6E12.4)')' MEM2:New IDs or X ',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
 		if(CheckDLL)write(6198,'(a,i4,6E12.4)')' MEM2:New IDs or X',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
@@ -241,7 +241,7 @@ END MODULE Assoc
 	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 		continue
 	else !if( SUM(xFrac(1:nComps)) < 0)then
-		if(etaOld.ge.zeroTol)then ! adapt old values.to accelerate Z iterations
+		if(etaOld > 0)then ! adapt old values.to accelerate Z iterations
 			sqArg=eta/etaOld*rdfContact/rdfOld
 			if(sqArg < zeroTol)then
 				iErr=12
