@@ -1,3 +1,4 @@
+  initCall=          1
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -6,11 +7,13 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.8491     .9418
- MEM2: ID1,IDold1,x1,x1old   1051     0    .1000E+01   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .0000E+00   1051     0
+  MEM2: etaOld,rdfOld    .0000E+00   .1000E+01
  MEM2:New IDs or X1051   .1000E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.85     .94    1.0000    1.0000   .9418E+00   .1849E+01
  iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.85     .94     .4928     .9675   .1110E-15   .1110E-15
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4928     .9675   -1.7482    3.6667     .9535     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -19,11 +22,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    4.3824    2.2322
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5000E+00   .6000E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    4.38    2.23    1.0000    1.0000   .2232E+01   .4382E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.38    2.23     .6087    1.1950   .1110E-15   .2220E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.38    2.23     .6087    1.1950   .3798E-09   .1464E-08
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6087    1.1950   -5.4270    7.4615    1.4547     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -32,11 +36,20 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    8.4510    4.8299
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
- iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    8.45    4.83    1.0000    1.0000   .4830E+01   .8451E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    8.45    4.83     .6991    1.2233  -.1110E-15   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7000E+00   .2407E+02
+ iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0   12.46    6.34    1.0000    1.0000   .4830E+01   .8451E+01
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1   12.46    6.34     .8838     .7037  -.2142E+00  -.2942E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  2    9.13    5.09     .7334    1.0979  -.3291E-01  -.7617E-01
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  3    8.57    4.87     .7050    1.2005  -.5451E-02  -.1408E-01
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  4    8.47    4.84     .7001    1.2194  -.9224E-03  -.2429E-02
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  5    8.45    4.83     .6993    1.2226  -.1567E-03  -.4140E-03
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  6    8.45    4.83     .6992    1.2232  -.2663E-04  -.7040E-04
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  7    8.45    4.83     .6991    1.2233  -.4527E-05  -.1197E-04
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  8    8.45    4.83     .6991    1.2233  -.7691E-06  -.2033E-05
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  9    8.45    4.83     .6991    1.2233  -.1303E-06  -.3444E-06
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6991    1.2233  -14.4235   16.8647    1.7105     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -45,11 +58,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    4.5165    2.5813
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .8469E+00   .1608E+03
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    4.52    2.58    1.0000    1.0000   .2581E+01   .4517E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.52    2.58     .6533    1.1432   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.52    2.58     .6533    1.1432  -.1775E-07  -.4677E-07
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6533    1.1432   -7.7782   10.4141    1.4938     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -58,11 +72,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    3.7859    2.1637
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7699E+00   .5051E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    3.79    2.16    1.0000    1.0000   .2164E+01   .3786E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    3.79    2.16     .6354    1.1117   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    3.79    2.16     .6354    1.1117  -.2450E-08  -.6315E-08
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6354    1.1117   -6.3978    9.0576    1.4127     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -71,11 +86,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    2.7836    1.5909
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7424E+00   .3680E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    2.78    1.59    1.0000    1.0000   .1591E+01   .2784E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.78    1.59     .5974    1.0453  -.1110E-15   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.78    1.59     .5974    1.0453  -.6767E-10  -.3972E-10
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5974    1.0453   -4.4175    7.0738    1.2490     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -84,11 +100,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    2.2074    1.2616
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6874E+00   .2149E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    2.21    1.26    1.0000    1.0000   .1262E+01   .2207E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.21    1.26     .5627     .9845   .0000E+00  -.2220E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.21    1.26     .5627     .9845   .2379E-09   .7521E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5627     .9845   -3.2424    5.8528    1.1080     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -97,11 +114,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.7692    1.0112
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6395E+00   .1452E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.77    1.01    1.0000    1.0000   .1011E+01   .1769E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.77    1.01     .5245     .9177   .0000E+00  -.1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.77    1.01     .5245     .9177   .2456E-09   .7551E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5245     .9177   -2.3467    4.8758     .9626     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -110,11 +128,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.4843     .8483
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5886E+00   .1014E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.48     .85    1.0000    1.0000   .8483E+00   .1484E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.48     .85     .4908     .8587   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.48     .85     .4908     .8587   .2213E-09   .6779E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4908     .8587   -1.7765    4.2151     .8429     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -123,11 +142,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.3017     .7439
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5447E+00   .7711E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.30     .74    1.0000    1.0000   .7439E+00   .1302E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.30     .74     .4639     .8116   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.30     .74     .4639     .8116   .2006E-09   .6141E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4639     .8116   -1.4233    3.7805     .7530     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -136,11 +156,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1989     .6852
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5100E+00   .6333E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.20     .69    1.0000    1.0000   .6852E+00   .1199E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.20     .69     .4463     .7810   .5551E-16   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.20     .69     .4463     .7810   .1895E-09   .5801E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4463     .7810   -1.2312    3.5321     .6972     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -149,11 +170,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1529     .6589
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4876E+00   .5620E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.15     .66    1.0000    1.0000   .6589E+00   .1153E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.15     .66     .4379     .7661   .5551E-16   .1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.15     .66     .4379     .7661   .1865E-09   .5710E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4379     .7661   -1.1473    3.4200     .6709     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -162,11 +184,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1402     .6516
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4767E+00   .5315E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6516E+00   .1140E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4354     .7619   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4354     .7619   .1877E-09   .5746E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4354     .7619   -1.1243    3.3890     .6635     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -175,11 +198,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4736E+00   .5233E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1889E-09   .5784E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1217    3.3853     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -188,11 +212,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1386     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4732E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4351     .7614  -.5551E-16  -.1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4351     .7614   .1893E-09   .5795E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4351     .7614   -1.1216    3.3852     .6626     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -201,11 +226,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1386     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4732E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4351     .7614   .0000E+00  -.1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4351     .7614   .1893E-09   .5797E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4351     .7614   -1.1216    3.3852     .6626     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -214,12 +240,13 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1386     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4732E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4351     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4351     .7614   .1894E-09   .5797E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4351     .7614   -1.1216    3.3852     .6626     .0000
  MEM2: aAssoc,fugAssoc=   -.4736E+00  -.1595E+01
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -228,11 +255,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0189     .0108
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4732E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1083E-01   .1895E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0108     .0189   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0108     .0189   .2916E-14   .8923E-14
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0108     .0189    -.0002    1.0017     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -241,11 +269,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    8.4410    4.8242
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6831E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    8.44    4.82    1.0000    1.0000   .4824E+01   .8441E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    8.44    4.82     .6991    1.2232   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    8.44    4.82     .6991    1.2232   .2633E-07   .8060E-07
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6991    1.2232  -14.4081   16.8497    1.7102     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -254,11 +283,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    4.5133    2.5794
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .8468E+00   .1604E+03
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    4.51    2.58    1.0000    1.0000   .2579E+01   .4513E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.51    2.58     .6533    1.1431   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.51    2.58     .6533    1.1431   .3983E-08   .1220E-07
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6533    1.1431   -7.7721   10.4081    1.4935     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -267,11 +297,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    3.7828    2.1620
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7698E+00   .5044E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    3.78    2.16    1.0000    1.0000   .2162E+01   .3783E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    3.78    2.16     .6353    1.1116   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    3.78    2.16     .6353    1.1116   .9485E-09   .2904E-08
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6353    1.1116   -6.3919    9.0517    1.4123     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -280,11 +311,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    2.7817    1.5898
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7423E+00   .3675E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    2.78    1.59    1.0000    1.0000   .1590E+01   .2782E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.78    1.59     .5973    1.0451   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.78    1.59     .5973    1.0451   .4125E-09   .1263E-08
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5973    1.0451   -4.4135    7.0698    1.2486     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -293,11 +325,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    2.2060    1.2608
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6873E+00   .2146E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    2.21    1.26    1.0000    1.0000   .1261E+01   .2206E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.21    1.26     .5626     .9844   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.21    1.26     .5626     .9844   .3060E-09   .9368E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5626     .9844   -3.2394    5.8497    1.1076     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -306,11 +339,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.7683    1.0106
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6394E+00   .1451E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.77    1.01    1.0000    1.0000   .1011E+01   .1768E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.77    1.01     .5244     .9175   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.77    1.01     .5244     .9175   .2549E-09   .7802E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5244     .9175   -2.3448    4.8736     .9622     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -319,11 +353,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.4837     .8480
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5885E+00   .1013E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.48     .85    1.0000    1.0000   .8480E+00   .1484E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.48     .85     .4907     .8586   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.48     .85     .4907     .8586   .2225E-09   .6813E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4907     .8586   -1.7753    4.2137     .8426     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -332,11 +367,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.3014     .7438
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5446E+00   .7706E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.30     .74    1.0000    1.0000   .7438E+00   .1301E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.30     .74     .4638     .8115   .5551E-16   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.30     .74     .4638     .8115   .2007E-09   .6145E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4638     .8115   -1.4227    3.7797     .7528     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -345,11 +381,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1988     .6851
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5100E+00   .6331E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.20     .69    1.0000    1.0000   .6851E+00   .1199E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.20     .69     .4463     .7809   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.20     .69     .4463     .7809   .1895E-09   .5802E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4463     .7809   -1.2310    3.5317     .6971     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -358,11 +395,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1529     .6589
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4875E+00   .5619E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.15     .66    1.0000    1.0000   .6589E+00   .1153E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.15     .66     .4379     .7661   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.15     .66     .4379     .7661   .1865E-09   .5711E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4379     .7661   -1.1473    3.4201     .6709     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -371,11 +409,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1403     .6517
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4767E+00   .5315E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6517E+00   .1140E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4355     .7619   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4355     .7619   .1877E-09   .5747E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4355     .7619   -1.1245    3.3892     .6636     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -384,11 +423,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1388     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4736E+00   .5233E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .5551E-16   .1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1889E-09   .5784E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3856     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -397,11 +437,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5224E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1893E-09   .5795E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3855     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -410,11 +451,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614  -.5551E-16  -.1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1894E-09   .5797E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3855     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -423,12 +465,13 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1894E-09   .5798E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3855     .6627     .0000
  MEM2: aAssoc,fugAssoc=   -.4736E+00  -.1595E+01
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -437,11 +480,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0156     .0089
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .8891E-02   .1556E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0089     .0156   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0089     .0156   .1617E-14   .4942E-14
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0089     .0156    -.0001    1.0012     .0003     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -450,11 +494,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0148     .0085
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4609E-03   .1001E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .01     .01    1.0000    1.0000   .8477E-02   .1483E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .01     .01     .0085     .0148   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .01     .01     .0085     .0148   .5709E-13   .1748E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0085     .0148    -.0001    1.0010     .0003     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -463,11 +508,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0163     .0093
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4190E-03   .1001E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .9287E-02   .1625E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0093     .0162   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0093     .0162   .9117E-13   .2791E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0093     .0162    -.0002    1.0013     .0003     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -476,11 +522,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0178     .0102
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5028E-03   .1001E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1017E-01   .1780E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0102     .0178   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0102     .0178   .1145E-12   .3505E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0102     .0178    -.0002    1.0015     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -489,11 +536,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6033E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1096E-01   .1917E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1316E-12   .4029E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -502,11 +550,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6996E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1096E-01   .1918E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1221E-12   .3738E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -515,12 +564,13 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6999E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1096E-01   .1918E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1204E-12   .3687E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
  MEM2: aAssoc,fugAssoc=   -.2102E-03  -.4207E-03
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -529,11 +579,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    8.4410    4.8242
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7000E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    8.44    4.82    1.0000    1.0000   .4824E+01   .8441E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    8.44    4.82     .6991    1.2232  -.1110E-15  -.2220E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    8.44    4.82     .6991    1.2232   .3119E-07   .9549E-07
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6991    1.2232  -14.4080   16.8497    1.7102     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -542,11 +593,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    4.5132    2.5794
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .8468E+00   .1604E+03
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    4.51    2.58    1.0000    1.0000   .2579E+01   .4513E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.51    2.58     .6533    1.1431  -.1110E-15  -.2220E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.51    2.58     .6533    1.1431   .4658E-08   .1426E-07
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6533    1.1431   -7.7721   10.4081    1.4935     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -555,11 +607,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    3.7828    2.1620
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7698E+00   .5044E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    3.78    2.16    1.0000    1.0000   .2162E+01   .3783E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    3.78    2.16     .6353    1.1116   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    3.78    2.16     .6353    1.1116   .1054E-08   .3227E-08
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6353    1.1116   -6.3919    9.0517    1.4123     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -568,11 +621,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    2.7817    1.5898
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7423E+00   .3675E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    2.78    1.59    1.0000    1.0000   .1590E+01   .2782E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.78    1.59     .5973    1.0451   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.78    1.59     .5973    1.0451   .4274E-09   .1308E-08
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5973    1.0451   -4.4135    7.0697    1.2486     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -581,11 +635,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    2.2060    1.2608
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6873E+00   .2146E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    2.21    1.26    1.0000    1.0000   .1261E+01   .2206E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.21    1.26     .5626     .9844   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.21    1.26     .5626     .9844   .3081E-09   .9433E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5626     .9844   -3.2394    5.8497    1.1076     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -594,11 +649,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.7683    1.0106
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6394E+00   .1451E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.77    1.01    1.0000    1.0000   .1011E+01   .1768E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.77    1.01     .5244     .9175   .0000E+00   .1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.77    1.01     .5244     .9175   .2551E-09   .7811E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5244     .9175   -2.3448    4.8736     .9622     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -607,11 +663,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.4837     .8480
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5885E+00   .1013E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.48     .85    1.0000    1.0000   .8480E+00   .1484E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.48     .85     .4907     .8586   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.48     .85     .4907     .8586   .2226E-09   .6814E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4907     .8586   -1.7753    4.2137     .8426     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -620,11 +677,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.3014     .7438
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5446E+00   .7706E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.30     .74    1.0000    1.0000   .7438E+00   .1301E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.30     .74     .4638     .8115   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.30     .74     .4638     .8115   .2007E-09   .6145E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4638     .8115   -1.4226    3.7797     .7528     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -633,11 +691,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1988     .6851
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5100E+00   .6331E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.20     .69    1.0000    1.0000   .6851E+00   .1199E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.20     .69     .4463     .7809   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.20     .69     .4463     .7809   .1895E-09   .5802E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4463     .7809   -1.2310    3.5317     .6971     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -646,11 +705,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1529     .6589
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4875E+00   .5619E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.15     .66    1.0000    1.0000   .6589E+00   .1153E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.15     .66     .4379     .7661   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.15     .66     .4379     .7661   .1865E-09   .5711E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4379     .7661   -1.1473    3.4201     .6709     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -659,11 +719,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1403     .6517
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4767E+00   .5315E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6517E+00   .1140E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4355     .7619   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4355     .7619   .1877E-09   .5747E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4355     .7619   -1.1245    3.3892     .6636     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -672,11 +733,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1388     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4736E+00   .5233E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1889E-09   .5784E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3856     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -685,11 +747,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5224E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1893E-09   .5795E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3855     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -698,11 +761,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1894E-09   .5797E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3855     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -711,12 +775,13 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614  -.1110E-15  -.1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1894E-09   .5798E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3855     .6627     .0000
  MEM2: aAssoc,fugAssoc=   -.4736E+00  -.1595E+01
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -725,11 +790,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0156     .0089
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .8899E-02   .1557E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0089     .0156   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0089     .0156   .1618E-14   .4956E-14
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0089     .0156    -.0001    1.0012     .0003     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -738,11 +804,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0148     .0085
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4617E-03   .1001E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .01     .01    1.0000    1.0000   .8485E-02   .1485E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .01     .01     .0085     .0148   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .01     .01     .0085     .0148   .5720E-13   .1751E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0085     .0148    -.0001    1.0010     .0003     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -751,11 +818,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0163     .0093
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4197E-03   .1001E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .9296E-02   .1626E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0093     .0163   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0093     .0163   .9133E-13   .2796E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0093     .0163    -.0002    1.0013     .0003     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -764,11 +832,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0178     .0102
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5037E-03   .1001E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1018E-01   .1782E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0102     .0178   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0102     .0178   .1147E-12   .3511E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0102     .0178    -.0002    1.0015     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -777,11 +846,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6044E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1097E-01   .1919E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1318E-12   .4036E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -790,11 +860,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7009E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1097E-01   .1920E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1223E-12   .3744E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -803,12 +874,13 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7012E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1097E-01   .1920E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1206E-12   .3694E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
  MEM2: aAssoc,fugAssoc=   -.2105E-03  -.4214E-03
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -817,11 +889,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    8.4410    4.8242
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7012E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    8.44    4.82    1.0000    1.0000   .4824E+01   .8441E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    8.44    4.82     .6991    1.2232   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    8.44    4.82     .6991    1.2232   .3116E-07   .9540E-07
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6991    1.2232  -14.4080   16.8497    1.7102     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -830,11 +903,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    4.5132    2.5794
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .8468E+00   .1604E+03
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    4.51    2.58    1.0000    1.0000   .2579E+01   .4513E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.51    2.58     .6533    1.1431   .1110E-15   .2220E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    4.51    2.58     .6533    1.1431   .4654E-08   .1425E-07
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6533    1.1431   -7.7721   10.4081    1.4935     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -843,11 +917,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    3.7828    2.1620
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7698E+00   .5044E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    3.78    2.16    1.0000    1.0000   .2162E+01   .3783E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    3.78    2.16     .6353    1.1116   .0000E+00   .2220E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    3.78    2.16     .6353    1.1116   .1053E-08   .3225E-08
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .6353    1.1116   -6.3919    9.0517    1.4123     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -856,11 +931,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    2.7817    1.5898
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7423E+00   .3675E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    2.78    1.59    1.0000    1.0000   .1590E+01   .2782E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.78    1.59     .5973    1.0451   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.78    1.59     .5973    1.0451   .4273E-09   .1308E-08
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5973    1.0451   -4.4135    7.0697    1.2486     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -869,11 +945,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    2.2060    1.2608
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6873E+00   .2146E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    2.21    1.26    1.0000    1.0000   .1261E+01   .2206E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.21    1.26     .5626     .9844  -.1110E-15   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    2.21    1.26     .5626     .9844   .3081E-09   .9433E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5626     .9844   -3.2394    5.8497    1.1076     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -882,11 +959,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.7683    1.0106
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6394E+00   .1451E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.77    1.01    1.0000    1.0000   .1011E+01   .1768E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.77    1.01     .5244     .9175   .0000E+00   .1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.77    1.01     .5244     .9175   .2551E-09   .7811E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .5244     .9175   -2.3448    4.8736     .9622     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -895,11 +973,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.4837     .8480
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5885E+00   .1013E+02
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.48     .85    1.0000    1.0000   .8480E+00   .1484E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.48     .85     .4907     .8586   .5551E-16   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.48     .85     .4907     .8586   .2226E-09   .6814E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4907     .8586   -1.7753    4.2137     .8426     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -908,11 +987,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.3014     .7438
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5446E+00   .7706E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.30     .74    1.0000    1.0000   .7438E+00   .1301E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.30     .74     .4638     .8115   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.30     .74     .4638     .8115   .2007E-09   .6145E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4638     .8115   -1.4226    3.7797     .7528     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -921,11 +1001,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1988     .6851
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5100E+00   .6331E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.20     .69    1.0000    1.0000   .6851E+00   .1199E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.20     .69     .4463     .7809   .5551E-16   .1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.20     .69     .4463     .7809   .1895E-09   .5802E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4463     .7809   -1.2310    3.5317     .6971     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -934,11 +1015,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1529     .6589
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4875E+00   .5619E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.15     .66    1.0000    1.0000   .6589E+00   .1153E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.15     .66     .4379     .7661  -.5551E-16   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.15     .66     .4379     .7661   .1865E-09   .5711E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4379     .7661   -1.1473    3.4201     .6709     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -947,11 +1029,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1403     .6517
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4767E+00   .5315E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6517E+00   .1140E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4355     .7619   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4355     .7619   .1877E-09   .5747E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4355     .7619   -1.1245    3.3892     .6636     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -960,11 +1043,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1388     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4736E+00   .5233E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1889E-09   .5784E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3856     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -973,11 +1057,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5224E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1893E-09   .5795E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3855     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -986,11 +1071,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1894E-09   .5797E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3855     .6627     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -999,12 +1085,13 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3    1.1387     .6508
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0    1.14     .65    1.0000    1.0000   .6508E+00   .1139E+01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1110E-15   .1110E-15
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1    1.14     .65     .4352     .7614   .1894E-09   .5798E-09
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .4352     .7614   -1.1218    3.3855     .6627     .0000
  MEM2: aAssoc,fugAssoc=   -.4736E+00  -.1595E+01
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -1013,11 +1100,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0156     .0089
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4733E+00   .5223E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .8899E-02   .1557E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0089     .0156   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0089     .0156   .1620E-14   .4958E-14
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0089     .0156    -.0001    1.0012     .0003     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -1026,11 +1114,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0148     .0085
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4617E-03   .1001E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .01     .01    1.0000    1.0000   .8485E-02   .1485E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .01     .01     .0085     .0148   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .01     .01     .0085     .0148   .5720E-13   .1751E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0085     .0148    -.0001    1.0010     .0003     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -1039,11 +1128,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0163     .0093
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .4197E-03   .1001E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .9296E-02   .1626E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0093     .0163   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0093     .0163   .9133E-13   .2796E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0093     .0163    -.0002    1.0013     .0003     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -1052,11 +1142,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0178     .0102
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .5037E-03   .1001E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1018E-01   .1782E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0102     .0178   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0102     .0178   .1147E-12   .3511E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0102     .0178    -.0002    1.0015     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -1065,11 +1156,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .6044E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1097E-01   .1919E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1318E-12   .4036E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -1078,11 +1170,12 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7009E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1097E-01   .1920E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .0000E+00   .0000E+00
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1223E-12   .3744E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
+  initCall=          0
  iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	
      1    1        1051       2          0       0     .0000E+00     .0000E+00
      1    2        1051       1          0       0     .0000E+00     .0000E+00
@@ -1091,9 +1184,9 @@
  MEM2:iComp,iType,ralphA,ralphD  1  1     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  2     .0000     .0000
  MEM2:iComp,iType,ralphA,ralphD  1  3     .0192     .0110
- MEM2: ID1,IDold1,x1,x1old   1051  1051    .1000E+01   .1000E+01
- MEM2:New IDs or X   0   .0000E+00
+ MEM2: x1,x1old,ID,IDold    .1000E+01   .1000E+01   1051  1051
+  MEM2: etaOld,rdfOld    .7012E-03   .1002E+01
  iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0    0     .02     .01    1.0000    1.0000   .1097E-01   .1920E-01
- iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192  -.3469E-17  -.3469E-17
+ iter,ralphAmean,ralphDmean,FA,FD,errA,errD  1     .02     .01     .0110     .0192   .1206E-12   .3694E-12
  MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid     .0110     .0192    -.0002    1.0018     .0004     .0000
  MEM2: aAssoc,fugAssoc=   -.2105E-03  -.4214E-03

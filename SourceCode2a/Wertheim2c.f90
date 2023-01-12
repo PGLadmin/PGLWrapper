@@ -127,6 +127,7 @@ END MODULE Assoc
 		outFile=TRIM(PGLinputDir)//'\CheckSpeadmdDLL.txt'
 		if(initCall==1)open(6198,file=outFile)
 		if(initCall==0)open(6198,file=outFile,ACCESS='APPEND')
+		write(6198,*)' initCall=',initCall
 		write(6198,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
 		do i=1,nComps
 			do j=1,nTypes(i)
@@ -224,8 +225,9 @@ END MODULE Assoc
 		if(isAcid==0)return
 	endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	if(CheckDLL)write(6198,'(a,2i6,1x,6E12.4)')' MEM2: ID1,IDold1,x1,x1old ',ID(1),IDold(1),xFrac(1),xOld(1)
-	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
+	if(CheckDLL)write(6198,'(a,2E12.4,1x,8i6,1x)')' MEM2: x1,x1old,ID,IDold ',xFrac(1),xOld(1),(ID(i),i=1,nComps),(IDold(i),i=1,nComps)
+	if(CheckDLL)write(6198,601)' MEM2: etaOld,rdfOld ',etaOld,rdfOld
+	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. sumxmy2(nComps,xFrac,xOld) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 		if(LOUDER)write(*,'(a,i6,1x,6E12.4)')' MEM2:New IDs or X ',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
 		if(CheckDLL)write(6198,'(a,i4,6E12.4)')' MEM2:New IDs or X',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
@@ -236,9 +238,9 @@ END MODULE Assoc
 		else
 			ralphAmean=ralphAmean*avgNDS/avgNAS
 		endif
-	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
+	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
 		continue
-	elseif( SUM(xFrac(1:nComps)) < 0)then
+	else !if( SUM(xFrac(1:nComps)) < 0)then
 		if(etaOld.ge.zeroTol)then ! adapt old values.to accelerate Z iterations
 			sqArg=eta/etaOld*rdfContact/rdfOld
 			if(sqArg < zeroTol)then
