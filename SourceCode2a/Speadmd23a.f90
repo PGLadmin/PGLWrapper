@@ -361,14 +361,14 @@ END MODULE SpeadParms
 
 	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp)	
 	outFile=TRIM(PGLinputDir)//'\CheckSpeadmdReading.txt'
-	open(61,file=outFile)
-	write(61,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
+	open(619,file=outFile)
+	write(619,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
 	do i=1,nComps
 		do j=1,nTypes(i)
-			write(61,601)i,j,id(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
+			write(619,601)i,j,id(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
 		enddo
 	enddo ! i=1,nComps
-	close(61)
+	close(619)
 601	format(1x,2i5,i12,i8,i11,i8,2E14.4)
 	errMsgPas=Trim( ErrMsg(iErrCode) )
 	RETURN

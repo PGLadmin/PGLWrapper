@@ -79,14 +79,12 @@ END MODULE Assoc
 	USE Assoc ! XA,XD,XC,NAcceptors(NMX),NDonors(NMX),NDegree(NMX),...
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (FA,FD) AND properties (zAssoc, lnPhiAssoc,...) given T,rho,x
 	Implicit DoublePrecision(A-H,K,O-Z)
-	DoublePrecision xFrac(NMX),RALPHA(NMX,maxTypes),RALPHD(NMX,maxTypes),xOld(NMX),rLnPhiAssoc(NMX) !,KVE(NMX)
-	Integer IDold(NMX)
-	!DoublePrecision ralphMatch(NMX)
-    
+	DoublePrecision xFrac(NMX),RALPHA(NMX,maxTypes),RALPHD(NMX,maxTypes),xOld(NMX),rLnPhiAssoc(NMX),etaOld,rdfOld !,KVE(NMX)
+	Integer IDold(NMX),initCall
 	LOGICAL LOUDER,CheckDLL
 	Character*77 errMsg(22)
 	Character*234 outFile
-	data initCall/1/
+	data initCall,etaOld,rdfOld/1,0.0,1.0/
 	!  Reference: Elliott, IECR, 61:15724 (2022).
 	!  INPUT:
 	!  isZiter = 1 if only zAssoc is required (for zFactor iterations), 0 for lnPhiAssoc,aAssoc,uAssoc, -1 if derivatives are required, integer
@@ -116,7 +114,7 @@ END MODULE Assoc
 	!LOUDER=LouderWert
 	!LOUDER = .TRUE. ! for local debugging.
 	CheckDLL=.FALSE.
-	CheckDLL=.TRUE.
+	!CheckDLL=.TRUE.
 	if(initCall==1)then
 		etaOld=0
 		xOld(1:nComps)=0

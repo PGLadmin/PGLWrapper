@@ -1917,7 +1917,7 @@
 			write(*,*) ' ' 
 			TC_mix=tKelvin
 		    VC_mix=vTotCc/totMoles
-			call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErrVtot)
+			call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErrVtot)
 			ZC_mix=Z
 			PC_mix=PMpa
 			etaC_mix=eta
@@ -1926,7 +1926,7 @@
 	enddo
 	TC_mix=tKelvin
 	VC_mix=vTotCc/totMoles
-	call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErrVtot)
+	call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErrVtot)
 	ZC_mix=Z
 	PC_mix=PMpa
 	etaC_mix=eta
@@ -2021,11 +2021,11 @@
     rhoHi=(1+1/stepV)*rho
     rhoLo=(1-1/stepV)*rho
     isZiter=1               !Simplified to pure numerical derivatives. JRE 20200406
-	call FuVtot(isZiter,tKelvin,1/rho,gmol,NC,FUGC,Zbase,iErrVtot)
+	call FuVtot(isZiter,tKelvin,1/rho,gmol,NC,FUGC,Zbase,aRes,uRes,iErrVtot)
     if(iErrVtot.ne.0)iErrCode=4
     if(iErrCode.ne.0)goto 86
-	call FuVtot(isZiter,tKelvin,1/rhoHi,gmol,NC,FUGC,ZHi,iErrVtot)
-	call FuVtot(isZiter,tKelvin,1/rhoLo,gmol,NC,FUGC,ZLo,iErrVtot)
+	call FuVtot(isZiter,tKelvin,1/rhoHi,gmol,NC,FUGC,ZHi,aRes,uRes,iErrVtot)
+	call FuVtot(isZiter,tKelvin,1/rhoLo,gmol,NC,FUGC,ZLo,aRes,uRes,iErrVtot)
     pBaseJre=zBase*rho*rGas*tKelvin
     pHiJre=zHi*rhoHi*rGas*tKelvin
     pLoJre=zLo*rhoLo*rGas*tKelvin
@@ -2063,9 +2063,9 @@
             vTotcc=1/rho
             rhoHi=(1+1/stepV)*rho
             rhoLo=(1-1/stepV)*rho
-	        call FuVtot(isZiter,tKelvin,1/rho,gmol,NC,FUGC,Zbase,iErrVtot)
-		    call FuVtot(isZiter,tKelvin,1/rhoHi,gmol,NC,FUGC,ZHi,iErrVtot)
-		    call FuVtot(isZiter,tKelvin,1/rhoLo,gmol,NC,FUGC,ZLo,iErrVtot)
+	        call FuVtot(isZiter,tKelvin,1/rho,gmol,NC,FUGC,Zbase,aRes,uRes,iErrVtot)
+		    call FuVtot(isZiter,tKelvin,1/rhoHi,gmol,NC,FUGC,ZHi,aRes,uRes,iErrVtot)
+		    call FuVtot(isZiter,tKelvin,1/rhoLo,gmol,NC,FUGC,ZLo,aRes,uRes,iErrVtot)
             if(iErrVtot.ne.0)iErrCode=4
             pBaseJre=zBase*rho*rGas*tKelvin
             pHiJre=zHi*rhoHi*rGas*tKelvin
@@ -2150,7 +2150,7 @@
     TC_Pure=tBest
     vTotCc=1/rho
 	VC_PURE=vTotCc
-	call FuVtot(isZiter,tBest,1/rhoBest,gmol,NC,FUGC,Z,iErrVtot)
+	call FuVtot(isZiter,tBest,1/rhoBest,gmol,NC,FUGC,Z,aRes,uRes,iErrVtot)
 	ZC_PURE=Z
 	PC_PURE=Z*(rhoBest*rGas*tBest)
 	etaC_PURE=rhoBest*bVolCC_Mol(1)
@@ -2193,7 +2193,7 @@
 	ErrMsg(1)='error eigen - v_norm is equal to zero. Check the eigen vectors...'
 	iErrCode=0
 	half=1.d0/2.d0
-	call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErrVtot)
+	call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErrVtot)
 	DO I=1,NC
 		DO J=1,NC
 			Bij(I,J)=dFUG_dN(I,J)*sqrt(xFrac(I)*xFrac(J))
@@ -2360,12 +2360,12 @@
 	vTotCc_old=vTotCc	
     if (stepT.gt.1.d0) then 
 		tKelvin=tKelvin+tKelvin/stepT
-		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErrVtot)
+		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErrVtot)
         if(iErrVtot.ne.0)iErr=1
 		x_higherT=x
 
 		tKelvin=T_old-T_old/stepT
-		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErrVtot)
+		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErrVtot)
         if(iErrVtot.ne.0)iErr=iErr+10
         if(iErr.ne.0)return
 		x_lowerT=x
@@ -2379,12 +2379,12 @@
 	endif
 	if (stepV.gt.1) then
 		vTotCc=vTotCc+vTotCc/stepV
-		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErrVtot)
+		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErrVtot)
         if(iErrVtot.ne.0)iErr=iErr+100
 		x_higherV=x   
 		
 		vTotCc=vTotCc_old-vTotCc_old/stepV
-		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErrVtot)
+		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErrVtot)
         if(iErrVtot.ne.0)iErr=iErr+1000
         if(iErr.ne.0)return
 		x_lowerV=x

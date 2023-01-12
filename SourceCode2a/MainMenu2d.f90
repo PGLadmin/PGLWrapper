@@ -48,9 +48,9 @@
 	masterDir=TRIM(curDir)
 	outFile=TRIM(masterDir)//'\output\KijOut.txt'
 	IF(DEBUG)outFile='c:\spead\calceos\output\KijOut.txt'
-	open(61,file=outFile)
-	write(61,*)' ' ! clear out old contents.
-	close(61)
+	open(655,file=outFile)
+	write(655,*)' ' ! clear out old contents.
+	close(655)
 	outFile=TRIM(masterDir)//'\output\output.txt' ! // is the concatenation operator
 
 	if(LOUD)print*,'MasterDir=',TRIM(masterDir)
@@ -237,9 +237,9 @@
 
 		IF(calcType.ne.'QT'.and.calcType.ne.'qt')then
 			outFile=TRIM(masterDir)//'\output\TPXY.txt'
-			open(61,file=outFile)
-			write(61,*)' ' !open and clear old contents
-			close(61)
+			open(671,file=outFile)
+			write(671,*)' ' !open and clear old contents
+			close(671)
 		endif
 
 		IF(calcType.EQ.'AC'.OR.calcType.EQ.'ac')CALL IDACs(NC)

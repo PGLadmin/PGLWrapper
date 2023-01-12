@@ -231,7 +231,7 @@ END MODULE VpDb
 		if(i==1.and.LOUD)write(*,102)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
-!	close(61)
+
 100	FORMAT(I5,2X,A20,2X,F7.2,2X,F8.4,2X,F7.4,2X,F7.4)
 101	format(i5,11f10.0,i10,3a4,1x,a12,a33)
 102	format(i5,11f10.3,i10,3a4,1x,a12,a33)
@@ -334,7 +334,7 @@ END MODULE VpDb
 		if(i==1.and.LOUD)write(*,102)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
-!	close(61)
+
 100	FORMAT(I5,2X,A20,2X,F7.2,2X,F8.4,2X,F7.4,2X,F7.4)
 101	format(i5,11f10.0,i10,3a4,1x,a12,a33)
 102	format(i5,11f10.0,i10,3a4,1x,a12,a33)
@@ -770,7 +770,6 @@ END MODULE VpDb
 !		write(61,102)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 !			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
-!	close(61)
 100	FORMAT(I5,2X,A20,2X,F7.2,2X,F8.4,2X,F7.4,2X,F7.4)
 101	format(i5,11f10.0,i10,3a4,1x,a12,a33)
 102	format(i5,11f10.0,i10,3a4,1x,a12,a33)

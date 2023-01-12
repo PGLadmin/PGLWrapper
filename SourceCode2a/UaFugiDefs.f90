@@ -86,7 +86,7 @@
 !C It is a wrapper for vTot routines									   C
 !C			  															   C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC         	          
-	SUBROUTINE FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
+	SUBROUTINE FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)
 	USE GlobConst !iEosOpt
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
     integer ier(12)
@@ -100,7 +100,7 @@
 	if(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
 		call FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
 	elseif(isTPT)then
-		call FuTptVtot(isZiter,Z,aDep,uDep,FUGC,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
+		call FuTptVtot(isZiter,Z,aRes,uRes,FUGC,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
 	elseif(iEosOpt==1)then
 	    !SUBROUTINE FuPrVtot(tAbs,rhoMol_Cc,xFrac,NC,LIQ,FUGC,zFactor,aDep,uDep,IER)
 		call FuPrVtot(isZiter,tKelvin,1/vTotCc,gmol,NC,LIQ,FUGC,Z,Ares,Ures,IER)
@@ -109,7 +109,7 @@
 		call FuPrTcVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
 	elseif(isPcSaft)then
 		!subroutine FugiPcSaftVtot(nComps,tKelvin,vTotCc,gmol,pMPa,zFactor,chemPoRes,iErr)
-		call FugiPcSaftVtot(NC,tKelvin,vTotCc,gmol,P,Z,FUGC,iErr)
+		call FugiPcSaftVtot(NC,tKelvin,vTotCc,gmol,P,Z,aRes,uRes,FUGC,iErr)
 		if( iErr.ne.0)ier(1)=1
 	elseif(iEosOpt==17)then
 		icon=2 ! returns fugc and T,V derivatives. See GetPrLorraine for more options. 

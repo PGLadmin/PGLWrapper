@@ -105,7 +105,7 @@
 			goto 1000
 		else
 			write(*,601)pMPa,tK
-			if(iOpt.eq.0)write(61,601)pMPa,tK
+			!if(iOpt.eq.0)write(61,601)pMPa,tK
 			write(*,*)'t,p wanted',tWanted,pWanted
 			ier(1)=3
 			goto 86
@@ -120,10 +120,10 @@
 	etaVCalc(iterBoot)=etaV
 	if (writeOpt==0) then	  !old Format
 		if(iOpt==0)write(* ,602)tK,pMPa,X(1),Y(1),etaL,etaV,ier(1)
-		if(iOpt==0)write(61,602)tK,pMPa,X(1),Y(1),etaL,etaV,ier(1)
+		!if(iOpt==0)write(61,602)tK,pMPa,X(1),Y(1),etaL,etaV,ier(1)
 	else  !P vs. T 
 		if(iOpt==0)write(* ,603)tK,pMPa,etaL,etaV
-		if(iOpt==0)write(61,603)tK,pMPa,etaL,etaV
+		!if(iOpt==0)write(61,603)tK,pMPa,etaL,etaV
 	endif
 
 	if(iOpt < 2)then
@@ -346,7 +346,7 @@
 		else
 			!  you have to give up sometimes
 			write(*,601)pMPa,tK
-			if(iOpt.eq.0)write(61,601)pMPa,tK
+			!if(iOpt.eq.0)write(61,601)pMPa,tK
 			write(*,*)'t,p wanted',tWanted,pWanted
 			ier(1)=3
 			goto 86
@@ -355,7 +355,7 @@
 	!  we got a convergence!  keep going with init=2 to bootstrap.
 	init=2
 	if(iOpt.eq.0)write(* ,602)tK,pMPa,X(1),Y(1),etaL,etaV,ier(1)
-	if(iOpt.eq.0)write(61,602)tK,pMPa,X(1),Y(1),etaL,etaV,ier(1)
+	!if(iOpt.eq.0)write(61,602)tK,pMPa,X(1),Y(1),etaL,etaV,ier(1)
 
 	if(iOpt.le.1)then
 		if(pMPa.lt.pWanted)then

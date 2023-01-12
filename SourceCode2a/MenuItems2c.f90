@@ -121,7 +121,7 @@
 	write(*,*)'Enter P(MPa) for V vs T plot.'
 	read(*,*)PMPa
 	outFile=TRIM(masterDir)//'\output\Bifurcation.txt'
-	open(61,file=outFile)
+	open(632,file=outFile)
 	vOld1=0
 	vOld2=0
 	LIQ=2
@@ -142,10 +142,10 @@
 		endif
 		if(ier(1).ne.0)cycle
 		if(iBifurcate)then
-			write(61,601)it,tKelvin,vNew,ier(1), ' Probable bifurcation.'
+			write(632,601)it,tKelvin,vNew,ier(1), ' Probable bifurcation.'
 			write(* ,601)it,tKelvin,vNew,ier(1), ' Probable bifurcation.'
 		else
-			write(61,601)it,tKelvin,vNew,ier(1)
+			write(632,601)it,tKelvin,vNew,ier(1)
 			write(* ,601)it,tKelvin,vNew,ier(1)
 		endif
 		vOld2=vOld1
@@ -172,16 +172,16 @@
 		endif
 		if(ier(1).ne.0)cycle
 		if(iBifurcate)then
-			write(61,601)it,tKelvin,vNew,ier(1), ' Probable bifurcation.'
+			write(632,601)it,tKelvin,vNew,ier(1), ' Probable bifurcation.'
 			write(* ,601)it,tKelvin,vNew,ier(1), ' Probable bifurcation.'
 		else
-			write(61,601)it,tKelvin,vNew,ier(1)
+			write(632,601)it,tKelvin,vNew,ier(1)
 			write(* ,601)it,tKelvin,vNew,ier(1)
 		endif
 		vOld2=vOld1
 		vOld1=vNew
 	enddo
-	close(61)
+	close(632)
 	if(LOUD)pause 'Success! Output in output\Bifurcation.txt'
 	return
 	end
@@ -212,7 +212,7 @@
 	!if(LOUD)write(*,*)'enter file NAME for output'
 	!read(*,'(A1)')outfile
 	outFile=TRIM(masterDir)//'\output\Binodal.txt'
-	open(61,file=outFile)
+	open(633,file=outFile)
 600	format('   T(K)',4x,'  P(MPA)',5x,'x1Alpha',4x,'x1Beta',2x,'etaAlpha',3x, 'etaBeta')
 601	FORMAT(1X,1(F7.2,2X,F10.6,1X),6(F9.5,1X))
 602	FORMAT(' COMPONENT IS',2X,A20,2X,'ID NO. IS  ',i5)
@@ -223,7 +223,7 @@
 	WRITE(6,*)'ENTER PRESSURE(MPa) and starting Temperature (K)'
 	READ(5,*)P,T
 	if(LOUD)write(*,600)
-	write(61,600)
+	write(633,600)
 	MAXIT=1111
 	zero=0
 
@@ -241,7 +241,7 @@
 			call PrintErrFlash(iErrCode)
 		else
 			if(LOUDER)write(* ,601)T,P,X(1),xU(1),etaPasLo,etaPasUp
-			write(61,'(1X,F7.2,2X,F10.6,1X,4(f13.11,1X))')T,P,X(1),xU(1),etaPasLo,etaPasUp
+			write(633,'(1X,F7.2,2X,F10.6,1X,4(f13.11,1X))')T,P,X(1),xU(1),etaPasLo,etaPasUp
 		endif
 		if(iErrCode.ne.0.or.kPas(1).lt.1.05)goto 86
 
@@ -254,7 +254,7 @@
 86	continue
 	write(*,*)'These results are tabulated in',TRIM(outFile)
 	if(LOUDER)pause 'Success! Check your results.'
-	CLOSE(61)   
+	CLOSE(633)   
 	RETURN
 	END
 
@@ -759,7 +759,7 @@
 	bMix=SUM( x(1:Nc)*bVolCc_mol(1:Nc) )
 	vTotCc=bMix/eta
 	isZiter=0
-	Call FuVtot(isZiter,T,vTotCc,x,NC,FUGCL,ZL,iErr)
+	Call FuVtot(isZiter,T,vTotCc,x,NC,FUGCL,ZL,aRes,uRes,iErr)
 	if(initCall)write(*,'(a,f8.2,E12.4)')' FViter: called Fugi for liq. T(K),ZL=',T,ZL
 	etaLo=eta
 	rhoLo=1/vTotCc
@@ -853,21 +853,21 @@
 	isZiter=0
 	toll=1.d-10
 	CALL CP_Mixture(isZiter,toll,gmol,NC,TC_mix,VC_mix,PC_mix,ZC_mix,iErrCode)	  
-	if (iErrCode.eq.0) then
+	if (iErrCode==0) then
 	    outFile=TRIM(masterDir)//'\output\CriticalPoint.txt'
-	    open(61,file=outFile)
-		if (iEosOpt.EQ.5.or.iEosOpt.eq.9) then
-			write(61,600)
+	    open(634,file=outFile)
+		if (iEosOpt==5.or.iEosOpt==9) then
+			write(634,600)
  			if(LOUD)write(*,*)'Tc=',TC_mix,' etaC=',eta
 			if(LOUD)write(*,*)'Pc=',PC_mix,' Zc=',ZC_mix
-			write(61,602)TC_mix,PC_mix,ZC_mix,eta
+			write(634,602)TC_mix,PC_mix,ZC_mix,eta
 		else
- 			write(61,601)
+ 			write(634,601)
  			if(LOUD)write(*,*)'Tc=',TC_mix,' Pc=',PC_mix
 			if(LOUD)write(*,*)'Vc=',VC_mix,' Zc=',ZC_mix
-			write(61,602)TC_mix,PC_mix,ZC_mix,VC_mix
+			write(634,602)TC_mix,PC_mix,ZC_mix,VC_mix
 		endif
-		close(61)
+		close(634)
 	 	if(LOUD)pause 'Results are saved as output/CriticalPoint.txt'
 	endif
 
@@ -898,22 +898,22 @@
 	CALL CritPure(NC,isZiter,toll,TC_Pure,VC_Pure,PC_Pure,ZC_Pure,Acen_pure,iErrCode)	   
 	if (iErrCode.eq.0) then
 	    outFile=TRIM(masterDir)//'\output\CriticalPoint.txt'
-	    open(61,file=outFile)
+	    open(635,file=outFile)
 		if (iEosOpt.EQ.5.or.iEosOpt.eq.9) then
-			write(61,600)
+			write(635,600)
             eta=bVolCC_mol(1)/VC_Pure
  			if(LOUD)write(*,*)'Tc=',TC_Pure,' etaC=',eta
 			if(LOUD)write(*,*)'Pc=',PC_pure,' Zc=',ZC_Pure
 			rhoc=PC_pure*rMw(1)/(TC_Pure*8.31434*ZC_Pure)
 			if(LOUD)write(*,*)'rhoc(g/cc)=',rhoc
-			write(61,602)TC_Pure,PC_PURE,ZC_PURE,eta,rhoc
+			write(635,602)TC_Pure,PC_PURE,ZC_PURE,eta,rhoc
 		else
- 			write(61,601)
+ 			write(635,601)
  			if(LOUD)write(*,*)'Tc=',TC_Pure,' Pc=',PC_Pure
 			if(LOUD)write(*,*)'Vc=',VC_Pure,' Zc=',ZC_Pure
-			write(61,602)TC_Pure,PC_PURE,ZC_PURE,VC_Pure
+			write(635,602)TC_Pure,PC_PURE,ZC_PURE,VC_Pure
 		endif
-		close(61)
+		close(635)
 	 	if(LOUD)pause 'Results are saved as output/CriticalPoint.txt'
 		print*,'Replace Tc,Pc,Zc with CritPure values(0=No)? Improves vp calcs near critical.'
 		read*,iAnswer
@@ -944,17 +944,17 @@
 	LOUDER=.TRUE.
 	outFile=TRIM(masterDir)//'\output\TPXY.txt'
 	IF(DEBUG)outFile='C:\SPEAD\CALCEOS\output\TPXY.txt'
-	open(61,file=outFile,ACCESS='APPEND')
+	open(641,file=outFile,ACCESS='APPEND')
 	if(LOUDER)write(* ,*)'REQUIRED NUMBER OF ITERATIONS WAS:',ITMAX
 	if(LOUDER)write(* ,'(4(5x,a))')' zLo ',' zUp ','etaLo','etaUp'
 	if(LOUDER)write(* ,'(4(f9.6,1x))')zL,zV,etaL,etaV
 	if(LOUDER)write(* ,'(a,f8.2,a,f9.4)')' T(K)= ',tKelvin,' P(MPa)=',pMpa
 	if(pMpa.lt.1E-3 .or. pMpa > 10E4  .and. LOUDER)write(* ,*)'PMPa=',pMpa
-	WRITE(61,*)'REQUIRED NUMBER OF ITERATIONS WAS:',ITMAX
-	write(61,'(4(5x,a))')' zLo ',' zUp ','etaLo','etaUp'
-	write(61,'(4(f9.6,1x))')zL,zV,etaL,etaV
-	write(61,'(a,f8.2,a,f9.4)')' T(K)= ',tKelvin,' P(MPa)=',pMpa
-	if(pMpa.lt.1E-3 .or. pMpa.gt.10E4)write(61,*)'PMPa=',pMpa
+	WRITE(641,*)'REQUIRED NUMBER OF ITERATIONS WAS:',ITMAX
+	write(641,'(4(5x,a))')' zLo ',' zUp ','etaLo','etaUp'
+	write(641,'(4(f9.6,1x))')zL,zV,etaL,etaV
+	write(641,'(a,f8.2,a,f9.4)')' T(K)= ',tKelvin,' P(MPa)=',pMpa
+	if(pMpa.lt.1E-3 .or. pMpa.gt.10E4)write(641,*)'PMPa=',pMpa
 	avgMwLiq=0
 	avgMwVap=0
 	do i=1,nComps
@@ -964,25 +964,25 @@
 
 	DO I=1,nComps
 		if(LOUDER)write(* ,602)NAME(I),ID(I)
-		WRITE(61,602)NAME(I),ID(I)
+		WRITE(641,602)NAME(I),ID(I)
 		VLKI=yFrac(I)/(xFrac(I)+1.D-11)
 		wFrVap=yFrac(i)*rMw(i)/avgMwVap
 		wFrLiq=xFrac(i)*rMw(i)/avgMwLiq
 		if(LOUDER)write(* ,603)
 		if(xFrac(i).gt.1E-7)then
 			if(LOUDER)write(* ,604)xFrac(I),yFrac(I),VLKI,wFrLiq,wFrVap
-			WRITE(61,604)xFrac(I),yFrac(I),VLKI,wFrLiq,wFrVap
+			WRITE(641,604)xFrac(I),yFrac(I),VLKI,wFrLiq,wFrVap
 		else
 			if(LOUDER)write(* ,605)xFrac(I),yFrac(I),VLKI,wFrLiq,wFrVap
-			WRITE(61,605)xFrac(I),yFrac(I),VLKI,wFrLiq,wFrVap
+			WRITE(641,605)xFrac(I),yFrac(I),VLKI,wFrLiq,wFrVap
 		endif
 		if(LOUDER)write(* ,*)' '					   
-		WRITE(61,603)
-		WRITE(61,*)' '					   
+		WRITE(641,603)
+		WRITE(641,*)' '					   
 	enddo
 	if(LOUDER)write(* ,182)VOF
-	WRITE(61,182)VOF
-	close(61)
+	WRITE(641,182)VOF
+	close(641)
 182	FORMAT(2X,'UpperMoles/Feed = ',F11.5)
 602	FORMAT('  COMPONENT IS',2X,A20,2X,'ID NO. IS  ',i5)
 603	FORMAT(3X,'  LIQUID X  ',3X,'Upper Y',3X,' Yi/Xi ',5X,' wFrLo ',6X,'wFrUp')
@@ -1283,7 +1283,7 @@
 	!c	write(*,*)'enter file NAME for output'
 	!c	read(*,'(A1)')outfile
 	outFile=TRIM(masterDir)//'\output\xsGibbs.txt'
-	open(61,file=outFile)
+	open(642,file=outFile)
 !	if(iEosOpt.ne.5.or.iEosOpt.ne.8)then
 !		pause 'GX error: this option only for spead model at this time.'
 !		return
@@ -1299,8 +1299,8 @@
 	zero=0
 	nComps=nc
 	if(LOUDER)write(* ,'(a,f7.2,a,f7.3)')' T(K)=',tKelvin,'Eta=',eta
-	write(61,*)'  T(K)   Eta'
-	write(61,'(f8.2,f8.3)')tKelvin,eta
+	write(642,*)'  T(K)   Eta'
+	write(642,'(f8.2,f8.3)')tKelvin,eta
 	tInf=3.0e9
 	tStore=tKelvin
 	xInf=1e-11
@@ -1315,7 +1315,7 @@
 		bVolMix=sumproduct(nc,x,bVolCC_mol)
 		vTotCc=bVolMix/eta
 		!call FuTptVtot(zFactor,aDep,uDep,eta,tKelvin,x,bVolMix,nComps,iErr)
-		call FuVtot(isZiter,tStore,vTotCc,x,NC,FUGC,zFactor,iErr)
+		call FuVtot(isZiter,tStore,vTotCc,x,NC,FUGC,zFactor,aRes,uRes,iErr)
 		if(iErr /= 0)then
 			print*,' GibbsXsVsEta: Error returned from pure FuVtot. iPure,Z=',iPure,zFactor
 			print*,' Try a larger eta?'
@@ -1327,13 +1327,13 @@
 		fugAttPure(iPure)=FUGAtt(iPure)-Zatt
 		fugAssocPure(iPure)=FUGAssoc(iPure)-Zassoc
 		hPure(iPure)=uRes_RT
-		call FuVtot(isZiter,tInf,vTotCc,x,NC,FUGC,zFactor,iErr)
+		call FuVtot(isZiter,tInf,vTotCc,x,NC,FUGC,zFactor,aRes,uRes,iErr)
 		sPure(iPure)=aRes_RT-uRes_RT
 	enddo
 	!if(nc.eq.2 .and. LOUDER)write(6 ,*)'   x1      Z         uXs      -s0Xs        aXs      gIs         V(cc)','     LnGam'
 	if(nc.eq.3 .and. LOUDER)write(6 ,*)'   x1      x2      Z         hE      gMix         gE       gIs        V(cc)       LnGam(i)'
-	if(nc.eq.2)write(61,*)'   x1      x2      uXs      -s0Xs        aXs      gIs        Z         V(cc)       LnGam(i)'
-	if(nc.eq.3)write(61,*)'   x1      x2      x3      hE      gMix         gE       gIs        Z         V(cc)       LnGam(i)'
+	if(nc.eq.2)write(642,*)'   x1      x2      uXs      -s0Xs        aXs      gIs        Z         V(cc)       LnGam(i)'
+	if(nc.eq.3)write(642,*)'   x1      x2      x3      hE      gMix         gE       gIs        Z         V(cc)       LnGam(i)'
 	write(* ,*)' xi,PMPa,vTotCc,F,lnGam(1,2),lnGamRep(1,2),lnGamAtt(1,2)',',lnGamAssoc(1,2),ralph(1,2)'
 	nX3=nX
 	if(nc==2)nX3=1
@@ -1358,7 +1358,7 @@
 			bVolMix=sumproduct(nc,x,bVolCC_mol)
 			vTotCc=bVolMix/eta
 			!call FuTptVtot(zFactor,aDep,uDep,eta,tKelvin,x,bVolMix,nComps,iErr)
-			call FuVtot(isZiter,tKelvin,vTotCc,x,NC,FUGC,zFactor,iErr)
+			call FuVtot(isZiter,tKelvin,vTotCc,x,NC,FUGC,zFactor,aRes,uRes,iErr)
 			!call FuTptVtot(isZiter,zFactor,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErr)
 			gIs=0
 			gE=0
@@ -1380,18 +1380,18 @@
 			enddo
 			hE=uRes_RT-hIs
 			aE=aRes_RT-aIs
-			call FuVtot(isZiter,tKelvin,vTotCc,x,NC,FUGC,zFactor,iErr)
+			call FuVtot(isZiter,tKelvin,vTotCc,x,NC,FUGC,zFactor,aRes,uRes,iErr)
 			!call FuTptVtot(isZiter,zFactor,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErr)
 			sDep=aRes_RT-uRes_RT
 			sE=sDep-sIs !really this is -ve sXs/R
 			!if(LOUDER)write(* ,611)(x(i),i=1,nc-1),zFactor,hE,sE,aE,gIs,vTotCc,(rLnGam(i),i=1,nc)
 			PMPa=Zfactor*Rgas*tKelvin/vtotcc
 			write(* ,612)x(1),PMPa, vTotCc, Fassoc, (rLnGam(i),i=1,nc),(rLnGamRep(i),i=1,nc),(rLnGamAtt(i),i=1,nc),(rLnGamAssoc(i),i=1,nc),(ralph(i),i=1,nc)
-			write(61,611)(x(i),i=1,nc),hE,sE,aE,gIs,zFactor,vTotCc,(rLnGam(i),i=1,nc)
+			write(642,611)(x(i),i=1,nc),hE,sE,aE,gIs,zFactor,vTotCc,(rLnGam(i),i=1,nc)
 		enddo
 	enddo
 
-	CLOSE(61)
+	CLOSE(642)
 	write(*,*)'OutFile=',TRIM(outfile)
 	pause 'Check results in OutFile.'   
 	RETURN
@@ -1435,7 +1435,7 @@
 	!c	write(*,*)'enter file NAME for output'
 	!c	read(*,'(A1)')outfile
 	outFile=TRIM(masterDir)//'\output\xsGibbs.txt'
-	open(61,file=outFile)
+	open(643,file=outFile)
 1000  CONTINUE
 	WRITE(6,*)'ENTER TEMPERATURE(KELVIN) AND PRESSURE(MPa)   '
 	READ(5,*)T,P
@@ -1446,8 +1446,8 @@
 	endif
 	zero=0
 	if(LOUDER)write(* ,'(a,f7.2,a,f7.3)')' T(K)=',T,'P(MPa)=',P
-	write(61,*)'  T(K)   P(MPa)'
-	write(61,'(f8.2,f8.3)')T,P
+	write(643,*)'  T(K)   P(MPa)'
+	write(643,'(f8.2,f8.3)')T,P
 	xInf=zeroTol
 	do iPure=1,nc
 		sum=0
@@ -1467,8 +1467,8 @@
 	enddo
 	if(nc==2 .and. LOUDER)write(6 ,*)'   x1      x2       hE      gMix         gE       gIs        LnGam(i)'
 	if(nc==3 .and. LOUDER)write(6 ,*)'   x1      x2      x3      hE      gMix         gE       gIs        LnGam(i)'
-	if(nc==2)write(61,*)'   x1      x2       hE      gMix         gE       gIs        LnGam(i)'
-	if(nc==3)write(61,*)'   x1      x2      x3      hE      gMix         gE       gIs        LnGam(i)'
+	if(nc==2)write(643,*)'   x1      x2       hE      gMix         gE       gIs        LnGam(i)'
+	if(nc==3)write(643,*)'   x1      x2      x3      hE      gMix         gE       gIs        LnGam(i)'
 
 	write(* ,'(a,a)')'    xi    eta  vTotCc        F      lnGam(1,2)   lnGamRep(1,2)    lnGamAtt(1,2)','  lnGamAssoc(1,2)    ralph(1,2)'
 
@@ -1509,12 +1509,12 @@
 			gMix=gIs+gE
 			hE=hRes_RT-hIs
 			!if(LOUDER)write(* ,611)(x(i),i=1,nc),hE,gMix,gE,gIs,(rLnGam(i),i=1,nc)
-			write(61,611)(x(i),i=1,nc),hE,gMix,gE,gIs,(rLnGam(i),i=1,nc)
+			write(643,611)(x(i),i=1,nc),hE,gMix,gE,gIs,(rLnGam(i),i=1,nc)
 			write(* ,612)x(1),eta, vTotCc, Fassoc, (rLnGam(i),i=1,nc),(rLnGamRep(i),i=1,nc),(rLnGamAtt(i),i=1,nc),(rLnGamAssoc(i),i=1,nc),(ralph(i),i=1,nc)
 		enddo  !iX1
 	enddo !iX3
 
-	CLOSE(61)
+	CLOSE(643)
 	write(*,*)'OutFile=',TRIM(outfile)
 	pause 'Check results in OutFile.'   
 	RETURN
@@ -1560,7 +1560,7 @@
 	endif
 	gmol(1)=1				     !Arbitrarily setting 1 mole for basis.
 	outFile=TRIM(masterDir)//'\output\Isochore.txt'
-	open(61,file=outFile)
+	open(644,file=outFile)
 	!open(666,file='debugData.txt')
 	!WRITE(6,*)'ENTER packing fraction   '
 	!READ(5,*)eta
@@ -1574,9 +1574,9 @@
 	if(eta > etaMax)print*,'VpIter: etaMax < eta=',eta
 	if(eta > etaMax)goto 10
 	write(* ,*)'rho(g/cc) =',rhoLiqG_cc,' V(cc/mol) = ',vTotCc
-	write(61,*)'rho(g/cc) =',rhoLiqG_cc,' V(cc/mol) = ',vTotCc
+	write(644,*)'rho(g/cc) =',rhoLiqG_cc,' V(cc/mol) = ',vTotCc
 	if(LOUD)write(* ,*)'  T(K),      pMpa,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT,    CvRes/R,     (dP/dRho)/RT'
-	write(61,*)'  T(K),      pMpa,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT,    CvRes/R,     (dP/dRho)/RT'
+	write(644,*)'  T(K),      pMpa,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT,    CvRes/R,     (dP/dRho)/RT'
 	iTemp=0
 	!do while(iErr.eq.0)
 	do iTemp=1,nList
@@ -1590,34 +1590,34 @@
 		if(trInv.le.0)exit
 		tKelvin=TC(1)/trInv	
 		isZiter=1  !avoid ln(-ve Z) during first call.
-		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,zFactor,iErrFu)
+		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 		if(iErrFu)exit
 		pNew = zFactor*8.314*tKelvin/vTotCc
 		if(LOUD)write(* ,601)tKelvin,pNew,zFactor,uRes_RT*tKelvin/TC(1),aRes_RT
-		write(61,601)tKelvin,pNew,zFactor,uRes_RT*tKelvin/TC(1),aRes_RT
+		write(644,601)tKelvin,pNew,zFactor,uRes_RT*tKelvin/TC(1),aRes_RT
 	enddo !new temperatures
 	if(LOUD)write(*,*)'  T(K)    PMPa      Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R' !   Sdep'    
-	write(61,'(a)')'  T(K)    PMPa      Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R    HRes/RT'    
+	write(644,'(a)')'  T(K)    PMPa      Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R    HRes/RT'    
 	print*,'Enter Tstart,Tstop,increment'
 	read*,tStart,tStop,tInc
 	tKelvin=tStart-tInc
 	do while(tKelvin <= tStop)
 		tKelvin=tKelvin+tInc
 		isZiter=1 !=> derivative props moved separate from ln(Z)
-		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,zFactor,iErrFu)
+		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 		if(iErrFu)exit
 		if(isTPT)call NUMDERVS(NC,gMol,tKelvin,1/vTotCc,zFactor,cmprsblty,iErrNum)	!
 !		if(isTPT)print*,'Isotherm: CvRes_R,pas=',CvRes_R
 		pNew = zFactor*rGas*tKelvin/vTotCc
 		if(LOUD)write(* ,602)tKelvin,pNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R
-		write(61,602)tKelvin,pNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,hRes_RT
+		write(644,602)tKelvin,pNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,hRes_RT
 	!DoublePrecision uRes_RT, sRes_R, aRes_RT, hRes_RT, CpRes_R, cvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)
 	enddo
 601	format(f11.4,5(',',f11.4))
 602	FORMAT(2F9.3,1x,1(F7.4),8(F9.4,1X))      
 86	continue
 	if(LOUD)pause 'Your results are stored in Isochore.txt'
-	close(61)
+	close(644)
 	!close(666)
 	errMsgPas=errMsg(iErrCode)
 	if(iErrCode.ne.0)then
@@ -1660,7 +1660,7 @@
 	endif
 	gmol(1)=1				     !Arbitrarily setting 1 mole for basis.
 	outFile=TRIM(masterDir)//'\output\isobar.txt'
-	open(61,file=outFile)
+	open(645,file=outFile)
 	!open(666,file='debugData.txt')
 	!WRITE(6,*)'ENTER packing fraction   '
 	!READ(5,*)eta
@@ -1670,7 +1670,7 @@
 10	WRITE(6,*)'ENTER Pressure (MPa)   '
 	READ(5,*)pMPa
 	if(LOUDER)write(* ,*)'  T(K),      rhog/cc,     zFactor,   (A-Aig)/RT,  (U-Uig)/RTc,    eta' !   CvRes/R,     (dP/dRho)/RT'
-	write(61,'(a155)')'  T(K),     rhog/cc,     zFactor,   (A-Aig)/RT,  (U-Uig)/RTc,      eta'	     
+	write(645,'(a155)')'  T(K),     rhog/cc,     zFactor,   (A-Aig)/RT,  (U-Uig)/RTc,      eta'	     
 	iTemp=0
 	!do while(iErr.eq.0)
 	do iTemp=1,nList
@@ -1693,10 +1693,10 @@
 		if( ierFugi(1) )exit
 		rhoNew = pMPa*rMw(1)/(zFactor*rGas*tKelvin)
 		if(LOUDER)write(* ,601)tKelvin,rhoNew,zFactor,aRes_RT,uRes_RT*tKelvin/TC(1),etaPass
-		write(61,601)tKelvin,rhoNew,zFactor,aRes_RT,etaPass,uRes_RT*tKelvin/TC(1),etaPass
+		write(645,601)tKelvin,rhoNew,zFactor,aRes_RT,etaPass,uRes_RT*tKelvin/TC(1),etaPass
 	enddo !new temperatures
 	if(LOUDER)write(*,*)'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R' !   Sdep'    
-	write(61,'(a)')'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes/R    HRes/RT     eta'    
+	write(645,'(a)')'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes/R    HRes/RT     eta'    
 	print*,'Enter Tlo,Thi,increment'
 	read*,Tlo,Thi,tInc
 	tKelvin=Thi+tInc
@@ -1723,14 +1723,14 @@
 		call NUMDERVS(NC,gMol,tKelvin,rhoMol_cc,zFactor,cmprsblty,iErrNum)	!It's just way easier and more reliable to get derivative properties numerically.
 		if(isTPT.and.initCall)print*,'Isotherm: CvRes_R,pas=',CvRes_R
 		if(LOUDER)write(* ,602)tKelvin,rhoNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,eta
-		write(61,602)tKelvin,rhoG_cc,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,hRes_RT,etaPass
+		write(645,602)tKelvin,rhoG_cc,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,hRes_RT,etaPass
 		initCall=0
 	!DoublePrecision uRes_RT, sRes_R, aRes_RT, hRes_RT, CpRes_R, cvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)
 	enddo
 601	format(f11.4,6(',',f11.4))
 602	FORMAT(F9.3,f9.6,1x,1(F7.4),9(F9.4,1X))      
 86	continue
-	close(61)
+	close(645)
 	!close(666)
 	IF(LOUDER)PRINT*,'Output file:',TRIM(outFile)
 	if(LOUDER)pause 'Success! Check output.'
@@ -1780,12 +1780,12 @@
 	endif
 	outFile=TRIM(masterDir)//'\output\Isotherm.txt'
 	if(LOUD)write(*,*)'Output in:',TRIM(outFile)
-	open(61,file=outFile)
+	open(651,file=outFile)
 	write(6,*)'ENTER TEMPERATURE '
 	read(5,*)tKelvin
 	tr=tKelvin/TC(1)
 	!tKelvin=TC(1)*tr
-	write(61,*)'Temperature =',tKelvin,' Tc = ',TC(1)
+	write(651,*)'Temperature =',tKelvin,' Tc = ',TC(1)
 	etaList(1)=1D-11
 	dEta=etaMax/100
 	do I=2,nEta	!nEta is a parameter
@@ -1794,15 +1794,15 @@
 	gmol(1)=1
 	isZiter=1
 	if(LOUD)write(* ,600)	!!!!!!!!!!!!!!!!!!!!!!!! Write Header !!!!!!!!!!!!!!!!1
-	write(61,600)
+	write(651,600)
 	if(bVolCC_mol(1) < 1 .and. LOUD)print*,'Isotherm: 0~bVol=',bVolCc_mol(1)
 	if(initCall .and. LOUD)print*,'Isotherm: bVol=',bVolCc_mol(1)
 	do i=1,nEta   
-		if (I==1) write(61,600)
+		if (I==1) write(651,600)
 		eta=etaList(i)
 		rhoMol_cc=eta/bVolCC_mol(1)
 			if(initCall.and.Loud .and. i < 3)print*,'Isotherm: Calling FuVtot. eta,rhoMol_cc=',eta,rhoMol_cc
-		call FuVtot(isZiter,tKelvin,1/rhoMol_cc,gmol,NC,FUGC,Z,iErrFu)
+		call FuVtot(isZiter,tKelvin,1/rhoMol_cc,gmol,NC,FUGC,Z,aRes,uRes,iErrFu)
 		if(isTPT)call NUMDERVS(NC,gMol,tKelvin,rhoMol_cc,Z,cmprsblty,iErrNum)	!
 !		if(isTPT)print*,'Isotherm: cmprsblty,pas=',cmprsblty,cmprsbltyPas
 !		if(isTPT)cmprsblty=cmprsbltyPas
@@ -1810,9 +1810,9 @@
 		if(iEosOpt==10)DUONKT=uRes_RT		
 		if(iEosOpt==10)DAONKT=aRes_RT		
 		if(LOUD)write(* ,601) eta,PMpa,Z,DUONKT,DAONKT,rhoMol_cc,cmprsblty !cmprsblty from GlobConst
-		write(61,601) eta,PMpa,Z,DUONKT,DAONKT,rhoMol_cc,cmprsblty
+		write(651,601) eta,PMpa,Z,DUONKT,DAONKT,rhoMol_cc,cmprsblty
 	enddo
-	close(61)
+	close(651)
 	if(LOUD)pause 'Your results are stored in Isotherm.txt'
 86	continue
 	errMsgPas=errMsg(ier)
@@ -1854,7 +1854,7 @@
 		return
 	endif
 	outFile=TRIM(masterDir)//'\output\VCoeff.txt'
-	open(61,file=outFile)
+	open(652,file=outFile)
 	!WRITE(6,*)'ENTER INITIAL REDUCED TEMPERATURE   '
 	!READ(5,*)tr
 	Tr = 0.4
@@ -1883,11 +1883,11 @@
 				if(LOUD)write(*,*)ErrMsg(2)
 				return
 			endif
-			CALL FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,iErr)
+			CALL FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)
 			B2grid(I)=(Z-1.d0)/eta
 		enddo
 		if (J.EQ.1) WRITE(6 ,600)		
-		if (J.EQ.1) WRITE(61,600)		
+		if (J.EQ.1) WRITE(652,600)		
 		do k=1,(nEta-1)
 			deltaEta(k)=etaList(k+1)-etaList(k)
 			B3grid(k)=(B2grid(k+1)-B2grid(k))/deltaEta(k)
@@ -1896,9 +1896,9 @@
 		B2=B2grid(1) *bVolCC_mol(1)
 		B3=B3grid(1) *bVolCC_mol(1)**2
 		WRITE(6  ,601)tKelvin,betaRed,B2,B3	
-		WRITE(61,601)tKelvin,betaRed,B2,B3	
+		WRITE(652,601)tKelvin,betaRed,B2,B3	
 	enddo
-	close(61)
+	close(652)
 	if(LOUD)pause 'Your results are stored in VCoeff.txt'
 
 600 format(1x,'T(K)',6x,'1/Tr',4x,'B2(cc/mol)',2x,'B3(cc/mol)^2')			 
@@ -1934,11 +1934,11 @@
 		goto 86
 	endif
 	outFile=TRIM(masterDir)//'\output\Isotherm.txt'
-	open(61,file=outFile)
+	open(653,file=outFile)
 	WRITE(6,*)'ENTER temperature   '
 	READ(5,*)trInv
 	tKelvin=TC(1)/trInv
-	write(61,*)'Temperature =',tKelvin,' Tc = ',TC(1)
+	write(653,*)'Temperature =',tKelvin,' Tc = ',TC(1)
 	!Note: This is wacky since it is easy to compute Z,U given rho,
 	!but I don't have a standard interface for ZCalc of all eosOpt's.
 	!I only have a standard interface for fugi.
@@ -1947,7 +1947,7 @@
 	LIQ=1
 	tol=0.001
 	pOld=255	!initialize here so we bootstrap
-	write(61,*)'  1/Tr,      pMpa,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT'
+	write(653,*)'  1/Tr,      pMpa,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT'
 	ieta=0
 	do while(ier.eq.0)
 		pOld=pOld/2  !for boot strapping from hi temp to low, move the next guess down.
@@ -1985,12 +1985,12 @@
 		enddo !while(absDev.gt.tol)
 		if(LOUD)write(* ,*)'  1/Tr,      pMpa,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT'
 		if(LOUD)write(* ,601)trInv,pNew,zFactor,dUoNkT*tKelvin/TC(1),dAoNkT
-		write(61,601)trInv,pNew,zFactor,dUoNkT*tKelvin/TC(1),dAoNkT
+		write(653,601)trInv,pNew,zFactor,dUoNkT*tKelvin/TC(1),dAoNkT
 	enddo !new temperatures
 601	format(f7.4,5(',',f11.4))
 86	continue
 	if(LOUD)pause 'Your results are stored in Isotherm.txt'
-	close(61)
+	close(653)
 	errMsgPas=errMsg(ier)
 	if(ier.ne.0)then
 		if(LOUD)write(*,*)errMsgPas
@@ -2141,13 +2141,15 @@
 
 	outFile=TRIM(masterDir)//'\output\KijDb.txt'
 	if(DEBUG)outFile='c:\spead\calceos\output\KijDb.txt'
-	if(initial)then
+	if(initial==1)then
         initial=0
-        open(61,file=outFile)
+        open(674,file=outFile)
     else
-        open(61,file=outFile,ACCESS='APPEND') ! e.g. JaubertAq is appended to Jaubert if during the same run.
+        open(674,file=outFile,ACCESS='APPEND') ! e.g. JaubertAq is appended to Jaubert if during the same run.
     endif
-	write(61,*)'    ID1	  ID2  nConv      Kij       stdErr   %PAADP    rmsErrP    dStdErr'
+	if(LOUDER)print*,'KijDB: outFile=',TRIM(outFile) 
+	if(LOUDER)write(6,*)'    ID1	  ID2  nConv      Kij       stdErr   %PAADP    rmsErrP    dStdErr'
+	write(674,*)'    ID1	  ID2  nConv      Kij       stdErr   %PAADP    rmsErrP    dStdErr'
 
 	if(iEosOpt.eq.4)then
 		write(*,*)'Options:  1-kij, 2-kij,Hij, 3-kij,Hij,kTij'
@@ -2177,7 +2179,7 @@
 			print*,'KijDb: elapsed time(sec)=',timeTot
 			if(iSystem > 0)paadTot=paadTot/iSystem
 			write(*,'(a,i9,2f10.2)')' Overall nConverged,paad=',nConvergedTot,paadTot
-			close(61)
+			close(674)
 			close(661)
 			if(ioErr== -1)then
 				pause 'KijDb: end of file.'
@@ -2235,7 +2237,7 @@
 		if(iErrGet > 0 .or. iErrCrit.ne.0 .or. iErrLookup > 0 .or. iOptimize < 0)then
 			write(*,*)'KijDB Error: failed to get required pure props.'
 			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)								 
-			write(61,607)id(1),id(2),0,zero,eightySix
+			write(674,607)id(1),id(2),0,zero,eightySix
 			DO I=1,nPtsBipDat	!read the points but do nothing so we can cycle to next
 				!READ(51,'(a77)')dumString
 				READ(51,*)tDat(I),PDAT(I),XDAT(I),YDAT(I)
@@ -2305,8 +2307,9 @@
 		call KIJVAL(nc,nParms,parm,deviate,PAADP,DstdErr,LastCall)	!nConverged passed by BIPs module.
 		if(nConverged > 0)rmsErr=SQRT( DFLOAT(nPtsBipDat)/nConverged )*RmsJre(nPtsBipDat,deviate) !adjust for nConverged.nPts needed to sum over all elements.
 		!write(* ,607)id(1),id(2),nConverged,(parm(i),i=1,nParms),(StdErr(i),i=1,nParms),PAADP,rmsErr,DstdErr,name(1),name(2)
-		if(nParms==1)write(61,608)id(1),id(2),nConverged,(parm(i),i=1,1),(StdErr(i),i=1,1),PAADP,rmsErr,DstdErr,name(1),name(2)
-		if(nParms==2)write(61,608)id(1),id(2),nConverged,(parm(i),i=1,2),PAADP,rmsErr,DstdErr,name(1),name(2)
+		if(LOUDER)print*,'KijDB: back from KijVal.'
+		if(nParms==1)write(674,608)id(1),id(2),nConverged,(parm(i),i=1,1),(StdErr(i),i=1,1),PAADP,rmsErr,DstdErr,name(1),name(2)
+		if(nParms==2)write(674,608)id(1),id(2),nConverged,(parm(i),i=1,2),PAADP,rmsErr,DstdErr,name(1),name(2)
 		if(nParms==2)write(6 ,608)id(1),id(2),nConverged,(parm(i),i=1,2),PAADP,rmsErr,DstdErr,name(1),name(2)
 		write(6 ,'( 3i5,2F10.2,11(1x,E11.4) )')iSystem,id(1),id(2),PAADP,rmsErr,(parm(i),i=1,nParms)
 		paadTot=paadTot+paadP
@@ -2314,7 +2317,7 @@
 	enddo !while(ier.eq.0) loop over all data sets in db
 
 	close(51)
-	close(61)
+	!close(61)
 	if(LOUDER)pause 'These results are tabulated in KijDb.txt.'
 	!restore stored nc,id
 	NC=ncStore
@@ -2429,11 +2432,11 @@
 	if(DEBUG)outFile='c:\spead\calceos\output\KijDb.txt'
 	if(initial)then
         initial=0
-        open(61,file=outFile)
+        open(654,file=outFile)
     else
-        open(61,file=outFile,ACCESS='APPEND') ! e.g. JaubertAq is appended to Jaubert if during the same run.
+        open(654,file=outFile,ACCESS='APPEND') ! e.g. JaubertAq is appended to Jaubert if during the same run.
     endif
-	write(61,*)'   ID1   ID2  nConv      Kij       stdErr   %PAALDK    rmsErrP    dStdErr'
+	write(654,*)'   ID1   ID2  nConv      Kij       stdErr   %PAALDK    rmsErrP    dStdErr'
 
 	if(iEosOpt==4)then
 		write(*,*)'Options:  1-kij, 2-kij,Hij, 3-kij,Hij,kTij'
@@ -2496,7 +2499,7 @@
 		if(iErrGet > 0 .or. iErrCrit > 0 .or. ierLookup > 0)then
 			write(*,*)'KijDB Error: failed to get required pure props.'
 			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)								 
-			write(61,607)id(1),id(2),0,zero,eightySix
+			write(654,607)id(1),id(2),0,zero,eightySix
 			cycle
 		endif
 		iPt=0
@@ -2603,7 +2606,7 @@
 			if(nConverged > 0)rmsErr=SQRT( ENORM(nConverged,deviate) )
 			if(LOUDER)write(*,*)'iErrCode,rmsErr',iErrCode,rmsErr
 		elseif(ABS(parm(1)) < zeroTol)then
-			write(61,*)'KijDbLLE: warning, parm(1)=0'
+			write(654,*)'KijDbLLE: warning, parm(1)=0'
 		endif ! iOptimize
 		if(iEosOpt.le.3.or.iEosOpt.eq.7)then
 			if(LOUDER)write(* ,*)'   KIJ','      ',' KTIJ','       ',' xsBIP12',' xsBIP21'
@@ -2622,16 +2625,16 @@
 		if(nConverged > 0)rmsErr=SQRT( DFLOAT(nPtsBipDat)/nConverged )*RmsJre(nPtsBipDat,deviate) !adjust for nConverged.nPts needed to sum over all elements.
 		!write(* ,607)id(1),id(2),nConverged,(parm(i),i=1,nParms),(StdErr(i),i=1,nParms),PAADP,rmsErr,DstdErr,name(1),name(2)
 		if(nParms==1)write(6 ,608)id(1),id(2),nConverged,(parm(i),i=1,1),(StdErr(i),i=1,1),PAALDK,PBIASK,DstdErr,name(1),name(2)
-		if(nParms==1)write(61,608)id(1),id(2),nConverged,(parm(i),i=1,1),(StdErr(i),i=1,1),PAALDK,PBIASK,DstdErr,name(1),name(2)
-		if(nParms==2)write(61,609)id(1),id(2),nConverged,(parm(i),i=1,2),PAALDK,PBIASK,DstdErr,name(1),name(2)
+		if(nParms==1)write(654,608)id(1),id(2),nConverged,(parm(i),i=1,1),(StdErr(i),i=1,1),PAALDK,PBIASK,DstdErr,name(1),name(2)
+		if(nParms==2)write(654,609)id(1),id(2),nConverged,(parm(i),i=1,2),PAALDK,PBIASK,DstdErr,name(1),name(2)
 		if(nParms==2)write(6 ,609)id(1),id(2),nConverged,(parm(i),i=1,2),PAALDK,PBIASK,DstdErr,name(1),name(2)
 		write(6 ,'( 3i5,2F10.2,11(1x,E11.4) )')nSystems,id(1),id(2),PAALDK,PBIASK,(parm(i),i=1,nParms)
 	enddo !while(ier.eq.0) loop over all data sets in db
-	write(61,*)'nSystem total = ',nSystems
+	write(654,*)'nSystem total = ',nSystems
 	write( * ,*)' #systems=',nSystems
 	!write(661,*)' #systems=',nSystems
 	close(51)
-	close(61)
+	close(654)
 	!close(661)
 	write(*,*)'Pointwise details in: ',TRIM(outFilePts)
 	write(*,*)'Kij Summary in: ',TRIM(outFile)
@@ -2743,7 +2746,7 @@
 
 	outFile=TRIM(masterDir)//'\output\KijDb.txt'
 	if(DEBUG)outFile='c:\spead\calceos\output\KijDb.txt'
-	iSumUnit=61
+	iSumUnit=672
 	if(initial)then
         initial=0
         open(iSumUnit,file=outFile)
@@ -2967,11 +2970,11 @@
 		if(nParms==2)write(6 ,609)id(1),id(2),nConverged,(parm(i),i=1,2),PAALDK,PBIASK,DstdErr,name(1),name(2)
 		write(6 ,'( 3i5,2F10.2,11(1x,E11.4) )')nSystems,id(1),id(2),PAALDK,PBIASK,(parm(i),i=1,nParms)
 	enddo !while(ier.eq.0) loop over all data sets in db
-	write(61,*)'nSystem total = ',nSystems
+	write(iSumUnit,*)'nSystem total = ',nSystems
 	write( * ,*)' #systems=',nSystems
 	!write(661,*)' #systems=',nSystems
 	close(51)
-	close(61)
+	close(iSumUnit)
 	!close(661)
 	write(*,*)'Pointwise details in: ',TRIM(outFilePts)
 	write(*,*)'Kij Summary in: ',TRIM(outFile)
@@ -4341,14 +4344,14 @@
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 
 	outFile=TRIM(masterDir)//'\output\TPXY.txt'
-	open(61,file=outFile)
+	open(617,file=outFile)
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x, 'etaL',6x, 'etaV')
 601	FORMAT(1X,1(F7.2,2X,F10.6,1X),4(F9.5,1X),i5)
 1000  CONTINUE
 	WRITE(6,*)'ENTER COMPOSITION   '
 	READ(5,*)(X(I),I=1,NC)
 	if(LOUD)write(*,600)
-	write(61,600)
+	write(617,600)
 	MAXIT=1111
 	zero=0
 
@@ -4357,13 +4360,13 @@
 	CALL BootBP(tMax,x,NC,INIT,pMax,ITMAX,y,ier,0)
 !c	CALL ErrCheck(ier,iflag)
 	if(LOUD)write(* ,601)tMax,pMax,X(1),Y(1),etaL,etaV,ier(1)
-	write(61,601)tMax,pMax,X(1),Y(1),etaL,etaV,ier(1)
+	write(617,601)tMax,pMax,X(1),Y(1),etaL,etaV,ier(1)
 	if(ier(1).eq.0)init=1
 
 !C      PAUSE
 
 	if(LOUD)write(*,*)'Starting dew point curve.'
-	write(61,*)'Dew points.'
+	write(617,*)'Dew points.'
 	do i=1,nc
 		Y(i)=X(i)
 	enddo
@@ -4373,12 +4376,12 @@
 	CALL BootDT(tMax,X,NC,INIT,pMax,ITMAX,Y,ier,0)
 !c	CALL ErrCheck(ier,iflag)
 	if(LOUD)write(* ,601)tMax,pMax,X(1),Y(1),etaL,etaV,ier(1)
-	write(61,601)tMax,pMax,X(1),Y(1),etaL,etaV,ier(1)
+	write(617,601)tMax,pMax,X(1),Y(1),etaL,etaV,ier(1)
 	if(ier(1).eq.0)init=1
 
 86	continue
 	if(LOUD)pause 'These results are tabulated in TPXY.txt.'
-	CLOSE(61)   
+	CLOSE(617)   
 	RETURN
 	END
 
@@ -4457,7 +4460,7 @@
 		vTotCc=rMwAvg/rhoG_cc
 		gmol(1)=1
 		isZiter=0 !=>compute derivative props
-		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGCL,zFactor,iErr)
+		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGCL,zFactor,aRes,uRes,iErr)
 		pNew = zFactor*rGas*tKelvin/vTotCc
 		if(LOUDER)write(* ,612)tKelvin,pNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R
 		!write(61,612)tKelvin,pNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,hRes_RT
@@ -4714,7 +4717,7 @@
 		!eta=rhoLiq/rMw*bVolEff(0)
 		!zRef=(  1+eta*( zRefCoeff(1)+eta*(zRefCoeff(2)+eta*zRefCoeff(3)) )  )/(1-eta)**3
 		tHi=1e11 !get zRef assuming tHi ~ infinity.
-		call FuVtot(isZiter,tHi,vTotCc,gmol,NC,FUGC,zRef,iErr)
+		call FuVtot(isZiter,tHi,vTotCc,gmol,NC,FUGC,zRef,aRes,uRes,iErr)
 		zLiq=zRef
 		beps=0
 		dBeps=0.05 
@@ -4723,7 +4726,7 @@
 			beps=beps+dBeps
 			!tK=eokWells(1,1)/beps !only works for single site molecule (e.g. xenon)
 			!zLiq=ZCalcTpt(rhoLiq,tK,aDepLiq,uDepLiq,ierZ)
-			call FuVtot(isZiter,tK,vTotCc,gmol,NC,FUGC,zLiq,iErr)
+			call FuVtot(isZiter,tK,vTotCc,gmol,NC,FUGC,zLiq,aRes,uRes,iErr)
 			tInv=1000/tK
 			if(LOUD)write(*,*)tInv,zLiq !,eta
 		enddo
@@ -4734,7 +4737,7 @@
 		rhoVap=pMPa*rMw(1)/(rGas*tSatK) !assume pMPa guess is accurate and ig law
 		!zVap=ZCalcTpt(rhoVap,tK,aDepVap,uDepVap,ierZ)
 		gmol(1)=rhoVap/rMw(1)
-		call FuVtot(isZiter,tK,vTotCc,gmol,NC,FUGC,zVap,iErr)
+		call FuVtot(isZiter,tK,vTotCc,gmol,NC,FUGC,zVap,aRes,uRes,iErr)
 		!aDepVap+zVap-1-ln(zVap) = aDepLiq+zliq-1-ln(zLiq)
 		!zLiq = exp(aDepLiq-1-aDepVap)
 		pGuess=zLiq*rGas*tK*rhoLiq/rMw(1)
@@ -5132,7 +5135,7 @@
     end if
 	if(nc.gt.2)return
 	outFile=TRIM(masterDir)//'\output\TPXY.txt'
-	open(61,file=outFile)
+	open(618,file=outFile)
 	open(62,file='c:\spead\speadchart.dat',STATUS='OLD',IOSTAT=ioFileBad)
 	iSpead=1
 	if(ioFileBad)iSpead=0
@@ -5146,7 +5149,7 @@
 	WRITE(6,*)'ENTER TEMPERATURE(K)   '
 	READ(5,*)tK
 	if(LOUD)write(*,600)
-	write(61,600)
+	write(618,600)
 	MAXIT=1111
 	zero=0
 
@@ -5162,7 +5165,7 @@
 	CALL ErrCheck(ier,iflag)
 	if(ier(1).eq.0)init=1
 	write(* ,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
-	write(61,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
+	write(618,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
 	if(iSpead)write(62,'(6(f11.4,a1),i5)')T,tabChar,P,tabChar,X(1),tabChar,Y(1),tabChar,etaL,tabChar,etaV,tabChar,ier(1)
 	DO I=2,(nx-1)
 		X(1)=x1(i)
@@ -5176,7 +5179,7 @@
 		CALL ErrCheck(ier,iflag)
 		if(ier(1).eq.0)init=1
 		write(* ,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
-		write(61,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
+		write(618,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
 		if(iSpead)write(62,'(6(f11.4,a1),i5)')T,tabChar,P,tabChar,X(1),tabChar,Y(1),tabChar,etaL,tabChar,etaV,tabChar,ier(1)
 	enddo
 	X(1)=x1(nx)
@@ -5189,12 +5192,12 @@
 	endif
 	CALL ErrCheck(ier,iflag)
 	write(* ,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
-	write(61,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
+	write(618,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
 	if(iSpead)write(62,'(6(f11.4,a1),i5)')T,tabChar,P,tabChar,X(1),tabChar,Y(1),tabChar,etaL,tabChar,etaV,tabChar,ier(1)
 86	continue
 	print*,'OutFile=',TRIM(outFile)
 	pause 'Check results in OutFile.'
-	CLOSE(61)   
+	CLOSE(618)   
 	close(62)
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x, 'etaL',6x, 'etaV')
 601	FORMAT(1X,1(F7.2,2X,F10.6,1X),4(F9.5,1X),i5)
@@ -5319,7 +5322,7 @@
 	open(51,file=inFile)
 	outFile=TRIM(masterDir)//'\Output\KijDb.txt'
 	if(DEBUG)outFile='c:\spead\calceos\Output\KijDb.txt'
-	open(61,file=outFile)
+	open(619,file=outFile)
 	SipFile=TRIM(masterDir)//'\Input\SipSpead.txt'
 	if(DEBUG)SipFile='c:\spead\calceos\Input\SipSpead.txt'
 	open(72,file=SipFile)
@@ -5388,13 +5391,13 @@
 		call KIIVAL(nc,nParms,parm,deviate,PAADP,pBias,pErrMax,L)
 		print*,'KiiVal done.'
 		write(* ,607)id(1),(parm(i),i=1,nParms),(StdErr(i),i=1,nParms),PAADP,pBias,pErrMax,rmsErr,name(1)
-		write(61,607)id(1),(parm(i),i=1,nParms),(StdErr(i),i=1,nParms),PAADP,pBias,pErrMax,rmsErr,name(1)
+		write(619,607)id(1),(parm(i),i=1,nParms),(StdErr(i),i=1,nParms),PAADP,pBias,pErrMax,rmsErr,name(1)
 		write(72,608)id(1),(parm(i),i=1,nParms),name(1)
         exit
 	enddo !while(ier.eq.0) loop over data sets in db
 
 	close(51)
-	close(61)
+	close(619)
 	close(72)
 	print*,'Success! Output in: ', TRIM(outFile)
 	pause 'These results are tabulated in the output file.'
@@ -5643,7 +5646,7 @@
 	if(nc.ne.2 .and. LOUD)pause 'error - this option is only for 2 compos'
 	if(nc.ne.2)return
 	outFile=TRIM(masterDir)//'\output\TPXY.txt'
-	open(61,file=outFile)
+	open(621,file=outFile)
 	open(62,file='c:\spead\speadchart.dat',STATUS='OLD',IOSTAT=ioFileBad)
 	iSpead=1
 	if(ioFileBad)iSpead=0
@@ -5657,7 +5660,7 @@
 	WRITE(6,*)'ENTER PRESSURE(MPa)   '
 	READ(5,*)pMPa
 	write(*,600)
-	write(61,600)
+	write(621,600)
 	MAXIT=1111
 	zero=0
 
@@ -5671,7 +5674,7 @@
 	endif
 	CALL ErrCheck(ier,iflag)
 	write(* ,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
-	write(61,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
+	write(621,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
 	if(iSpead)write(62,'(6(f11.4,a1),i5)')T,tabChar,P,tabChar,X(1),tabChar,Y(1),tabChar,etaL,tabChar,etaV,tabChar,ier(1)
 	if(ier(1).eq.0)init=1
 
@@ -5688,7 +5691,7 @@
 		endif
 		CALL ErrCheck(ier,iflag)
 		write(* ,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
-		write(61,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
+		write(621,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
 		if(iSpead)write(62,'(6(f11.4,a1),i5)')T,tabChar,P,tabChar,X(1),tabChar,Y(1),tabChar,etaL,tabChar,etaV,tabChar,ier(1)
 		if(ier(1).eq.0)init=1
 	enddo 
@@ -5702,13 +5705,13 @@
 	endif
 	CALL ErrCheck(ier,iflag)
 	if(LOUD)write(* ,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
-	write(61,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
+	write(621,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
 	if(iSpead)write(62,'(6(f11.4,a1),i5)')T,tabChar,P,tabChar,X(1),tabChar,Y(1),tabChar,etaL,tabChar,etaV,tabChar,ier(1)
 
 86	continue
 	print*,'OutFile=',TRIM(outFile)
 	pause 'Check results in OutFile.'
-	CLOSE(61)   
+	CLOSE(621)   
 	close(62)
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x, 'etaL',6x, 'etaV')
 601	FORMAT(1X,1(F7.2,2X,F10.6,1X),4(F9.5,1X),i5)
@@ -5815,11 +5818,11 @@
 	delTr=(0.95d0-TrMin)/nSteps
 	iTrMin=INT(TrMin*100/5)*5
 	outFile=TRIM(masterDir)//'\output\Binodal.txt'
-	open(61,file=outFile)
+	open(631,file=outFile)
 	if(isTPT)write(6 ,'(a,3F9.3)')' G0,G1,e0 ',G0,G1,eta0
-	if(isTPT)write(61,'(a,3F9.3)')'G0,G1,e0 ',G0,G1,eta0
+	if(isTPT)write(631,'(a,3F9.3)')'G0,G1,e0 ',G0,G1,eta0
 	write(*,*)'  T(K)     PsatMPa     rhoVap(g/cc)    rhoLiq(g/cc)'
-	write(61,*)'  T(K)    PsatMPa   rhoVap    rhoLiq(g/cc)'
+	write(631,*)'  T(K)    PsatMPa   rhoVap    rhoLiq(g/cc)'
 	do iStep=1,nSteps
 		tKelvin=(TrMin+delTr*(iStep-1))*Tc(1)
 		call PsatEar(tKelvin,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode)
@@ -5829,7 +5832,7 @@
 		endif
 		!call EqualArea(NC,gmol,tKelvin,Psat,vLCc,vVCc)
 		write(* ,'(F8.2,1x,3F9.6,i3)')tKelvin,pMPa,rhoV,rhoL,ierCode
-		write(61,'(F8.2,1x,3F9.6,i3)')tKelvin,pMPa,rhoV,rhoL,ierCode
+		write(631,'(F8.2,1x,3F9.6,i3)')tKelvin,pMPa,rhoV,rhoL,ierCode
 	enddo
 	tKelvin=0.96*Tc(1)
 	do while(tKelvin.gt.0)
@@ -5837,9 +5840,9 @@
 		!call EqualArea(NC,gmol,tKelvin,Psat,vLCc,vVCc)
 		write(*,'(F8.2,1x,3F9.6,i3)')tKelvin,pMPa,rhoV,rhoL,ierCode
 		if(pMPa > 1.D-3)then
-			write(61,'(F8.2,1x,3F9.6,i3)')tKelvin,pMPa,rhoV,rhoL,ierCode
+			write(631,'(F8.2,1x,3F9.6,i3)')tKelvin,pMPa,rhoV,rhoL,ierCode
 		else
-			write(61,'(F8.2,1x,3(E11.4,1x),i3)')tKelvin,pMPa,rhoV,rhoL,ierCode
+			write(631,'(F8.2,1x,3(E11.4,1x),i3)')tKelvin,pMPa,rhoV,rhoL,ierCode
 		endif
 		write(*,*)'ENTER Temperature (K). (-ve to stop) '
 		READ(*,*) tKelvin
@@ -5847,8 +5850,8 @@
 	rhoc=Pc(1)*rMw(1)/( Zc(1)*8.31434*Tc(1) )
 	etac=rhoc/rMw(1)*bVolCc_Mol(1)
 	write(* ,'(F8.2,1x,5F9.6)')tc(1),pc(1),rhoc,rhoc,Zc(1),etac
-	write(61,'(F8.2,1x,5F9.6)')tc(1),pc(1),rhoc,rhoc,Zc(1),etac
-	close(61) 
+	write(631,'(F8.2,1x,5F9.6)')tc(1),pc(1),rhoc,rhoc,Zc(1),etac
+	close(631) 
 	if(LOUDER)write(*,*) 'Your results are in ',TRIM(outFile)
 	if(LOUDER)pause
 86	return 
