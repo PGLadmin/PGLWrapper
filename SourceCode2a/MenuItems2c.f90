@@ -128,7 +128,8 @@
 	do it=130,1,-1
 		iBifurcate=0
 		tKelvin=it*TC(1)/100
-		CALL FUGI(tKelvin,PMPa,X,NC,LIQ,FUGC,zFactor,ier)
+		Call FugiTP( tKelvin,PMPa,X,NC,LIQ,rhoMol_cc,zFactor,aRes,fugc,uRes,iErrF )
+		!CALL FUGI(tKelvin,PMPa,X,NC,LIQ,FUGC,zFactor,ier)
 		vNew=rGas*tKelvin*zFactor/PMPa
 		if(it==1)then
 			vOld2=vNew
@@ -158,7 +159,9 @@
 	do it=1,130 
 		iBifurcate=0
 		tKelvin=it*TC(1)/100
-		CALL FUGI(tKelvin,PMPa,X,NC,LIQ,FUGC,zFactor,ier)
+		Call FugiTP( tKelvin,PMPa,X,NC,LIQ,rhoMol_cc,zFactor,aRes,fugc,uRes,iErrF )
+		ier(1)=iErrF
+		!CALL FUGI(tKelvin,PMPa,X,NC,LIQ,FUGC,zFactor,ier)
 		vNew=rGas*tKelvin*zFactor/PMPa
 		if(it==1)then
 			vOld2=vNew
@@ -558,7 +561,7 @@
 	LOGICAL LOUDER
 	DoublePrecision fugcV(NMX),fugcL(NMX)
 	DoublePrecision X(NMX),Y(NMX),VLK(NMX),wFrac(NMX)
-	Integer ier(20)
+	!Integer ier(20)
 	COMMON/eta/etaL,etaV,zLiqDum,zVapDum
 	common/eta2/eta
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
@@ -580,29 +583,21 @@
 	READ(5,*)(X(J),J=1,NC)
 	WRITE(52,*)'LIQD COMPOSITIONS '
 	write(52,*)(X(J),J=1,NC)
-	rMwAvg=0
-	do i=1,nc
-		rMwAvg=rMwAvg+x(i)*rMw(i)
-	enddo
-	do i=1,nc
-		wFrac(i)=x(i)*rMw(i)/rMwAvg
-	enddo
+	bMix  =SUM( x(1:NC)*bVolCC_mol(1:NC) )
+	rMwAvg=SUM( x(1:NC)*rMw(1:NC) )
+	wFrac(1:NC)=x(1:NC)*rMw(1:NC)/rMwAvg
 	write(*,*)'Wt Fracs'
 	write(*,'(11f8.5)')(wFrac(i),i=1,nc)
 	if(initCall)print*,'Fiter: calling Fugi for liq. T(K)=',T
-	CALL Fugi(T,P,X,NC,LIQ,fugcL,ZL,ier)	  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	CALL FugiTP( T,P,X,NC,LIQ,rhoLo,ZL,aRes,fugcL,uRes,iFlag )
 	if(initCall)write(*,'(a,f8.2,E12.4)')' Fiter: called Fugi for liq. T(K),ZL=',T,ZL
-	etaLo=eta
-	rhoLo=P*rMwAvg/(zL*rGas*T)
-	iFLAG=0
-	DO I=1,6
-		IF (ier(I) > 9)IFLAG=1
-	enddo
-	IF (IFLAG==1 )then
-		WRITE(*,'(a,22I4)')'ier',(ier(I),I=1,12)
+	IF (IFLAG > 0)then
+		WRITE(*,'(a,22I4)')'iErrFugi=',iFlag
 		WRITE(*,*)'error in lower phase calculation'
 		goto 81 
 	endif
+	etaLo=rhoLo*bMix
+	rhoLo=rhoLo*rMwAvg ! Output as g/cc.
 	DHL=hRes_RT  !these are passed through GlobConst
 	DSL=sRes_R
 	CvL=CvRes_R
@@ -618,20 +613,17 @@
 	READ(5,*)(Y(I),I=1,NC)
 	WRITE(52,*)'Upper PHASE COMPOSITIONS    '
 	write(52,*)(Y(I),I=1,NC)
-	CALL Fugi(T,P,Y,NC,iPhaseUp,fugcV,ZV,ier)
-	rMwAvg=0
-	do i=1,nc
-		rMwAvg=rMwAvg+y(i)*rMw(i)
-	enddo
-	etaUp=eta
-	rhoUp=P*rMwAvg/(zV*rGas*T)
-	if(iPhaseUp.eq.1)etaUp=etaL
-	IFLAG=0
-	DO I=1,6
-		IF (ier(I) > 9)IFLAG=1
-	enddo
-	IF (IFLAG==1 )then
-		WRITE(*,'(a,22I4)')'ier',(ier(I),I=1,12)
+	!CALL Fugi(T,P,Y,NC,iPhaseUp,fugcV,ZV,ier)
+	CALL FugiTP( T,P,X,NC,iPhaseUp,rhoUp,ZV,aRes,fugcV,uRes,iFlag )
+	bMix  =SUM( y(1:NC)*bVolCC_mol(1:NC) )
+	rMwAvg=SUM( y(1:NC)*rMw(1:NC) )
+	!wFrac(1:NC)=y(1:NC)*rMw(1:NC)/rMwAvg
+	etaUp=rhoUp*bMix
+	rhoUp=rhoUp*rMwAvg
+	IF(iFlag==2 .and. LOUDER)write(*,*)'ERROR ALL UPPER PHASE'
+	IF(iFlag==3 .and. LOUDER)write(*,*)'ERROR ALL LOWER PHASE'
+	IF (IFLAG > 0 )then
+		WRITE(*,'(a,22I4)')'iErrFugi=',iFlag
 		WRITE(*,*)'error in upper phase calculation'
 		goto 81 
 	endif
@@ -645,8 +637,6 @@
 	!C        7 - eta > 0.53
 	!C		11 - goldenZ instead of real Z.
 
-	IF(ier(2)==1 .and. LOUDER)write(*,*)'ERROR ALL UPPER PHASE'
-	IF(ier(3)==1 .and. LOUDER)write(*,*)'ERROR ALL LOWER PHASE'
 	!C      PAUSE
 	rLogInfinity=707				!larger #'s in xls give #VALUE
 	expLogInf=EXP(rLogInfinity)		!useful for trapping overflows in log's and exp's
@@ -5418,9 +5408,9 @@
 !C  PROGRAMMED BY:  JRE 2/93
 !C
 	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
-	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
+	Implicit DoublePrecision(A-H,K,O-Z)
 	CHARACTER*64 Input_File_Name
-	DIMENSION X(NMX),fugcL(NMX),ier(12)
+	DoublePrecision X(NMX),fugcL(NMX) !,ier(12)
 	!Dimension fugcV(NMX),Y(NMX),VLK(NMX)
 	COMMON/eta/etaL,etaV,ZL,ZV
 	common/eta2/eta
@@ -5464,15 +5454,10 @@
 	iter=0
 	do while(ierScf.eq.0 .and.abs(dev).gt.1.d-5)
 		iter=iter+1
-		if(iter.gt.111)ierScf=2
-		IFLAG=0
-		!CALl Fugi(T,P,X,NC,1,fugcL,ZL,ier)
-		CALl Fugi(T,P,X,NC,1,fugcL,ZL,ier)
-		DO I=1,12
-			IF (ier(I).NE.0)IFLAG=1
-		enddo
-		IF (IFLAG.EQ.1)then
-			WRITE(6,'(a,22I4)')'ier',(ier(I),I=1,12)
+		if(iter > 111)ierScf=2
+		Call FugiTP( T,P,X,NC,1,rhoMol_cc,ZL,aRes,FugcL,uRes,iFlag )
+		IF (IFLAG > 0)then
+			WRITE(6,'(a,22I4)')'ScfIter: iErrFugi=',iFlag
 			WRITE(6,*)'error in lower phase calculation'
 			ierScf=1
 		endif
@@ -5494,11 +5479,6 @@
 		endif
 	enddo !while
 
-	if(ierScf.eq.1 .and. LOUD)write(*,*)'Error returned from FUGI.'
-	if(ierScf.eq.2 .and. LOUD)write(*,*)'Error: too many iterations.'
-
-	DHL=DHONKT
-	DSL=DSONK
 	!for Fugi:
 	!C  ier = 1 - AT LEAST ONE ERROR
 	!C        2 - NOT USED
@@ -5506,10 +5486,15 @@
 	!C        4 - ERROR IN ALPHA CALCULATION, SQRT(ALPHA) OR ITERATIONS
 	!C        5 - rho IS -VE
 	!C        6 - TOO MANY Z ITERATIONS
-	!C        7 - eta > 0.53
+	!C        7 - eta > etaMax
 	!C		11 - goldenZ instead of real Z.
-	IF(ier(2).EQ.1 .and. LOUD)WRITE(*,*)'ERROR ALL UPPER PHASE'
-	IF(ier(3).EQ.1 .and. LOUD)WRITE(*,*)'ERROR ALL LOWER PHASE'
+	if(iFlag==1 )write(*,*)'Error returned from FUGI.'
+	if(iFlag==6 )write(*,*)'Error: too many iterations.'
+	IF(iFlag==4 )WRITE(*,*)'ERROR ALL UPPER PHASE'
+	IF(iFlag==5 )WRITE(*,*)'ERROR ALL LOWER PHASE'
+
+	DHL=DHONKT
+	DSL=DSONK
 	if(ierScf.eq.0 .and. LOUD)then
 		DO I=1,1
 			WRITE(*,602)NAME(I),ID(I)

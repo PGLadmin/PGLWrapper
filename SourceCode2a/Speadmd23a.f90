@@ -71,7 +71,7 @@ END MODULE SpeadParms
 	character*333 dumString*333
 	character*77 ErrMsg(0:11),errMsgPas
 	character*234 outFile
-	logical LOUDER
+	logical LOUDER,CheckDLL
 	!integer nFg(nmx,maxTypes) !not in common because we transcribe these into HbParms and they do not need to be passed otherwise.
 	!common/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	!common/HbParms/dHkcalMol(NMX),bondVolNm3Esd(NMX)
@@ -81,6 +81,8 @@ END MODULE SpeadParms
 	!common/ppVpCoeffs/vpCoeffs(NMX,5)
 	LOUDER=LOUD
 	!LOUDER=.TRUE. !COMMENT OUT FOR RELEASE
+	CheckDLL=.FALSE.
+	!CheckDLL=.TRUE.
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isESD or isPcSaft.
 	isTPT=.TRUE. ! in GlobConst simplifies calls in FUGI and FuVtot
     etaMax = 0.99D0 ! if eta > etaMax, errors will be declared
@@ -359,16 +361,18 @@ END MODULE SpeadParms
 
 	ENDIF ! DISPLAY RELEVANT kijAD
 
-	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp)	
-	outFile=TRIM(PGLinputDir)//'\CheckSpeadmdReading.txt'
-	open(619,file=outFile)
-	write(619,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
-	do i=1,nComps
-		do j=1,nTypes(i)
-			write(619,601)i,j,id(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
-		enddo
-	enddo ! i=1,nComps
-	close(619)
+	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp)
+	if(CheckDLL)then	
+		outFile=TRIM(PGLinputDir)//'\CheckSpeadmdReading.txt'
+		open(619,file=outFile)
+		write(619,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
+		do i=1,nComps
+			do j=1,nTypes(i)
+				write(619,601)i,j,id(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
+			enddo
+		enddo ! i=1,nComps
+		close(619)
+	endif
 601	format(1x,2i5,i12,i8,i11,i8,2E14.4)
 	errMsgPas=Trim( ErrMsg(iErrCode) )
 	RETURN
