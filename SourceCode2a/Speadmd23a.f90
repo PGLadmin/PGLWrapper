@@ -71,7 +71,7 @@ END MODULE SpeadParms
 	character*333 dumString*333
 	character*77 ErrMsg(0:11),errMsgPas
 	character*234 outFile
-	logical LOUDER,CheckDLL
+	logical LOUDER !,CheckDLL
 	!integer nFg(nmx,maxTypes) !not in common because we transcribe these into HbParms and they do not need to be passed otherwise.
 	!common/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
 	!common/HbParms/dHkcalMol(NMX),bondVolNm3Esd(NMX)
@@ -98,11 +98,11 @@ END MODULE SpeadParms
 	ErrMsg(6)='GetTpt: a2 > 0 for at least one component when 0 < eta < 0.85'
 		ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTpt.txt' ! // is the concatenation operator
 		if(iEosOpt==14)ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTptTransPGL6ed.txt' ! // is the concatenation operator
-	if(LOUDER)write(*,*)'ParmsTptFile=',TRIM(ParmsTptFile)
+	if(LOUDER)write(dumpUnit,*)'ParmsTptFile=',TRIM(ParmsTptFile)
 	OPEN(40,FILE=ParmsTptFile,ERR=861)
 
 	READ(40,*,ERR=861)nDeck	 !check that there is something to read.
-    if(nDeck < 1 .and. LOUDER)pause 'nDeck<1 in TptParms.txt.  Please check.'
+    if(nDeck < 1 .and. LOUDER)write(dumpUnit,*) 'nDeck<1 in TptParms.txt.  Please check.'
 
 	!we do not store the entire database then operate on it because that would take a lot of space.
 	!instead, we rewind and re-read it from the hard drive multiple times.  this happens only at startup.
@@ -127,12 +127,12 @@ END MODULE SpeadParms
 			IF(idBase.EQ.idComp(iComp))THEN
 				iGotIt=1  !this will kick us to the next component
 
-				if(LOUDER)write(*,'(a,5f13.4)')' Mw,bVol(cc/mol),vEff(nm3)',rMwDum,bVolCc_mol(iComp),vMolecNm3(iComp)
-				if(LOUDER)write(*,'(a,5e13.5)')' zRefCof',(zRefCoeff(iComp,iCoeff),iCoeff=1,3)
-				if(LOUDER)write(*,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
-				if(LOUDER)write(*,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
-				if(LOUDER)write(*,'(a,i3,9(i3,i5))')' nTypes,Nd,Id',nTypes(iComp),(nDegree(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
-				if(LOUDER)write(*,'(a,i3,<nTypes(iComp)>i5)')' nTypes,#Fgi',nTypes(iComp),(nDegree(iComp,iType),iType=1,nTypes(iComp))
+				if(LOUDER)write(dumpUnit,'(a,5f13.4)')' Mw,bVol(cc/mol),vEff(nm3)',rMwDum,bVolCc_mol(iComp),vMolecNm3(iComp)
+				if(LOUDER)write(dumpUnit,'(a,5e13.5)')' zRefCof',(zRefCoeff(iComp,iCoeff),iCoeff=1,3)
+				if(LOUDER)write(dumpUnit,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
+				if(LOUDER)write(dumpUnit,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
+				if(LOUDER)write(dumpUnit,'(a,i3,9(i3,i5))')' nTypes,Nd,Id',nTypes(iComp),(nDegree(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
+				if(LOUDER)write(dumpUnit,'(a,i3,<nTypes(iComp)>i5)')' nTypes,#Fgi',nTypes(iComp),(nDegree(iComp,iType),iType=1,nTypes(iComp))
 				if(nTypesTot.eq.0)then
 					nTypesTot=1
 					localType( idType(1,1) )= 1 !this must happen 1st, the next step will work fine even if redundant 1st time thru.
@@ -151,8 +151,8 @@ END MODULE SpeadParms
                 enddo
                 etaFactor=bVolRef(iComp,Tc(iComp))/bVolCC_mol(iComp) ! tKelvin=Tc(i) here. JRE 20200406
 				!etaFactor=1
-				if(LOUDER)write(*,*)' bVol(Tc)/bVolCC_mol =  ' ,etaFactor
-                if(LOUDER)write(*,*)'  eta     zRef     A1/100    A2/10000   rho(g/cc)   zRefCs'
+				if(LOUDER)write(dumpUnit,*)' bVol(Tc)/bVolCC_mol =  ' ,etaFactor
+                if(LOUDER)write(dumpUnit,*)'  eta     zRef     A1/100    A2/10000   rho(g/cc)   zRefCs'
 				etaStd=0.4d0
 				increment=5
                 do i=5,85,increment
@@ -161,29 +161,29 @@ END MODULE SpeadParms
 					rhoG_cc=eta*rMw(iComp)/bVolCC_mol(iComp)
 					ZrefCs = 4*eta*(1-eta/2)/(1-eta)**3
 	                call TptTerms(isZiter,nComps,iComp,eta,etaStd,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
-                    if(LOUDER)write(*,'(f7.4,6f10.5)')eta,z0i,a1i/100,a2i/(100*100),rhoG_cc,zRefCs
+                    if(LOUDER)write(dumpUnit,'(f7.4,6f10.5)')eta,z0i,a1i/100,a2i/(100*100),rhoG_cc,zRefCs
                     if(a1i > 0)iErrCode=5
                     if(a2i > 0)iErrCode=6
 					if(iErrCode > 0 .and. eta < etaMax)etaMax=eta-increment/1.D2 !We might still get useful results under reasonable conditions.
                 enddo
-                if(iErrCode .and. LOUDER)write(*,*) 'GetTpt: check Ais. A1 or A2 > 0 ? iErrCode=',iErrCode
+                if(iErrCode .and. LOUDER)write(dumpUnit,*) 'GetTpt: check Ais. A1 or A2 > 0 ? iErrCode=',iErrCode
 				if(iErrCode==5 .or. iErrCode==6)then
 					iErrCode=0 !convert to warning, while reducing etaMax to accommodate.
-					if(LOUDER)print*,'etaMax reduced to:',etaMax
+					if(LOUDER)write(dumpUnit,*)'etaMax reduced to:',etaMax
 				endif
 				exit !quit searching if found
 			ENDIF !idBase==idComp
 		enddo !while(iGotIt.eq.0)
 		if(iGotIt == 0)then
 			iErrCode=iErrCode*10+iComp
-			if(LOUDER)write(*,*)' GetTpt: ParmsTpt.txt has no data for component #:',idComp(iComp)
-			if(LOUDER)pause
+			if(LOUDER)write(dumpUnit,*)' GetTpt: ParmsTpt.txt has no data for component #:',idComp(iComp)
+			if(LOUDER)write(dumpUnit,*)
 		endif
 	enddo
 	if(nTypesTot > maxTypes)then
 		iErrCode=4
-		if(LOUDER)write(*,*)ErrMsg(4)
-		if(LOUDER)pause
+		if(LOUDER)write(dumpUnit,*)ErrMsg(4)
+		if(LOUDER)write(dumpUnit,*)
 	endif
 	CLOSE(40)
         
@@ -202,11 +202,11 @@ END MODULE SpeadParms
 				
 		ParmsHbFile=TRIM(PGLinputDir)//'\ParmsHb4.txt' ! // is the concatenation operator
     inHbFile=40
-	if(LOUDER)write(*,*)'ParmsHbFile=',TRIM(ParmsHbFile)
+	if(LOUDER)write(dumpUnit,*)'ParmsHbFile=',TRIM(ParmsHbFile)
 	OPEN(inHbFile,FILE=ParmsHbFile)
 
 	READ(inHbFile,*,ERR=862)nDeck	 !check that there is something to read.
-	if(nDeck < 1 .and. LOUDER)pause 'nDeck<1 in ParmsHb4.txt.  Please check.'
+	if(nDeck < 1 .and. LOUDER)write(dumpUnit,*) 'nDeck<1 in ParmsHb4.txt.  Please check.'
 
 	!we do not store the entire database then operate on it because that would take a lot of space.
 	!instead, we rewind and re-read it from the hard drive multiple times.  this happens only at startup.
@@ -263,35 +263,35 @@ END MODULE SpeadParms
 			bondVolNm3(iComp,iHbType)=bondVolNm3(iComp,iHbType)*( 1+bondRate(iComp,iHbType)*( nDegree(iComp,iHbType)/DFLOAT(numSitesTot) )**iBondExp )
             if(bondVolNm3(iComp,iHbType) < 0)bondVolNm3(iComp,iHbType)=2D-8 !this only happens for formic acid. JRE 20200303.
 		enddo
-		if(LOUDER)write(*,*)' SiteType:',( idType(iComp,i),i=1,nTypes(iComp))
-		if(LOUDER)write(*,'(a,11i4)')' nDegree   :',( nDegree(iComp,iType),iType=1,nTypes(iComp) )
-		if(LOUDER)write(*,'(a,11i4)')' nAcceptors:',( nAcceptors(iComp,iType),iType=1,nTypes(iComp) )
-		if(LOUDER)write(*,'(a,11i4)')' nDonors:   ',( nDonors(iComp,iType),iType=1,nTypes(iComp) )
-		if(LOUDER)write(*,'(a,9E11.4)')' bondVolNm3:',( bondVolNm3(iComp,iType),iType=1,nTypes(iComp) )
-		if(LOUDER)write(*,'(a,11f7.1)')' Don energy:',( eDonorKcal_mol(iComp,iType),iType=1,nTypes(iComp) )
-		if(LOUDER)write(*,'(a,11f7.1)')' Acc energy:',( eAcceptorKcal_mol(iComp,iType),iType=1,nTypes(iComp) )
+		if(LOUDER)write(dumpUnit,*)' SiteType:',( idType(iComp,i),i=1,nTypes(iComp))
+		if(LOUDER)write(dumpUnit,'(a,11i4)')' nDegree   :',( nDegree(iComp,iType),iType=1,nTypes(iComp) )
+		if(LOUDER)write(dumpUnit,'(a,11i4)')' nAcceptors:',( nAcceptors(iComp,iType),iType=1,nTypes(iComp) )
+		if(LOUDER)write(dumpUnit,'(a,11i4)')' nDonors:   ',( nDonors(iComp,iType),iType=1,nTypes(iComp) )
+		if(LOUDER)write(dumpUnit,'(a,9E11.4)')' bondVolNm3:',( bondVolNm3(iComp,iType),iType=1,nTypes(iComp) )
+		if(LOUDER)write(dumpUnit,'(a,11f7.1)')' Don energy:',( eDonorKcal_mol(iComp,iType),iType=1,nTypes(iComp) )
+		if(LOUDER)write(dumpUnit,'(a,11f7.1)')' Acc energy:',( eAcceptorKcal_mol(iComp,iType),iType=1,nTypes(iComp) )
 		gmol=0 ! Q&D estimate of eta where P~0
 		gmol(iComp)=1
 		isHeNeH2(iComp)=.FALSE.
 		if(ID(iComp)==913.or.ID(iComp)==923.or.ID(iComp)==919.or.ID(iComp)==902.or.ID(iComp)==925)isHeNeH2(iComp)=.TRUE.
 		if(tKmin(iComp) < 50 .and. .not.isHeNeH2(iComp) )tKmin(iComp)=0.4*Tc(iComp) 
 		vTotCc=bVolCc_mol(iComp)/0.5D0
-		if(LOUDER)print*,'Calling Fu: Tmin,vTot=',tKmin(iComp),vTotCc
+		if(LOUDER)write(dumpUnit,*)'Calling Fu: Tmin,vTot=',tKmin(iComp),vTotCc
 		isZiter=1 
 		call FuTptVtot(isZiter,zFactorLo,aRes,uRes,chemPo,vTotCc,tKmin(iComp),gmol,nComps,iErrFu)
-		if(iErrFu > 0 .and. LOUDER)pause 'GetTpt: error from FuTptVtot at eta=0.5' 
+		if(iErrFu > 0 .and. LOUDER)write(dumpUnit,*) 'GetTpt: error from FuTptVtot at eta=0.5' 
 		vTotCc=bVolCc_mol(iComp)/0.7D0
-		if(LOUDER)print*,'Calling Fu: Tmin,vTot=',tKmin(iComp),vTotCc
+		if(LOUDER)write(dumpUnit,*)'Calling Fu: Tmin,vTot=',tKmin(iComp),vTotCc
 		call FuTptVtot(isZiter,zFactorHi,aRes,uRes,chemPo,vTotCc,tKmin(iComp),gmol,nComps,iErrFu)
-		if(iErrFu > 0 .and. LOUDER)pause 'GetTpt: error from FuTptVtot at eta=0.7'
+		if(iErrFu > 0 .and. LOUDER)write(dumpUnit,*) 'GetTpt: error from FuTptVtot at eta=0.7'
 		if(iErrFu > 0)etaPure=0.5d0
 		!Interpolate on V, assuming that V is more linear in ZsatLiq than rho is. 
 		!v=vLo+(Ztarget-ZLo)*dV/dZ = vLo-ZLo*(vHi-vLo)/(Zhi-ZLo)
 		!vTot0=bVolCc_mol(iComp)*(  1/0.5d0-zFactorLo*(1/0.7d0-1/0.5d0)/(zFactorHi-zFactorLo)  )
 		!etaPure=bVolCc_mol/vTot0
 		etaPure(iComp)=1/(  1/0.5d0-zFactorLo*(1/0.7d0-1/0.5d0)/(zFactorHi-zFactorLo)  )
-		if(LOUDER)write(*,'(a,f10.5)')' etaPure(iComp)~',etaPure(iComp) 
-        if(LOUDER)pause 'Check HB parms&etaPure.'
+		if(LOUDER)write(dumpUnit,'(a,f10.5)')' etaPure(iComp)~',etaPure(iComp) 
+        if(LOUDER)write(dumpUnit,*) 'Check HB parms&etaPure.'
 	enddo !iComp. All compounds have their parameters defined.
 	CLOSE(inHbFile)
 
@@ -304,18 +304,18 @@ END MODULE SpeadParms
 	if(iErrCode > 10)then
 		iErr=11 ! 
 	elseif(iErrCode.ne.0 .and. LOUDER)then
-		pause 'GetTpt Error: GetBIPs returned error.'
+		write(dumpUnit,*) 'GetTpt Error: GetBIPs returned error.'
 	endif
     if(LOUDER)then
-	    if(nC > 1)pause 'GetTpt: you need to reincorporate GetBips for mixtures.'
-		if(iErrCode > 10) print*,'GetTpt: BIPs missing for ',iErrCode-10,' binary combinations.'
-		print*,'GetTpt: bipFile=',TRIM(bipFile)
-		if(iErrCode.ne.0) print*,'GetTpt: bipFile read error=',iErrCode
+	    if(nC > 1)write(dumpUnit,*) 'GetTpt: you need to reincorporate GetBips for mixtures.'
+		if(iErrCode > 10) write(dumpUnit,*)'GetTpt: BIPs missing for ',iErrCode-10,' binary combinations.'
+		write(dumpUnit,*)'GetTpt: bipFile=',TRIM(bipFile)
+		if(iErrCode.ne.0) write(dumpUnit,*)'GetTpt: bipFile read error=',iErrCode
     end if
 
 	!load aBipAD matrix
 		bipHbFile=TRIM(PGLinputDir)//'\BipDA.txt' ! // is the concatenation operator
-	!if(LOUDER)print*,'GetTpt: Only BipDA is needed.'
+	!if(LOUDER)write(dumpUnit,*)'GetTpt: Only BipDA is needed.'
 	call GetAssocBips(bipHbFile,aBipDA,ierABip) !in WertheimVv.f90. idLocalType,nTypesTot USE Assoc 
 	do i=1,nTypesTot
 		do j=1,nTypesTot
@@ -326,11 +326,11 @@ END MODULE SpeadParms
 	!load aBipDA matrix
 
 	if(LOUDER)THEN ! DISPLAY RELEVANT kijAD
-		write(*,*)'bipHbFile=',TRIM(bipHbFile)
-		write(*,*)' Solvation BIPs'
-		write(*,'(5x,11i7)')(idLocalType(iType),iType=1,nTypesTot)
+		write(dumpUnit,*)'bipHbFile=',TRIM(bipHbFile)
+		write(dumpUnit,*)' Solvation BIPs'
+		write(dumpUnit,'(5x,11i7)')(idLocalType(iType),iType=1,nTypesTot)
 		do jType=1,nTypesTot
-			write(*,'(i5,11f7.3)')idLocalType(jType),( aBipAD(jType,iType),iType=1,nTypesTot )
+			write(dumpUnit,'(i5,11f7.3)')idLocalType(jType),( aBipAD(jType,iType),iType=1,nTypesTot )
 		enddo
 		do iComp=1,nComps
 			do jComp=1,nComps
@@ -348,22 +348,22 @@ END MODULE SpeadParms
 				enddo
 			enddo
 		enddo
-!		write(*,*)' AiDj Energies (kCal/mol)'
-!		write(*,'(a5,11i7)')' j\i ',(idLocalType(iType),iType=1,nTypesTot)
+!		write(dumpUnit,*)' AiDj Energies (kCal/mol)'
+!		write(dumpUnit,'(a5,11i7)')' j\i ',(idLocalType(iType),iType=1,nTypesTot)
 !		do jType=1,nTypesTot
-!			write(*,'(i5,11f7.2)')idLocalType(jType),( epskAdKelvin(jType,iType),iType=1,nTypesTot )
+!			write(dumpUnit,'(i5,11f7.2)')idLocalType(jType),( epskAdKelvin(jType,iType),iType=1,nTypesTot )
 !		enddo
-!		write(*,*)' DiAj Energies (kCal/mol)'
-!		write(*,'(a5,11i7)')' j\i ',(idLocalType(iType),iType=1,nTypesTot)
+!		write(dumpUnit,*)' DiAj Energies (kCal/mol)'
+!		write(dumpUnit,'(a5,11i7)')' j\i ',(idLocalType(iType),iType=1,nTypesTot)
 !		do jType=1,nTypesTot
-!			write(*,'(i5,11f7.2)')idLocalType(jType),( epskDAKelvin(jType,iType),iType=1,nTypesTot )
+!			write(dumpUnit,'(i5,11f7.2)')idLocalType(jType),( epskDAKelvin(jType,iType),iType=1,nTypesTot )
 !		enddo
 
 	ENDIF ! DISPLAY RELEVANT kijAD
 
 	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp)
 	if(CheckDLL)then	
-		outFile=TRIM(PGLinputDir)//'\CheckSpeadmdReading.txt'
+		outFile=TRIM(PGLinputDir)//'\CheckPGLWrapperDLL.txt'
 		open(619,file=outFile)
 		write(619,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
 		do i=1,nComps
@@ -378,38 +378,38 @@ END MODULE SpeadParms
 	RETURN
 861	continue
 	iErrCode=1
-	if(LOUDER)write(*,*)Trim( ErrMsg(iErrCode) )
-	if(LOUDER)write(*,*)'nDeck,iCompo',NDECK,jComp
-	if(LOUDER)pause
+	if(LOUDER)write(dumpUnit,*)Trim( ErrMsg(iErrCode) )
+	if(LOUDER)write(dumpUnit,*)'nDeck,iCompo',NDECK,jComp
+	if(LOUDER)write(dumpUnit,*)
 	errMsgPas=Trim( ErrMsg(iErrCode) )
 	return                      
 862	continue
 	iErrCode=2
-	if(LOUD)write(*,*)Trim( ErrMsg(2) )
-	if(LOUD)write(*,*)'nDeck,iCompo',NDECK,jComp
-	if(LOUD)pause
+	if(LOUD)write(dumpUnit,*)Trim( ErrMsg(2) )
+	if(LOUD)write(dumpUnit,*)'nDeck,iCompo',NDECK,jComp
+	if(LOUD)write(dumpUnit,*)
 	errMsgPas=Trim( ErrMsg(iErrCode) )
 	return                      
 863	continue  ! Error reading line of ParmsTpt. Try reading parts of dumString sequentially.
 	iErrCode=3
-	if(LOUDER)write(*,*)Trim( ErrMsg(3) ),jComp
-	if(LOUDER)write(*,*)trim( dumString )
+	if(LOUDER)write(dumpUnit,*)Trim( ErrMsg(3) ),jComp
+	if(LOUDER)write(dumpUnit,*)trim( dumString )
 	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3)
-	if(LOUDER)write(*,*)idBase,idCc,idCAS,(zRefCoeff(iComp,iCoeff),iCoeff=1,3)
-	if(LOUDER)pause 'ids and zRef read ok. Checking A1.'
+	if(LOUDER)write(dumpUnit,*)idBase,idCc,idCAS,(zRefCoeff(iComp,iCoeff),iCoeff=1,3)
+	if(LOUDER)write(dumpUnit,*) 'ids and zRef read ok. Checking A1.'
 	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
-	if(LOUDER)write(*,*)'A1',(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
-	if(LOUDER)pause 'A1 read ok. Checking A2.'
+	if(LOUDER)write(dumpUnit,*)'A1',(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
+	if(LOUDER)write(dumpUnit,*) 'A1 read ok. Checking A2.'
 	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
-	if(LOUDER)write(*,*)'A2',(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
-	if(LOUDER)pause 'A2 read ok. Checking V,Tmin,Mw'
+	if(LOUDER)write(dumpUnit,*)'A2',(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
+	if(LOUDER)write(dumpUnit,*) 'A2 read ok. Checking V,Tmin,Mw'
 	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),vMolecNm3(iComp),tKmin(iComp),rMwDum
-	if(LOUDER)write(*,*)'V,Tmin,Mw',vMolecNm3(iComp),tKmin(iComp),rMw(iComp)
-	if(LOUDER)pause 'VTM read ok. Checking nTypes, nFg, idType'
+	if(LOUDER)write(dumpUnit,*)'V,Tmin,Mw',vMolecNm3(iComp),tKmin(iComp),rMw(iComp)
+	if(LOUDER)write(dumpUnit,*) 'VTM read ok. Checking nTypes, nFg, idType'
 	read(dumString,*)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),vMolecNm3(iComp),tKmin(iComp),rMwDum,nTypes(iComp),(nDegree(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
-	if(LOUDER)write(*,*)'Types',nTypes(iComp),(nDegree(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
-	if(LOUDER)write(*,*)'nDeck,iCompo',NDECK,jComp
-	if(LOUDER)pause	'Check the comp#. Thats all folks!'
+	if(LOUDER)write(dumpUnit,*)'Types',nTypes(iComp),(nDegree(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
+	if(LOUDER)write(dumpUnit,*)'nDeck,iCompo',NDECK,jComp
+	if(LOUDER)write(dumpUnit,*)	'Check the comp#. Thats all folks!'
 	errMsgPas=Trim( ErrMsg(iErrCode) )
 
 	return                      
@@ -462,14 +462,14 @@ END MODULE SpeadParms
 	!added by JRE20161010 for Sai Venkata Ramana to help with PrismTpt
 	isSW=0
 	isFileSwap=0
-	write(*,*)'Enter 1 to swap coeffs from ...input\PrismTptAcoeffs.txt or 0 to use AFG Spead11'
+	write(dumpUnit,*)'Enter 1 to swap coeffs from ...input\PrismTptAcoeffs.txt or 0 to use AFG Spead11'
 	read(*,*)isFileSwap
-	write(*,*)'Enter 1 if this is a SW potential or 0 otherwise'
+	write(dumpUnit,*)'Enter 1 if this is a SW potential or 0 otherwise'
 	if(isFileSwap)read(*,*)isSW
 
 	if(initialCall .and. isSW)then
 		!initialCall=0
-		write(*,*)'Enter eps_kB'
+		write(dumpUnit,*)'Enter eps_kB'
 		read(*,*)eps_kB
 	endif
 	if(isSW .or. isFileSwap)then
@@ -488,10 +488,10 @@ END MODULE SpeadParms
 	if(initialCall)then
 		initialCall=0
 		iComp=1
-		if(LOUD)write(*,'(a,4F10.0)')' zRefCoeff:',(zRefCoeff(1,j),j=1,4)
-		if(LOUD)write(*,'(a,4F10.0)')' a1Coeff:',(a1Coeff(1,j),j=1,4)
-		if(LOUD)write(*,'(a,4F10.0)')' a2Coeff:',(a2Coeff(1,j),j=1,4)
-		if(LOUD)write(*,*)'  eta      A1        A2'
+		if(LOUD)write(dumpUnit,'(a,4F10.0)')' zRefCoeff:',(zRefCoeff(1,j),j=1,4)
+		if(LOUD)write(dumpUnit,'(a,4F10.0)')' a1Coeff:',(a1Coeff(1,j),j=1,4)
+		if(LOUD)write(dumpUnit,'(a,4F10.0)')' a2Coeff:',(a2Coeff(1,j),j=1,4)
+		if(LOUD)write(dumpUnit,*)'  eta      A1        A2'
 		do i=1,16
 			eta=i*.05d0
 			!copied from TptTerms()
@@ -503,7 +503,7 @@ END MODULE SpeadParms
 			denom=(1.d0+50.d0*eta3)
 			A1=a1Coeff(iComp,1)*eta+a1Coeff(iComp,2)*eta*ePart1+a1Coeff(iComp,3)*eta3*ePart2		
 			A2=(a2Coeff(iComp,1)*eta+a2Coeff(iComp,2)*eta2+a2Coeff(iComp,3)*eta3+a2Coeff(iComp,4)*eta4)/denom
-			if(LOUD)write(*,'(f7.4,2F10.0)')eta,A1,A2
+			if(LOUD)write(dumpUnit,'(f7.4,2F10.0)')eta,A1,A2
 		enddo
 	endif
 	RETURN
@@ -650,7 +650,7 @@ end	!Subroutine QueryParPureSpead
 	bVolMix=0
 	bRefMix=0
 	Vmix=0
-	if(initCall.and.LOUDER)print*,'FuTpt: T(K) = ',tKelvin
+	if(initCall.and.LOUDER)write(dumpUnit,*)'FuTpt: T(K) = ',tKelvin
     DO i=1,nComps
 		xFrac(i)=gmol(i)/totMoles
 		Vmix=Vmix+xFrac(i)*bVolCc_mol(i)/etaPure(i) !etaPure is evaluated at Tmin for each compd.
@@ -666,11 +666,11 @@ end	!Subroutine QueryParPureSpead
     if(tKelvin < tKmin(iVolatile))then	   ! Don't round Tmin down here or NUMDERVS may fail later.
         isTtooLow=1
         iErr=5
-        if(LOUDER.and.initCall)write(*,'(a,i3,2f7.1,a)')' FuTpt: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
+        if(LOUDER.and.initCall)write(dumpUnit,'(a,i3,2f7.1,a)')' FuTpt: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
     endif
     if(isTtooLow==1)then
         iErr=5
-        if(LOUDER)write(*,*)TRIM(errMsg(iErr))
+        if(LOUDER)write(dumpUnit,*)TRIM(errMsg(iErr))
         !goto 86		! declare warning if T < Tmin, but compute properties anyway. e.g. LDEN probably OK although Psat might be nonsense.
     endif
     hRes_RT=86.8686D0 !initialize to error indicator in case of bad return
@@ -684,7 +684,7 @@ end	!Subroutine QueryParPureSpead
 
 	IF (rGas.Le.0 .or. tKelvin.le.0)then
 		iErr=11
-		if(LOUDER)write(*,*)' FuTpt: Nonsense. rGas=',rGas,' tKelvin=',tKelvin
+		if(LOUDER)write(dumpUnit,*)' FuTpt: Nonsense. rGas=',rGas,' tKelvin=',tKelvin
 		!call BeepMsg(errMsg(iErr))
 		goto 86
 	endif
@@ -701,18 +701,18 @@ end	!Subroutine QueryParPureSpead
 	etaRef=eta*bRefMix/bVolMix
 	IF (eta > etaMax .or. etaRef > etaMax .or. eta < 0)then
 		iErr=11
-		if(LOUDER)write(*,*)' pMPa=',pMPa,' eta=',eta,' etaRef=',etaRef
+		if(LOUDER)write(dumpUnit,*)' pMPa=',pMPa,' eta=',eta,' etaRef=',etaRef
 		!call BeepMsg(errMsg(iErr))
 		goto 86
 	endif
 	rhoMol_cc=eta/bVolMix
 	vTotCc=totMoles/rhoMol_cc
 	isZiter=1
-	if(initCall.and.LOUDER)write(*,'(a,6E12.4)')' FuTpt: first call to FuVtot. T(K),eta=',tKelvin,eta
+	if(initCall.and.LOUDER)write(dumpUnit,'(a,6E12.4)')' FuTpt: first call to FuVtot. T(K),eta=',tKelvin,eta
 	call FuTptVtot(isZiter,zFactor,aDep,uDep,chemPo,vTotCc,tKelvin,gmol,nComps,iErrZ)
 	if(iErrZ > 10)then
 		iErr=13
-		if(LOUDER)write(*,*)'FuTpt: FuTptVtot returned with error code:',iErrZ
+		if(LOUDER)write(dumpUnit,*)'FuTpt: FuTptVtot returned with error code:',iErrZ
 		!call BeepMsg(errMsg(iErr))
 		goto 86
 	endif
@@ -728,7 +728,7 @@ end	!Subroutine QueryParPureSpead
 	pMin=1.d11
 	isZiter=1
     iterGold=0
-	if(LOUDER.and.initCall)write(*,'(a,i4,6E12.4)')' FuTpt init: liq,eta', liq,eta
+	if(LOUDER.and.initCall)write(dumpUnit,'(a,i4,6E12.4)')' FuTpt init: liq,eta', liq,eta
 100 continue
 	do while(ABS(change) > 1.e-9 .and. iErr < 11)	! using change as criterion, instead of change/eta, means ~9 sig figs on liquid density, while ideal gas is exactly returned for vapor density, even when P-> 1E-11.
 		NITER=NITER+1
@@ -739,24 +739,24 @@ end	!Subroutine QueryParPureSpead
 		endif
 		!ETA=rhoMol_Cc*bVolMix
 		if( (1-eta) < 1.d-11)then
-			if(LOUDER)write(*,*) ' FuTpt: eta > 1. nIter=',nIter
+			if(LOUDER)write(dumpUnit,*) ' FuTpt: eta > 1. nIter=',nIter
 			do iComp=1,nComps
-				if(LOUDER)write(*,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,i),i=1,nTptCoeffs)
-				if(LOUDER)write(*,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,i),i=1,nTptCoeffs)
+				if(LOUDER)write(dumpUnit,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,i),i=1,nTptCoeffs)
+				if(LOUDER)write(dumpUnit,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,i),i=1,nTptCoeffs)
 			enddo
-			if(LOUDER)pause
+			if(LOUDER)write(dumpUnit,*)
 		endif
 		rhoMol_cc=eta/bVolMix
 		vTotCc=totMoles/rhoMol_cc
 		call FuTptVtot(isZiter,zFactor,aDep,uDep,chemPo,vTotCc,tKelvin,gmol,nComps,iErrZ)
 		if(iErrZ > 10)then
 			iErr=13
-			if(LOUDER)write(*,*)'FuTpt: FuTptVtot returned with error code:',iErrZ
+			if(LOUDER)write(dumpUnit,*)'FuTpt: FuTptVtot returned with error code:',iErrZ
 			!call BeepMsg(errMsg(iErr))
 			cycle
 		endif
 		error=pb_rt-eta*zFactor
-		if(LOUDER)write(*,'(a,i3,F9.5,2(E12.4))')' FuTpt: After FuVtot. iter,eta,Z,error=',NITER,eta,zFactor,error
+		if(LOUDER)write(dumpUnit,'(a,i3,F9.5,2(E12.4))')' FuTpt: After FuVtot. iter,eta,Z,error=',NITER,eta,zFactor,error
 		if(eta*zFactor > pMax .and. eta < 0.15)then
 			pMax=eta*zFactor
 			etaAtPmax=eta	 !for crude goldenz. ~randomly searches for lo eta max in p
@@ -766,7 +766,7 @@ end	!Subroutine QueryParPureSpead
 			etaAtPmin=eta	 !for crude goldenz. ~randomly searches for hi eta min in p
 		endif
 		change=error/(error-errOld)*(eta-etaOld)
-		!print*,'FuTpt: eta,change=',eta,change
+		!write(dumpUnit,*)'FuTpt: eta,change=',eta,change
 		etaOld=eta
 		errOld=error
         if(zFactor < 0)change=1 !force another iteration if Z < 0. This happens when P ~ 1E-12.
@@ -776,17 +776,17 @@ end	!Subroutine QueryParPureSpead
 		rhoMol_cc=eta/bVolMix
 		if(eta < 0 .or. eta > etaHi)then !NOTE: this should not happen given step limiting
 			if(niter < (itMax-1))niter=itMax-1 !restrict tries with new guess so we can crash if necessary.
-			if(LOUDER)write(*,'(a,f8.4)')' Warning in FuTpt: next guess is eta=',eta
+			if(LOUDER)write(dumpUnit,'(a,f8.4)')' Warning in FuTpt: next guess is eta=',eta
 			eta=0
 			if(liq==1.or.liq==3)eta=etaHi
-			if(LOUDER)write(*,*) 'Restarting iteration with eta=',eta
-			if(LOUDER)pause
+			if(LOUDER)write(dumpUnit,*) 'Restarting iteration with eta=',eta
+			if(LOUDER)write(dumpUnit,*)
 		endif
 	enddo  !iteration on eta to find P=P(input)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Whoohoo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	if(iErr > 10)then
-		if(LOUDER)print*,'FuTpt: Convergence failed, attempting crude estimate.'
+		if(LOUDER)write(dumpUnit,*)'FuTpt: Convergence failed, attempting crude estimate.'
         iterGold=iterGold+1
 		if(liq==0 .or. LIQ==2)eta=etaAtPmax  !crude goldenz for vapor
 		if(liq==1.or.LIQ==3)then
@@ -805,13 +805,13 @@ end	!Subroutine QueryParPureSpead
 			vTotCc=totMoles/rhoMol_cc
 			call FuTptVtot(isZiter,zFactor,aDep,uDep,chemPo,vTotCc,tKelvin,gmol,nComps,iErrZ)
 		    if(eta < 0 .or. eta > etaMax)eta=etaHi ! liq==1 or 3 in this if.
-			if(LOUDER)write(*,'(a,f8.4,1x,a,i3,1x,a,f7.4,a,1PE11.4,a,1PE11.4)')' FuTpt: P=',pMPa,' LIQ=',LIQ,' etaMin=',etaAtPmin,' pMin=',pMin,' pMax=',pMax
+			if(LOUDER)write(dumpUnit,'(a,f8.4,1x,a,i3,1x,a,f7.4,a,1PE11.4,a,1PE11.4)')' FuTpt: P=',pMPa,' LIQ=',LIQ,' etaMin=',etaAtPmin,' pMin=',pMin,' pMax=',pMax
             if(iterGold < 2)goto 100
 		endif
 	endif
 	IF (eta < 0)then
 		iErr=12
-        if(LOUDER)write(*,*)'FuTpt: eta < 0 after converged.'
+        if(LOUDER)write(dumpUnit,*)'FuTpt: eta < 0 after converged.'
 		!call BeepMsg(errMsg(iErr))
 	endif
 	etaPass=eta  ! etaPass in GlobConst
@@ -825,7 +825,7 @@ end	!Subroutine QueryParPureSpead
 	dU_RT=uDep
 	dH_RT=uDep+zFactor-1
 	dA_RT=aDep
-	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: getting chemPo(T,P). T,eta,Z=',tKelvin,eta,zFactor
+	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' FuTpt: getting chemPo(T,P). T,eta,Z=',tKelvin,eta,zFactor
 	initCall=0
     if(LIQ > 1)return
 	!  ITERATION ON RHO HAS CONCLUDED.  GET DEPARTURES AND FUGACITY COEFFS.
@@ -837,8 +837,8 @@ end	!Subroutine QueryParPureSpead
 	if(iErrZ > 9)iErr=iErr+iErrZ*10
 	IF (zFactor < zeroTol)then
 		iErr=14
-		if(LOUDER)write(*,'(a,8E12.4)')' FuTpt: eta,Z=',eta,zFactor
-        if(LOUDER)pause 'FuTpt: zFactor < 0 after converged.'
+		if(LOUDER)write(dumpUnit,'(a,8E12.4)')' FuTpt: eta,Z=',eta,zFactor
+        if(LOUDER)write(dumpUnit,*) 'FuTpt: zFactor < 0 after converged.'
         goto 86
 		!IF(LOUDER)call BeepMsg(errMsg(iErr))
 	endif
@@ -848,18 +848,18 @@ end	!Subroutine QueryParPureSpead
     hRes_RT=uRes+zFactor-1
     Sres_R =uRes-aRes
 	chemPo(1:nComps)=chemPo(1:nComps)-DLOG(zFactor) ! transform from TV to TP
-	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: FuVtot=>chemPo=',(chemPo(i),i=1,nComps)
-	if(LOUDER)write(*,'(a,6E12.4)')' FuTpt: ChemPoCalc done. aRes,uRes=',aRes,uRes
+	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' FuTpt: FuVtot=>chemPo=',(chemPo(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' FuTpt: ChemPoCalc done. aRes,uRes=',aRes,uRes
 	if(zFactor > zeroTol)ChemPoPure=aRes+zFactor-1-DLOG(zFactor)
-	if(nComps==1 .and. LOUDER)write(*,'(a,6E12.4)')' FuTpt: fugc(1),Gdep1',chemPo(1),ChemPoPure
+	if(nComps==1 .and. LOUDER)write(dumpUnit,'(a,6E12.4)')' FuTpt: fugc(1),Gdep1',chemPo(1),ChemPoPure
 	initCall=0
 	RETURN
 
-86	if(LOUDER)WRITE(6,'(a,i4)')' FuTpt: error= ',iErr
+86	if(LOUDER)write(dumpUnit,'(a,i4)')' FuTpt: error= ',iErr
 	IER(1)=iErr
 	RETURN
 867 continue
-	if(LOUDER)write(*,*)'Exiting FuTpt: Please correct xFrac'
+	if(LOUDER)write(dumpUnit,*)'Exiting FuTpt: Please correct xFrac'
 	iErr=17
 	ier(1)=17
 	ier(7)=1
@@ -925,7 +925,7 @@ end	!Subroutine QueryParPureSpead
 			pSatExp=exp(vpCoeffs(kComp,1)+vpCoeffs(kComp,2)/tKelvin+vpCoeffs(kComp,3)*DLOG(tKelvin)+vpCoeffs(kComp,4)*tKelvin**vpCoeffs(kComp,5))/1000000 !todo: fill in the vp eqn...
 			if(pSat.lt.1e-33)pSat=1E-33 !logArg in fugc() cannot be zero
 			gamma=exp(rLnGam(kComp))
-			!if(LOUD)write(*,'(i3,1x,2(f7.4),f10.3,f10.3,e11.4)')kComp,xFrac(kComp),volFrac(kComp),fugc(kComp),fugAssoc(kComp),gamma
+			!if(LOUD)write(dumpUnit,'(i3,1x,2(f7.4),f10.3,f10.3,e11.4)')kComp,xFrac(kComp),volFrac(kComp),fugc(kComp),fugAssoc(kComp),gamma
 			chemPo(kComp)=LOG(pSatExp/pMPa) + rLnGam(kComp)	!log of product is sum of logs 
 		enddo
 	endif
@@ -953,12 +953,12 @@ end	!Subroutine QueryParPureSpead
 	errMsg(2)='TptTerms Error: eta out of range.'
 	if(etaRef > etaMax .or. etaRef < 0)then
 		iErr=1
-		if(LOUD)write(*,*)'In TptTerms: eta=',eta
+		if(LOUD)write(dumpUnit,*)'In TptTerms: eta=',eta
 		return
 	endif
 	if(eta > etaMax .or. eta < 0)then
 		iErr=2
-		if(LOUD)write(*,*)'In TptTerms: eta=',eta
+		if(LOUD)write(dumpUnit,*)'In TptTerms: eta=',eta
 		return
 	endif
 	c1=zRefCoeff(iComp,1)+3
@@ -967,8 +967,8 @@ end	!Subroutine QueryParPureSpead
 	void=1.d0-etaRef
 	void2=void*void
 	void3=void*void2
-	if(void.le.0 .and. LOUD)write(*,*)'TptTerms: LOG error for a0i. iComp,etaRef,void=',iComp,etaRef,void
-	if(void.le.0 .and. LOUD)write(*,*)'TptTerms: LOG error for a0i. iComp,etaRef,void=',iComp,etaRef,void
+	if(void.le.0 .and. LOUD)write(dumpUnit,*)'TptTerms: LOG error for a0i. iComp,etaRef,void=',iComp,etaRef,void
+	if(void.le.0 .and. LOUD)write(dumpUnit,*)'TptTerms: LOG error for a0i. iComp,etaRef,void=',iComp,etaRef,void
 	a0i=0.5d0*(c1+c2+c3)/void2-(c2+2*c3)/void-c3*LOG(void)-0.5d0*(c1-c2-3*c3)
 	dA0iDeta=(c1+etaRef*(c2+etaRef*c3))/void3  ! =zRef/eta	 
 	etaDA0iDeta=etaRef*dA0iDeta  ! =zRef	 
@@ -1003,8 +1003,8 @@ end	!Subroutine QueryParPureSpead
 	z2i=eta*da2i_deta
 
 	if(a1i > 0 .or. a2i > 0)then
-		if(LOUD)write(*,'(a,i4,E11.4,3e12.4)')' TptTerms: a1 or a2 > 0.  iComp, eta, a1i, a2i=',iComp,eta,a1i,a2i
-		!if(LOUD)pause 'Fatal error.  Sorry.  Check your ParmsTpt.'
+		if(LOUD)write(dumpUnit,'(a,i4,E11.4,3e12.4)')' TptTerms: a1 or a2 > 0.  iComp, eta, a1i, a2i=',iComp,eta,a1i,a2i
+		!if(LOUD)write(dumpUnit,*) 'Fatal error.  Sorry.  Check your ParmsTpt.'
 		!a2i = -1D-11
         iErr=2
         return
@@ -1174,17 +1174,17 @@ end	!Subroutine QueryParPureSpead
    enddo
    if(tKelvin < tKmin(iVolatile)*0.998D0)then	   !round TKmin down a little for possible lost precision
         iErr=5
-        if(LOUD.and.init)write(*,'(a,i3,2f7.1,a)')' FuVtot: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
+        if(LOUD.and.init)write(dumpUnit,'(a,i3,2f7.1,a)')' FuVtot: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
     endif
-	if(bVolMix==0 .and. LOUD)pause 'MixRule error: bVolMix=0'
+	if(bVolMix==0 .and. LOUD)write(dumpUnit,*) 'MixRule error: bVolMix=0'
     etaRef=eta*bRefMix/bVolMix
     rhoMol_cc=eta/bVolMix
-	!if(LOUD)write(*,*)'init,ks0=',init,ks0
+	!if(LOUD)write(dumpUnit,*)'init,ks0=',init,ks0
 		ks0= -0.04*18*nComps/ SUM(bRef) !ks0= -0.04*18*Nc/sum(bRef) is a crude rule so that kijS0->0 for polymer blends
 		ks1=0 ! see data statement
-		!if(LOUD)write(*,*)'Enter estimate for ks0'
+		!if(LOUD)write(dumpUnit,*)'Enter estimate for ks0'
 		!read(*,*)ks0
-		!if(LOUD)write(*,*)'kSo=',ks0
+		!if(LOUD)write(dumpUnit,*)'kSo=',ks0
 		do iComp=1,nComps
 			do jComp=1,nComps
 				ks0ij(iComp,jComp)=0
@@ -1195,23 +1195,23 @@ end	!Subroutine QueryParPureSpead
 		enddo
 		etaStd=0.4
         etaRefStd=etaStd*bRefMix/bVolMix
-		!print*,'MixRule: Calling TptTerms for SolPar calcs.'
+		!write(dumpUnit,*)'MixRule: Calling TptTerms for SolPar calcs.'
 		do iComp=1,nComps
 			call TptTerms(isZiter,nComps,iComp,etaStd,etaRefStd,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
 			solParEntro(iComp)=SQRT( a0i*1.987d0*298.d0*etaRefStd/bRef(iComp) )
 			solParEnerg(iComp)=SQRT(-a1i*1.987d0*etaStd/bVolCC_mol(iComp) )
-			!if(LOUD)write(*,'(a,i4,2(f8.2))')' i,delSi,delUi',iComp,solParEntro(iComp),solParEnerg(iComp)
+			!if(LOUD)write(dumpUnit,'(a,i4,2(f8.2))')' i,delSi,delUi',iComp,solParEntro(iComp),solParEnerg(iComp)
 		enddo
 
 	if(eta > etaMax .or. eta < 0)then
 		iErr=15
-		if(LOUD)write(*,*)'MixRule: eta=',eta
+		if(LOUD)write(dumpUnit,*)'MixRule: eta=',eta
 		!if(LOUD)call BeepMsg( TRIM(errMsg(iErr)) )
 		return
 	endif
 	if(etaRef > etaMax .or. etaRef < 0)then
 		iErr=15
-		if(LOUD)write(*,*)'MixRule: etaRef=',etaRef
+		if(LOUD)write(dumpUnit,*)'MixRule: etaRef=',etaRef
 		!if(LOUD)call BeepMsg( TRIM(errMsg(iErr)) )
 		return
 	endif
@@ -1230,21 +1230,21 @@ end	!Subroutine QueryParPureSpead
 	do iComp=1,nComps
 		bVoli=bVolCC_mol(iComp)
 		aMixQuadPart(iComp)=0.d0
-		!print*,'MixRule: Calling TptTerms for Compo ai zi calcs. iComp=',iComp
+		!write(dumpUnit,*)'MixRule: Calling TptTerms for Compo ai zi calcs. iComp=',iComp
 		call TptTerms(isZiter,nComps,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
 		if(iErrTpt.ne.0)then
-			if(LOUD)print*, 'MixRule: iErrTpt=',iErrTpt
-			if(LOUD)pause 'MixRule: error from TptTerms'
+			if(LOUD)write(dumpUnit,*) 'MixRule: iErrTpt=',iErrTpt
+			if(LOUD)write(dumpUnit,*) 'MixRule: error from TptTerms'
 			iErr=17
 			return
 		endif
 		if(a0i < 0 .or. a1i > 0 .or. a2i > 0)then
-			if(LOUD)write(*,*)'MixRule: error in TptTerms:a0i<0 or a1i or a2i > 0. a0i,a1i,a2i'
-			if(LOUD)write(*,*)'   eta         a0i        a1i         a2i'
-			if(LOUD)write(*,'(1x,E11.4,3e13.5)')eta,a0i,a1i,a2i
-			if(LOUD)write(*,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,i),i=1,nTptCoeffs)
-			if(LOUD)write(*,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,i),i=1,nTptCoeffs)
-			if(LOUD)pause 'Check your input.'
+			if(LOUD)write(dumpUnit,*)'MixRule: error in TptTerms:a0i<0 or a1i or a2i > 0. a0i,a1i,a2i'
+			if(LOUD)write(dumpUnit,*)'   eta         a0i        a1i         a2i'
+			if(LOUD)write(dumpUnit,'(1x,E11.4,3e13.5)')eta,a0i,a1i,a2i
+			if(LOUD)write(dumpUnit,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,i),i=1,nTptCoeffs)
+			if(LOUD)write(dumpUnit,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,i),i=1,nTptCoeffs)
+			if(LOUD)write(dumpUnit,*) 'Check your input.'
 			iErr=11
 			exit !terminate the do loop, Note: "cycle" would go to enddo and keep looping.
 		endif
@@ -1262,16 +1262,16 @@ end	!Subroutine QueryParPureSpead
 		!Analytical second and third virial coefficients
 			!B2=((zRefCoeff(1,1)+3))+(a1Coeff(1,1)+a1Coeff(1,2))/tKelvin+(a2Coeff(1,1))/(tKelvin*tKelvin) 
 			!B3=(3.d0*(zRefCoeff(1,1)+3)+(zRefCoeff(1,2)-3)+(2.d0*a2Coeff(1,2))/(tKelvin*tKelvin)) 	!+(2.d0*a1Coeff(1,2))/tKelvin
-			!if(LOUD)write(*,*)B2,' ',B3 
+			!if(LOUD)write(dumpUnit,*)B2,' ',B3 
 		endif
 		if(iErr > 10)then	   ! allow to continue for iErr=6(T< Tmin)
-			if(LOUD)pause
+			if(LOUD)write(dumpUnit,*)
 			return
 		endif
 		chiConst=1/1.987d0/298.d0
 		do jComp=1,nComps
 			bVolj=bVolCC_mol(jComp)
-			!print*,'MixRule: Calling TptTerms for jComp calcs. jComp=',jComp
+			!write(dumpUnit,*)'MixRule: Calling TptTerms for jComp calcs. jComp=',jComp
 			call TptTerms(isZiter,nComps,jComp,eta,etaRef,a0j,a1j,a2j,z0j,z1j,z2j,iErrTpt)
 		   	vij=(bRef(iComp)+bRef(jComp))/2
 			chiS=vij*(solParEntro(iComp)-solParEntro(jComp))**2/(1.987*298)
@@ -1285,7 +1285,7 @@ end	!Subroutine QueryParPureSpead
 			!_ASSERT( (a0i*a0j).gt.0 )
 			aRefij=SQRT( bRef(iComp)*bRef(jComp)*a0i*a0j )/bRefMix  !NOTE: genlzd value for ksij is -0.04
 			a0Mix=a0Mix+xFrac(iComp)*xFrac(jComp)*aRefij*(1.d0-ksij) !moved 1-ksij to here so dKijDeta works right for z0Mix JRE 2012-07
-			if((ABS(a0i)<1e-22 .or. ABS(a0j)<1e-22) .and. LOUD)pause 'MixRule:a0i or a0j ~ 0. Watch for divide error.' 
+			if((ABS(a0i)<1e-22 .or. ABS(a0j)<1e-22) .and. LOUD)write(dumpUnit,*) 'MixRule:a0i or a0j ~ 0. Watch for divide error.' 
 			zRefij=SQRT( bRef(iComp)*bRef(jComp)/(a0i*a0j) ) /2.d0
 			zRefij=zRefij*( z0i*a0j+a0i*z0j )/bRefMix*(1-ksij)	! check: a0j/sqrt(a0ij) and sqrt(bi*bj)/bMix cancel so units are zRef. 
 			z0Mix=z0Mix+xFrac(iComp)*xFrac(jComp)*( zRefij+kETAij(iComp,jComp)*aRefij )
@@ -1297,14 +1297,14 @@ end	!Subroutine QueryParPureSpead
             bipKij=KIJ(iComp,jComp)+KTIJ(iComp,jComp)*eta !NOTE: nComps==1 omits this part by goto 100
 			if(iComp==jComp.and.nComps==2)bipKij=0
 			if(a1j > 0 .or. a2j > 0)then
-				if(LOUD)write(*,*)'Mixrule: a1j or a2j .ge. 0. a1j,a2j',a1j,a2j
-				if(LOUD)pause 'Check your parmstpt.'
+				if(LOUD)write(dumpUnit,*)'Mixrule: a1j or a2j .ge. 0. a1j,a2j',a1j,a2j
+				if(LOUD)write(dumpUnit,*) 'Check your parmstpt.'
 				iErr=11
 				exit
 			endif
 			a1ijSq=( bVoli*bVolj * a1i*a1j )
 			if(a1ijSq < 0)then
-				if(LOUD)pause 'Mixrule Error:sqArg < 0 for a1ijSq'
+				if(LOUD)write(dumpUnit,*) 'Mixrule Error:sqArg < 0 for a1ijSq'
 				iErr=13
 				exit
 			else
@@ -1315,14 +1315,14 @@ end	!Subroutine QueryParPureSpead
 			a1Mix=a1Mix+xFrac(iComp)*xFrac(jComp)*a1ij
 			!z1ij=eta*da1ij/dEta
 			!z1ij=(1-bipKij)*( etaDA1jDeta+etaDA1iDeta )/2								!jre082304
-			if( (a1i/a1j) < 0 .and. LOUD)pause 'MixRule: a1i/a1j < 0'
+			if( (a1i/a1j) < 0 .and. LOUD)write(dumpUnit,*) 'MixRule: a1i/a1j < 0'
 			z1ij=(1-bipKij)*( z1j*SQRT(a1i/a1j)+z1i*SQRT(a1j/a1i) )/2.d0
 			z1ij=z1ij*SQRT( bVoli*bVolj )/bVolMix !this should be same result as form for z0, but simpler connection to old molfrac basis. 
 			z1Mix=z1Mix+xFrac(iComp)*xFrac(jComp)*(z1ij+kETAij(iComp,jComp)*a1ij)
 			a1KijMix=a1KijMix+xFrac(iComp)*xFrac(jComp)*a1ij*kETAij(iComp,jComp) 	!this is a new term b/c kij=kij(eta)
 			a2ijSq=( bVoli*bVolj * a2i*a2j )
 			if(a2ijSq < 0)then
-				if(LOUD)pause 'MixRule Error:sqArg < 0 for a2ijSq'
+				if(LOUD)write(dumpUnit,*) 'MixRule Error:sqArg < 0 for a2ijSq'
 				iErr=13
 				exit
 			else
@@ -1341,7 +1341,7 @@ end	!Subroutine QueryParPureSpead
    			aMixQuadPart(iComp)=aMixQuadPart(iComp)+xFrac(jComp)*(a1ij+a2ij/tKelvin)/tKelvin
 		enddo  !jComp
 	enddo !iComp
-	!if(LOUD.and.init)print*,'MixRule: Calling all done except derivative calcs. isZiter = ',isZiter
+	!if(LOUD.and.init)write(dumpUnit,*)'MixRule: Calling all done except derivative calcs. isZiter = ',isZiter
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !C Added by AFG 2010
@@ -1396,7 +1396,7 @@ end	!Subroutine QueryParPureSpead
 		!if(iComp==2)a0i=5.227
 		solParEntro(iComp)=SQRT( a0i*1.987*298*etaStd/bRef(iComp) )
 		solParEnerg(iComp)=SQRT(-a1i*1.987*etaStd/bVolCC_mol(i) )
-		if(LOUD)write(*,'(a,i4,2(f8.2))')' i,delSi,delUi',iComp,solParEntro(iComp),solParEnerg(iComp)
+		if(LOUD)write(dumpUnit,'(a,i4,2(f8.2))')' i,delSi,delUi',iComp,solParEntro(iComp),solParEnerg(iComp)
 	enddo
 !	do iComp=1,nComps
 !	call TptTerms(iComp,eta,a0i,a1i,a2i,etaDA0iDeta,etaDA1iDeta,etaDA2iDeta)
@@ -1416,7 +1416,7 @@ end	!Subroutine QueryParPureSpead
 	errMsg(5)=' AxsCalc Error: eta out of range.'
 	if(eta > 0.85 .or. eta < 0)then
 		iErr=5
-		if(LOUD)write(*,*)'AxsCalc: eta=',eta
+		if(LOUD)write(dumpUnit,*)'AxsCalc: eta=',eta
 		!call BeepMsg(errMsg(iErr))
 		return
 	endif
@@ -1426,7 +1426,7 @@ end	!Subroutine QueryParPureSpead
 	do iComp=1,nComps
 		bVolMix=bVolMix+xFrac(iComp)*vMolecNm3(iComp)*602.22
 	enddo
-	if(bVolMix==0 .and. LOUD)pause 'AxsCalc: bVolMix=0'
+	if(bVolMix==0 .and. LOUD)write(dumpUnit,*) 'AxsCalc: bVolMix=0'
 	rhoMol_cc=eta/bVolMix 
 
 	a0Mix=0
@@ -1443,17 +1443,17 @@ end	!Subroutine QueryParPureSpead
 		aMixQuadPart(iComp)=0
 		call TptTerms(isZiter,nComps,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
 		if(a0i.le.0 .or. a1i.ge.0 .or. a2i.ge.0)then
-			if(LOUD)write(*,*)'FuTptVtot error:a0i<0 or a1i or a2i .ge. 0. a0i,a1i,a2i'
-			if(LOUD)write(*,*)'   eta         a0i        a1i         a2i'
-			if(LOUD)write(*,'(1x,f8.4,3e13.5)')eta,a0i,a1i,a2i
-			if(LOUD)write(*,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,i),i=1,nTptCoeffs)
-			if(LOUD)write(*,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,i),i=1,nTptCoeffs)
-			if(LOUD)pause 'Check your input.'
+			if(LOUD)write(dumpUnit,*)'FuTptVtot error:a0i<0 or a1i or a2i .ge. 0. a0i,a1i,a2i'
+			if(LOUD)write(dumpUnit,*)'   eta         a0i        a1i         a2i'
+			if(LOUD)write(dumpUnit,'(1x,f8.4,3e13.5)')eta,a0i,a1i,a2i
+			if(LOUD)write(dumpUnit,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,i),i=1,nTptCoeffs)
+			if(LOUD)write(dumpUnit,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,i),i=1,nTptCoeffs)
+			if(LOUD)write(dumpUnit,*) 'Check your input.'
 			iErr=1
 			exit !terminate the do loop, Note: "cycle" would go to enddo and keep looping.
 		endif
 		if(iErr.ne.0)then
-			if(LOUD)pause
+			if(LOUD)write(dumpUnit,*)
 			return
 		endif
 		do jComp=1,nComps
@@ -1485,14 +1485,14 @@ end	!Subroutine QueryParPureSpead
 			!endif
 			!if(iComp==jComp.and.nComps==2)bipKij=0
 			!if(a1j.ge.0 .or. a2j.ge.0)then
-			!	if(LOUD)write(*,*)'FuTptVtot error:a1j or a2j .ge. 0. a1j,a2j',a1j,a2j
-			!	if(LOUD)pause 'Check your input.'
+			!	if(LOUD)write(dumpUnit,*)'FuTptVtot error:a1j or a2j .ge. 0. a1j,a2j',a1j,a2j
+			!	if(LOUD)write(dumpUnit,*) 'Check your input.'
 			!	iErr=1
 			!	exit
 			!endif
 			!a1ijSq=( bVoli*bVolj * a1i*a1j )
 			!if(a1ijSq.lt.0)then
-			!	if(LOUD)pause 'ZCalcTpt Error:sqArg < 0 for a1ijSq'
+			!	if(LOUD)write(dumpUnit,*) 'ZCalcTpt Error:sqArg < 0 for a1ijSq'
 			!	iErr=3
 			!	exit
 			!else
@@ -1509,7 +1509,7 @@ end	!Subroutine QueryParPureSpead
 			!a1KijMix=a1KijMix+xFrac(iComp)*xFrac(jComp)*a1ij*dKijDeta 	!this is a new term b/c kij=kij(eta)
 			!a2ijSq=( bVoli*bVolj * a2i*a2j )
 			!if(a2ijSq.lt.0)then
-			!	if(LOUD)pause 'ZCalcTpt Error:sqArg < 0 for a2ijSq'
+			!	if(LOUD)write(dumpUnit,*) 'ZCalcTpt Error:sqArg < 0 for a2ijSq'
 			!	iErr=3
 			!	exit
 			!else
@@ -1527,7 +1527,7 @@ end	!Subroutine QueryParPureSpead
 		!enddo  !jComp
 	!enddo !iComp
 	!a0Xsss=a0Mix-(xFrac(1)*A01+xFrac(2)*A02)
-	!if(LOUD)write(*,*)'eta,Ais',eta,a0Mix,a1Mix,a2Mix
+	!if(LOUD)write(dumpUnit,*)'eta,Ais',eta,a0Mix,a1Mix,a2Mix
 	!aRefKij=a0KijMix
 	!aAttKij=(a1KijMix+a2KijMix/tKelvin)/tKelvin
 	return
@@ -1622,7 +1622,7 @@ end	!Subroutine QueryParPureSpead
     enddo
    if(tKelvin < tKmin(iVolatile)*0.998D0)then	   !round TKmin down a little for possible lost precision
         iErr=5
-        if(LOUDER.and.initCall)write(*,'(a,i3,2f7.1,a)')' FuVtot: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
+        if(LOUDER.and.initCall)write(dumpUnit,'(a,i3,2f7.1,a)')' FuVtot: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
     endif
     hRes_RT=86.8686D0 !initialize to error indicator in case of bad return
     uRes_RT=86.8686D0 !initialize to error indicator in case of bad return
@@ -1637,18 +1637,18 @@ end	!Subroutine QueryParPureSpead
 	eta3=eta2*eta
 	eta4=eta3*eta
 	if( eta > etaMax)then
-		if(LOUDER)write(*,*) 'FuTptVtot: eta > etaMax. eta,etaMax=',eta,etaMax
-		if(LOUDER)pause
+		if(LOUDER)write(dumpUnit,*) 'FuTptVtot: eta > etaMax. eta,etaMax=',eta,etaMax
+		if(LOUDER)write(dumpUnit,*)
         iErr=11
         return
 	endif
 
 	!call XsAs(nComps,iErrXs)  !for debugging
-	!print*,'FuTptVtot: calling MixRule'
+	!write(dumpUnit,*)'FuTptVtot: calling MixRule'
 	call MixRule(isZiter,xFrac,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
 	if(iErrMix > 10)then
 		iErr=13
-        if(LOUDER)write(*,*)'FuTptVtot: iErrMix=',iErrMix
+        if(LOUDER)write(dumpUnit,*)'FuTptVtot: iErrMix=',iErrMix
 		!call BeepMsg(errMsg(iErr))
 		return
 	endif 
@@ -1676,15 +1676,15 @@ end	!Subroutine QueryParPureSpead
 	!a_d=a2Mix/a1Mix/TC(1)
 	
 	!C We define a flag for association term here to avoid calling Werthiem routine when it is not necessary...
-	!print*,'FuTptVtot: calling Wertheim'
+	!write(dumpUnit,*)'FuTptVtot: calling Wertheim'
     zAssoc=0
     aAssoc=0
     uAssoc=0
     if(iErr < 11)call Wertheim(isZiter,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
-!	if( ABS(zAssoc) < 1e-11 )print*,'zAssoc ~ 0???'		 !for debugging
+!	if( ABS(zAssoc) < 1e-11 )write(dumpUnit,*)'zAssoc ~ 0???'		 !for debugging
 	IF(iErrCode)then
 		!iErr=iErrCode
-		if(LOUDER)pause 'FuTptVtot: Wertheim gave error.'
+		if(LOUDER)write(dumpUnit,*) 'FuTptVtot: Wertheim gave error.'
 		iErr=12
 		return
 	endif
@@ -1694,11 +1694,11 @@ end	!Subroutine QueryParPureSpead
 	endif
 
 	if(iErr > 10)then
-		if(LOUDER)write(*,*)errMsg(iErr)
+		if(LOUDER)write(dumpUnit,*)errMsg(iErr)
 		return
 	endif
 	
-	!if(LOUDER)print*,'uAtt,uAssoc',uAtt,uAssoc,uDep
+	!if(LOUDER)write(dumpUnit,*)'uAtt,uAssoc',uAtt,uAssoc,uDep
 	zFactor=(1.d0+zRep+zAtt+zAssoc) !+zNC
 	PMpa=(zFactor)*rGas*rhoMol_cc*tKelvin
 	if(isZiter > 0)return 
@@ -1719,19 +1719,19 @@ end	!Subroutine QueryParPureSpead
 		FUGQUAD=2.d0*aMixQuadPart(iComp) !we lump all the quadparts together in the current version.  
 		FUGBON=fugAssoc(iComp)
 		chemPo(iComp)=FUGREP+FUGATT+FUGQUAD+fugAssoc(iComp) !+(zNC-aDepNC)*bVolk/bVolMix+2.d0*aDepNC 
-		if(LOUDER)write(*,'(a,5E12.4)')' FuVtot:fugrep,fugatt,fugquad,fugbon,Z',fugrep,fugatt,fugquad,fugbon,zFactor
+		if(LOUDER)write(dumpUnit,'(a,5E12.4)')' FuVtot:fugrep,fugatt,fugquad,fugbon,Z',fugrep,fugatt,fugquad,fugbon,zFactor
 	enddo
 
 	if(isZiter < 0)then
-		if(LOUDER.and.initCall)print*,'FuTptVtot: T,rho,z=',tKelvin,rhoMol_cc,zFactor
+		if(LOUDER.and.initCall)write(dumpUnit,*)'FuTptVtot: T,rho,z=',tKelvin,rhoMol_cc,zFactor
         if(LOUDER.and.zFactor < zeroTol) then
-            pause 'FuTptVtot: zFactor < 0?'
+            write(dumpUnit,*) 'FuTptVtot: zFactor < 0?'
             continue
         endif
 		call NUMDERVS(nComps,xFrac,tKelvin,rhoMol_cc,zFactor,cmprsblty,iErrNum)
-		if(LOUDER.and.initCall)print*,'FuTptVtot: cmprsblty,CvRes_R=',cmprsblty,CvRes_R
+		if(LOUDER.and.initCall)write(dumpUnit,*)'FuTptVtot: cmprsblty,CvRes_R=',cmprsblty,CvRes_R
 		if(iErrNum > 1.and.LOUDER)then
-			print*,'FuTptVtot: NUMDERVS failed. No derivatives for you!'
+			write(dumpUnit,*)'FuTptVtot: NUMDERVS failed. No derivatives for you!'
 			iErr=16
 		endif
 	endif
@@ -1754,11 +1754,11 @@ end	!Subroutine QueryParPureSpead
 	iErr=0
 	if(nComps.ne.2)then
 		iErr=1
-		if(LOUD)write(*,*)errMsg(1)
-		if(LOUD)pause
+		if(LOUD)write(dumpUnit,*)errMsg(1)
+		if(LOUD)write(dumpUnit,*)
 		return
 	endif
-	if(LOUD)write(*,*)'Input eta for xs Ai calculations'
+	if(LOUD)write(dumpUnit,*)'Input eta for xs Ai calculations'
 	read(*,*)eta
 	tKelvin=300 !tKelvin should not matter for the Ai values, they are only density dependent.
 	do iComp=1,2
@@ -1774,7 +1774,7 @@ end	!Subroutine QueryParPureSpead
 		a0xs=a0Mix-( xFrac(1)*a0Pure(1)+xFrac(2)*a0Pure(2) )
 		a1xs=a1Mix-( xFrac(1)*a1Pure(1)+xFrac(2)*a1Pure(2) )
 		a2xs=a2Mix-( xFrac(1)*a2Pure(1)+xFrac(2)*a2Pure(2) )
-		if(LOUD)write(*,'(2f8.4,2f10.3,2E11.4)')a0Mix,a0Xs,a1Mix,a1Xs,a2Mix,a2Xs
+		if(LOUD)write(dumpUnit,'(2f8.4,2f10.3,2E11.4)')a0Mix,a0Xs,a1Mix,a1Xs,a2Mix,a2Xs
 	enddo
 	return
 	end
@@ -1792,8 +1792,8 @@ end	!Subroutine QueryParPureSpead
 		if(id(i)==913.or.id(i)==923)nEff = 15	  !He3,He4
 		p2 = (.0093d0*nEff-.0592d0)*nEff !E&D(1986)
 		p2 = ( (nEff-6)/6 )**2 /exp(  gammln( (nEff-3)/nEff )  )**(2*nEff/3) ! ESK(2019)
-		!print*,'bVolRef: p2 = ', p2
-		!pause
+		!write(dumpUnit,*)'bVolRef: p2 = ', p2
+		!write(dumpUnit,*)
 		p1 = (nEff-1)  
 		p1 = 1.13*nEff-3.28 !ESK(2019) 
 		eps_kB=2	!Helium
@@ -1844,7 +1844,7 @@ end	!Subroutine QueryParPureSpead
 
 	iErr=0
 	totMoles=SUM(gmol) ! SUM() is an intrinsic function
-	if(ABS(totMols) < 0.001 .and. LOUD)pause 'FuTpt: totMols ~0? Will try renormalizing, but you should check input.'
+	if(ABS(totMols) < 0.001 .and. LOUD)write(dumpUnit,*) 'FuTpt: totMols ~0? Will try renormalizing, but you should check input.'
 	bVolMix=0
 	bRefMix=0
     DO i=1,nComps
@@ -1863,7 +1863,7 @@ end	!Subroutine QueryParPureSpead
 		enddo
 		etaMinus=eta*(1-redStep*bVolCC_mol(k)/bVolMix)
 		call MixRule(isZiter,xFracPert,tKelvin,etaMinus,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
-		if(iErrMix > 10 .and. LOUD)pause 'ChemPoPhysNum: fatal error from MixRule.'
+		if(iErrMix > 10 .and. LOUD)write(dumpUnit,*) 'ChemPoPhysNum: fatal error from MixRule.'
 		aMinus=a0Mix+(a1Mix+a2Mix/tKelvin)/tKelvin
 		zMinus=1+z0Mix+(z1Mix+z2Mix/tKelvin)/tKelvin
 		do i=1,nComps
@@ -1873,7 +1873,7 @@ end	!Subroutine QueryParPureSpead
 		enddo
 		etaPlus=eta*(1+redStep*bVolCC_mol(k)/bVolMix)
 		call MixRule(isZiter,xFracPert,tKelvin,etaPlus,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
-		if(iErrMix > 10 .and. LOUD)pause 'ChemPoPhysNum: fatal error from MixRule.'
+		if(iErrMix > 10 .and. LOUD)write(dumpUnit,*) 'ChemPoPhysNum: fatal error from MixRule.'
 		aPlus=a0Mix+(a1Mix+a2Mix/tKelvin)/tKelvin
 		zPlus=1+z0Mix+(z1Mix+z2Mix/tKelvin)/tKelvin
 		zMid=(zPlus+zMinus)/2
@@ -1883,176 +1883,4 @@ end	!Subroutine QueryParPureSpead
 	return
 	end
 	
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!C Programmed by AFG 2011.																						  C
-!C This part till the end of the file is not used anywhere in the CalcEos.										  C
-!C I used these routines to compare PC-SAFT with SPEAD11 														  C
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-
-	SUBROUTINE PCSAFT(tKelvin,eta,zFactor)
-	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	DIMENSION etaList(21)
-	DOUBLEPRECISION mShape
-	nEta=21
- 	!tKelvin=469.70d0
-	mShape=2.002 !29.7282 !2.002  !7.9849 !4.6627d0 !2.6896d0			  
-	sigma=3.6184 !4.2787d0 !3.6184d0 !3.8384d0  !3.7729d0
-	eok=208.11 !293.608d0 !208.11 !257.75d0 !231.2d0			 
-	!PC=2.140d6  !Pa
-	!TC=613.70d0 !K
-	etaList(1)=0.00001
-	DO I=2,nEta
-		etaList(I)=etaList(I-1)+0.03
-	ENDDO
-	!DO I=1,nEta   !AUG, this routine just works for options 4 and 5, we need to add lines for other options as well
-		!eta=etaList(I)
-		call zPcSaftCalc(tKelvin,eta,mShape,sigma,eok,zFactor,aRes,a_d)
-		!if(LOUD)write(*,*)eta,'  ',a_d
-	!ENDDO
-	return 
-	END
-
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-
-  	SUBROUTINE zPcSaftCalc(tKelvin,eta,mShape,sigma,eok,zFactor,aRes,a_d)
-	USE GlobConst ! for LOUD
-	IMPLICIT DOUBLEPRECISION(a-h,o-z)
-	!INTEGER NITER 
-	DOUBLEPRECISION mShape,mReverse,mdReverse,md2Reverse,md3Reverse
-	DOUBLEPRECISION ap(7,3),bp(7,3),am(7),bm(7)
-	DOUBLEPRECISION I1,I2
-	dEhs=sigma !*(1-0.12*EXP(-3*eok/tKelvin))
-	md=mShape*dEhs
-	md2=mShape*dEhs*dEhs
-	mReverse=1/mShape
-	mdReverse=mReverse/dEhs
-	md2Reverse=mdReverse/dEhs
-	md3Reverse=md2Reverse/dEhs
-	kBoltzman= 8.31447/6.02214d23
-	rho=6/pi*eta*md3Reverse
-	Xitha0=pi/6*rho*mShape
-	Xitha1=Xitha0*dEhs
-	Xitha2=Xitha1*dEhs
-
-	ap(1,1)=  0.91056314451539d0 !from p1234 of ref1
-	ap(1,2)= -0.30840169182720d0
-	ap(1,3)= -0.09061483509767d0
-	ap(2,1)=  0.63612814494991d0
-	ap(2,2)=  0.18605311591713d0
-	ap(2,3)=  0.45278428063920d0
-	ap(3,1)=  2.68613478913903d0
-	ap(3,2)= -2.50300472586548d0
-	ap(3,3)=  0.59627007280101d0
-	ap(4,1)= -26.5473624914884d0
-	ap(4,2)=  21.4197936296668d0
-	ap(4,3)= -1.72418291311787d0
-	ap(5,1)=  97.7592087835073d0
-	ap(5,2)= -65.2558853303492d0
-	ap(5,3)= -4.13021125311661d0
-	ap(6,1)= -159.591540865600d0
-	ap(6,2)=  83.3186804808856d0
-	ap(6,3)=  13.7766318697211d0
-	ap(7,1)=  91.2977740839123d0
-	ap(7,2)= -33.7469229297323d0
-	ap(7,3)= -8.67284703679646d0
-
-	bp(1,1)=  0.72409469413165d0
-	bp(1,2)= -0.57554980753450d0
-	bp(1,3)=  0.09768831158356d0
-	bp(2,1)=  1.11913959304690d0  *2.d0
-	bp(2,2)=  0.34975477607218d0  *2.d0
-	bp(2,3)= -0.12787874908050d0  *2.d0
-	bp(3,1)= -1.33419498282114d0  *3.d0
-	bp(3,2)=  1.29752244631769d0  *3.d0
-	bp(3,3)= -3.05195205099107d0  *3.d0
-	bp(4,1)= -5.25089420371162d0  *4.d0
-	bp(4,2)= -4.30386791194303d0  *4.d0
-	bp(4,3)=  5.16051899359931d0  *4.d0
-	bp(5,1)=  5.37112827253230d0  *5.d0
-	bp(5,2)=  38.5344528930499d0  *5.d0
-	bp(5,3)= -7.76088601041257d0  *5.d0
-	bp(6,1)=  34.4252230677698d0  *6.d0
-	bp(6,2)= -26.9710769414608d0  *6.d0
-	bp(6,3)=  15.6044623461691d0  *6.d0
-	bp(7,1)= -50.8003365888685d0  *7.d0
-	bp(7,2)= -23.6010990650801d0  *7.d0
-	bp(7,3)= -4.23812936930675d0  *7.d0
-
-	am(1)=ap(1,1) + (mShape-1)/mShape*ap(1,2) + (mShape-1)/mShape*(mShape-2)/mShape*ap(1,3)
-	am(2)=ap(2,1) + (mShape-1)/mShape*ap(2,2) + (mShape-1)/mShape*(mShape-2)/mShape*ap(2,3)
-	am(3)=ap(3,1)+ (mShape-1)/mShape*ap(3,2) + (mShape-1)/mShape*(mShape-2)/mShape*ap(3,3)
-	am(4)=ap(4,1) + (mShape-1)/mShape*ap(4,2) + (mShape-1)/mShape*(mShape-2)/mShape*ap(4,3)
-	am(5)=ap(5,1) + (mShape-1)/mShape*ap(5,2) + (mShape-1)/mShape*(mShape-2)/mShape*ap(5,3)
-	am(6)=ap(6,1) + (mShape-1)/mShape*ap(6,2) + (mShape-1)/mShape*(mShape-2)/mShape*ap(6,3)
-	am(7)=ap(7,1) + (mShape-1)/mShape*ap(7,2) + (mShape-1)/mShape*(mShape-2)/mShape*ap(7,3)
-
-	bm(1)=bp(1,1) + (mShape-1)/mShape*bp(1,2) + (mShape-1)/mShape*(mShape-2)/mShape*bp(1,3)
-	bm(2)=bp(2,1) + (mShape-1)/mShape*bp(2,2) + (mShape-1)/mShape*(mShape-2)/mShape*bp(2,3)
-	bm(3)=bp(3,1) + (mShape-1)/mShape*bp(3,2) + (mShape-1)/mShape*(mShape-2)/mShape*bp(3,3)
-	bm(4)=bp(4,1)+ (mShape-1)/mShape*bp(4,2) + (mShape-1)/mShape*(mShape-2)/mShape*bp(4,3)
-	bm(5)=bp(5,1) + (mShape-1)/mShape*bp(5,2) + (mShape-1)/mShape*(mShape-2)/mShape*bp(5,3)
-	bm(6)=bp(6,1) + (mShape-1)/mShape*bp(6,2) + (mShape-1)/mShape*(mShape-2)/mShape*bp(6,3)
-	bm(7)=bp(7,1) + (mShape-1)/mShape*bp(7,2) + (mShape-1)/mShape*(mShape-2)/mShape*bp(7,3)      
-	order1=mShape*mShape*sigma**3*eok/tKelvin
-	order2=mShape*mShape*sigma**3*(eok/tKelvin)**2	  
-
-!***************************
-!		eta Vapor
-!		b2Virial=2.5+1.5*mShape-12*md3Reverse*am(1)*order1-6/dEhs3*bm(1)*order2
-!		eta=(-1+ SQRT(1+(4*pMpa*pi/6*md2*dEhs*b2Virial)/8.314/tKelvin))/2/b2Virial
-!***************************
-
-	voidFrac=1.d0-eta
-	voidFrac2=voidFrac*voidFrac
-	voidFrac3=voidFrac*voidFrac2
-	voidFrac4=voidFrac*voidFrac3
-	voidFrac5=voidFrac*voidFrac4
-	voidFrac6=voidFrac*voidFrac5
-
-	I1=am(1)
-	I2=bm(1)
-	dEtaI1_dEta=am(1)
-	dEtaI2_dEta=bm(1)
-	etaProd=eta
-	do iCoeff=2,7
-		I1=I1+etaProd*am(iCoeff)
-		I2=I2+etaProd*bm(iCoeff)
-		dEtaI1_dEta=dEtaI1_dEta + iCoeff*am(iCoeff)*etaProd 
-		dEtaI2_dEta=dEtaI2_dEta + iCoeff*bm(iCoeff)*etaProd 
-		etaProd=etaProd*eta
-	enddo
-
-	denom=voidFrac*(2-eta)
-	denom2=denom*denom
-	denom3=denom*denom2
-	IF(voidFrac.le.0 .and. LOUD)PAUSE 'voidFrac<0'
-	!zHs=eta/(1-eta) + 3*Xitha1*Xitha2/Xitha0/(1-eta)**2+(3*Xitha2**3-eta*Xitha2**3)/Xitha0/(1-eta)**3
-	zHs=4.d0*eta*(1.d0-eta/2.d0)/voidfrac3	  !it is ZHS-1
-	aHs=1/Xitha0* (3*Xitha1*Xitha2/voidFrac+Xitha2**3/eta/(1-eta)**2+(Xitha2**3/(eta*eta)-Xitha0)*DLOG(voidFrac))
-	!gHs=1/(1-eta)+(dEhs/2)*3*Xitha2/(1-eta)**2+(dEhs/2)**2*2*Xitha2**2/voidFrac3
-	gHs=(1.d0-eta/2.d0)/voidfrac3
-	rhogHs_rho=eta*(2.5d0-eta)/voidfrac4
-	!rhogHs_rho=eta/(1-eta)**2+dEhs/2*(3*Xitha2/(1-eta)**2+6*Xitha2*eta/(1-eta)**3)+(dEhs/2)**2*(4*Xitha2**2/(1-eta)**3+6*Xitha2**2*eta/(1-eta)**4)
-	zHc=mShape*(zHs) - (mShape-1.d0)*(rhogHs_rho/gHs)
-	IF(gHs.le.0 .and. LOUD)PAUSE 'gHs<0'
-	aHc=mShape*aHs - (mShape-1)*DLOG(gHs)
-
-	C1inv=1+mShape*(8*eta-2*eta*eta)/voidFrac4 + &
-		(1-mShape)*eta*(  20+eta*(-27+eta*(12-2*eta) )  )/denom2
-	C1=1/C1inv
-	C2=-(C1*C1)* (mShape*(-4*eta**2+20*eta+8)/voidFrac5+(1-mShape)*&
-	 (2*eta**3+12*eta**2-48*eta+40)/denom3   )
-	zDisp=-2*pi*rho*dEtaI1_dEta*order1-pi*rho*mShape*&
-	 (C1*dEtaI2_dEta+C2*eta*I2)*order2
-	aDisp=-2*pi*rho*I1*order1-pi*rho*mshape*C1*I2*order2	  ! mShape*mShape*sigma**3*(eok)**2
-
-	!a_d=(zHc)/80*(1.d0-eta)**3 ! pi*rho*mshape*C1*I2*order2/(2*pi*rho*I1*order1)
-	!a_d=-12*mShape*eta*I1*eok/5
-	a_d=(-6*eta*mShape*mShape*C1*I2*(eok)**2)/80
-	zFactor=1+zHc+zDisp
-	aRes=aHc+aDisp !+aAssoc
-
-	return 
-	END 
 

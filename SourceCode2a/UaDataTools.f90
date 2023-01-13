@@ -18,8 +18,8 @@ MODULE GlobConst
 	character*30 NAME(NMX)
 	character*5 class(NMX) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. Ch06CompoundsList.xls, PGL6edClasses.xls)
     Logical LOUD   !LOUD=.TRUE. means writing debug info to the screen.
-	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
-	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos 
+	LOGICAL DEBUG, isESD, isTPT, isPcSaft, CheckDLL 
+	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
 	DoublePrecision etaPass !TODO:Consider if rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).
     DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS
 	DoublePrecision etaPure(NMX) !store eta for each compound at P=0 and Tmin(K). 
@@ -68,7 +68,7 @@ END MODULE BIPs
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE VpDb
-	USE GlobConst, only:NMX
+	USE GlobConst, only:NMX,dumpUnit
 	IMPLICIT NONE !DoublePrecision(A-H,O-Z)
 	Integer nVpDb
 	PARAMETER(nVpDb=2475)
@@ -115,13 +115,13 @@ END MODULE VpDb
 	end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine GetTmHfus(id,Tm,Hfus,iErr)
-	USE GlobConst, Only:DEBUG,PGLInputDir,LOUD 
+	USE GlobConst, Only:DEBUG,PGLInputDir,LOUD,dumpUnit 
 	! Purpose: Read Tm(K) and Hfus(J/mol) from input file.
 	Implicit DoublePrecision(a-h,o-z)
 	Character*77 HfusFile,FN !,inFile77
     FN="Hfus.txt"
 	HfusFile=TRIM(PGLInputDir)//'\'//TRIM(FN)
-	if(LOUD)print*,'HfusFile=',TRIM(HfusFile)
+	if(LOUD)write(dumpUnit,*)'HfusFile=',TRIM(HfusFile)
 	inUnitHfus=51
 	open(inUnitHfus,file=HfusFile)
 	read(inUnitHfus,*)nHfus
@@ -137,8 +137,8 @@ END MODULE VpDb
 			Tm=TmDb
 			Hfus=HfusTde*1000 ! convert to J/mol so Rgas=8.314 when computing SLE.
 			if(idCas==120127.or.idCas==92524)then
-				write(*,*)'idCas,ID,Hfus=',idCas,idDippr,HfusTde,HfusDip,Hfus
-				!pause 'GetTmHfus: check HfusTde,HfusDip,Hfus again'
+				write(dumpUnit,*)'idCas,ID,Hfus=',idCas,idDippr,HfusTde,HfusDip,Hfus
+				!write(dumpUnit,*) 'GetTmHfus: check HfusTde,HfusDip,Hfus again'
 			endif
 			exit ! leave if done.
 		endif
@@ -153,21 +153,21 @@ END MODULE VpDb
 	subroutine BeepMsg(msg)
 	USE GlobConst
 	character*222 msg
-	if(LOUD)write(*,*)TRIM(msg) !-- causes crash???
-!	pause
+	if(LOUD)write(dumpUnit,*)TRIM(msg) !-- causes crash???
+!	write(dumpUnit,*)
 	return
 	end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	subroutine IdDipprLookup(NC,idCas,ier,errMsgPas)
-    USE GlobConst, only:ID,nmx,LOUD
+    USE GlobConst, only:ID,nmx,LOUD,dumpUnit
 	USE CritParmsDb, only:idCasDb,idNum,CrIndex,nDeckDb
     integer ier,	idCas(nmx)
 	character*77 errMsg(0:11),errMsgPas
 	errMsg(0)='No Problem'
 	errMsg(1)='IdDipprLookup Error: at least one id not found'
 	ier=0
-	!print*,'IdLookup: nDeck=',nDeck
+	!write(dumpUnit,*)'IdLookup: nDeck=',nDeck
 	do iComp=1,NC
 		iGotIt=0
 		do i=1,nDeckDb
@@ -179,7 +179,7 @@ END MODULE VpDb
 			endif
 		enddo
 		if(iGotIt==0)ier=1 !only way here is if cycle failed => iGotIt==0.
-		if(LOUD.and.ier>0)write(*,*)'Did not find idCas(i).i,id=',iComp,id(i)
+		if(LOUD.and.ier>0)write(dumpUnit,*)'Did not find idCas(i).i,id=',iComp,id(i)
 		if(ier > 0)goto 861
 	enddo
 861	errMsgPas=errMsg(ier)
@@ -210,25 +210,25 @@ END MODULE VpDb
 	iErrCode=0
 	CrIndex=ndb ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
 	inFile=TRIM(PGLInputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
-	if(LOUD)print*,'LoadCritParmsDb: CritFile=',TRIM(inFile)
+	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: CritFile=',TRIM(inFile)
 !	OPEN(40,FILE=inFile,FORM='BINARY')
 	OPEN(40,FILE=inFile)
 	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
 	I=0
 !	READ(40,ERR=861)NDECK1
 	READ(40,*,ERR=861)NDECK1
-	!if(ndeck1.gt.ndb)pause 'GetCrit: more data in file than allocated'
+	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetCrit: more data in file than allocated'
 !	open(61,file='c:\spead\CalcEos\ParmsCrit.txt')
 	DO I=1,NDECK1
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
-		!if(i.eq.691)pause
+		!if(i.eq.691)write(dumpUnit,*)
 !		READ (40,ERR=861)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 		READ (40,'(a188)',ioStat=ioErr)dumString
 		READ (dumString,*,ioStat=ioErr)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I),tCode,pCode,vCode,form,NAMED(I)
 		CrIndex(IDNUM(i))=i
-		if(ioErr.and.LOUD)print*,'GetCrit: error reading ParmsCrit.txt. line=',i
-		if(i==1.and.LOUD)write(*,102)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
+		if(ioErr.and.LOUD)write(dumpUnit,*)'GetCrit: error reading ParmsCrit.txt. line=',i
+		if(i==1.and.LOUD)write(dumpUnit,102)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
 
@@ -238,8 +238,8 @@ END MODULE VpDb
 599	FORMAT(3(1X,i5,1X,A20))
 	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor       Cas#  tC  pC  vC  FORM        Name 
 	CLOSE(40)
-	!if((nDeck1).gt.ndb)pause 'GetCrit: too much data in file'
-	if(LOUD)print*,'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Trying ParmsCrAdd.'
+	!if((nDeck1).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
+	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Trying ParmsCrAdd.'
 		inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
 		OPEN(40,FILE=inFile)
 	!ENDIF
@@ -267,22 +267,22 @@ END MODULE VpDb
 	enddo
 	close(40)
 	nDeckDb=nDeck1+nDeck2
-	if(LOUD)print*,'LoadCritParmsDb: Success! DB is loaded.'
-	!if((nDeck).gt.ndb)pause 'GetCrit: too much data in ParmsCrAdd file'
-	!Write(*,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
+	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: Success! DB is loaded.'
+	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in ParmsCrAdd file'
+	!write(dumpUnit,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
 
 	RETURN
 861	continue
-	!write(*,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
-	!write(*,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
+	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
+	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
 	iErrCode=1
-	!pause
+	!write(dumpUnit,*)
 	return                      
 862	continue
-	!write(*,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
-	!write(*,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
+	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
+	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
 	iErrCode=1
-	!pause
+	!write(dumpUnit,*)
 	return                      
 	END
 
@@ -314,24 +314,24 @@ END MODULE VpDb
 	!	eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 	iErrCode=0
 	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
-	if(LOUD)write(*,'(2a)')' CritFile=',TRIM(inFile)
+	if(LOUD)write(dumpUnit,'(2a)')' CritFile=',TRIM(inFile)
 	OPEN(40,FILE=inFile)
 	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
 	I=0
 !	READ(40,ERR=861)NDECK1
 	READ(40,*,ERR=861)NDECK1
-	!if(ndeck1.gt.ndb)pause 'GetCrit: more data in file than allocated'
+	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetCrit: more data in file than allocated'
 !	open(61,file='c:\spead\CalcEos\ParmsCrit.txt')
 	DO I=1,NDECK1
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
-		!if(i.eq.691)pause
+		!if(i.eq.691)write(dumpUnit,*)
 !		READ (40,ERR=861)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 		READ (40,'(a188)',ioStat=ioErr)dumString
 		READ (dumString,*,ioStat=ioErr)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas
 		READ (dumString,'(a126,3a4,a12,a30)',ioStat=ioErr)readText,tCode,pCode,vCode,form,NAMED(I)
-		if(ioErr.and.LOUD)print*,'GetCrit: error reading ParmsCrit.txt. line=',i
-		if(i==1.and.LOUD)write(*,102)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
+		if(ioErr.and.LOUD)write(dumpUnit,*)'GetCrit: error reading ParmsCrit.txt. line=',i
+		if(i==1.and.LOUD)write(dumpUnit,102)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
 
@@ -342,13 +342,13 @@ END MODULE VpDb
 	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor       Cas#  tC  pC  vC  FORM        Name 
 	IF(ID(1)==0)THEN
 		DO I=1,NDECK1,3
-			IF(LOUD)WRITE(*,599)IDNUM(I),NAMED(I),IDNUM(I+1),NAMED(I+1),IDNUM(I+2),NAMED(I+2)
-			!IF(((I-1)/45)*45.EQ.(I-1))PAUSE
+			IF(LOUD)write(dumpUnit,599)IDNUM(I),NAMED(I),IDNUM(I+1),NAMED(I+1),IDNUM(I+2),NAMED(I+2)
+			!IF(((I-1)/45)*45.EQ.(I-1))write(dumpUnit,*)
 		enddo
 		RETURN
 	END IF
 	CLOSE(40)
-	!if((nDeck1).gt.ndb)pause 'GetCrit: too much data in file'
+	!if((nDeck1).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
 
 	inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
 	OPEN(40,FILE=inFile)
@@ -371,8 +371,8 @@ END MODULE VpDb
 	enddo
 	close(40)
 	nDeck=nDeck1+nDeck2
-	!if((nDeck).gt.ndb)pause 'GetCrit: too much data in ParmsCrAdd file'
-	!Write(*,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
+	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in ParmsCrAdd file'
+	!write(dumpUnit,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
 
 	DO iComp=1,NC
 		iGotIt=0
@@ -392,23 +392,23 @@ END MODULE VpDb
 		enddo
 		if(iGotIt.eq.0)then
 			iErrCode=iErrCode*10+iComp
-			!write(*,*)'Error in GetCrit: not found for iComp=',iComp
-			!pause
+			!write(dumpUnit,*)'Error in GetCrit: not found for iComp=',iComp
+			!write(dumpUnit,*)
 		endif
-		if(LOUD)write(*,'(1x,i5,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp),TC(iComp),PC(iComp),acen(iComp),ZC(iComp)
+		if(LOUD)write(dumpUnit,'(1x,i5,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp),TC(iComp),PC(iComp),acen(iComp),ZC(iComp)
 	enddo
 	RETURN
 861	continue
-	!write(*,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
-	!write(*,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
+	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
+	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
 	iErrCode=1
-	!pause
+	!write(dumpUnit,*)
 	return                      
 862	continue
-	!write(*,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
-	!write(*,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
+	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
+	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
 	iErrCode=1
-	!pause
+	!write(dumpUnit,*)
 	return                      
 	END
 
@@ -422,32 +422,32 @@ END MODULE VpDb
 	!	   ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!OUTPUT:
 	!VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
-    USE GlobConst, only: PGLinputDir,LOUD
+    USE GlobConst, only: PGLinputDir,LOUD,dumpUnit
     USE VpDb ! Stores all the coefficients.
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
     character*255 inFile
 	iErrCode=0
     inFile=TRIM(PGLinputDir)//'\CoeffsVp2a.TXT'
     OPEN(662,FILE=inFile,ioStat=ioErr)
-    if(ioErr.and.LOUD)pause 'GetVpDb: error opening CoeffsVp2a.txt'
+    if(ioErr.and.LOUD)write(dumpUnit,*) 'GetVpDb: error opening CoeffsVp2a.txt'
     !open(662,file='junk.txt')
 	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
 	!ndeck1=1974
 	READ(662,*,ioStat=ioErr)NDECK1 ! ioStat= -1,endofFile; -2,endOfLine
-    if(ioErr)print*,'ioErr,nDeck1,inFile',ioErr,nDeck1,TRIM(inFile)
-    if(ioErr)pause 'GetVpDb: Error reading NDECK1'
+    if(ioErr)write(dumpUnit,*)'ioErr,nDeck1,inFile',ioErr,nDeck1,TRIM(inFile)
+    if(ioErr)write(dumpUnit,*) 'GetVpDb: Error reading NDECK1'
     
-	!if(ndeck1.gt.ndb)pause 'GetVp: more data in file than allocated'
+	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetVp: more data in file than allocated'
 	DO I=1,NDECK1
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
-		!if(i.eq.691)pause
+		!if(i.eq.691)write(dumpUnit,*)
 		READ(662,*,ioStat=ioErr)IDNUM(I),rMINTD(I) ,VALMIND(I) ,rMAXTD(I),VALMAXD(I),AVGDEVD(I),NUMCOEFFD(I) ,(vpCoeffsd(i,iCoeff),iCoeff=1,5)  
-	    if(ioErr.and.LOUD)print*, 'inFile=',TRIM(inFile)
-	    if(ioErr.and.LOUD)print*, 'ioErr,line,id,vpCoeffs=',ioErr,I,IDNUM(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
-	    if(ioErr.and.LOUD)pause 'GetVp: error reading CoeffsVp2a.txt'
+	    if(ioErr.and.LOUD)write(dumpUnit,*) 'inFile=',TRIM(inFile)
+	    if(ioErr.and.LOUD)write(dumpUnit,*) 'ioErr,line,id,vpCoeffs=',ioErr,I,IDNUM(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
+	    if(ioErr.and.LOUD)write(dumpUnit,*) 'GetVp: error reading CoeffsVp2a.txt'
 		indexVpDb(IDNUM(I))=I ! vpCoeffs(iComp,iCoeff)=vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)
     enddo
-    if(LOUD)print*,'GetVpDb: Success! USE VpDb for vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)'
+    if(LOUD)write(dumpUnit,*)'GetVpDb: Success! USE VpDb for vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)'
 	CLOSE(662)
     return
     end
@@ -461,7 +461,7 @@ END MODULE VpDb
 	!	   ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!OUTPUT:
 	!VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
-	USE GlobConst, only:DEBUG,NMX
+	USE GlobConst, only:DEBUG,NMX,dumpUnit
 	USE VpDb
 	LOGICAL notFound
 	!DoublePrecision vpCoeffs(NMX,5)
@@ -478,10 +478,10 @@ END MODULE VpDb
 		endif
 		if(notFound)then
 			iErrCode=iErrCode*10+iComp
-			!write(*,*)'Error in GetCrit: not found for iComp=',iComp
-			!pause
+			!write(dumpUnit,*)'Error in GetCrit: not found for iComp=',iComp
+			!write(dumpUnit,*)
 		endif
-		!write(*,'(1x,i5,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp) &
+		!write(dumpUnit,'(1x,i5,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp) &
 		!,TC(iComp),PC(iComp),acen(iComp),ZC(iComp)
 	enddo
 
@@ -521,7 +521,7 @@ END MODULE VpDb
 		close(55)
 	endif
 	numBips=item
-	!write(*,*)'# of bips in database =',numBips
+	!write(dumpUnit,*)'# of bips in database =',numBips
 
 	do iComp=1,NC
 		do jComp=iComp+1,NC
@@ -574,10 +574,10 @@ END MODULE VpDb
 
 	return
 861	continue
-	if(LOUD)write(*,'(a33,a22)')'GetBip error - error reading ',bipFile
-	if(LOUD)write(*,*)'numBips,item',numBips,item
-	if(LOUD)write(*,*)'Data read as:'
-	if(LOUD)write(*,'(i4,7F8.4)')idBinarY(item),KIJDB(item),KTIJDB(item),wsTAUij(item),wsTAUji(item),wsTauTij(item),wsTauTji(item),alphaDB(item)
+	if(LOUD)write(dumpUnit,'(a33,a22)')'GetBip error - error reading ',bipFile
+	if(LOUD)write(dumpUnit,*)'numBips,item',numBips,item
+	if(LOUD)write(dumpUnit,*)'Data read as:'
+	if(LOUD)write(dumpUnit,'(i4,7F8.4)')idBinarY(item),KIJDB(item),KTIJDB(item),wsTAUij(item),wsTAUji(item),wsTauTij(item),wsTauTji(item),alphaDB(item)
 	GetBIPs= -1
 	return                      
 	end
@@ -607,7 +607,7 @@ END MODULE VpDb
 	enddo
 	if(id(1).eq.0)then
 		ier=1
-		if(LOUD)write(*,*)'Did not find idcc(1)=',idcc(1)
+		if(LOUD)write(dumpUnit,*)'Did not find idcc(1)=',idcc(1)
 		errMsgPas=errMsg(ier)
 		return
 	endif
@@ -624,7 +624,7 @@ END MODULE VpDb
 		enddo
 		if(id(iComp).eq.0)then		
 			ier=1
-			if(LOUD)write(*,*)'Did not find idcc(i).i,idcc=',iComp,idcc(1)
+			if(LOUD)write(dumpUnit,*)'Did not find idcc(i).i,idcc=',iComp,idcc(1)
 			errMsgPas=errMsg(ier)
 			return
 		endif
@@ -635,7 +635,7 @@ END MODULE VpDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	subroutine IdCasLookup(NC,idCas,ier,errMsgPas)
-    USE GlobConst, only:ID,idTrc,nmx,class,DEBUG,LOUD,PGLinputDir
+    USE GlobConst, only:ID,idTrc,nmx,class,DEBUG,LOUD,PGLinputDir,dumpUnit
 	parameter(maxDb=3000)
 	character*77 errMsg(0:11),errMsgPas,dumString
 	character*251 inFile
@@ -645,30 +645,30 @@ END MODULE VpDb
 	integer idCasDb(maxDb),idDb(maxDb),idTrcDb(maxDb)
     !OPEN(50,FILE='c:\spead\idTrcDipCas.TXT')
 		inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
-	if(LOUD)print*,'idCasLookup: inFile=',TRIM(inFile)
+	if(LOUD)write(dumpUnit,*)'idCasLookup: inFile=',TRIM(inFile)
 	OPEN(50,FILE=inFile)
 	errMsg(0)='No Problem'
 	errMsg(1)='IdCasLookup Error: at least one id not found'
 	ier=0
 	iGotIt=0
 	read(50,*)nDeck
-	!print*,'IdLookup: nDeck=',nDeck
+	!write(dumpUnit,*)'IdLookup: nDeck=',nDeck
 	do i=1,nDeck
 		read(50,'(a77)')dumString
 		read(dumString,'(2i6,i12,1x,a28,a5)',ioStat=ioErr)idTrcDb(i),idDb(i),idCasDb(i),dumName,classdb(i)  
-		if(ioErr.and.LOUD)print*,'idCas ioErr. i,idDippr=',i,idDb(i)
+		if(ioErr.and.LOUD)write(dumpUnit,*)'idCas ioErr. i,idDippr=',i,idDb(i)
 		if( id(1)==idDb(i) )then
 			iGotIt=1
 			idCas(1)=idCasDb(i)
 			idTrc(1)=idTrcDb(i)
 			class(1)=classdb(i)
-			if(LOUD)print*,TRIM(dumString)
-			if(LOUD)print*,'IdCasLookup:id1,name,class1:',id(1),TRIM(dumName),class(1)
+			if(LOUD)write(dumpUnit,*)TRIM(dumString)
+			if(LOUD)write(dumpUnit,*)'IdCasLookup:id1,name,class1:',id(1),TRIM(dumName),class(1)
 		endif
 	enddo
 	if(iGotIt==0)then
 		ier=1
-		!pause 'IdCasLookup: idCas not found for comp1'
+		!write(dumpUnit,*) 'IdCasLookup: idCas not found for comp1'
 		goto 861
 	endif
 	if(NC==1)goto 861
@@ -679,14 +679,14 @@ END MODULE VpDb
 				idCas(iComp)=idCasDb(i)
 				idTrc(iComp)=idTrcDb(i)
 				class(iComp)=classdb(i)
-				if(LOUD)print*,'IdCasLookup:idi,classi:',id(i),class(i)
+				if(LOUD)write(dumpUnit,*)'IdCasLookup:idi,classi:',id(i),class(i)
 				iGotit=1
 				exit
 			endif
 		enddo
 		if(iGotIt==0)then 
 			ier=1 
-			if(LOUD)write(*,*)'IdCasLookup:Did not find idCas(i).i,id=',iComp,id(i)
+			if(LOUD)write(dumpUnit,*)'IdCasLookup:Did not find idCas(i).i,id=',iComp,id(i)
 			goto 861
 		endif
 	enddo
@@ -699,21 +699,21 @@ END MODULE VpDb
 
 	subroutine PrintErrFlash(iErrCode)
 	USE GlobConst
-	if(LOUD)write(*,*)'PrintErrFlash:iErrCode=',iErrCode
-	IF(iErrCode.EQ.1)WRITE(*,*)'LLeFL:Initial guess REQUIRED.'
-	IF(iErrCode.EQ.2)WRITE(*,*)'Flash:ERROR ALL UPPER PHASE'
-	IF(iErrCode.EQ.3)WRITE(*,*)'Flash:ERROR ALL LOWER PHASE'
-	IF(iErrCode.EQ.4)WRITE(*,*)'Flash:LIQUID FUGACITY COEFFICIENT CALCULATION HAD ERROR'
-	IF(iErrCode.EQ.5)WRITE(*,*)'Flash:VAPOR  FUGACITY COEFFICIENT CALCULATION HAD ERROR'
-	IF(iErrCode.EQ.6)WRITE(*,*)'Flash:ITMAX EXCEEDED		 '
-	IF(iErrCode.EQ.7)WRITE(*,*)' Flash:xFrac(i) < 0 for some i'
-	IF(iErrCode.EQ.11)WRITE(*,*)' zV~zL - Flash: warning'
+	if(LOUD)write(dumpUnit,*)'PrintErrFlash:iErrCode=',iErrCode
+	IF(iErrCode.EQ.1)write(dumpUnit,*)'LLeFL:Initial guess REQUIRED.'
+	IF(iErrCode.EQ.2)write(dumpUnit,*)'Flash:ERROR ALL UPPER PHASE'
+	IF(iErrCode.EQ.3)write(dumpUnit,*)'Flash:ERROR ALL LOWER PHASE'
+	IF(iErrCode.EQ.4)write(dumpUnit,*)'Flash:LIQUID FUGACITY COEFFICIENT CALCULATION HAD ERROR'
+	IF(iErrCode.EQ.5)write(dumpUnit,*)'Flash:VAPOR  FUGACITY COEFFICIENT CALCULATION HAD ERROR'
+	IF(iErrCode.EQ.6)write(dumpUnit,*)'Flash:ITMAX EXCEEDED		 '
+	IF(iErrCode.EQ.7)write(dumpUnit,*)' Flash:xFrac(i) < 0 for some i'
+	IF(iErrCode.EQ.11)write(dumpUnit,*)' zV~zL - Flash: warning'
 	!IF(iErrCode.EQ.21)	!NOTE: not relevant for polymers because vLiq >> 1 and p >> pSat
-	!& WRITE(*,*)' zL > 0.33 - Flash:warning '
-	IF(iErrCode.EQ.22)WRITE(*,*)' zV < 0.33 - Flash:warning'
-	IF(iErrCode.EQ.23)WRITE(*,*)' Flash warning:gEx < 0 on at least one LLE iteration.'
+	!& write(dumpUnit,*)' zL > 0.33 - Flash:warning '
+	IF(iErrCode.EQ.22)write(dumpUnit,*)' zV < 0.33 - Flash:warning'
+	IF(iErrCode.EQ.23)write(dumpUnit,*)' Flash warning:gEx < 0 on at least one LLE iteration.'
 	!C
-	!pause 'PrintErrFlash: Check errors'
+	!write(dumpUnit,*) 'PrintErrFlash: Check errors'
 	return
 	end
 
@@ -751,19 +751,19 @@ END MODULE VpDb
 	!	eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 	iErrCode=0
 	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
-	!print*,'CritFile=',TRIM(inFile)
+	!write(dumpUnit,*)'CritFile=',TRIM(inFile)
 	!OPEN(40,FILE=inFile)
 	OPEN(40,FILE=inFile)
 	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
 	I=0
 	READ(40,*,ERR=861)NDECK1
-	print*,'nDeck1=',nDeck1
-	print*,'ID(1)=',ID(1)
-	!if(ndeck1.gt.ndb)pause 'GetCrit: more data in file than allocated'
+	write(dumpUnit,*)'nDeck1=',nDeck1
+	write(dumpUnit,*)'ID(1)=',ID(1)
+	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetCrit: more data in file than allocated'
 !	open(61,file='c:\spead\CalcEos\ParmsCrit.txt')
 	DO I=1,NDECK1
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
-		!if(i.eq.691)pause
+		!if(i.eq.691)write(dumpUnit,*)
 		READ (40,'(a188)',ioStat=ioErr)readText
 		READ (readText,*,ioStat=ioErr)IDNUM(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
@@ -777,13 +777,13 @@ END MODULE VpDb
 	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor       Cas#  tC  pC  vC  FORM        Name 
 	IF(ID(1).EQ.0)THEN
 		DO I=1,NDECK1,3
-			if(LOUD)write(*,599)IDNUM(I),NAMED(I),IDNUM(I+1),NAMED(I+1),IDNUM(I+2),NAMED(I+2)
-			!IF(((I-1)/45)*45.EQ.(I-1))PAUSE
+			if(LOUD)write(dumpUnit,599)IDNUM(I),NAMED(I),IDNUM(I+1),NAMED(I+1),IDNUM(I+2),NAMED(I+2)
+			!IF(((I-1)/45)*45.EQ.(I-1))write(dumpUnit,*)
 		enddo
 		RETURN
 	ENDIF
 	CLOSE(40)
-	!if((nDeck).gt.ndb)pause 'GetCrit: too much data in file'
+	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
 
 		inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
 		OPEN(40,FILE=inFile)
@@ -806,8 +806,8 @@ END MODULE VpDb
 	enddo
 	close(40)
 	nDeck=nDeck1+nDeck2
-	!if((nDeck).gt.ndb)pause 'GetCrit: too much data in ParmsCrAdd file'
-	if(LOUD)write(*,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
+	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in ParmsCrAdd file'
+	if(LOUD)write(dumpUnit,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
 
 	DO iComp=1,NC
 		iGotIt=0
@@ -828,24 +828,24 @@ END MODULE VpDb
 		enddo
 		if(iGotIt.eq.0)then
 			iErrCode=iErrCode*10+iComp
-			!write(*,*)'Error in GetCrit: not found for iComp=',iComp
-			!pause
+			!write(dumpUnit,*)'Error in GetCrit: not found for iComp=',iComp
+			!write(dumpUnit,*)
 		endif
-		if(LOUD)write(*,'(1x,i11,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp) &
+		if(LOUD)write(dumpUnit,'(1x,i11,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp) &
 		,TC(iComp),PC(iComp),acen(iComp),ZC(iComp)
 	enddo
 	RETURN
 861	continue
-	if(LOUD)write(*,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
-	!write(*,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
+	if(LOUD)write(dumpUnit,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
+	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
 	iErrCode=1
-	!pause
+	!write(dumpUnit,*)
 	return                      
 862	continue
-	if(LOUD)write(*,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
-	if(LOUD)write(*,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
+	if(LOUD)write(dumpUnit,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
+	if(LOUD)write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
 	iErrCode=1
-	!pause
+	!write(dumpUnit,*)
 	return                      
 END ! subroutine GetCrit
 
@@ -927,7 +927,7 @@ END ! subroutine GetCrit
           SumProduct=SumProduct+X(i)*Y(i)
       enddo
 	if( ABS(SumProduct) < zeroTol .and. LOUD)then
-		print*,'SumProduct: N,x1,y1',N,X(1),Y(1)
+		write(dumpUnit,*)'SumProduct: N,x1,y1',N,X(1),Y(1)
 	endif
       return
       end
@@ -1074,9 +1074,9 @@ END ! subroutine GetCrit
 !C              SUM FOR LARGE COMPONENTS.
 !C
                IF (XABS .LE. X1MAX) GO TO 10
-				if((XABS.EQ.0).AND.LOUD)PAUSE 'ENORM:XABS=0'
+				if((XABS.EQ.0).AND.LOUD)write(dumpUnit,*) 'ENORM:XABS=0'
                   S1 = ONE + S1*(X1MAX/XABS)**2
-				!if(X1MAX.EQ.0)PAUSE 'ENORM:X1MAX=0'
+				!if(X1MAX.EQ.0)write(dumpUnit,*) 'ENORM:X1MAX=0'
                   X1MAX = XABS
                   GO TO 20
 10          CONTINUE
@@ -1088,12 +1088,12 @@ END ! subroutine GetCrit
 !C              SUM FOR SMALL COMPONENTS.
 !C
                IF (XABS .LE. X3MAX) GO TO 40
-				if((XABS.EQ.0).AND.LOUD)PAUSE 'SumSq:XABS=0'
+				if((XABS.EQ.0).AND.LOUD)write(dumpUnit,*) 'SumSq:XABS=0'
                   S3 = ONE + S3*(X3MAX/XABS)**2
                   X3MAX = XABS
                   GO TO 50
 40          CONTINUE
-				!if(X3MAX.EQ.0)PAUSE 'ENORM:X3MAX=0'
+				!if(X3MAX.EQ.0)write(dumpUnit,*) 'ENORM:X3MAX=0'
                   IF ( X3MAX.NE. ZERO) S3 = S3 + (XABS/X3MAX)**2
 50          CONTINUE
 60       CONTINUE

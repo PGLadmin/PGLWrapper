@@ -1,6 +1,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). Sums are over sites per molecule then over molecules.
-	USE GlobConst, only:nmx,isTPT,isESD,iEosOpt,LOUD ! nmx is the maximum number of compounds, typically 55. 
+	USE GlobConst, only:nmx,isTPT,isESD,iEosOpt,LOUD,dumpUnit ! nmx is the maximum number of compounds, typically 55. 
 	implicit NONE
 	integer maxTypes,nsx,maxTypesGlobal,localPool	
 	PARAMETER (maxTypes=44,nsx=maxTypes,maxTypesGlobal=999) 
@@ -41,8 +41,8 @@ contains
 
 	if(iRdfOpt.eq.0)then
 		iErrCode=11
-		if(LOUD)write(*,*) 'Error in RdfCalc: iRdfOpt not specified'
-		if(LOUD)pause '1=ESD form, 2=CS form, 3=activity coeff form, 4=ESD+geometric association'
+		if(LOUD)write(dumpUnit,*) 'Error in RdfCalc: iRdfOpt not specified'
+		if(LOUD)write(dumpUnit,*) '1=ESD form, 2=CS form, 3=activity coeff form, 4=ESD+geometric association'
 		return
 	endif
 	!alpha=eta*rdf*kAD*yHB => (eta/alpha)*(dAlpha/dEta) = 1+(eta/rdf)*(dRdf/dEta)
@@ -74,16 +74,16 @@ END MODULE Assoc
 	!  ELLIOTT'S SUBROUTINE 
 	!  20221202 Initial adaptation MEM2 for speadmd: IECR,61(42):15725. Started as accelerator for initial guesses of SS method. Found SS no longer necessary. 90 minutes->63 seconds for regression of Jaubert database.
 	SUBROUTINE MEM2(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErr )!,ier)
-	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID,PGLinputDir
+	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID,PGLinputDir,dumpUnit
 	!USE SpeadParms
 	USE Assoc ! XA,XD,XC,NAcceptors(NMX),NDonors(NMX),NDegree(NMX),...
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (FA,FD) AND properties (zAssoc, lnPhiAssoc,...) given T,rho,x
 	Implicit DoublePrecision(A-H,K,O-Z)
 	DoublePrecision xFrac(NMX),RALPHA(NMX,maxTypes),RALPHD(NMX,maxTypes),xOld(NMX),rLnPhiAssoc(NMX),etaOld,rdfOld !,KVE(NMX)
 	Integer IDold(NMX),initCall
-	LOGICAL LOUDER,CheckDLL
+	LOGICAL LOUDER
 	Character*77 errMsg(22)
-	Character*234 outFile
+	!Character*234 outFile
 	data initCall,etaOld,rdfOld/1,0.0,1.0/
 	!  Reference: Elliott, IECR, 61:15724 (2022).
 	!  INPUT:
@@ -113,25 +113,11 @@ END MODULE Assoc
 	LOUDER=LOUD	! from GlobConst
 	!LOUDER=LouderWert
 	!LOUDER = .TRUE. ! for local debugging.
-	CheckDLL=.FALSE.
-	!CheckDLL=.TRUE.
 	if(initCall==1)then
 		etaOld=0
 		xOld(1:nComps)=0
 		IDold(1:nComps)=0
 		rdfOld=1
-	endif
-	if(CheckDLL)then
-		outFile=TRIM(PGLinputDir)//'\CheckSpeadmdDLL.txt'
-		if(initCall==1)open(6198,file=outFile)
-		if(initCall==0)open(6198,file=outFile,ACCESS='APPEND')
-		write(6198,*)' initCall=',initCall
-		write(6198,'(a)')' iComp,jType,       ID,   nDegree,nAcceptors,nDonors,eAcceptorKcal_mol,eDonorKcal_mol	'
-		do i=1,nComps
-			do j=1,nTypes(i)
-				write(6198,610)i,j,id(i),nDegree(i,j),nAcceptors(i,j),nDonors(i,j),eAcceptorKcal_mol(i,j),eDonorKcal_mol(i,j)
-			enddo
-		enddo ! i=1,nComps
 	endif
 	initCall=0
 	picard=0.83D0
@@ -145,8 +131,8 @@ END MODULE Assoc
 	Call RdfCalc(rdfContact,dAlpha,eta)
 	if(rdfContact < 1)then
 		iErr=11
-		if(Louder)write(*,'(a,3f9.4)')' MEM2: eta,rdfContact(<1)=',eta,rdfContact
-		if(Louder)pause
+		if(Louder)write(dumpUnit,'(a,3f9.4)')' MEM2: eta,rdfContact(<1)=',eta,rdfContact
+		if(Louder)write(dumpUnit,*)
 		return
 	endif
 	zAssoc=0
@@ -155,15 +141,14 @@ END MODULE Assoc
 	rLnPhiAssoc(1:nComps)=0
     iErr=0  
 610	format(1x,2i5,i12,i8,i11,i8,2E14.4)
-	if(CheckDLL)write(6198,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
-	if(LOUDER)write(*,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
+	if(LOUDER)write(dumpUnit,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
 	!XA=1  !				   ! initializing the entire array is slow.
 	!XD=1
 	ralphAmax=0
 	ralphDmax=0
 	isAcid=0
 	do iComp=1,nComps
-		if(nTypes(iComp)==0 .and.LOUDER)print*,'MEM2: nTypes=0 for iComp=',iComp
+		if(nTypes(iComp)==0 .and.LOUDER)write(dumpUnit,*)'MEM2: nTypes=0 for iComp=',iComp
 		do iType=1,nTypes(iComp)
 			XA(iComp,iType)=1  ! initializing the entire array is slow.
 			XD(iComp,iType)=1
@@ -173,22 +158,21 @@ END MODULE Assoc
 				epsCC=3*( eAcceptorKcal_Mol(iComp,iType)+eDonorKcal_Mol(iComp,iType) )/2
 				!ralphC is not subscripted because 1603 is the only acid type and always the same.
 				ralphC=SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(epsCC/tKelvin/1.987D-3)-1.d0 )  ) ! Note the "3*" in the exponent, which makes the C bond "special."
-				if(LOUDER)write(*,'(a,F10.6,3E12.4)')' MEM2: epsCC,bondVol,ralphC',epsCC,bondVolNm3(iComp,iType),ralphC
+				if(LOUDER)write(dumpUnit,'(a,F10.6,3E12.4)')' MEM2: epsCC,bondVol,ralphC',epsCC,bondVolNm3(iComp,iType),ralphC
 			endif
 			isAcceptor=0
 			if(nAcceptors(iComp,iType) > 0)isAcceptor=1
 			!sqArg=rho*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eAcceptorKcal_Mol(iComp,iType)/tKelvin/1.987D-3)-1.d0 )
-			!if(sqArg < 0)write(*,'(a,2i3,f8.2,f8.4)')' MEM2: iComp,iType,T',iComp,iType,tKelvin,eAcceptorKcal_Mol(iComp,iType)
+			!if(sqArg < 0)write(dumpUnit,'(a,2i3,f8.2,f8.4)')' MEM2: iComp,iType,T',iComp,iType,tKelvin,eAcceptorKcal_Mol(iComp,iType)
 			ralphA(iComp,iType)=isAcceptor*SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eAcceptorKcal_Mol(iComp,iType)/tKelvin/1.987D-3)-1.d0 )  )
 			if(ralphA(iComp,iType) > ralphAmax)ralphAmax=ralphA(iComp,iType)
 			isDonor=0
 			if(nDonors(iComp,iType) > 0)isDonor=1
 			!sqArg=rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eDonorKcal_Mol(iComp,iType)   /tKelvin/1.987D-3)-1.d0 )
-			!if(sqArg < 0)write(*,'(a,2i3,f8.2,f8.4)')' MEM2: iComp,iType,T,eDonor',iComp,iType,tKelvin,eDonorKcal_Mol(iComp,iType)
+			!if(sqArg < 0)write(dumpUnit,'(a,2i3,f8.2,f8.4)')' MEM2: iComp,iType,T,eDonor',iComp,iType,tKelvin,eDonorKcal_Mol(iComp,iType)
 			ralphD(iComp,iType)=isDonor*   SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eDonorKcal_Mol(iComp,iType)   /tKelvin/1.987D-3)-1.d0 )  )
 			if(ralphD(iComp,iType) > ralphDmax)ralphDmax=ralphD(iComp,iType)
-			if(LOUDER)write(*,'(a,2i3,2F10.4)')' MEM2:iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType) 
-			if(CheckDLL)write(6198,'(a,2i3,2F10.4)')' MEM2:iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType) 
+			if(LOUDER)write(dumpUnit,'(a,2i3,2F10.4)')' MEM2:iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType) 
 		enddo
 	enddo
 	FA0=0
@@ -208,8 +192,7 @@ END MODULE Assoc
 	moreDonors=0
 	if(avgNAS < avgNDS)moreDonors=1
 	if(FA0==0 .or. FD0==0)then
-		if(LOUDER)write(6198,601)' MEM2: No assoc. FA0,FD0=',FA0,FD0
-		if(CheckDLL)write(6198,601)' MEM2: No assoc. FA0,FD0=',FA0,FD0
+		if(LOUDER)write(dumpUnit,601)' MEM2: No assoc. FA0,FD0=',FA0,FD0
 		return ! no need to calculate if either no donors or no acceptors
 	endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -217,18 +200,16 @@ END MODULE Assoc
 		Call MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,FA,rLnPhiAssoc,iErrMEM1 )!,rLnPhiAssoc,ier)
 		if(iErrMEM1 > 0)then
 			iErr=12
-			if(LOUDER)write(*,*)'MEM2: error from MEM1=',iErrMEM1
-			if(CheckDLL)write(6198,*)'MEM2: error from MEM1=',iErrMEM1
+			if(LOUDER)write(dumpUnit,*)'MEM2: error from MEM1=',iErrMEM1
 		endif
 		if(isAcid==0)return
 	endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	if(CheckDLL)write(6198,'(a,2E12.4,1x,8i6,1x)')' MEM2: x1,x1old,ID,IDold ',xFrac(1),xOld(1),(ID(i),i=1,nComps),(IDold(i),i=1,nComps)
-	if(CheckDLL)write(6198,601)' MEM2: etaOld,rdfOld ',etaOld,rdfOld
+	if(LOUDER)write(dumpUnit,'(a,2E12.4,1x,8i6,1x)')' MEM2: x1,x1old,ID,IDold ',xFrac(1),xOld(1),(ID(i),i=1,nComps),(IDold(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,601)' MEM2: etaOld,rdfOld ',etaOld,rdfOld
 	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10.or.etaOld.le.0  )then	!Only use default estimate if compounds or composition have changed.
 	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. sumxmy2(nComps,xFrac,xOld) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
-		if(LOUDER)write(*,'(a,i6,1x,6E12.4)')' MEM2:New IDs or X ',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
-		if(CheckDLL)write(6198,'(a,i4,6E12.4)')' MEM2:New IDs or X',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
+		if(LOUDER)write(dumpUnit,'(a,i6,1x,6E12.4)')' MEM2:New IDs or X ',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
 		ralphAmean=ralphAmax
 		ralphDmean=ralphDmax
 		if(moreDonors)then
@@ -243,13 +224,12 @@ END MODULE Assoc
 			sqArg=eta/etaOld*rdfContact/rdfOld
 			if(sqArg < zeroTol)then
 				iErr=12
-				if(LOUDER)write(*,'(a,4f10.4)')' MEM2: sqArg for ralphMean update. eta,etaOld,rdfContact,rdfOld',eta,etaOld,rdfContact,rdfOld
+				if(LOUDER)write(dumpUnit,'(a,4f10.4)')' MEM2: sqArg for ralphMean update. eta,etaOld,rdfContact,rdfOld',eta,etaOld,rdfContact,rdfOld
 			endif
 			ralphAmean=ralphAmean*SQRT(sqArg)
 			ralphDmean=ralphDmean*SQRT(sqArg)
 		else
-			if(LOUDER)write(*,601)' MEM2: etaOld < 0???',etaOld
-			if(CheckDLL)write(6198,601)' MEM2: etaOld < 0???',etaOld
+			if(LOUDER)write(dumpUnit,601)' MEM2: etaOld < 0???',etaOld
 			iErr=15
 			return
 		endif
@@ -260,11 +240,10 @@ END MODULE Assoc
 	FD    =1 ! 
 	NITER=0
 	avgFo=(ralphDmean*FD0+ralphAmean*FA0)/2
-	if(Louder)write(*,'(a,f8.2,11f8.5)')' MEM2:T,eta',tKelvin,eta !,(etaPure(i),i=1,nComps)
+	if(Louder)write(dumpUnit,'(a,f8.2,11f8.5)')' MEM2:T,eta',tKelvin,eta !,(etaPure(i),i=1,nComps)
 	error=1234
 	ITMAX=44
-	if(LOUDER)write(*,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0  ',nIter,ralphAmean,ralphDmean,FA,FD,FA0,FD0
-	if(CheckDLL)write(6198,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0  ',nIter,ralphAmean,ralphDmean,FA,FD,FA0,FD0
+	if(LOUDER)write(dumpUnit,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0  ',nIter,ralphAmean,ralphDmean,FA,FD,FA0,FD0
 	do while(ABS(error)>Ftol.and.NITER<ITMAX)
 		NITER=NITER+1
 		!if(NITER > 33)picard=0.5D0
@@ -274,8 +253,7 @@ END MODULE Assoc
 		sqArgA=delFA*delFA+4*ralphAmean*FA0
 		sqArgD=delFD*delFD+4*ralphDmean*FD0
 		if(sqArgA < zeroTol .or. sqArgD < zeroTol)then
-			if(LOUDER)write(*,'(a,i3,4E12.4)')' MEM2: sqArg(A or D). iter,ralphAmean,FA0,ralphDmean,FD0',nIter,ralphAmean,FA0,ralphDmean,FD0
-			if(CheckDLL)write(6198,'(a,i3,4E12.4)')' MEM2: sqArg(A or D). iter,ralphAmean,FA0,ralphDmean,FD0',nIter,ralphAmean,FA0,ralphDmean,FD0
+			if(LOUDER)write(dumpUnit,'(a,i3,4E12.4)')' MEM2: sqArg(A or D). iter,ralphAmean,FA0,ralphDmean,FD0',nIter,ralphAmean,FA0,ralphDmean,FD0
 			iErr=13
 			return
 		endif 
@@ -295,8 +273,7 @@ END MODULE Assoc
 		FAold=FA
 		FDold=FD
 		!Compute new ralphMeans.
-		if(LOUDER)write(*,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,ralphAmean,ralphDmean,FA,FD,errA,errD
-		if(CheckDLL)write(6198,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,ralphAmean,ralphDmean,FA,FD,errA,errD
+		if(LOUDER)write(dumpUnit,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,ralphAmean,ralphDmean,FA,FD,errA,errD
 		ralphDmean= picard*(-1+FA0/sumD)/(FD+1D-9)+(1-picard)*ralphDmean !Using new sumD to compute new ralphMeans.
 		if(ralphDmean < 0)ralphDmean=(-1+FA0/sumD)/(FD+1D-9)
 		if(ralphDmean < 0)ralphDmean=zeroTol
@@ -307,24 +284,24 @@ END MODULE Assoc
 	enddo !while abs(error) > 1.D-9. 
 	if(NITER>ITMAX-1)then
 		iErr=1	!warning level
-		if(LOUDER)write(*,*)'ERROR - NO CNVRG. NITER,FA1,FA=',NITER,FA1,FA
+		if(LOUDER)write(dumpUnit,*)'ERROR - NO CNVRG. NITER,FA1,FA=',NITER,FA1,FA
 		!GOTO 86
 	ENDIF
-	if(NITER > itMax-1 .and. LOUDER)write(*,'(a,i3,2i5,2F7.4,3f8.2,2f10.4,4E12.4)')' iter,id(1),id(2),eta,xFrac(1),tKelvin,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,id(1),id(2),xFrac(1),tKelvin,ralphAmean,ralphDmean,FA,FD,errA,errD
+	if(NITER > itMax-1 .and. LOUDER)write(dumpUnit,'(a,i3,2i5,2F7.4,3f8.2,2f10.4,4E12.4)')' iter,id(1),id(2),eta,xFrac(1),tKelvin,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,id(1),id(2),xFrac(1),tKelvin,ralphAmean,ralphDmean,FA,FD,errA,errD
 	!  fAssoc ITERATION HAS CONCLUDED
 	if(isAcid==1)then
 		FC=2*FC0_ralphC*ralphC/( 1+SQRT(1+4*FC0_ralphC*ralphC*ralphC) )
 		XCtemp=1/(1+FC*ralphC)
 		if(XCtemp < zeroTol)then
 			iErr=14
-			if(LOUDER)write(*,'(a,2f12.4,2F10.4)')' MEM2:ralphC,FC0,FC,XC',ralphC,FC0_ralphC*ralphC,FC,XCtemp 
-			if(LOUDER)write(*,'(a,E12.4)')' MEM2: XC=',XCtemp
+			if(LOUDER)write(dumpUnit,'(a,2f12.4,2F10.4)')' MEM2:ralphC,FC0,FC,XC',ralphC,FC0_ralphC*ralphC,FC,XCtemp 
+			if(LOUDER)write(dumpUnit,'(a,E12.4)')' MEM2: XC=',XCtemp
 		endif
 	endif
 	if(FA < zeroTol .or.FD < zeroTol .or.FC < 0 )then
-		if(LOUDER)write(*,601)' MEM2: FB < 0? FA,FD,FC=',FA,FD,FC
-		if(LOUDER)write(*,601)' MEM2: ralphMeans=',ralphAmean,ralphDmean
-		if(LOUDER)pause 'MEM2: Check this out!'
+		if(LOUDER)write(dumpUnit,601)' MEM2: FB < 0? FA,FD,FC=',FA,FD,FC
+		if(LOUDER)write(dumpUnit,601)' MEM2: ralphMeans=',ralphAmean,ralphDmean
+		if(LOUDER)write(dumpUnit,*) 'MEM2: Check this out!'
 	endif
 	hAD=0
 	hDA=0
@@ -342,19 +319,17 @@ END MODULE Assoc
 				hCC=hCC+xFrac(i)*nDegree(i,j) * (1-XC(i,j))
 			endif
 		enddo
-		if(LOUDER)write(*,'(a,i3,8F10.7)')' MEM2: i,XA(i,j)=',i,(XA(i,j),j=1,nTypes(i))
-		if(LOUDER)write(*,'(a,i3,8F10.7)')' MEM2: i,XD(i,j)=',i,(XD(i,j),j=1,nTypes(i))
+		if(LOUDER)write(dumpUnit,'(a,i3,8F10.7)')' MEM2: i,XA(i,j)=',i,(XA(i,j),j=1,nTypes(i))
+		if(LOUDER)write(dumpUnit,'(a,i3,8F10.7)')' MEM2: i,XD(i,j)=',i,(XD(i,j),j=1,nTypes(i))
 	enddo
 601	format(1x,a,8E12.4)
 
 	zAssoc= -dAlpha*(hAD+hDA+hCC)/2
-	if(LOUDER)  write(*   ,'(a,8f10.4)')' MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid',FA,FD,zAssoc,dAlpha,hAD+hDA+hCC,-dAlpha*hCC/2
-	if(CheckDLL)write(6198,'(a,8f10.4)')' MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid',FA,FD,zAssoc,dAlpha,hAD+hDA+hCC,-dAlpha*hCC/2
+	if(LOUDER)write(dumpUnit,'(a,8f10.4)')' MEM2:FA,FD,zAssoc,dAlpha,h^M,zAcid',FA,FD,zAssoc,dAlpha,hAD+hDA+hCC,-dAlpha*hCC/2
 	xOld(1:nComps)=xFrac(1:nComps)
 	IDold(1:nComps)=ID(1:nComps)
 	etaOld=eta
 	rdfOld=rdfContact
-	if(isZiter==1.and.CheckDLL)close(6198)
 	if(isZiter==1)return 
 	!aAssoc= 0 !already initialized at the top.
 	betadFA_dBeta=0
@@ -364,7 +339,7 @@ END MODULE Assoc
 		sumLnXi=0.d0
 		do j=1,nTypes(i)
 			if( XA(i,j) < zeroTol .or.XD(i,j) < zeroTol .or.XC(i,j) < zeroTol )then
-				if(LOUDER)write(*,'(a,2i3,3E12.4)')' MEM2: XBij < 0? i,j,XA,D,C=',i,j,XA(i,j),XD(i,j),XC(i,j)
+				if(LOUDER)write(dumpUnit,'(a,2i3,3E12.4)')' MEM2: XBij < 0? i,j,XA,D,C=',i,j,XA(i,j),XD(i,j),XC(i,j)
 				iErr=14
 				return
 			endif
@@ -389,25 +364,23 @@ END MODULE Assoc
 	enddo
 	aAssoc=  aAssoc+(hAD+hDA+hCC)/2  ! Eqs. 1 & 40
 	uAssoc= -( FA*betadFD_dBeta+FD*betadFA_dBeta+FC*betadFC_dBeta )/2 ! Eq. 43
-	if(LOUDER)write(*,'(a,6E12.4)')' MEM2: aAssoc,fugAssoc= ',aAssoc,(rLnPhiAssoc(i),i=1,nComps)
-	if(CheckDLL)write(6198,'(a,6E12.4)')' MEM2: aAssoc,fugAssoc= ',aAssoc,(rLnPhiAssoc(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' MEM2: aAssoc,fugAssoc= ',aAssoc,(rLnPhiAssoc(i),i=1,nComps)
 	if(ABS(hAD-hDA) > Ftol)then
 		iErr=2 !Warning
-		if(LOUDER)print*,'MEM2: Failed bond site balance.'
+		if(LOUDER)write(dumpUnit,*)'MEM2: Failed bond site balance.'
 	endif
 	if(LOUDER)then
-		write(*,'(a,8F9.6,3f7.3)')' XAs&XDs1,...',(XA(1,i),i=1,4),(XD(1,i),i=1,4)
-		write(*,'(a,8F9.6,3f7.3)')' XAs&XDs2,...',(XA(2,i),i=1,4),(XD(2,i),i=1,4)
-		if(isAcid==1)write(*,'(a,3E12.4)')' MEM2: ralphC,XC= ',ralphC,XCtemp
+		write(dumpUnit,'(a,8F9.6,3f7.3)')' XAs&XDs1,...',(XA(1,i),i=1,4),(XD(1,i),i=1,4)
+		write(dumpUnit,'(a,8F9.6,3f7.3)')' XAs&XDs2,...',(XA(2,i),i=1,4),(XD(2,i),i=1,4)
+		if(isAcid==1)write(dumpUnit,'(a,3E12.4)')' MEM2: ralphC,XC= ',ralphC,XCtemp
 	endif
-	if(CheckDLL)close(6198)
 	return
 	end	!subroutine MEM2()
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!  ELLIOTT'S SUBROUTINE 
 	!  20221202 Initial adaptation MEM2 paper: IECR,61(42):15725. Start as accelerator for initial guesses of SS method.
 	SUBROUTINE MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErr )!,aAssoc,uAssoc,rLnPhiAssoc,ier)
-	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID
+	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID,dumpUnit
 	USE Assoc
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (fAssoc) AND zAssoc given rho,VM
 	Implicit DoublePrecision(A-H,K,O-Z)
@@ -430,8 +403,8 @@ END MODULE Assoc
 	voidFrac3=voidFrac*voidFrac*voidFrac
 	Call RdfCalc(rdfContact,dAlpha,eta)
 	if(rdfContact < 1)then
-		if(Louder)write(*,'(a,3f9.4)')' MEM1: Returning zero. eta,rdfContact(<1)=',eta,rdfContact
-		if(Louder)pause
+		if(Louder)write(dumpUnit,'(a,3f9.4)')' MEM1: Returning zero. eta,rdfContact(<1)=',eta,rdfContact
+		if(Louder)write(dumpUnit,*)
 		return
 	endif
 	zAssoc=0
@@ -452,9 +425,9 @@ END MODULE Assoc
 
 			SQARG=bondVolNm3(iComp,iType)*avoNum*rhoMol_cc*rdfContact*bigYhb
 			IF(SQARG < 0)THEN
-				if(Louder)write(*,*) 'neg alpha in wertheim. ETA=',ETA
+				if(Louder)write(dumpUnit,*) 'neg alpha in wertheim. ETA=',ETA
 				iErrCode=3
-				if(Louder)pause
+				if(Louder)write(dumpUnit,*)
 				RETURN
 			ENDIF
 			ralph(iComp,iType)=DSQRT( SQARG )
@@ -470,14 +443,14 @@ END MODULE Assoc
 			iComplex=nAcceptors(iComp,iType)*nDonors(iComp,iType)
 			if(iComplex.ne.0)then !only apply symmetric rule when acceptors AND donors on a site.
 				FA0=FA0+xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)*ralph(iComp,iType) !/(1+fAssoc*ralph(iComp,iType))
-				if(LOUDER)write(*,'(a,2i3,8E12.4)')' MEM1: iComp,iType,ralph',iComp,iType,ralph(iComp,iType)
+				if(LOUDER)write(dumpUnit,'(a,2i3,8E12.4)')' MEM1: iComp,iType,ralph',iComp,iType,ralph(iComp,iType)
 				if(ralph(iComp,iType) > ralphMean)ralphMean=ralph(iComp,iType) ! Infinity norm for initial estimate.
 			endif
 		enddo
 	enddo
 	errOld=fAssoc-FA0
 	fOld=fAssoc
-	IF(ABS(errOld) < 1.D-9.and.LOUDER)write(*,601)' MEM1: No assoc? FA0=',FA0	!don't iterate if errOld < 1D-9
+	IF(ABS(errOld) < 1.D-9.and.LOUDER)write(dumpUnit,601)' MEM1: No assoc? FA0=',FA0	!don't iterate if errOld < 1D-9
 	IF(ABS(errOld) > 1.D-9)then	!don't iterate if errOld < 1D-9
 		fAssoc1=2*FA0/( 1+DSQRT(1+4*ralphMean*FA0) )  ! Eq.23 where FD0=FA0. This is exact for binary like benzene+methanol.
 		fAssoc=fAssoc1 
@@ -497,31 +470,31 @@ END MODULE Assoc
 			enddo
 			ERR=fAssoc-SUMA
 			!checkSum=FA0/(1+fAssoc*ralphMean)
-			if( ABS((ERR-errOld)/errOld) < zeroTol .and. Louder)write(*,601)'MEM1: err~errOld=',err,errOld
+			if( ABS((ERR-errOld)/errOld) < zeroTol .and. Louder)write(dumpUnit,601)'MEM1: err~errOld=',err,errOld
 			CHANGE=ERR/(ERR-errOld)*(fAssoc-fOld)
-			if(LOUDER)write(*,601)' MEM1: FA,SUMA',fAssoc,SUMA 
+			if(LOUDER)write(dumpUnit,601)' MEM1: FA,SUMA',fAssoc,SUMA 
 			fOld=fAssoc
 			errOld=ERR
 			fAssoc=fAssoc-CHANGE
 			!ralphMean=(-1+FA0/sumA)/(fAssoc+1D-9)
 		ENDDO
 		IF(NITER > itMax-1)THEN
-			if(LouderWert)write(*,*)'ERROR - NO CNVRG ON fAssoc'
+			if(LouderWert)write(dumpUnit,*)'ERROR - NO CNVRG ON fAssoc'
 			iErrCode=4
-			if(Louder)pause
+			if(Louder)write(dumpUnit,*)
 			return
 		ENDIF
 	endif
 
 	!fAssoc ITERATION HAS CONCLUDED
 	if(fAssoc < zeroTol)then
-		if(LOUDER)write(*,601)' MEM1: 0 > FA=',fAssoc
+		if(LOUDER)write(dumpUnit,601)' MEM1: 0 > FA=',fAssoc
 	endif
 601 format(1x,a,8E12.4)
 
 	!Elliott'96 Eq.35 (mod for CS or ESD rdf)
 	ZASSOC= -fAssoc*fAssoc*dAlpha
-	if(LOUDER)write(*,601)'MEM1: eta,fAssoc,Zassoc=',eta,fAssoc,Zassoc
+	if(LOUDER)write(dumpUnit,601)'MEM1: eta,fAssoc,Zassoc=',eta,fAssoc,Zassoc
 	if(isZiter==1)return
 	!XA=1 !set to unity means no association !Setting the entire array to 1 is slow.	          
 	!XD=1 !set to unity means no association	          
@@ -534,10 +507,10 @@ END MODULE Assoc
 			XC(i,j)=1
 			hAD=hAD+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*(1-XA(i,j))
 		enddo
-		if(LOUDER)write(*,'(a,i3,4F10.7)')' MEM1: i,XA(i,j)=',i,(XA(i,j),j=1,nTypes(i))
+		if(LOUDER)write(dumpUnit,'(a,i3,4F10.7)')' MEM1: i,XA(i,j)=',i,(XA(i,j),j=1,nTypes(i))
 	enddo
 
-	if(LOUDER)write(*,'(a,8f10.4)')' MEM1:fAssoc,zAssoc,dAlpha,h^M,sumLnXi',fAssoc,zAssoc,dAlpha,hAD+hDA,sumLnXi
+	if(LOUDER)write(dumpUnit,'(a,8f10.4)')' MEM1:fAssoc,zAssoc,dAlpha,h^M,sumLnXi',fAssoc,zAssoc,dAlpha,hAD+hDA,sumLnXi
 	hDA=hAD
 	zAssoc= -dAlpha*(hAD+hDA)/2 ! check same?
 	!aAssoc= 0 	!already initialized
@@ -545,7 +518,7 @@ END MODULE Assoc
 		sumLnXi=0.d0
 		do j=1,nTypes(i)
 			if( XA(i,j) < zeroTol)then
-				if(LOUDER)write(*,'(a,2i3,8E12.4)')' MEM1: XAij < 0? i,j,XA=',i,j,XA(i,j)
+				if(LOUDER)write(dumpUnit,'(a,2i3,8E12.4)')' MEM1: XAij < 0? i,j,XA=',i,j,XA(i,j)
 				iErr=14
 				return
 			endif
@@ -553,10 +526,10 @@ END MODULE Assoc
 		enddo
 		aAssoc=aAssoc+xFrac(i)*sumLnXi	! ln(XD)=ln(XA) so *2.
 		rLnPhiAssoc(i)=sumLnXi-(hAD+hDA)/2*(dAlpha-1)*bVolCC_mol(i)/bVolMix !*( 1+(dAlpha-1)*rhoMol_cc*bVolCC_mol(1:nComps) )	! Eq. 42
-		!write(*,'(a,i3,6E12.4)')' MEM1: iComp,sumLnXi,lnPhi=',i,sumLnXi,rLnPhiAssoc(i)
+		!write(dumpUnit,'(a,i3,6E12.4)')' MEM1: iComp,sumLnXi,lnPhi=',i,sumLnXi,rLnPhiAssoc(i)
 	enddo
 	aAssoc=  aAssoc+(hAD+hDA)/2  ! Eqs. 1 & 40
-	if(LOUDER)write(*,'(a,6E12.4)')' MEM1:         fugAssocBefore=',(rLnPhiAssoc(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' MEM1:         fugAssocBefore=',(rLnPhiAssoc(i),i=1,nComps)
 	
 	betadFA_dBeta=0	!cf E'96(19)
 	do i=1,nComps !cf E'96(19)	 TODO: rewrite this in terms of ralph.
@@ -573,14 +546,14 @@ END MODULE Assoc
 	IDold(1:nComps)=ID(1:nComps)
 	etaOld=eta
 	rdfOld=rdfContact
-	if(LOUDER)write(*,'(a,I4,2F10.6,2E12.4)')' MEM1:F1,fAssoc,zAssoc,rmsErr,nIter=',NITER,fAssoc1,fAssoc,zAssoc
+	if(LOUDER)write(dumpUnit,'(a,I4,2F10.6,2E12.4)')' MEM1:F1,fAssoc,zAssoc,rmsErr,nIter=',NITER,fAssoc1,fAssoc,zAssoc
 	return
 	end	!subroutine MEM1()
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
 	! THE WERTHEIM ROUTINES OF SPEAD AND ESD TOGETHER COMBINED BY AGF, Oct. 2009
 	subroutine Wertheim( isZiter,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErrCode)
-	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID ,etaMax
+	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID ,etaMax,dumpUnit
 	USE Assoc !XA,XD,XC
 	!USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
@@ -625,7 +598,7 @@ END MODULE Assoc
 !		endif
 !	enddo
 	!e.g. ethanol: rho=.68, tK=453 zAssoc=, aAssoc=
-	if(LOUD.and.initCall)print*,'Wertheim: starting.'
+	if(LOUD.and.initCall)write(dumpUnit,*)'Wertheim: starting.'
 	sumx=SUM( xFrac(1:nComps) )
 	if( ABS(sumx-1) > zeroTol .and. sumx > zeroTol)xFrac(1:nComps)=xFrac(1:nComps)/sumx 
 	bVolMix=SUM( xFrac(1:nComps)*bVolCc_mol(1:nComps) )
@@ -647,7 +620,7 @@ END MODULE Assoc
 			XA(iComp,iType)=1
 			XD(iComp,iType)=1
 			XC(iComp,iType)=1
-			if(LOUD.and.initCall)print*,'Wertheim: iComp,iType,#Acc,#Don', iComp,iType,nAcceptors(iComp,iType),nDonors(iComp,iType)
+			if(LOUD.and.initCall)write(dumpUnit,*)'Wertheim: iComp,iType,#Acc,#Don', iComp,iType,nAcceptors(iComp,iType),nDonors(iComp,iType)
 		enddo
         bAssoc(iComp)=.false. ! then check if each component associates.
 		if(	nAccComp*nDonComp > 0 )bAssoc(iComp)=.true.
@@ -660,40 +633,40 @@ END MODULE Assoc
 	HyBond=.false. ! then check if any prospect for HyBonding, association or solvation 
 	if(nDonTot*nAccTot > 0)HyBond=.true.
 	if(.not.HyBond)then
-		if(LouderWert.and.initCall)print*,'Wertheim: No HyBond. nDonTot,nAccTot=',nDonTot,nAccTot
-		if(LouderWert.and.initCall)pause 'Wertheim: no HyBond. Dont come back!'
+		if(LouderWert.and.initCall)write(dumpUnit,*)'Wertheim: No HyBond. nDonTot,nAccTot=',nDonTot,nAccTot
+		if(LouderWert.and.initCall)write(dumpUnit,*) 'Wertheim: no HyBond. Dont come back!'
 		initCall=0
 		return !no need for wertheim in this case.
 	endif
-	if(LouderWert)print*,'nAcceptors(iComp1)=',( nAcceptors(1,iType),iType=1,nTypes(1) )
-	if(LouderWert)print*,'nDonors(iComp1)=',( nDonors(1,iType),iType=1,nTypes(1) )
-	if(initCall.and.LouderWert.and.HyBond)pause 'FuTptVtot: HyBonding identified in this fluid. Correct?'
-	!pause 'Wertheim: .not.HyBond, but still in Wertheim???'
+	if(LouderWert)write(dumpUnit,*)'nAcceptors(iComp1)=',( nAcceptors(1,iType),iType=1,nTypes(1) )
+	if(LouderWert)write(dumpUnit,*)'nDonors(iComp1)=',( nDonors(1,iType),iType=1,nTypes(1) )
+	if(initCall.and.LouderWert.and.HyBond)write(dumpUnit,*) 'FuTptVtot: HyBonding identified in this fluid. Correct?'
+	!write(dumpUnit,*) 'Wertheim: .not.HyBond, but still in Wertheim???'
 	if(tKelvin < 2)iErrCode=1 ! < 2 is too low even for He.
 	if(eta > etaMax .or. eta < 0)iErrCode=1
 	if(bVolMix.le.0)iErrCode=1
 	if(sumx.le.0)iErrCode=1
 	if(iErrCode==1)then
-		if(LouderWert)write(*,'(a,f10.2)')' Wertheim: bVolMixCc_mol= ',bVolMix
-		if(LouderWert)write(*,'(a,1PE11.4,a,0Pf7.2,a,f7.4)')' eta=',eta,' tKelvin=',tKelvin,' sumx=',sumx
-		if(LouderWert)write(*,'(a,11F8.4)')' vMolecNm3=',(vMolecNm3(iComp),iComp=1,nComps)
+		if(LouderWert)write(dumpUnit,'(a,f10.2)')' Wertheim: bVolMixCc_mol= ',bVolMix
+		if(LouderWert)write(dumpUnit,'(a,1PE11.4,a,0Pf7.2,a,f7.4)')' eta=',eta,' tKelvin=',tKelvin,' sumx=',sumx
+		if(LouderWert)write(dumpUnit,'(a,11F8.4)')' vMolecNm3=',(vMolecNm3(iComp),iComp=1,nComps)
 		!call BeepMsg(errMsg(iErrCode))
-		if(LouderWert)write(*,*)errMsg(iErrCode)
-		if(LouderWert)pause
+		if(LouderWert)write(dumpUnit,*)errMsg(iErrCode)
+		if(LouderWert)write(dumpUnit,*)
 	endif
 	if(iErrCode.ne.0)return !sorry for bad return
 	
 	rhoMol_cc=eta/bVolMix
-	!pause 'Calling MEM1'
+	!write(dumpUnit,*) 'Calling MEM1'
 	if(LouderWert)call MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErrMEM1 )! XA,XD USE Assoc
-	if(LouderWert)write(*,'(a,8f9.4)')' Wertheim-MEM1:eta,fAssoc,zAssoc,aAssoc,uAssoc',eta,fAssoc,zAssoc,aAssoc,uAssoc
-	!pause 'Results from MEM1'
-	!if(LouderWert.and.initCall)write(*,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
-	if(LouderWert.and.initCall)pause 'Wertheim: MEM1 estimate. Calling MEM2'
+	if(LouderWert)write(dumpUnit,'(a,8f9.4)')' Wertheim-MEM1:eta,fAssoc,zAssoc,aAssoc,uAssoc',eta,fAssoc,zAssoc,aAssoc,uAssoc
+	!write(dumpUnit,*) 'Results from MEM1'
+	!if(LouderWert.and.initCall)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
+	if(LouderWert.and.initCall)write(dumpUnit,*) 'Wertheim: MEM1 estimate. Calling MEM2'
 	call MEM2(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErr )!,rLnPhiAssoc,ier)
-	if(LouderWert)write(*,'(a,8f9.4)')' Wertheim-MEM2:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
-	!if(LouderWert)write(*,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
-	!if(LouderWert)pause 'Wertheim: MEM2 estimate. Calling XsolJre'
+	if(LouderWert)write(dumpUnit,'(a,8f9.4)')' Wertheim-MEM2:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
+	!if(LouderWert)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
+	!if(LouderWert)write(dumpUnit,*) 'Wertheim: MEM2 estimate. Calling XsolJre'
     iDoSolvation=0
     if(isESD)iDoSolvation=0
     !if(isAcid > 0)iDoSolvation=1	 ! FYI: rmsErr on XsolJre2a is 1E-6
@@ -704,8 +677,8 @@ END MODULE Assoc
 		half=one/2 !defined in GlobConst
 		Call RdfCalc(rdfContact,dAlpha,eta)
 		if(rdfContact < 1)then
-			if(Loud)write(*,'(a,3f9.4)')' Wertheim: eta,rdfContact(<1)=',eta,rdfContact
-			if(Loud)pause
+			if(Loud)write(dumpUnit,'(a,3f9.4)')' Wertheim: eta,rdfContact(<1)=',eta,rdfContact
+			if(Loud)write(dumpUnit,*)
 			return
 		endif
 
@@ -723,9 +696,9 @@ END MODULE Assoc
 
 				SQARG=bondVolNm3(iComp,iType)*avoNum*rhoMol_cc*rdfContact*bigYhb
 				IF(SQARG < 0)THEN
-					if(LouderWert)write(*,*) 'neg alpha in wertheim. ETA=',ETA
+					if(LouderWert)write(dumpUnit,*) 'neg alpha in wertheim. ETA=',ETA
 					iErrCode=3
-					if(LouderWert)pause
+					if(LouderWert)write(dumpUnit,*)
 					RETURN
 				ENDIF
 				ralph(iComp,iType)=DSQRT( SQARG )
@@ -734,10 +707,10 @@ END MODULE Assoc
 		!XA=1 !set to unity means no association	          
 		!XD=1 !set to unity means no association	          
 		!XC=1 !set to unity means no association	          
-		if(LouderWert.and.initCall) write(*,'(a,5F10.6,3F10.1)')'Wertheim:solvation. X(1),X(2)=',xFrac(1),xFrac(2)
-		!pause 'Results from MEM1'
-		!print*,'Wert:uAssoc,CvAssoc',uAssoc,CvAssoc
-		!print*,'uAssoc,b_xaDxa_db',uAssoc,b_xaDxa_db
+		if(LouderWert.and.initCall) write(dumpUnit,'(a,5F10.6,3F10.1)')'Wertheim:solvation. X(1),X(2)=',xFrac(1),xFrac(2)
+		!write(dumpUnit,*) 'Results from MEM1'
+		!write(dumpUnit,'Wert:uAssoc,CvAssoc',uAssoc,CvAssoc
+		!write(dumpUnit,'uAssoc,b_xaDxa_db',uAssoc,b_xaDxa_db
 
 		!Note: extension of uAssoc to asymmetric association below.
 
@@ -765,10 +738,10 @@ END MODULE Assoc
 		!Check if Old guesses are better. During Z iteration, Old result may be close. 20201224: How can that be when we initialize to 1 in line 61?  Wiping out "old" stuff for Wertheim2d
 		!Also, compute FAsolv, FDsolv, and rmsErrSolv, without SRCR.
 		if(isAcid)call XsolJre2a(xFrac,rhoMol_cc,tKelvin,nComps,ierXsol)	 ! XA,XD,XC passed through module Assoc.
-		!if(LouderWert)write(*,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
+		!if(LouderWert)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
         if(ierXsol.ne.0)then
             iErrCode=1
-			if(LouderWert)write(*,'(a,15i3)')' Wertheim: ier from Xsol=',ierXsol
+			if(LouderWert)write(dumpUnit,'(a,15i3)')' Wertheim: ier from Xsol=',ierXsol
             return !sorry.
         endif
 		!TooDone: DIOXANE+CHLOROFORM SYSTEM WORKS LIKE EL2ed P799 but it overestimates the solvation.  Maybe because difunctionality of dioxane(?). 
@@ -783,8 +756,8 @@ END MODULE Assoc
 		uAssoc=0
 		do iComp=1,nComps		 
 			do iType=1,nTypes(iComp)
-				if(XA(iComp,iType) < zeroTol .and. LouderWert)pause 'Error in Wertheim: XA<1E-11'
-				if(XD(iComp,iType) < zeroTol .and. LouderWert)pause 'Error in Wertheim: XD<1E-11'
+				if(XA(iComp,iType) < zeroTol .and. LouderWert)write(dumpUnit,*) 'Error in Wertheim: XA<1E-11'
+				if(XD(iComp,iType) < zeroTol .and. LouderWert)write(dumpUnit,*) 'Error in Wertheim: XD<1E-11'
 				h_nMichelsen=h_nMichelsen+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)*(1-XA(iComp,iType))+nDonors(iComp,iType)*(1-XD(iComp,iType)) )          !M&H Eq 11.
 				hCC=hCC+xFrac(iComp)*nDegree(iComp,iType)*( (1-XC(iComp,iType)) )          !M&H Eq 11.
 				sumDon=nDegree(iComp,iType)*nDonors(iComp,iType)*( DLOG(XD(iComp,iType))+(1-XD(iComp,iType))/2 )
@@ -797,9 +770,9 @@ END MODULE Assoc
 		enddo
 		zAcid = -half*(hCC)*dAlpha	!M&H Eq 10&13.
 		zAssoc= -half*(h_nMichelsen)*dAlpha+zAcid	!M&H Eq 10&13.
-		if(LOUDERwert)write(*,'(a,8E12.4)')' Wertheim:hAD+hDA,hCC,fAssoc,zAssoc,zAcid',h_nMichelsen,hCC,fAssoc,zAssoc,zAcid
+		if(LOUDERwert)write(dumpUnit,'(a,8E12.4)')' Wertheim:hAD+hDA,hCC,fAssoc,zAssoc,zAcid',h_nMichelsen,hCC,fAssoc,zAssoc,zAcid
 
-		!if(LouderWert)write(*,'(a,8f9.4)')' From Xsol:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
+		!if(LouderWert)write(dumpUnit,'(a,8f9.4)')' From Xsol:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
 		uAssocAD=0	 !cf ML Michelsen and EM Hendriks (M&H), Physical Properties from Association Models, FPE 180:165-174(2001)
 		uAssocDA=0	 !use analogy to Passoc in vicinity of Eqs 6-11.
 		DO iComp=1,nComps
@@ -819,8 +792,8 @@ END MODULE Assoc
 		enddo
 		uAssoc= -half*(uAssocAD+uAssocDA)	!this appears to be faulty. TODO: fix. JRE 20191008			
 	endif
-	if(LouderWert)write(*,'(a,8f9.4)')' Wertheim-Xsol:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
-	if(LouderWert)pause 'Wertheim: After Calling XsolJre'
+	if(LouderWert)write(dumpUnit,'(a,8f9.4)')' Wertheim-Xsol:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
+	if(LouderWert)write(dumpUnit,*) 'Wertheim: After Calling XsolJre'
 	initCall=0
 	RETURN
 	END	 ! subroutine Wertheim()
@@ -852,7 +825,7 @@ END MODULE Assoc
 	!
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC  
 	SUBROUTINE WertheimFugc(xFrac,tKelvin,nComps,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
-	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID
+	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID,dumpUnit
 	USE Assoc
 	!USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
@@ -889,15 +862,15 @@ END MODULE Assoc
 			h_nMichelsen=h_nMichelsen+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)*(1.d0-XA(iComp,iType))+nDonors(iComp,iType)*(1.d0-XD(iComp,iType))+(1.d0-XC(iComp,iType)) )          !M&H Eq 11.
 		enddo
 	enddo
-	if(LOUDER)write(*,'(a,6E12.4)')' WertheimFugc: fugAssocBefore=',(fugAssoc(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' WertheimFugc: fugAssocBefore=',(fugAssoc(i),i=1,nComps)
 	aAssoc=0
 	isAcid=0
 	do iComp=1,nComps		 
 		sumLnXi=0.d0
 		do iType=1,nTypes(iComp)
-			if(XA(iComp,iType) < zeroTol .and. LouderWert)pause 'Error in WertheimFugc: XA<zeroTol'
-			if(XD(iComp,iType) < zeroTol .and. LouderWert)pause 'Error in WertheimFugc: XD<zeroTol'
-			if(XC(iComp,iType) < zeroTol .and. LouderWert)pause 'Error in WertheimFugc: XC<zeroTol'
+			if(XA(iComp,iType) < zeroTol .and. LouderWert)write(dumpUnit,*) 'Error in WertheimFugc: XA<zeroTol'
+			if(XD(iComp,iType) < zeroTol .and. LouderWert)write(dumpUnit,*) 'Error in WertheimFugc: XD<zeroTol'
+			if(XC(iComp,iType) < zeroTol .and. LouderWert)write(dumpUnit,*) 'Error in WertheimFugc: XC<zeroTol'
 			if(XC(iComp,iType) < 1-zeroTol)then
 				XCtemp=XC(iComp,iType)
 				isAcid=1
@@ -905,18 +878,18 @@ END MODULE Assoc
 			sumLnXi=sumLnXi+nDegree(iComp,iType)*( nAcceptors(iComp,iType)*LOG(XA(iComp,iType))+nDonors(iComp,iType)*LOG(XD(iComp,iType))+LOG(XC(iComp,iType)) )          !M&H Eq 13
 		enddo
 		aAssoc=aAssoc+xFrac(iComp)*sumLnXi
-		!if(LOUDER)write(*,'(a,i3,4F10.7)')' Fugc: i,XA(i,j)=',iComp,(XA(iComp,j),j=1,nTypes(iComp))
-		!if(LOUDER)write(*,'(a,i3,4F10.7)')' Fugc: i,XD(i,j)=',iComp,(XD(iComp,j),j=1,nTypes(iComp))
-		!if(LOUDER)write(*,'(a,i3,4F10.7)')' Fugc: i,XC(i,j)=',iComp,(XC(iComp,j),j=1,nTypes(iComp))
+		!if(LOUDER)write(dumpUnit,'(a,i3,4F10.7)')' Fugc: i,XA(i,j)=',iComp,(XA(iComp,j),j=1,nTypes(iComp))
+		!if(LOUDER)write(dumpUnit,'(a,i3,4F10.7)')' Fugc: i,XD(i,j)=',iComp,(XD(iComp,j),j=1,nTypes(iComp))
+		!if(LOUDER)write(dumpUnit,'(a,i3,4F10.7)')' Fugc: i,XC(i,j)=',iComp,(XC(iComp,j),j=1,nTypes(iComp))
 		fugAssoc(iComp)=sumLnXi-half*h_nMichelsen*(dAlpha-1)*bVolCC_mol(iComp)/bVolMix  !Eq 13
 	enddo
 	if(LOUDER)then
-		write(*,'(a,8F9.6,3f7.3)')' XAs&XDs1,...',(XA(1,i),i=1,4),(XD(1,i),i=1,4)
-		write(*,'(a,8F9.6,3f7.3)')' XAs&XDs2,...',(XA(2,i),i=1,4),(XD(2,i),i=1,4)
-		if(isAcid==1)write(*,'(a,3E12.4)')' Fugc: XC= ',XCtemp
+		write(dumpUnit,'(a,8F9.6,3f7.3)')' XAs&XDs1,...',(XA(1,i),i=1,4),(XD(1,i),i=1,4)
+		write(dumpUnit,'(a,8F9.6,3f7.3)')' XAs&XDs2,...',(XA(2,i),i=1,4),(XD(2,i),i=1,4)
+		if(isAcid==1)write(dumpUnit,'(a,3E12.4)')' Fugc: XC= ',XCtemp
 	endif
-	if(LOUDER)write(*,'(a,6E12.4)')' WertheimFugc: hMich,aAssoc=',h_nMichelsen,aAssoc
-	if(LOUDER)write(*,'(a,6E12.4)')' WertheimFugc: fugAssocAfter =',(fugAssoc(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' WertheimFugc: hMich,aAssoc=',h_nMichelsen,aAssoc
+	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' WertheimFugc: fugAssocAfter =',(fugAssoc(i),i=1,nComps)
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !Derivatives are added by AFG, Oct. 2009
@@ -1014,7 +987,7 @@ END MODULE Assoc
 !C	XA,XD are initial guesses on input and answers on output
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC      
 	SUBROUTINE XsolJre2a(xFrac,rho,tKelvin,nComps,ierCode)
-	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID
+	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID,dumpUnit
 	USE Assoc !XA,XD,XC,aBipAD,aBipDA
 	IMPLICIT doublePrecision(A-H,K,O-Z)
 	PARAMETER (iWegFreq=4)
@@ -1070,13 +1043,13 @@ END MODULE Assoc
 						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
 						SUMDONj(iType)=SUMDONj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*XD(jComp,jType)*ALPHADij
 						if(SUMDONj(iType)<0)then
-							if(LouderWert)write(*,*)'iType,sumdonj(iType)',iType,sumdonj(iType)
-							if(LouderWert)pause 'XsolJre:sumdon<0?'
+							if(LouderWert)write(dumpUnit,*)'iType,sumdonj(iType)',iType,sumdonj(iType)
+							if(LouderWert)write(dumpUnit,*) 'XsolJre:sumdon<0?'
 						endif
 						SUMACCj(iType)=SUMACCj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nAcceptors(jComp,jType)*XA(jComp,jType)*ALPHDAij
 						if(SUMACCj(iType)<0)then
-							if(LouderWert)write(*,*)'iType,sumaccj(iType)',iType,sumaccj(iType)
-							if(LouderWert)pause 'XsolJre:sumacc<0?'
+							if(LouderWert)write(dumpUnit,*)'iType,sumaccj(iType)',iType,sumaccj(iType)
+							if(LouderWert)write(dumpUnit,*) 'XsolJre:sumacc<0?'
 						endif
 					enddo      
 				enddo
@@ -1115,10 +1088,10 @@ END MODULE Assoc
 				quadB=(1+sumDon)*(1+sumAcc)+fracAD-fracDA
 				sqArg=quadB*quadB+4*fracDA*(1+sumAcc)*(1+sumDon)
 				if(sqArg<0)then
-					if(LouderWert)write(*,*)'quadB,fracDA,sumAcc,sumDon',quadB,fracDA,sumAcc,sumDon
-					if(LouderWert)pause 'XsolJre: sqArg < 0.'
+					if(LouderWert)write(dumpUnit,*)'quadB,fracDA,sumAcc,sumDon',quadB,fracDA,sumAcc,sumDon
+					if(LouderWert)write(dumpUnit,*) 'XsolJre: sqArg < 0.'
 				endif
-				if( (1+sumAcc) < 0) sumAcc= -0.99 !pause 'XsolJre: 1+sumAcc < 0'
+				if( (1+sumAcc) < 0) sumAcc= -0.99 !write(dumpUnit,*) 'XsolJre: 1+sumAcc < 0'
 				if(ABS( quadB+SQRT(sqArg) ) < 1e-11)then
 					xaNew=SQRT(1+sumAcc)/( (1+sumDon)*SQRT(1+sumAcc)+fracAD )
 				else
@@ -1141,7 +1114,7 @@ END MODULE Assoc
 				!Note: XCi=XCj b/c we assume alphCC is universal.  So we can factor out alphCCavg.
 				!xCC=( -1+SQRT(1+4*alphCCavg(iType)) )/( 2*alphCCavg(iType) ) !divide by zero when type is not CC
 				!xCC=( (1+4*alphCCavg(iType)-1) )/( 2*alphCCavg(iType)*(1+SQRT(1+4*alphCCavg(iType)) ) !divide by zero when type is not CC
-				if( (1+4*alphCCavg(iType)) < 0) pause 'XsolJre: 1+4*alphCCavg(iType) < 0'
+				if( (1+4*alphCCavg(iType)) < 0) write(dumpUnit,*) 'XsolJre: 1+4*alphCCavg(iType) < 0'
 				xCC=2/( 1+SQRT(1+4*alphCCavg(iType)) )
 				XC(iComp,iType)=xCC
 			enddo  ! iType
@@ -1149,22 +1122,22 @@ END MODULE Assoc
 		rmsErr=sqrt( rmsErr/(2*nComps) )
 		rmsFerr=sqrt( rmsFerr/(2*nComps) )
 		rmsOld=rmsErr
-		if(LOUDER)write(*,'(a,i3,2E12.4)')' XsolJre2a: iter,rmsErr,rmsFerr=',iter,rmsErr,rmsFerr
-		!if(LOUD.and.initCall)write(*,'(a,7F10.6,3f7.3)')' XAs&XDs,...',XA(1,2),XA(1,3),XA(2,2),XD(1,2),XD(2,2),rmsErr,wegParm,float(iter) !,deltaAlphaA(1,3) 
+		if(LOUDER)write(dumpUnit,'(a,i3,2E12.4)')' XsolJre2a: iter,rmsErr,rmsFerr=',iter,rmsErr,rmsFerr
+		!if(LOUD.and.initCall)write(dumpUnit,'(a,7F10.6,3f7.3)')' XAs&XDs,...',XA(1,2),XA(1,3),XA(2,2),XD(1,2),XD(2,2),rmsErr,wegParm,float(iter) !,deltaAlphaA(1,3) 
 	enddo ! while(rmsErr > tol)
 	if(LOUDER)then
-		write(*,'(a,8F9.6,3f7.3)')' XAs&XDs1,...',(XA(1,i),i=1,4),(XD(1,i),i=1,4)
-		write(*,'(a,8F9.6,3f7.3)')' XAs&XDs2,...',(XA(2,i),i=1,4),(XD(2,i),i=1,4)
-		if(isAcid==1)write(*,'(a,3E12.4)')' Xsol: alphCCavg,XC= ',ralphC*ralphC,xCC
-		write(*,'(a,3E12.4)')' rmsErr,wegParm,iter',rmsErr,wegParm,float(iter) !,deltaAlphaA(1,3)
+		write(dumpUnit,'(a,8F9.6,3f7.3)')' XAs&XDs1,...',(XA(1,i),i=1,4),(XD(1,i),i=1,4)
+		write(dumpUnit,'(a,8F9.6,3f7.3)')' XAs&XDs2,...',(XA(2,i),i=1,4),(XD(2,i),i=1,4)
+		if(isAcid==1)write(dumpUnit,'(a,3E12.4)')' Xsol: alphCCavg,XC= ',ralphC*ralphC,xCC
+		write(dumpUnit,'(a,3E12.4)')' rmsErr,wegParm,iter',rmsErr,wegParm,float(iter) !,deltaAlphaA(1,3)
 	endif 
 	if(iter > itMax)then
 		ierCode=2
-		if(Louder)pause 'Error in XsolJre: iter>itMax'
+		if(Louder)write(dumpUnit,*) 'Error in XsolJre: iter>itMax'
 	else
-!		if(LOUD)write(*,*)'XsolJre converged. iter=',iter
-!		if(LOUD)write(*,*)'xa1,xa2',XA(1),XA(2)
-!		if(LOUD)write(*,*)'xd1,xd2',XD(1),XD(2)
+!		if(LOUD)write(dumpUnit,*)'XsolJre converged. iter=',iter
+!		if(LOUD)write(dumpUnit,*)'xa1,xa2',XA(1),XA(2)
+!		if(LOUD)write(dumpUnit,*)'xd1,xd2',XD(1),XD(2)
 	endif
 	initCall=0
 	RETURN
@@ -1210,13 +1183,13 @@ END MODULE Assoc
 						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
 						SUMDONj(iType)=SUMDONj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*XD(jComp,jType)*alphADij
 						if(SUMDONj(iType)<0)then
-							if(LouderWert)write(*,*)'iType,sumdonj(iType)',iType,sumdonj(iType)
-							if(LouderWert)pause 'sumdon<0?'
+							if(LouderWert)write(dumpUnit,*)'iType,sumdonj(iType)',iType,sumdonj(iType)
+							if(LouderWert)write(dumpUnit,*) 'sumdon<0?'
 						endif
 						SUMACCj(iType)=SUMACCj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nAcceptors(jComp,jType)*XA(jComp,jType)*alphDAij
 						if(SUMACCj(iType)<0)then
-							if(LouderWert)write(*,*)'iType,sumaccj(iType)',iType,sumaccj(iType)
-							if(LouderWert)pause 'sumacc<0?'
+							if(LouderWert)write(dumpUnit,*)'iType,sumaccj(iType)',iType,sumaccj(iType)
+							if(LouderWert)write(dumpUnit,*) 'sumacc<0?'
 						endif
 					enddo ! jType
 				enddo ! jComp
@@ -1266,22 +1239,22 @@ END MODULE Assoc
 				!Note: XCi=XCj b/c we assume alphCC is universal.  So we can factor out alphCCavg.
 				!xCC=( -1+SQRT(1+4*alphCCavg(iType)) )/( 2*alphCCavg(iType) ) !divide by zero when type is not CC
 				!xCC=( (1+4*alphCCavg(iType)-1) )/( 2*alphCCavg(iType)*(1+SQRT(1+4*alphCCavg(iType)) ) !divide by zero when type is not CC
-				if( (1+4*alphCCavg(iType)) < 0) pause 'Wertheim: 1+4*alphCCavg(iType)2nd < 0'
+				if( (1+4*alphCCavg(iType)) < 0) write(dumpUnit,*) 'Wertheim: 1+4*alphCCavg(iType)2nd < 0'
 				xCC=2/( 1+SQRT(1+4*alphCCavg(iType)) )
 				XC(iComp,iType)=xCC
 			enddo
 		enddo
 		rmsErr=sqrt( rmsErr/(2*nComps) )
 		rmsOld=rmsErr
-		write(*,'(a,6F10.6,3F10.1)')' XAs&XDs:',XA(1,2),XA(1,3),XA(2,2),XD(1,2),XD(2,2),rmsErr,float(iter), wegParm !,deltaAlphaA(1,3) 
+		write(dumpUnit,'(a,6F10.6,3F10.1)')' XAs&XDs:',XA(1,2),XA(1,3),XA(2,2),XD(1,2),XD(2,2),rmsErr,float(iter), wegParm !,deltaAlphaA(1,3) 
 	enddo ! while(rmsErr > tol)
 	if(iter > itMax)then
 		ierCode=2
-		if(LouderWert)pause 'Error in XsolJre: iter>itMax'
+		if(LouderWert)write(dumpUnit,*) 'Error in XsolJre: iter>itMax'
 	else
-!		if(LOUD)write(*,*)'XsolJre converged. iter=',iter
-!		if(LOUD)write(*,*)'xa1,xa2',XA(1),XA(2)
-!		if(LOUD)write(*,*)'xd1,xd2',XD(1),XD(2)
+!		if(LOUD)write(dumpUnit,*)'XsolJre converged. iter=',iter
+!		if(LOUD)write(dumpUnit,*)'xa1,xa2',XA(1),XA(2)
+!		if(LOUD)write(dumpUnit,*)'xd1,xd2',XD(1),XD(2)
 	endif
 	RETURN
 	END
@@ -1291,7 +1264,7 @@ END MODULE Assoc
 !C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	Subroutine AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
-	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID
+	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID,dumpUnit
 	USE Assoc !aBipAD,aBipDA
 	USE BIPs  !H((I,J) for ESD
 	implicit doublePrecision(a-h,k,o-z)
@@ -1335,8 +1308,8 @@ END MODULE Assoc
 	alphADij=iComplexAD*( ralphAi*ralphDj+aBipAD(indexi,indexj)*KVEadij*rho*rdfContact )
 	alphDAij=iComplexAD*( ralphDi*ralphAj+aBipDA(indexi,indexj)*KVEdaij*rho*rdfContact )
 	if(alphADij<0 .or. alphDAij<0)then
-		if(LouderWert)write(*,*)'alphADij,alphDAij',alphADij,alphDAij
-		if(LouderWert)pause 'AlphaSp: -ve alpha? Thats weird.'
+		if(LouderWert)write(dumpUnit,*)'alphADij,alphDAij',alphADij,alphDAij
+		if(LouderWert)write(dumpUnit,*) 'AlphaSp: -ve alpha? Thats weird.'
 	endif
 	if(isZiter)return
 	!ralph=(rootRhogK*Y)^0.5
@@ -1394,7 +1367,7 @@ END MODULE Assoc
 	! First derivatives in respect to RHO while N & T are constant
 	if (kVj > zeroTol)	then
 		dg_dEta=(dAlpha-1)*rdfContact/eta ! = (dLng/dLnEta)*g/eta
-		if(rho < zeroTol .or. rdfContact < zeroTol .and. LouderWert)write(*,'(a,2E12.4)')' AlphaSp: rho,rdfContact=',rho,rdfContact
+		if(rho < zeroTol .or. rdfContact < zeroTol .and. LouderWert)write(dumpUnit,'(a,2E12.4)')' AlphaSp: rho,rdfContact=',rho,rdfContact
 		dalphad_dRHO=(rdfContact+rho*dg_deta*bVolMix)/(rho*rdfContact)   !Actually this is equal to RHO/alpha*dalpha_dRHO
 		dalphda_dRHO=dalphad_dRHO
 		dalphcc_dRHO=dalphad_dRHO
@@ -1404,14 +1377,14 @@ END MODULE Assoc
 		dalphcc_dRHO=0.d0
 	endif
 
-	!if(LouderWert)write(*,'(a,4i3,2E12.4)')' AlphaSp: i,k,j,l,alphAD,alphDA=',iComp,iType,jComp,jType,alphADij,alphDAij
+	!if(LouderWert)write(dumpUnit,'(a,4i3,2E12.4)')' AlphaSp: i,k,j,l,alphAD,alphDA=',iComp,iType,jComp,jType,alphADij,alphDAij
 
 	return
 	end
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	Subroutine GetAssocBips(bipHbFile,aBip,ier)  !idLocalType,nTypesTot are in common/assoc
-	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID
+	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID,dumpUnit
 	USE Assoc
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	PARAMETER(ndb=1555,listPool=1000) ! listPool could be 10000x10000, but very few BIP corrections in reality. 
@@ -1448,7 +1421,7 @@ END MODULE Assoc
 			do item=1,nHbBips
 				if(idBinarY(item)==idBin)then
 					aBip(iType,jType)=KIJDB(item) 
-					IF(LOUDER)WRITE(*,'(a,2i5,f8.3)')' GetAssocBIPs: FOUND - idi,idj,BipIJ ',idLocalType(iType),idLocalType(jType),KijDB(item)
+					IF(LOUDER)write(dumpUnit,'(a,2i5,f8.3)')' GetAssocBIPs: FOUND - idi,idj,BipIJ ',idLocalType(iType),idLocalType(jType),KijDB(item)
 					exit !found it so terminate the item loop
 				endif
 			enddo
@@ -1459,14 +1432,14 @@ END MODULE Assoc
 		enddo
 	enddo
 	if(LOUDER)THEN
-		write(*,'(7x,11i7)')(idLocalType(iType),iType=1,nTypesTot)
+		write(dumpUnit,'(7x,11i7)')(idLocalType(iType),iType=1,nTypesTot)
 		DO jType=1,nTypesTot
-			write(*,'(i7,11f7.3)')idLocalType(jType),(aBip(jType,iType),iType=1,nTypesTot)
+			write(dumpUnit,'(i7,11f7.3)')idLocalType(jType),(aBip(jType,iType),iType=1,nTypesTot)
 		enddo
 	endif
 	return
 861	continue
-	if(LOUD)write(*,*)'GetAssocBips: error opening file=',bipHbFile
+	if(LOUD)write(dumpUnit,*)'GetAssocBips: error opening file=',bipHbFile
 	ier=1
 	return 
 	end
