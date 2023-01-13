@@ -79,12 +79,13 @@ END MODULE Assoc
 	USE Assoc ! XA,XD,XC,NAcceptors(NMX),NDonors(NMX),NDegree(NMX),...
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (FA,FD) AND properties (zAssoc, lnPhiAssoc,...) given T,rho,x
 	Implicit DoublePrecision(A-H,K,O-Z)
-	DoublePrecision xFrac(NMX),RALPHA(NMX,maxTypes),RALPHD(NMX,maxTypes),xOld(NMX),rLnPhiAssoc(NMX),etaOld,rdfOld !,KVE(NMX)
+	DoublePrecision xFrac(NMX),RALPHA(NMX,maxTypes),RALPHD(NMX,maxTypes),xOld(NMX),rLnPhiAssoc(NMX) !,KVE(NMX)
+	DoublePrecision ralphAmean,ralphDmean,etaOld,rdfOld
 	Integer IDold(NMX),initCall
 	LOGICAL LOUDER
 	Character*77 errMsg(22)
 	!Character*234 outFile
-	data initCall,etaOld,rdfOld/1,0.0,1.0/
+	data initCall,etaOld,rdfOld,ralphAmean,ralphDmean/1,0.4,1.0,2.0,2.0/ !This trick makes these values static for Intel Compiler so we can reuse them on next call.
 	!  Reference: Elliott, IECR, 61:15724 (2022).
 	!  INPUT:
 	!  isZiter = 1 if only zAssoc is required (for zFactor iterations), 0 for lnPhiAssoc,aAssoc,uAssoc, -1 if derivatives are required, integer
@@ -218,7 +219,7 @@ END MODULE Assoc
 			ralphAmean=ralphAmean*avgNDS/avgNAS
 		endif
 	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
-		continue
+		if(LOUDER)write(dumpUnit,601)' MEM2: fresh ralphAmean,ralphDmean= ',ralphAmean,ralphDmean
 	else !if( SUM(xFrac(1:nComps)) < 0)then
 		if(etaOld > 0)then ! adapt old values.to accelerate Z iterations
 			sqArg=eta/etaOld*rdfContact/rdfOld
@@ -228,6 +229,7 @@ END MODULE Assoc
 			endif
 			ralphAmean=ralphAmean*SQRT(sqArg)
 			ralphDmean=ralphDmean*SQRT(sqArg)
+		if(LOUDER)write(dumpUnit,601)' MEM2: reused&updated ralphAmean,ralphDmean= ',ralphAmean,ralphDmean
 		else
 			if(LOUDER)write(dumpUnit,601)' MEM2: etaOld < 0???',etaOld
 			iErr=15

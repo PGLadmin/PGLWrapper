@@ -18,7 +18,7 @@ MODULE GlobConst
 	character*30 NAME(NMX)
 	character*5 class(NMX) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. Ch06CompoundsList.xls, PGL6edClasses.xls)
     Logical LOUD   !LOUD=.TRUE. means writing debug info to the screen.
-	LOGICAL DEBUG, isESD, isTPT, isPcSaft, CheckDLL 
+	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
 	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
 	DoublePrecision etaPass !TODO:Consider if rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).
     DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS

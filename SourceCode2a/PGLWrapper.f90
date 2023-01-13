@@ -25,6 +25,7 @@
 	!DIMENSION ZFEED(NMX),S(NMX)
     DoublePrecision xFrac(NMX),FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER  localCas(NMX) !ier(12),
+	Logical CheckDLL
 	
 	COMMON/eta/etaL,etaV,ZL,ZV
 
@@ -43,9 +44,10 @@
     LOUD = .TRUE.
     !LOUD = .FALSE.
 	CheckDLL=.TRUE.
-	!CheckDLL=.FALSE.
+	CheckDLL=.FALSE.
 	dumpUnit=6
 	if(CheckDLL)then
+		LOUD=.TRUE. ! Force this, just in case forgotten above.
 		DumpUnit=686
 		dumpFile=TRIM(masterDir)//'\DebugDLL.txt'
 		OPEN(dumpUnit,file=dumpFile)
