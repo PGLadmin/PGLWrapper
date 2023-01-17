@@ -104,7 +104,7 @@
 	COMMON/ETA2/ETA
 	nComps=NC
 	if(iEosOpt==1)then
-		call FuPrVtot(isZiter,tKelvin,1/vTotCc,gmol,NC,LIQ,FUGC,Z,aRes,uRes,IER)
+		call FuPrVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,IER)
 	!elseif(iEosOpt==4)then ! unused for now.
 	elseif(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
 		call FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)

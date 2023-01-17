@@ -9,18 +9,19 @@ C  INPUT
 C    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 C  OUTPUT
 	USE GlobConst
+	USE PREosParms ! to store svKappa1(NMX)
 	USE VpDb ! for VpCoeffs
       IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
       PARAMETER(ndb=350,numSV=20)
 	character bipFile*234
 	integer GetBIPs
 c	dimension IDDippr(numSV),svKap1(numSV)
-      COMMON /PRSVWS/ svKappa1(NMX)
+c      COMMON /PRSVWS/ svKappa1(NMX)
 C           Stryjek and Vera, can j chem eng, 64:323 (1986).
 
-	write(*,*)'ID  NAME       TCK   PCMPa      w     '
+	if(LOUD)write(*,*)'ID  NAME       TCK   PCMPa      w     '
 	do 8 i=1,nc
-	  write(*,606) ID(i),NAME(i),TC(i),PC(i),ACEN(i)
+	  if(LOUD)write(*,606) ID(i),NAME(i),Tc(i),Pc(i),ACEN(i)
 8	continue
 606	format(i4,1x,a11,f6.1,f6.3,1x,f6.3,f8.2,f6.1,f8.1,i4,f8.6,f8.4)
 	GetPRSVWS=0
@@ -63,6 +64,7 @@ C
 C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 C
 	USE GlobConst
+	USE PREosParms
 	USE BIPs
       IMPLICIT DOUBLEPRECISION (A-H,K,O-Z)
 	DIMENSION IER(12)
@@ -71,7 +73,6 @@ C
 C
 	dimension b2KIJ(NMX,NMX),b2KTIJ(NMX,NMX)
 c      COMMON/PRSVWS/ svKappa1(NMX)
-      COMMON/PRSVWS/ svKappa1(Nmx)
 c	data initEos/0/
 c  cf. stryjek and vera, can j chem eng., 64:323 (1986). 
       DATA  kappa0,kappa1,kappa2,kappa3
@@ -86,26 +87,23 @@ C
 	  initEos=1
 C
 C                        SET UP PRS PARAMETERS
-	   aOmega=0.45723553d0
-	   bOmega=0.07779607d0
-	   root2=SQRT(2.d0)
-	   con1=  1+root2
-	   con2=-(1-root2)
-	   con3=2*root2
-	   RDUM=RGAS
-c	   rGas=R
-	   bigC = 1/root2*LOG(root2-1)  !WS eq A4 !
+	   con1=  1+sqrt2
+	   con2=-(1-sqrt2)
+	   con3=2*sqrt2
+	   RDUM=Rgas
+c	   Rgas=R
+	   bigC = 1/sqrt2*LOG(sqrt2-1)  !WS eq A4 !
       ENDIF
       DO 030 I = 1, NC
-		PR = P / PC(I)
-		TR = T / TC(I)
+		PR = P / Pc(I)
+		TR = T / Tc(I)
 	svKappa0=kappa0+acen(I)*( kappa1+acen(I)*(kappa2+acen(I)*kappa3) )
 	    kappa=svKappa0+svKappa1(i)*(1+SQRT(TR))*(0.7d0-TR) 
 		ALPHA = 1.D0+kappa*(1.D0-SQRT(TR))
 c  note:  A(i) = SQRT(a*p/(RT)^2)
 c			B(i) = bP/(RT)
-		A(I) = ALPHA * SQRT(AOMEGA*PR) / TR
-		B(I) = BOMEGA * PR / TR
+		A(I) = ALPHA * SQRT(OMA*PR) / TR
+		B(I) = OMB * PR / TR
 030   CONTINUE
 C                        GIVEN COMPOSITIONS OF LIQUID AND VAPOR,
 C                        CALCULATE THE FUGACITIES AND K-VALUES
@@ -148,7 +146,7 @@ C                        CALCULATE FUGACITIES
 C
 	QUEST=Z-BMX
 	IF(QUEST.LT.0)IER(1)=1
-	TMP1 = (Z-1.0) / BMX
+	TMP1 = (Z-1.D0) / BMX
 	TMP2 = -LOG(MAX(Z-BMX,1.0D-20))
 	TMP3 = -AMX * LOG((Z+CON1*BMX)/(Z-CON2*BMX)) / (CON3*BMX)
 	DO 100 I = 1, NC

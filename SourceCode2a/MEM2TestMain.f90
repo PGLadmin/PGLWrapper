@@ -1,4 +1,4 @@
-	Subroutine MEMTest()
+	!Subroutine MEMTest()  ! Comment this line out to make this the main program
 	USE GlobConst
     USE Assoc
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)

@@ -9,34 +9,34 @@
 !C    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 !C  OUTPUT
 	USE GlobConst
+	USE PrTcParms
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	PARAMETER(ndb=350,numSV=20)
 	character bipFile*234
 	integer GetBIPs
 !c	dimension IDDippr(numSV),svKap1(numSV)
-	common/ParmsPrTc/zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX),OMA,OMB
+	!common/ParmsPrTc/zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX),OMA,OMB
 !C           This version of PRWS uses Jaubert's correlation for alpha. 
 
-	write(*,*)'ID  NAME       TCK   PCMPa      w     '
+	write(dumpUnit,*)'ID  NAME       TCK   PCMPa      w     '
 	do i=1,nc
-	  write(*,606) ID(i),NAME(i),TC(i),PC(i),ACEN(i)
+	  write(dumpUnit,606) ID(i),NAME(i),Tc(i),Pc(i),ACEN(i)
 	enddo
 606	format(i4,1x,a11,f6.1,f6.3,1x,f6.3,f8.2,f6.1,f8.1,i4,f8.6,f8.4)
-	GetPRSVWS=0
 	iErrCode=0
-	Call GetPRtc(NC,iErrGet) !use the existing code to loade common parms
+	Call GetPRtc(NC,iErrGet) !use the existing code to USE PrTcParms
 
 	if(iErrGet.ne.0)then
 		iErrCode=1
-		if(LOUD)print*,'GetPRtcWs: failed to load pure parms.'
+		if(LOUD)write(dumpUnit,*)'GetPRtcWs: failed to load pure parms.'
 		return
 	endif
 !c  note:  bips are passed back through common/BIPs/
 		bipFile=TRIM(PGLinputDir)//'\BipPRtcWS.txt' ! // is the concatenation operator
 	iErrGet=GetBIPs(bipFile,ID,NC)
 	if(iErrGet.ne.0)then
-		iErrCode=2
-		if(LOUD)print*,'GetPRtcWs: failed to load BIPs.'
+		iErrCode=12
+		if(LOUD)write(dumpUnit,*)'GetPRtcWs: failed to load BIPs.'
 		return
 	endif
 
@@ -44,7 +44,7 @@
 	END
 
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      SUBROUTINE FugiPRtcWS( T,P,gMol,NC,LIQ,FUGC,Z,IER)
+      SUBROUTINE FugiPRtcWS( T,P,gMol,NC,LIQ,FUGC,Z,iErr)
 !C
 !C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 !C
@@ -61,40 +61,37 @@
 !C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 !C
 	USE GlobConst
+	USE PrTcParms ! includes PREosParms
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION ( A-H,K,O-Z)
-	DIMENSION IER(*)
-	DIMENSION bigQSum(Nmx),xsChemPo(Nmx)
-	dimension X(Nmx),ZR(3),AZ(3),A(Nmx),B(Nmx),fugc(Nmx)
-	dimension ALA(NMX,NMX),TdLAL_dT(NMX),T2d2LAL_dT2(NMX),gMol(NMX),bVol(NMX)
+	!DIMENSION IER(*)
+	DOUBLEPRECISION bigQSum(Nmx),xsChemPo(Nmx)
+	DOUBLEPRECISION X(Nmx),ZR(3),AZ(3),A(Nmx),B(Nmx),fugc(Nmx)
+	DOUBLEPRECISION ALA(NMX,NMX),TdLAL_dT(NMX),T2d2LAL_dT2(NMX),gMol(NMX) !,bVol(NMX)
+	DOUBLEPRECISION, STATIC:: con1,con2,con3,bigC ! STATIC keeps these numbers in memory so they don't need to be recomputed on the next call.
 !C
-	dimension b2KIJ(NMX,NMX),b2KTIJ(NMX,NMX)
-!c      COMMON/PRSVWS/ svKappa1(NMX)
-	common/ParmsPrTc/zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX),OMA,OMB
+	DOUBLEPRECISION b2KIJ(NMX,NMX),b2KTIJ(NMX,NMX)
 	data initCall/1/
 	b2KIJ=KIJ
 	b2KTIJ=KTIJ
-	do iErr=1,6
-		ier(iErr)=0
-	enddo
+	iErr=0
 !C                        SET UP PRS PARAMETERS
-	tAbs=T
+	tKelvin=T
 	pMPa=P
 	if(initCall==1)then
-		initEos=1
-		root2=SQRT(2.d0)
-		con1=  1+root2
-		con2=-(1-root2)
-		con3=2*root2
-		bigC = 1/root2*LOG(root2-1)  !WS eq A4 !
+		initCall=0
+		con1=  1+sqrt2
+		con2=-(1-sqrt2)
+		con3=2*sqrt2
+		bigC = 1/sqrt2*LOG(sqrt2-1)  !WS eq A4 !
 	ENDIF
 	totMol=sum(gMol)
 	DO iComp = 1, NC
-		aCrit = OMA*RGAS*RGAS*TC(iComp)*TC(iComp)/PC(iComp)
+		aCrit = OMA*Rgas*Rgas*Tc(iComp)*Tc(iComp)/Pc(iComp)
 		X(i)=gMol(i)/totMol
 		!sTmp = 0.37464 + 1.54226*ACEN(iComp) - 0.26993*ACEN(iComp)*ACEN(iComp)
 		!DLALDT(iComp)= -sTmp*SQRT(Tr/ ALPHA) ! dAlp/dT = 2*sqrt(alp)*S*(-0.5/sqrt(Tr)) = -sqrt(alp)*S/sqrt(Tr); (T/alp)*dAlp/dT= -S*sqrt(Tr/Alp)	 EL2ed Eq.7.18,8.35
-		Tr = tAbs / Tc(iComp)
+		Tr = tKelvin / Tc(iComp)
 		Pow = alphaM(iComp)*alphaN(iComp)
 		TrPow = Tr**Pow 
 		!ALPHA = TrPow/ Tr**alphaN(iComp) *DEXP( alphaL(iComp)*(1-TrPow) )	 ! = Tr^[N*(M-1)]*exp[ L*(1-Tr^MN) ] Eq. 4
@@ -111,9 +108,8 @@
 		! Td/dT[ TdLALdT ] = T*d/dT[ Pow - alphaN(iComp) - pow*alphaL(iComp)*TrPow ]
 		T2d2LAL_dT2(iComp) = -pow+alphaN(iComp) -pow*(pow-1)*alphaL(iComp)*TrPow
 		ALA(iComp,iComp) = aCrit*ALPHA
-		!bVol(iComp) = OMB*RGAS*TC(iComp)/PC(iComp) - cVolCc_mol(iComp)	
-		bVol(iComp) = bVolCc_mol(iComp)	
-		bMix=bMix+x(iComp)*bVol(iComp)
+		!bVol(iComp) = OMB*Rgas*Tc(iComp)/Pc(iComp) - cVolCc_mol(iComp)	
+		bMix=bMix+x(iComp)*bVolCC_mol(iComp)
 		FUGC(iComp)=0 !initial to zero for isZiter=1.
 		!c  note: A(i) = SQRT(a*p/(RT)^2)
 		!c			B(i) = bP/(RT)
@@ -163,7 +159,7 @@
 !C                        CALCULATE FUGACITIES
 !C
 	QUEST=Z-BMX
-	IF(QUEST.LT.0)IER(1)=1
+	IF(QUEST < 0)iErr=11
 	TMP1 = (Z-1.0) / BMX
 	TMP2 = -LOG(MAX(Z-BMX,1.0D-20))
 	TMP3 = -AMX * LOG((Z+CON1*BMX)/(Z-CON2*BMX)) / (CON3*BMX)

@@ -5,81 +5,11 @@ MODULE EsdParms
 	DoublePrecision mShape(NMX),KadNm3(NMX),epsA_kB(NMX),epsD_kB(NMX) !for ESD2
 	Integer         ND(NMX),NDS(NMX),NAS(NMX)
 	LOGICAL         isMEM2
-contains
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-subroutine QueryParPureEsd(iComp,iParm,value,iErr)
-	!USE EsdParms      !Just for ESD
-	IMPLICIT NONE
-	DoublePrecision value
-	integer iComp,iParm,iErr
-	!-----------------------------------------------------------------------------
-	! pure component parameters
-	!-----------------------------------------------------------------------------
-	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
-	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
-	iErr=0
-	if(iParm==1)then
-		value=c(iComp)
-	elseif(iParm==2)then
-		value=vx(iComp)
-	elseif(iParm==3)then
-		value=eokp(iComp)
-	elseif(iParm==4)then
-		value=KcStar(iComp)
-	elseif(iParm==5)then
-		value=DH(iComp)
-	elseif(iParm==6)then
-		value=ND(iComp)
-	elseif(iParm==7)then
-		value=NAS(iComp)
-	elseif(iParm==8)then
-		value=NDS(iComp)
-	else
-		iErr=1
-	endif
-	return
-end	Subroutine QueryParPureEsd
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-subroutine SetParPureEsd(iComp,iParm,value,iErr)
-	!USE EsdParms      !Just for ESD
-	IMPLICIT NONE
-	DoublePrecision value
-	integer iComp,iParm,iErr
-	!-----------------------------------------------------------------------------
-	! pure component parameters
-	!-----------------------------------------------------------------------------
-	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
-	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
-	iErr=0
-	if(iParm==1)then
-		c(iComp)=value
-		q(iComp)=1+(value-1)*1.9076D0
-	elseif(iParm==2)then
-		vx(iComp)=value
-	elseif(iParm==3)then
-		eokp(iComp)=value
-	elseif(iParm==4)then
-		KcStar(iComp)=value
-	elseif(iParm==5)then
-		DH(iComp)=value
-	elseif(iParm==6)then
-		ND(iComp)=value
-	elseif(iParm==7)then
-		NAS(iComp)=value  ! Not used for ESD96
-	elseif(iParm==8)then
-		NDS(iComp)=value  ! Not used for ESD96
-	else
-		iErr=1
-	endif
-	return
-end	Subroutine SetParPureEsd
-
 END MODULE EsdParms
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
+Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	!
-	!  PURPOSE:  LOOKS UP THE ESD PARAMETERS AND STORES THEM IN COMMON EsdParms
+	!  PURPOSE:  LOOKS UP THE ESD PARAMETERS AND STORES THEM IN USEd EsdParms
 	!
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
@@ -101,7 +31,8 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 	!LOUDER=.TRUE.
 	idCas(1:NC)=idCasPas(1:NC) ! workaround after promoting idCas to GlobConst 
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or isPcSaft.
-	isESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI 
+	isESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI
+	if(LOUDER)write(dumpUnit,*)' GetEsdCas: idCas()=',idCas(1:NC) 
 	etaMax=1/1.9D0-zeroTol
 	isMEM2=.FALSE.
 	if(iEosOpt==4)isMEM2=.TRUE.
@@ -116,7 +47,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 
 
 	READ(31,*)nDeck
-	if(LOUDER)write(dumpUnit,602)' nDeck=',nDeck
+	if(LOUDER)write(dumpUnit,602)' GetEsdCas: nDeck=',nDeck
 	do i=1,nDeck
 		READ(31,'(a222)')dumString
 		if(isMEM2)then
@@ -125,7 +56,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
 		else ! iEosOpt=2,12,13 all use ESD96.
 			READ(dumString,*,ioStat=ioErr)IDA(I),CAi,QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I) ,idCasa(i)
 			!READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I),NDA(I),NASA(I),idCasa(i)
-			if(LOUDER)write(dumpUnit,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
+			if(LOUDER)write(dumpUnit,602)'GetEsdCas: inFile~',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
 			if(NASA(I).ne.NDSA(I))NASA(I)=0	 ! ESD96 requires that NAS=NDS for all compounds.
 			NDSA(I)=NASA(I)
 			eAccEpsK(i)=DHA(I)*1000/RgasCal
@@ -234,7 +165,7 @@ Subroutine GetEsdCas(nC,idCasPas,iErr) !ID is passed through GlobConst
     end if
 606	format(i9,1x,a11,f9.3,f8.2,f8.2,2i3,1x,f8.6,2f8.0)
 
-	!note:  bips are passed back through common/BIPs/
+	!note:  bips are passed back through USEd BIPs
 		bipFile=TRIM(PGLinputDir)//'\BipEsd96.txt' ! // is the concatenation operator
 		if(isMEM2)bipFile=TRIM(PGLinputDir)//'\BipEsdMEM2.txt' ! // is the concatenation operator
 	if(nC > 1)iErrCode=GetBIPs(bipFile,ID,nC) !not necessary for pure fluids
@@ -319,17 +250,14 @@ subroutine ExactEsd(nC,VX,c,q,eokP,iErr,ierComp)
 		c(i) = cShape
 		Q(i) = qShape
 		eokP(i)=TC(i)*rlnY1
-		bVolCc_mol(i)=8.314*TC(i)/PC(i)*Bc
+		bVolCc_mol(i)=8.314*Tc(i)/Pc(i)*Bc
 		VX(i)=bVolCc_mol(i)
 	enddo
 	return
 end	!subroutine ExactEsd
-!------------------------------------------------------------------------------ 
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-!------------------------------------------------------------------------------ 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!	FugiESD
 	!   LATEST REVISION : 
 	!	9/94 jre
@@ -381,7 +309,7 @@ end	!subroutine ExactEsd
 	!	34.044	1.883551	64.1246	107.349	71.1151	0.30995	5.68055	-5.6358	-1.0410		4.701303	0.65418	998.0017
 
 	SUBROUTINE FugiESD(tKelvin,pMPa,xFrac,NC,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr)
-	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS	  + GlobConst{rGas,Tc,Pc,...}
+	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS	  + GlobConst{Rgas,Tc,Pc,...}
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	DoublePrecision xFrac(NMX),FUGC(NMX) !,chemPoAssoc(nmx)
@@ -403,7 +331,6 @@ end	!subroutine ExactEsd
 	!        17 - eta > etaMax or eta < 0
 	!		111 - goldenZ instead of real Z.
 	!
-	!COMMON/ETA/ETAL,ETAV,ZL,ZV
 	DATA INITIAL/1/  !Zm=9.5 since 1996, at least.  It is 9.5 in the CHEMCAD documentation, the EL text, and 2002.  It is not mentioned in ref[2,3,4,5,6]
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
@@ -435,7 +362,7 @@ end	!subroutine ExactEsd
 	rho=eta/bMix
 	if(initial.and.LOUD)write(dumpUnit,*)'FugiEsd: initial eta,err',etaOld,errOld
 	itMax=77
-	errBestEta=1234
+	errBesteta=1234
 	do nIter=1,itMax
 		Call FuEsdVtot(isZiter,tKelvin,bMix/eta,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
 		IF(iErr > 10)EXIT
@@ -452,9 +379,9 @@ end	!subroutine ExactEsd
 		IF(liq==0.and.DABS(CHNG) > 0.02d0)CHNG=DSIGN(0.02D0,CHNG)
 		IF(liq==2.and.DABS(CHNG) > 0.02d0)CHNG=DSIGN(0.02D0,CHNG)
  		eta=eta-CHNG
-		if(ABS(CHNG) < errBestEta)then
+		if(ABS(CHNG) < errBesteta)then
 			etaBest=eta
-			errBestEta=ABS(CHNG)
+			errBesteta=ABS(CHNG)
 		endif
 		if(eta < 0 .or. eta > 1/1.9)eta=etaOld-DSIGN(0.1D0,CHNG)*etaOld
 		IF(DABS(CHNG) < 1.D-9 .and. eta > 0)EXIT  ! Don't use CHNG/eta here. Converge quickly to ideal gas if P->0, still ~9 sigfigs if liquid.
@@ -480,7 +407,7 @@ end	!subroutine ExactEsd
 	if(eta > 0.43.and.LOUDER)write(dumpUnit,'(a,i3,F8.2,2F8.5)')' FugiESD: converged. nIter,eta,T,x1=',nIter,tKelvin,xFrac(1),eta
 	if(ABS(eta-rho*bMix) > 1E-11 .and. LOUDER)write(dumpUnit,*) 'FugiESD: eta.ne.(rho*bMix)?'
 	if(pMPa==0 .and. LOUDER)write(dumpUnit,*)' FugiEsd: P=0? LIQ,P=',LIQ,pMPa
-	!zFactor=P/(rho*rGas*T)  ! add this to improve precision when computing rho from Z after return.   
+	!zFactor=P/(rho*Rgas*T)  ! add this to improve precision when computing rho from Z after return.   
 	isZiter=0
 	Call FuEsdVtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
 	if(zFactor.le.0)then
@@ -514,43 +441,34 @@ end	!subroutine ExactEsd
 !C	Written originally by JRE, Oct. 2019																				C
 !C	Given T,V and gmol(), this routine calculates rho, Zfactor, Ares_RT, Ures_RT, lnPhi 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	SUBROUTINE FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,Ares,Ures,iErr)
+	SUBROUTINE FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,zFactor,Ares,Ures,iErr)
+	! Input:
+	! isZiter:	1 if Z iteration, 0 if need fugc,Ares&Ures
+	! tKelvin:	T(K)
+	! vTotCc:	total volume(cm3)
+	! gmol():	mole number vector
+	! NC:		number of components
+	! Output:
+	! FUGC():	fugacity coefficients
+	! zFactor:	Compressibility factor (PV/nRT)
+	! aRes:		Dimensionless residual Helmholtz energy, a(T,v)/RT.
+	! uRes:		Dimensionless residual Helmholtz energy, u(T,v)/RT.
+	! iErr:		Warning:1=>MEM_() failed to converge; 5=T<Tmin(EOS); 
+	!			Severe: 11=input nonsense; 12=xFrac(i) < 0; 13=severe error from MEM_();
+	! References:
+	! Elliott, J.R., S.J.Suresh, M.D.Donohue, Ind. Eng. Chem. Res., 29:1476 (1990). doi: 10.1021/ie00103a057   
 	USE GlobConst
-	USE Assoc !includes GlobConst {Tc,Pc,...} + XA,XD,XC...
+	USE Assoc !includes GlobConst {Tc,Pc,...} + XA,XD,XC...	 and FugiParts
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	DoublePrecision gmol(NMX),xFrac(NMX),FUGC(NMX),k10,k2,Zm !,KCSTARp(NMX),KVE(NMX)
 	!integer iera(12) !IER(12),
 	DoublePrecision YQVIJ(NMX,NMX),YQVI(NMX),Y(NMX,NMX),EOK(NMX,NMX)
-	DoublePrecision CVI(NMX),CVIJ(NMX,NMX),QV(NMX,NMX)
+	DoublePrecision CVI(NMX),CVIJ(NMX,NMX),QV(NMX,NMX),fugAssoc(NMX)
 	Integer initCall
-	DoublePrecision k1(NMX) !,RALPHA(NMX),RALPHD(NMX)
-	!DoublePrecision FUGASSOC(NMX),FUGREP(NMX),FUGATT(NMX)			  
-	!double precision moleStep
-	!DoublePrecision dEOK_dT(NMX,NMX),dY_dT(NMX,NMX),dYQVI_dT(NMX),dYQVIJ_dT(NMX,NMX)
-	!DoublePrecision dCVM_dN(NMX),dYQVM_dN(NMX) ,dVM_dN(NMX),dK1YVM_dN(NMX) !,dCVI_dN(NMX,NMX)
-	!DIMENSION dZREP_dN(NMX),dZATT_dN(NMX),dZASSOC_dN(NMX),dZ_dN(NMX),dP_dN(NMX),dFREP_dN(NMX),dFATT_dN(NMX),dYQVI_dN(NMX,NMX)
-	!DIMENSION dFUGC1_dP(NMX),dFUGC1_dT(NMX),dFUGC2_dP(NMX),dFUGC2_dT(NMX),dFUGASSOC_dRHO(NMX)
-	!DIMENSION dFUGREP_dN(NMX,NMX),dFUGATT_dN(NMX,NMX),dFUGC1_dN(NMX,NMX),dFUGC2_dN(NMX,NMX),dFUG_dN(NMX,NMX)
-	!DIMENSION dh_dN(NMX),dFUGASSOC_dT(NMX),dFUGASSOC_dN(NMX,NMX)
-	!DIMENSION dh_dN_num(NMX),dFUGASSOC_dN_num(NMX,NMX),fugassocLoop(NMX),gmol_old(NMX)
-	!DoublePrecision vMolecNm3(NMX) !for Wertheim
+	DoublePrecision k1(NMX) 
 	LOGICAL LOUDER
-	
-!	COMMON/ETA/ETAL,ETAV,ZL,ZV
-!	COMMON/ETA2/ETA
-!	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
-!	COMMON/ALPHA/ALPHAD(NMX,NMX), ALPHDA(NMX,NMX)
-!	COMMON/HbParms/dHkcalMol(NMX),bondVolNm3Esd(nmx)
-!	COMMON/Derv1/dbVolMix_dN(NMX),DFUG_DN_NUM(NMX,NMX),dP_dV,d2P_dV2,d3P_dV3,assocFlag
-!!	COMMON/rdf/d2lng,d2g,dlng,dg_deta,dAlph_deta
-!	COMMON/dFug/h_nMichelsen,dh_dT,dh_dN,dFugassoc_dT,dFugassoc_dN,dFUGASSOC_dRHO,dh_dRHO!,FUGASSOC_num
-!	COMMON/dfug2/dFUGASSOC_dN_num,dh_dN_num
-!	COMMON/num/FUGASSOC_num
-!	COMMON/fugCR/PMpa,dFUG_dN,dP_dN
-!	COMMON/Helm_derv/Ur,UrV,FREP,FATT,FassocAfg
-	common/FugiParts/fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),ralph(nmx),Zrep,Zatt,Zassoc,Fassoc
 	DATA K10,K2,ZM,initCall/1.7745D0,1.0617D0,9.5D0,1/
 
 	LOUDER=LOUD
@@ -609,8 +527,6 @@ end	!subroutine ExactEsd
 	K1YVM=0
 	iType=1	  
 	DO I=1,NC
-		K1(I)=K10
-		Cmix=Cmix+xFrac(i)*C(i)
 		DO J=1,NC
 			kIJbip=KIJ(I,J)+KTIJ(I,J)/tKelvin 
 			EOK(I,J)=DSQRT(EOKP(I)*EOKP(J))*(1.d0-kIJbip)
@@ -621,27 +537,19 @@ end	!subroutine ExactEsd
 			YQVM=YQVM+YQVIJ(I,J)*xFrac(I)*xFrac(J)	   
 			CVM = CVM + CVIJ(I,J)*xFrac(I)*xFrac(J)	   !note: above means <c>=sum(xi*ci) and <b>=sum(xj*bj) 
 		enddo
-		!dHkcalMol(I)=DH(I)*TC(I)*1.987D-3	!JRE 12/00
-		!KVE(I)=KCSTAR(I)*( DEXP(dHkcalMol(I)/tKelvin/1.987D-3)-1.d0 )  *avoNum  !KVE[=] cc/mol, KcStar [=] nm3.
-		!	if(initCall.and.LOUD)write(dumpUnit,*)'FuESDVtot: KcStar=',KcStar(i)
-		!if(initCall.and.LOUD)write(dumpUnit,*) 'Right?'
-		!KCSTARp(I)=KCSTAR(I)
+		K1(I)=K10
+		Cmix=Cmix+xFrac(i)*C(i)
 		VM=VM+xFrac(I)*bVolCC_mol(I)
 		K1YVM=K1YVM+xFrac(I)*K1(I)*Y(I,I)*bVolCC_mol(I) !1991 form, overwritten if applying 1990 form
-		!vMolecNm3(i)=VX(I)/avoNum
-		!bondVolNm3Esd(I)=KCSTAR(I) !*vMolecNm3(I)
-		!eHbKcal_mol(I,iType)=dHkcalMol(I)
-		!bondVolNm3(I,iType)=bondVolNm3Esd(I)
 	enddo
 	if( ABS(VX(1) - bVolCC_mol(1)) > zeroTol .and. LOUD ) write(dumpUnit,601)' FuEsdVtot: VX.ne.bVol=',VX(1),bVolCC_mol(1)
 	if(LOUD.and.k1yvm < zeroTol)write(dumpUnit,*)'FuEsdVtot: 0~k1yvm=',k1yvm 
-	!eta=rho*vm
 	if(isMEM2)then
-		CALL MEM2(isZiter,tKelvin,xFrac,NC,rho,zAssoc,aAssoc,uAssoc,FUGASSOC,iErrMEM )!,ier)
+		CALL MEM2(isZiter,tKelvin,xFrac,NC,rho,zAssoc,aAssoc,uAssoc,fugAssoc,iErrMEM )!,ier)
 	else
-		CALL MEM1(isZiter,tKelvin,xFrac,NC,rho,zAssoc,aAssoc,uAssoc,fAssoc,FUGASSOC,iErrMEM )!,aAssoc,uAssoc,rLnPhiAssoc,ier)
+		CALL MEM1(isZiter,tKelvin,xFrac,NC,rho,zAssoc,aAssoc,uAssoc,fAssoc,fugAssoc,iErrMEM )!,aAssoc,uAssoc,rLnPhiAssoc,ier)
 	endif
-!	CALL AlpSolEz2(isZiter,tKelvin,xFrac,Nc,VM,rho,zAssoc,aAssoc,uAssoc,FUGASSOC,iera)
+!	CALL AlpSolEz2(isZiter,tKelvin,xFrac,Nc,VM,rho,zAssoc,aAssoc,uAssoc,fugAssoc,iera)
 !	IF(iera(1) > 0)then
 !       if(iera(1)>10)iErr=13 ! This is a warning level for iErr when AlpSol did not converge.
 !		if(iera(1)==1)iErr=1
@@ -650,14 +558,14 @@ end	!subroutine ExactEsd
 	if(iErrMEM > 0 .and. LOUDER)write(dumpUnit,601)' FuEsdVtot: iErrMEM > 0. rho,zAssoc=',rho,zAssoc
 	if(iErrMEM==1)iErr=1
 	if(iErrMEM > 10)iErr=13
-	voidFrac=1-1.9D0*ETA
+	voidFrac=1-1.9D0*eta
 	denom=voidFrac
-	ZREP= 4.d0*Cmix*eta/denom
-	ZATT= -ZM*YQVM*RHO/(1+K1YVM*RHO)
-	Z=(1+ZREP+ZATT+ZASSOC)
-	PMpa=Z*rGas*RHO*tKelvin
+	zRep= 4.d0*Cmix*eta/denom
+	zAtt= -ZM*YQVM*rho/(1+K1YVM*rho)
+	zFactor=(1+zRep+zAtt+zAssoc)
+	pMPa=zFactor*Rgas*rho*tKelvin
     if(voidFrac < 0)then
-	    IF(LOUD)write(dumpUnit,*) 'FuEsdVtot:Error! (1-1.9*ETA) IS -VE. eta,rho=',eta,rho
+	    IF(LOUD)write(dumpUnit,*) 'FuEsdVtot:Error! (1-1.9*eta) IS -VE. eta,rho=',eta,rho
 		iErr=14
     endif
 	if(iErr > 10)return
@@ -681,48 +589,108 @@ end	!subroutine ExactEsd
 			CVI(I)=CVI(I) + CVIJ(I,J)*xFrac(J)
  		enddo
 	enddo
-	FATT= -ZM*YQVM/K1YVM*DLOG(1.d0+K1YVM*RHO)
+	FATT= -ZM*YQVM/K1YVM*DLOG(1.d0+K1YVM*rho)
 	FREP= -4.d0/1.9D0*DLOG(voidFrac)*CVM/VM
 	FREP= -4.d0/1.9D0*DLOG(voidFrac)*Cmix
-	UATT= -ZM*YQVM*RHO/(1+K1YVM*RHO)*UATT/K1YVM	!uAtt=...uAtt/k1YVM where uAtt defined in 3rd line of above do loop.
+	UATT= -ZM*YQVM*rho/(1+K1YVM*rho)*UATT/K1YVM	!uAtt=...uAtt/k1YVM where uAtt defined in 3rd line of above do loop.
 
 	!     CALLING ASSYMU IF NUMBER OF DONOR SITES AND ACCEPTOR SITES ARE NOT EQUAL 
-	!      IF(IFLAG.EQ.2)CALL ASSYMU(ALPHAD,ALPHDA,XA,XD,X,ND,NC,QIJ,UASSOC)
+	!      IF(IFLAG.EQ.2)CALL ASSYMU(ALPHAD,ALPHDA,XA,XD,X,ND,NC,QIJ,uAssoc)
 
-	DUONKT=UATT+uASSOC
-	DAONKT=FREP+FATT+aAssoc !-DLOG(Z) !don't subtract log(z) for aRes)T,V. Important for EAR.
-	DSONK =DUONKT-DAONKT
-	DHONKT=DUONKT+Z-1.d0
-	uRes_RT=UATT+UASSOC
-	aRes_RT=FREP+FATT+aAssoc !-DLOG(Z) !don't subtract log(z) for aRes)T,V. Important for EAR.
-	!write(dumpUnit,*)'aRes_RT=',aRes_RT
-	sRes_R =UATT+UASSOC-aRes_RT
-	hRes_RT=UATT+UASSOC+Z-1
-	Ares=DAONKT
-	Ures=DUONKT
+	uRes=UATT+uAssoc
+	aRes=FREP+FATT+aAssoc !-DLOG(Z) !don't subtract log(z) for aRes(T,V). Important for EAR.
 	if(LOUDER)write(dumpUnit,601)' FuEsdVtot: zAssoc,aAssoc,uAssoc=',zAssoc,aAssoc,uAssoc
 
 	if (isZiter==0) then
-		!call WertheimFugc(xFrac,vMolecNm3,tKelvin,NC,ETA,FUGASSOC,h_nMichelsen,dFUGASSOC_dT,dFUGASSOC_dRHO,dh_dT,dh_dRHO)
-        if( Z < zeroTol)then  ! Z < 0 is no problem given Vtot because ln(Z) is not relevant.  JRE 20210724
-		    if(LOUDER)write(dumpUnit,*) 'FuEsdVtot: Z.le.0 for fugc calculation.'
+		!call WertheimFugc(xFrac,vMolecNm3,tKelvin,NC,eta,fugAssoc,h_nMichelsen,dfugAssoc_dT,dfugAssoc_drho,dh_dT,dh_drho)
+        if( zFactor < zeroTol)then  ! Z < 0 is no problem given Vtot because ln(Z) is not relevant.  JRE 20210724
+		    if(LOUDER)write(dumpUnit,*) 'FuEsdVtot: zFactor.le.0 for last iteration.'
 			iErr=3	  ! warning level because another call might produce Z > 0.
 			goto 86
         endif
 		if(LOUDER)write(dumpUnit,'(a,f10.5)')' i,lnGamRep,lnGamAtt,lnGamBon.'
 		DO I=1,NC
-			FUGREP(I)=FREP*( 2.d0*C(I)/Cmix-VX(I)/VM ) + ZREP*VX(I)/VM
-			FUGREP(I)=FREP*( C(I)/Cmix ) + ZREP*VX(I)/VM ! For pure i, FugRepi= -4ci/1.9*ln(1-1.9eta) + 4ci*eta/(1-1.9eta) 
-			FUGATT(I)=FATT*( 2*YQVI(I)/YQVM-K1(I)*Y(I,I)*VX(I)/K1YVM )+ZATT*K1(I)*Y(I,I)*VX(I)/K1YVM !91-pres form, complete w/o dNk1YbNk, cf. EL99 p559 & S&E91apx
-			!FUGASSOC(i)=ND(i)*2*DLOG(XA(i,1)) + zAssoc*1.9D0*VX(i)*rho !JRE'96 Eq.43.
-			FUGC(I)=FUGREP(I)+FUGATT(I)+FUGASSOC(I)  ! -DLOG(Z)  Don't subtract ln(Z) when given Vtot as independent variable.
-			rLnGamRep=FUGREP(i)-Zrep*Vx(i)/VM  ! cf. Bala and Lira (2016), Eqs A6-A14. to correct from constant volume to P.
-			rLnGamAtt=FUGATT(i)-Zatt*Vx(i)/VM
-			rLnGamBon=FUGASSOC(i)-Zassoc*Vx(i)/VM
-			IF(LOUDER)write(dumpUnit,'(i3,f7.4,9f10.4)')i,xFrac(i),rLnGamRep,rLnGamAtt,rLnGamBon !,ralpha(i),ralphd(i)
+			!FUGREP(I)=FREP*( 2.d0*C(I)/Cmix-VX(I)/VM ) + zRep*VX(I)/VM
+			FUGREP=FREP*( C(I)/Cmix ) + zRep*VX(I)/VM ! For pure i, FugRepi= -4ci/1.9*ln(1-1.9eta) + 4ci*eta/(1-1.9eta) 
+			FUGATT=FATT*( 2*YQVI(I)/YQVM-K1(I)*Y(I,I)*VX(I)/K1YVM )+zAtt*K1(I)*Y(I,I)*VX(I)/K1YVM !91-pres form, complete w/o dNk1YbNk, cf. EL99 p559 & S&E91apx
+			!fugAssoc(i)=ND(i)*2*DLOG(XA(i,1)) + zAssoc*1.9D0*VX(i)*rho !JRE'96 Eq.43.
+			FUGC(I)=FUGREP+FUGATT+fugAssoc(I)  ! -DLOG(Z)  Don't subtract ln(Z) when given Vtot as independent variable.
+			rLnGamRep(i)=FUGREP-zRep*Vx(i)/VM  ! cf. Bala and Lira (2016), Eqs A6-A14. to correct from constant volume to P.
+			rLnGamAtt(i)=FUGATT-zAtt*Vx(i)/VM
+			rLnGamAssoc(i)=fugAssoc(i)-zAssoc*Vx(i)/VM
+			IF(LOUDER)write(dumpUnit,'(i3,f7.4,9f10.4)')i,xFrac(i),rLnGamRep(i),rLnGamAtt(i),rLnGamAssoc(i) !,ralpha(i),ralphd(i)
 		ENDDO
 	endif
 	if(LOUDER)write(dumpUnit,*) 'FuEsdVtot: Check results before returning.'
 86	return
 	end !subroutine FuEsdVtot
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine QueryParPureEsd(iComp,iParm,value,iErr)
+	USE EsdParms      !Just for ESD
+	IMPLICIT NONE
+	DoublePrecision value
+	integer iComp,iParm,iErr
+	!-----------------------------------------------------------------------------
+	! pure component parameters
+	!-----------------------------------------------------------------------------
+	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
+	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
+	iErr=0
+	if(iParm==1)then
+		value=c(iComp)
+	elseif(iParm==2)then
+		value=vx(iComp)
+	elseif(iParm==3)then
+		value=eokp(iComp)
+	elseif(iParm==4)then
+		value=KcStar(iComp)
+	elseif(iParm==5)then
+		value=DH(iComp)
+	elseif(iParm==6)then
+		value=ND(iComp)
+	elseif(iParm==7)then
+		value=NAS(iComp)
+	elseif(iParm==8)then
+		value=NDS(iComp)
+	else
+		iErr=1
+	endif
+	return
+end	Subroutine QueryParPureEsd
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine SetParPureEsd(iComp,iParm,value,iErr)
+	USE EsdParms      !Just for ESD
+	IMPLICIT NONE
+	DoublePrecision value
+	integer iComp,iParm,iErr
+	!-----------------------------------------------------------------------------
+	! pure component parameters
+	!-----------------------------------------------------------------------------
+	!DoublePrecision EOKP(NMX),KCSTAR(NMX),DH(NMX),C(NMX),Q(NMX),VX(NMX)
+	!Integer         ND(NMX),NDS(NMX),NAS(NMX)
+	iErr=0
+	if(iParm==1)then
+		c(iComp)=value
+		q(iComp)=1+(value-1)*1.9076D0
+	elseif(iParm==2)then
+		vx(iComp)=value
+	elseif(iParm==3)then
+		eokp(iComp)=value
+	elseif(iParm==4)then
+		KcStar(iComp)=value
+	elseif(iParm==5)then
+		DH(iComp)=value
+	elseif(iParm==6)then
+		ND(iComp)=value
+	elseif(iParm==7)then
+		NAS(iComp)=value  ! Not used for ESD96
+	elseif(iParm==8)then
+		NDS(iComp)=value  ! Not used for ESD96
+	else
+		iErr=1
+	endif
+	return
+end	Subroutine SetParPureEsd
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

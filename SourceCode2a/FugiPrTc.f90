@@ -2,9 +2,9 @@
 MODULE PrTcParms
 	USE GlobConst
 	USE BIPs
+	USE PREosParms !OMA,OMB, ...
 	DoublePrecision zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX)
 	DoublePrecision TCj(NMX),PCj(NMX),acenj(NMX)
-	DoublePrecision OMA,OMB	! these are not adjustable parms but it seems silly to recompute them all the time.
 END MODULE PrTcParms
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine GetPrTc(nComps,iErrCode)
@@ -19,7 +19,8 @@ subroutine GetPrTc(nComps,iErrCode)
 	!    commons: ppData, BIPs through GetBips
 	!  Programmed by:  JRE 07/00
 	USE PrTcParms ! GlobConst(bVol)+alphaL-M+cvol
-	implicit doublePrecision( A-H,K,O-Z)
+	USE PREosParms ! OMA,OMB, ...
+	Implicit DoublePrecision( A-H,K,O-Z)
 	character*99 bipFile,inFile,dumString
 	integer GetBIPs
 	LOGICAL LOUDER
@@ -32,73 +33,66 @@ subroutine GetPrTc(nComps,iErrCode)
 	! note:  bips are passed back through module /BIPs/
 		inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
 		bipFile=TRIM(PGLinputDir)//'\BipPRtc.txt' ! // is the concatenation operator
-	if(LOUD)write(*,*)'GetPrTc: inFile= ',TRIM(inFile)
+	if(LOUD)write(dumpUnit,*)'GetPrTc: inFile= ',TRIM(inFile)
 	open(40,file=inFile,ioStat=ioErr)
 	if(ioErr.and.LOUDER)then
-		print*,'GetPrTc: PGLinputDir= ',TRIM(PGLinputDir) 
-		print*,'GetPrTc: Error opening: ', TRIM(inFile)
-		if(LOUDER)pause 'Check that the parms file is in the right dir.'
+		write(dumpUnit,*)'GetPrTc: PGLinputDir= ',TRIM(PGLinputDir) 
+		write(dumpUnit,*)'GetPrTc: Error opening: ', TRIM(inFile)
+		if(LOUDER)write(dumpUnit,*)'Check that the parms file is in the right dir.'
 	endif
 
-	THIRD=1.D0/3
-	sqrt2=DSQRT(2.D0)
-	sqrt8=2*sqrt2
-	etac = 1+(4-sqrt8)**third+(4+sqrt8)**third	 !Jaubert, Eq.7
-	etac = 1/etac
-	OMA = (40*etac+8)/(49-37*etac)
-	OMB = etac/(etac+3)						  
-	if(LOUDER)write(*,*)'    ID          TwuL      TwuM      TwuN       cVolCc_mol    Tmin(K) '
+	if(LOUDER)write(dumpUnit,*)'    ID          TwuL      TwuM      TwuN       cVolCc_mol    Tmin(K) '
 	!we do not store the entire database then operate on it because that would take a lot of space.
 	!instead, we rewind and re-read it from the hard drive multiple times.  this happens only at startup and only once if nComps=1.
 	do iComp=1,nComps
 		iGotIt=0
 		rewind(UNIT=40,ioStat=ioErr)
 		read(40,*,ioStat=ioErr)nDeck
-		!print*,'nDeck=',nDeck
+		!write(dumpUnit,*)'nDeck=',nDeck
 		jComp=0 
 		DO while (jComp < nDeck .and. iGotIt==0) !rewind and loop through hard drive till you find the comp of interest.
 			jComp=jComp+1
 			read(40,'(A99)',ioStat=ioErr)dumString
-			!Print*,TRIM(dumString)
-			if(ioErr)print*,'GetPrTc: i,j,ioErr,String: ',iComp,jComp,ioErr,TRIM(dumString)
+			!write(dumpUnit,*)TRIM(dumString)
+			if(ioErr)write(dumpUnit,*)'GetPrTc: i,j,ioErr,String: ',iComp,jComp,ioErr,TRIM(dumString)
 
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!  NOTE!  Jaubert replaces Tc,Pc,acen with his values!!!      !!!!!!!!!!!!!!!!!
 			read(dumString,*,ioStat=ioErr)idBase,Tcj(iComp),PcBar,acenj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),zRa(iComp),TminK(iComp)
-			!if( TminK(iComp) < 50.and.LOUD) print*,TRIM(dumString)
-			!if( TminK(iComp) < 50.and.LOUD)print*,'GetPrTc: Warning 50>Tmin=',TminK(iComp)
+			!if( TminK(iComp) < 50.and.LOUD) write(dumpUnit,*)TRIM(dumString)
+			!if( TminK(iComp) < 50.and.LOUD)write(dumpUnit,*)'GetPrTc: Warning 50>Tmin=',TminK(iComp)
 			if(cVolCc_mol(iComp)==86)cVolCc_mol(iComp)=0
 			!cVolCc_mol(iComp)=0 !for debugging, but it shouldn't matter for VLE.
 			Pcj(iComp)=PcBar !/10 !JRE changed the database to MPa JRE 20200504
 			!read(40,*,ERR=861)idBase,idCc,(zRefDb(iCoeff),iCoeff=1,3),(a1Db(iCoeff),iCoeff=1,nTptCoeffs),(a2Db(iCoeff),iCoeff=1,nTptCoeffs),vMolecDb,tKmin(iComp),nTypes(iComp),(idType(iComp,iType),iType=1,nTypes(iComp)),(nFg(iComp,iType),iType=1,nTypes(iComp))
 			IF(idBase==id(iComp))THEN
 				iGotIt=1  !this will kick us to the next component
-				bVolCC_mol(iComp)=OMB*rGas*TCj(iComp)/PCj(iComp)-cVolCc_mol(iComp)
-				if(LOUDER)write(*,'(i7,5f13.4)')ID(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),TminK(iComp)
-				if(LOUDER)write(*,'(a,5f13.4)')' Jaubert Tc,Pc,acen,bVol= ', Tcj(iComp),Pcj(iComp),acenj(iComp),bVolCC_mol(iComp)
+				bVolCC_mol(iComp)=OMB*Rgas*TCj(iComp)/PCj(iComp)-cVolCc_mol(iComp)
+				if(LOUDER)write(dumpUnit,'(i7,5f13.4)')ID(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),TminK(iComp)
+				if(LOUDER)write(dumpUnit,'(a,5f13.4)')' Jaubert Tc,Pc,acen,bVol= ', Tcj(iComp),Pcj(iComp),acenj(iComp),bVolCC_mol(iComp)
 				if(bVolCC_mol(iComp) < 1)then
 					iErrCode=8686
-					if(LOUDER)pause 'GetPrTc: bVol < 1??? Could happen if Pc[=]bar or cVol too big.'
+					if(LOUDER)write(dumpUnit,*)'GetPrTc: bVol < 1??? Could happen if Pc[=]bar or cVol too big.'
 				endif 	  
 				exit !quit searching if found
 			ENDIF !idBase==id(iComp)
 		enddo !while(iGotIt.eq.0)
 		if(iGotIt==0)then
 			iErrCode=iErrCode*10+iComp
-			if(LOUDER)write(*,*)'GetPrTc: no data for id#:',id(iComp),' in file=',TRIM(inFile)
+			if(LOUDER)write(dumpUnit,*)'GetPrTc: no data for id#:',id(iComp),' in file=',TRIM(inFile)
 		endif
 	enddo !all iComps
 
 
 	IERRGET=GetBIPs(bipFile,ID,NC)
 	if(LOUDER)then
-		print*,'From GetPrTc:'
-		write(*,'(a,11i7)')' kij ',(ID(j),j=1,NC)
+		write(dumpUnit,*)'From GetPrTc:'
+		write(dumpUnit,'(a,11i7)')' kij ',(ID(j),j=1,NC)
 		do i=1,NC
 			do j=1,NC
 				if(kij(i,j) > 0.9)kij(i,j)=0.9d0
 				if(kij(i,j) <  -1)kij(i,j)= -1
 			enddo
-			write(*,'(i5,11f7.4)')ID(j),(kij(i,j),j=1,NC)
+			write(dumpUnit,'(i5,11f7.4)')ID(j),(kij(i,j),j=1,NC)
 		enddo
 	endif ! LOUDER, print bips.
 
@@ -176,7 +170,7 @@ end	!Subroutine SetParPurePrTc
 	!        TC       VECTOR CRITICAL TEMPERATURES OF THE COMPONENTS
 	!        PC       VECTOR CRITICAL PRESSURES OF THE COMPONENTS
 	!        ACEN     VECTOR ACENTRIC FACTORS OF THE COMPONENTS
-	!        RGAS     GAS CONSTANT ( EG. 8.31434 CC-MPA/(GMOL-K) ) IN PHASE LIQ
+	!        Rgas     GAS CONSTANT ( EG. 8.31434 CC-MPA/(GMOL-K) ) IN PHASE LIQ
 	!        tAbs     ABSOLUTE TEMPERATURE
 	!        pAbs     ABSOLUTE PRESSURE
 	!        xFrac    VECTOR MOLE FRACTIONS OF COMPONENTS IN PHASE LIQ
@@ -198,7 +192,7 @@ end	!Subroutine SetParPurePrTc
 	!          IER(6) = 1 SRKNR DID NOT CONVERGE
 	!
 	!   NOTE:           UNITS OF ALL THE INPUTS SHOULD BE
-	!                   CONSISTENT WITH UNITS OF RGAS.  EXCEPT
+	!                   CONSISTENT WITH UNITS OF Rgas.  EXCEPT
 	!                   FOR THIS, THE USER MAY CHOOSE HIS OWN UNITS.
 	!
 	!   REQD. ROUTINES:
@@ -248,7 +242,7 @@ end	!Subroutine SetParPurePrTc
 	USE BIPs
 	Implicit DoublePrecision(A-H,K,O-Z)
 	DIMENSION FUGC(NC),xFrac(NC),gMol(NC) !,IER(*)
-	DoublePrecision ALA(NMX,NMX),bVol(NMX),TDLAL_DT(NMX),T2d2LAL_dT2(NMX),NdC_b_dni
+	DoublePrecision ALA(NMX,NMX),TDLAL_DT(NMX),T2d2LAL_dT2(NMX),NdC_b_dni !,bVol(NMX)
 	!common/ParmsPrTc/zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX),OMA,OMB
 	COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
 	COMMON/eta/etaL,etaV,zFactorL,zFactorV
@@ -261,13 +255,11 @@ end	!Subroutine SetParPurePrTc
 	!if(iErrZ=6)'FuPrTcVtot: 0~cmprsblty=',cmprsblty
 	!if(iErrTmin.ne.0)iErrZ=5
 	!iErrZ=17  if dChemPo > 33
-	sqrt2=DSQRT(2.D0)
-	sqrt8=2*sqrt2
 	
 	!  COMPUTE THE MOLECULAR PARAMETERS A AND B AND THEIR CROSS COEFFS
-	if(LOUD.and.initCall)print*,'FuPrTcVtot:OMA,OMB',OMA,OMB
+	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTcVtot:OMA,OMB',OMA,OMB
 	totMol=sum(gMol(1:NC))
-	if( vTotCc < 1E-11 .and. LOUD)print*,'FuPrTcVtot: 0 ~ vTotCc=',vTotCc
+	if( vTotCc < 1E-11 .and. LOUD)write(dumpUnit,*)'FuPrTcVtot: 0 ~ vTotCc=',vTotCc
 	rhoMol_cc=totMol/vTotCc
 	bMix=0
 	iErrTmin=0
@@ -275,14 +267,14 @@ end	!Subroutine SetParPurePrTc
 	do iComp = 1,NC
 		if(PCj(iComp)==0)then
 			iErrZ=11
-			if(LOUD)write(*,'(a,F7.2,5F8.3)')' FuPrTcVtot: nonsense input. Tc,Pc,L,M,N,c: ',TCj(iComp),PCj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),TminK(iComp)
+			if(LOUD)write(dumpUnit,'(a,F7.2,5F8.3)')' FuPrTcVtot: nonsense input. Tc,Pc,L,M,N,c: ',TCj(iComp),PCj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),TminK(iComp)
 			cycle
 		endif
 		if(Tcj(iComp) < TcVolatile)then
 			TcVolatile=Tcj(iComp)
 			iVolatile=iComp
 		endif
-		aCrit = OMA*RGAS*RGAS*TCj(iComp)*TCj(iComp)/PCj(iComp)
+		aCrit = OMA*Rgas*Rgas*TCj(iComp)*TCj(iComp)/PCj(iComp)
 		!sTmp = 0.37464 + 1.54226*ACEN(iComp) - 0.26993*ACEN(iComp)*ACEN(iComp)
 		!DLALDT(iComp)= -sTmp*SQRT(Tr/ ALPHA) ! dAlp/dT = 2*sqrt(alp)*S*(-0.5/sqrt(Tr)) = -sqrt(alp)*S/sqrt(Tr); (T/alp)*dAlp/dT= -S*sqrt(Tr/Alp)	 EL2ed Eq.7.18,8.35
 		Tr = tKelvin / Tcj(iComp)
@@ -304,23 +296,22 @@ end	!Subroutine SetParPurePrTc
 		! Td/dT[ TdLALdT ] = T*d/dT[ Pow - alphaN(iComp) - pow*alphaL(iComp)*TrPow ]
 		T2d2LAL_dT2(iComp) = -pow+alphaN(iComp) -pow*(pow-1)*alphaL(iComp)*TrPow
 		ALA(iComp,iComp) = aCrit*ALPHA
-		!bVol(iComp) = OMB*RGAS*TC(iComp)/PC(iComp) - cVolCc_mol(iComp)	
-		bVol(iComp) = bVolCc_mol(iComp)	
+		!bVolCC_mol(iComp) = OMB*Rgas*TC(iComp)/Pc(iComp) - cVolCc_mol(iComp)	
 		xFrac(iComp)=gMol(iComp)/totMol
-		bMix=bMix+xFrac(iComp)*bVol(iComp)
+		bMix=bMix+xFrac(iComp)*bVolCC_mol(iComp)
 		FUGC(iComp)=0 !initial to zero for isZiter=1.
 	enddo
 	if( tKelvin < TminK(iVolatile) )iErrTmin=1
 	if(iErrTmin.ne.0)then
-		if(LOUD.and.initCall)write(*,'(a,5f8.2)' )' FuVtot: T,Tmin(i)',tKelvin,( TminK(i),i=1,NC)
+		if(LOUD.and.initCall)write(dumpUnit,'(a,5f8.2)' )' FuVtot: T,Tmin(i)',tKelvin,( TminK(i),i=1,NC)
 		iErrZ=5
 	endif
 	if(iErrZ>10)return
 	eta=bMix*rhoMol_cc
-	if(LOUD.and.initCall)print*,'FuPrTcVtot: eta,bMix',eta,bMix
-	if(LOUD.and.initCall)write(*,'(a,3(1PE11.4))')' FuPrTcVtot:TdLAL_dT,T2d2LAL_dT2',TdLAL_dT(1),T2d2LAL_dT2(1)
+	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTcVtot: eta,bMix',eta,bMix
+	if(LOUD.and.initCall)write(dumpUnit,'(a,3(1PE11.4))')' FuPrTcVtot:TdLAL_dT,T2d2LAL_dT2',TdLAL_dT(1),T2d2LAL_dT2(1)
 	if(ABS(totMol-1) > 1e-5)then
-		if(LOUD)print*, 'FuPrTcVtot warning: totMol= ',totMol
+		if(LOUD)write(dumpUnit,*) 'FuPrTcVtot warning: totMol= ',totMol
 		!iErrZ=2
 		!goto 861
 	endif
@@ -345,12 +336,12 @@ end	!Subroutine SetParPurePrTc
  	!T2d2aMixDt2 = T2d2aMixDt2*aMix
 	!BIGMES=BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
 	!dU_NKT= BIGMES*(-1+daMixDt/aMix)	!EL2ed Eq.8.35
-	if(aMix < zeroTol .and. LOUD)print*,'FuPrTcVtot:0~aMix,aCrit,alpha,Tr=',aMix,aCrit,alpha,Tr
-	if(bMix < zeroTol .and. LOUD)print*,'FuPrTcVtot:bMix~0=',bMix
+	if(aMix < zeroTol .and. LOUD)write(dumpUnit,*)'FuPrTcVtot:0~aMix,aCrit,alpha,Tr=',aMix,aCrit,alpha,Tr
+	if(bMix < zeroTol .and. LOUD)write(dumpUnit,*)'FuPrTcVtot:bMix~0=',bMix
 
 	eta=bMix*rhoMol_Cc
 	crho=cMix*rhoMol_Cc
-	!print*,'FuPrTcVtot: eta,bMix,cMix=',eta,bMix !,cMix
+	!write(dumpUnit,*)'FuPrTcVtot: eta,bMix,cMix=',eta,bMix !,cMix
 
 
 !	Z=1/(1-brho) - (A/Bsqrt8)*brho/[(1+crho)*(1+brho+2crho)+(brho+crho)*(1-brho)]
@@ -368,27 +359,27 @@ end	!Subroutine SetParPurePrTc
 	! qq = -(bq^2-4cq) ; sqrtNqq=sqrt(-qq) = (d1-d2)=(1+c/b)*sqrt8
 	sqrtNqq=(1+c_b)*sqrt8 ! x = c/b & -qq = (bq*bq-4*cq) = (2+4x)^2-4(2x^2-1)= 4+16x+16x^2-8x^2+4 = 8+16x+8x^2 = 8*(1+x)^2  
 	voidFrac=1-eta
-	if( voidFrac.le. 0 .and. LOUD)print*,'FuPrTcVtot:0~ voidFrac = ',voidFrac
+	if( voidFrac.le. 0 .and. LOUD)write(dumpUnit,*)'FuPrTcVtot:0~ voidFrac = ',voidFrac
 	dArep_dEta=1/ voidFrac
 	zRep=eta * dArep_dEta
 	d1=1+sqrt2+c_b*(2+sqrt2) !=( bq+sqrtNqq )/2=[(2+4x)+(1+x)sqrt8]/2 = 1+2x+(1+x)*sqrt2 = 1+sqrt2+x*(2+sqrt2) ! = 2cq/(bq-sqrtNqq)
 	d2=1-sqrt2+c_b*(2-sqrt2) !=( bq-sqrtNqq )/2=[(2+4x)-(1+x)sqrt8]/2 = 1+2x-(1+x)*sqrt2 = 1-sqrt2+x*(2-sqrt2) ! = 2cq/(bq+sqrtNqq)
 	!  2	  +c_b*2          = d1+d2 = 2*(1+x)
 	denom = 1+eta*bq + cq*eta*eta ! (1+d1*eta)*(1+d2*eta) = (1+(d2+d1)*eta+d1*d2*eta^2); 
-	dAatt_dEta= -aMix/(bMix*RGAS*tKelvin)/denom	 ! Jaubert Eq.7
+	dAatt_dEta= -aMix/(bMix*Rgas*tKelvin)/denom	 ! Jaubert Eq.7
 	zAtt=eta*dAatt_dEta
 	zFactor = 1+zRep+zAtt 
-	pMPa=zFactor*rhoMol_Cc*RGAS*tKelvin
+	pMPa=zFactor*rhoMol_Cc*Rgas*tKelvin
 
-	!print*,'qq,sqrt(-qq)',qq,sqrtNqq
-	!print*,'b,c/b',bMix,c_b
-	!print*,'bq,cq',bq,cq
-	!print*,'zRep,zAtt',zRep,zAtt
-	!print*,'d1+,d2+',d1Plus,d2Plus
-	!print*,'d1-,d2-',d1Minus,d2Minus
-	BIGA = aMix*pMPa/(RGAS*RGAS*tKelvin*tKelvin)
-	BIGB = bMix*pMPa/(RGAS*tKelvin)
-	if(LOUD.and.initCall)print*,'FuPrTcVtot: zFactor,pMPa=',zFactor,pMPa
+	!write(dumpUnit,*)'qq,sqrt(-qq)',qq,sqrtNqq
+	!write(dumpUnit,*)'b,c/b',bMix,c_b
+	!write(dumpUnit,*)'bq,cq',bq,cq
+	!write(dumpUnit,*)'zRep,zAtt',zRep,zAtt
+	!write(dumpUnit,*)'d1+,d2+',d1Plus,d2Plus
+	!write(dumpUnit,*)'d1-,d2-',d1Minus,d2Minus
+	BIGA = aMix*pMPa/(Rgas*Rgas*tKelvin*tKelvin)
+	BIGB = bMix*pMPa/(Rgas*tKelvin)
+	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTcVtot: zFactor,pMPa=',zFactor,pMPa
 	!
 	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS
 	!
@@ -399,19 +390,19 @@ end	!Subroutine SetParPurePrTc
 	argLog2 = 1+d2*eta
 
 	argLog = argLog1/argLog2
-	if(LOUD.and.initCall)print*,'FuPrTcVtot: argLog1,2=',argLog1,argLog2
-	if(loud .and. argLog < zeroTol)print*, 'FuPrTcVtot: argLog 1or2 < 0',argLog1,argLog2
+	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTcVtot: argLog1,2=',argLog1,argLog2
+	if(loud .and. argLog < zeroTol)write(dumpUnit,*) 'FuPrTcVtot: argLog 1or2 < 0',argLog1,argLog2
 	aResAtt= -BIGA/BIGB/sqrtNqq*DLOG( argLog )
-	!print*,'a/bRT,alpha', BIGA/BIGB,alpha
-	!print*,'zAtt,aAtt',zAtt,aResAtt
+	!write(dumpUnit,*)'a/bRT,alpha', BIGA/BIGB,alpha
+	!write(dumpUnit,*)'zAtt,aAtt',zAtt,aResAtt
 	aAttRKPR = -BIGA/BIGB/(d1-d2)*DLOG( (1+d1*eta)/(1+d2*eta) )
 	zAttRKPR = -BIGA/BIGB*eta/( (1+d1*eta)*(1+d2*eta) )
 	denomRKPR= (1+d1*eta)*(1+d2*eta)
-	!print*,'RKPR: zAtt,aAtt',zAttRKPR, aAttRKPR
-	!print*,'denom: tcPR,RKPR', denom,denomRKPR
-	!pause 'check values'
+	!write(dumpUnit,*)'RKPR: zAtt,aAtt',zAttRKPR, aAttRKPR
+	!write(dumpUnit,*)'denom: tcPR,RKPR', denom,denomRKPR
+	!write(dumpUnit,*)'check values'
 	!BIGMESOld=BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
-	!print*,'BigMes,BigMesOld:',BigMes,BigMesOld
+	!write(dumpUnit,*)'BigMes,BigMesOld:',BigMes,BigMesOld
 	aRes_RT= -LOG(1-eta) + aResAtt
 	!uDep/RT = beta*d(A/RT)/dBeta = -T*d(A/RT)/dT = -T* [ -A/RT^2 + (1/RT)*dA/dT ] = A/RT - (dA/dT)/R = A/RT*[ 1-(T/alpha)*dAlpha/dT ]  
 	uRes_RT= aResAtt*(1-TdaMixDt/aMix)	! Cv = (dU/dT) = U/T + T*d(U/T)/dT; U/RT = A/RT*(1-TdaMixDt/aMix) => Td(U/RT)/dT = T(dA/RT)/dT -(A/RT)*Td/dT[TdaMixDt/aMix] = -U/RT -A/RT*[ Td(TdaMixDt)/dT -(TdaMixDt/aMix)^2] 
@@ -437,8 +428,8 @@ end	!Subroutine SetParPurePrTc
 	!d2ARep/dEta2 = 1/(1-eta)^2
 	!dZrep/dEta = dArep/dEta+eta*d2Arep/dEta2 
 	!eta*dZrep/dEta = zRep + eta^2*d2Arep/dEta2 = eta/(1-eta) + eta^2/(1-eta)^2 = eta/(1-eta)*[ 1+eta/(1-eta) ] = eta/(1-eta)^2
-	!zAtt= -eta*aMix/(bMix*RGAS*tKelvin)/( 1+eta*bq + cq*eta*eta ) = eta*dAatt_dEta	 ! Jaubert Eq.7
-	!dAatt_dEta= -aMix/(bMix*RGAS*tKelvin)/denom = -(a/bRT)/denom	 ! Jaubert Eq.7
+	!zAtt= -eta*aMix/(bMix*Rgas*tKelvin)/( 1+eta*bq + cq*eta*eta ) = eta*dAatt_dEta	 ! Jaubert Eq.7
+	!dAatt_dEta= -aMix/(bMix*Rgas*tKelvin)/denom = -(a/bRT)/denom	 ! Jaubert Eq.7
 	!d2Aatt_dEta2 = +(a/bRT)/( 1+eta*bq + cq*eta*eta )^2 * (bq + 2*cq*eta ) 
 	!d2Aatt_dEta2 = -dAatt_dEta/( 1+eta*bq + cq*eta*eta ) * (bq + 2*cq*eta ) 
 	d2Aatt_dEta2 = -dAatt_dEta/denom * (bq + 2*cq*eta )  
@@ -450,10 +441,10 @@ end	!Subroutine SetParPurePrTc
 	!cmprsblty=cmprsblty*1.804 ! dunno why, but works for CH4.
 	!PGL6edEq.6.24=> CpRes_R = CvRes_R-1-[Z+TdZ/dT]^2/[Z+rho*dZ/dRho]
 	if( ABS(cmprsblty) > 1.D-11)then
-		!if(LOUD)print*,'(dP/dT)/rhoR=',(zFactor+TdZ_dT)
+		!if(LOUD)write(dumpUnit,*)'(dP/dT)/rhoR=',(zFactor+TdZ_dT)
 		CpRes_R = CvRes_R-1 + (zFactor+TdZ_dT)*(zFactor+TdZ_dT)/cmprsblty
 	else
-		if(LOUD)print*,'FuPrTcVtot: 0~cmprsblty=',cmprsblty
+		if(LOUD)write(dumpUnit,*)'FuPrTcVtot: 0~cmprsblty=',cmprsblty
 		iErrZ=6
 		CpRes_R=86.8686D0
 	endif
@@ -464,7 +455,7 @@ end	!Subroutine SetParPurePrTc
 		iErrZ=13
 		goto 861
 	endif
-	if(LOUD.and.initCall)print*,'aRes,uRes',aRes_RT,uRes_RT
+	if(LOUD.and.initCall)write(dumpUnit,*)'aRes,uRes',aRes_RT,uRes_RT
 	DO iComp = 1,NC
 		SUMXA = 0
 		DO jComp=1,NC
@@ -478,19 +469,19 @@ end	!Subroutine SetParPurePrTc
 		ELSE
 			NdC_b_dni= ( cVolCC_mol(iComp) - cMix*bVolCC_mol(iComp)/bMix )/bMix	!NOTE: declared DoublePrecision.
 			!BIGB=b*P/RT  ; c_b = cMix/bMix
-			ChemPoRes = bVol(iComp)/bMix*(zFactor-1) - DLOG(zFactor-BIGB) & 
-			!+ aResAtt*( 2*SUMXA/aMix - bVol(ICOMP)/bMix ) + zFactor*(cMix-cVolCC_mol(iComp))*rhoMol_cc	! Privat(2016a) Eq 14.
-			+ aResAtt*( 2*SUMXA/aMix - bVol(ICOMP)/bMix - NdC_b_dni/(1+c_b) ) &
+			ChemPoRes = bVolCC_mol(iComp)/bMix*(zFactor-1) - DLOG(zFactor-BIGB) & 
+			!+ aResAtt*( 2*SUMXA/aMix - bVolCC_mol(ICOMP)/bMix ) + zFactor*(cMix-cVolCC_mol(iComp))*rhoMol_cc	! Privat(2016a) Eq 14.
+			+ aResAtt*( 2*SUMXA/aMix - bVolCC_mol(ICOMP)/bMix - NdC_b_dni/(1+c_b) ) &
 			+ zAtt*(1-eta)*NdC_b_dni/(1+c_b)  
 		END IF
 		IF(ChemPoRes > 33) THEN
 			!	AVOID EXPONENT OVERFLOW. DON'T INDICATE ERROR. IT MAY BE N-HEXANE AT P>1GPa AND 298K.
-			iErrZ=7
+			iErrZ=7	 ! Warning because exp(33)~ infinity may be a good enough approximation.
 			ChemPoRes = 33
 		endif
 		FUGC(ICOMP) = (ChemPoRes)
 	enddo
-	if(LOUD.and.initCall)print*,'FUGC(1-NC)',(fugc(i),i=1,nc)
+	if(LOUD.and.initCall)write(dumpUnit,*)'FUGC(1-NC)',(fugc(i),i=1,nc)
 !	if(LIQ.eq.0)then
 !	  etaV=BIGB/zFactor
 !	  zFactorV=zFactor
@@ -502,7 +493,7 @@ end	!Subroutine SetParPurePrTc
 861	continue
 	initCall=0
 	RETURN
-	END
+	END	!Subroutine FuPrTcVtot()
 
 	!SUBROUTINE FugiPrTc(tKelvin,pMPa,gMol,NC,LIQ,FUGC,zFactor,IER)
 	Subroutine FugiPrTc( tKelvin,pMPa,gmol,NC,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,ier )	  ! JRE 2020
@@ -523,7 +514,7 @@ end	!Subroutine SetParPurePrTc
 	!        TC       VECTOR CRITICAL TEMPERATURES OF THE COMPONENTS
 	!        PC       VECTOR CRITICAL PRESSURES OF THE COMPONENTS
 	!        ACEN     VECTOR ACENTRIC FACTORS OF THE COMPONENTS
-	!        RGAS     GAS CONSTANT ( EG. 8.31434 CC-MPA/(GMOL-K) ) IN PHASE LIQ
+	!        Rgas     GAS CONSTANT ( EG. 8.31434 CC-MPA/(GMOL-K) ) IN PHASE LIQ
 	!        tAbs     ABSOLUTE TEMPERATURE
 	!        pAbs     ABSOLUTE PRESSURE
 	!        xFrac    VECTOR MOLE FRACTIONS OF COMPONENTS IN PHASE LIQ
@@ -545,7 +536,7 @@ end	!Subroutine SetParPurePrTc
 	!          IER(6) = 1 SRKNR DID NOT CONVERGE
 	!
 	!   NOTE:           UNITS OF ALL THE INPUTS SHOULD BE
-	!                   CONSISTENT WITH UNITS OF RGAS.  EXCEPT
+	!                   CONSISTENT WITH UNITS OF Rgas.  EXCEPT
 	!                   FOR THIS, THE USER MAY CHOOSE HIS OWN UNITS.
 	!
 	!   REQD. ROUTINES:
@@ -603,12 +594,12 @@ end	!Subroutine SetParPurePrTc
     iErr=0 !error tracker internal for FUGI()
 
 	!zeroTol=1D-11 !zeroTol is now global
-	if(tKelvin < zeroTol .and.LOUD)pause 'FuPrTc: Nonsense on input. 0~tKelvin'
-	totMoles=sum(gMol) 
-	xFrac=gMol/totMoles
-	if( ABS(totMoles-1) > zeroTol .and. LOUD)print*,'FuPrTc: ??? totMoles,x(1)=',totMoles,xFrac(1) 
-	bMix=SumProduct(NC,xFrac,bVolCc_mol)
-	if(LOUD.and.initCall)print*,'FuPrTc: bMix=',bMix
+	if(tKelvin < zeroTol .and.LOUD)write(dumpUnit,*)'FuPrTc: Nonsense on input. 0~tKelvin'
+	totMoles=sum( gMol(1:NC) ) 
+	xFrac(1:NC)=gMol(1:NC)/totMoles
+	if( ABS(totMoles-1) > zeroTol .and. LOUD)write(dumpUnit,*)'FuPrTc: ??? totMoles,x(1)=',totMoles,xFrac(1) 
+	bMix=SUM( xFrac(1:NC)*bVolCc_mol(1:NC) )
+	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTc: bMix=',bMix
 	aRes_RT=86.8686	  ! initialize to avoid NAN on error return
 	uRes_RT=86.8686
 	cvRes_R=86.8686
@@ -617,17 +608,17 @@ end	!Subroutine SetParPurePrTc
 
 	isZiter=1
 
-	pb_RT = pMPa*bMix/(rGas*tKelvin)
+	pb_RT = pMPa*bMix/(Rgas*tKelvin)
 	eta=pb_RT/1.001d0  	!super high pressures can generate eta>1 because Z>>1. Check eta in if() below.
-	if(LIQ==1 .or. LIQ==3 .or. eta>etaMax)eta=etaMax/1.001d0 !organize so "new" eta for 1st iteration will be exactly ideal gas value, to improve precision when P~1E-11.
+	if(LIQ==1 .or. LIQ==3 .or. eta>etaMax)eta=etaMax/1.001d0 !organize to improve precision when P~1E-11.
 	rhoMol_Cc=eta/bMix
-	if(LOUD.and.initCall)write(*,'( a,3(1PE11.4) )')' FuPrTc: 1st FuVtot. rhoMol_cc,eta=', rhoMol_cc,eta 
+	if(LOUD.and.initCall)write(dumpUnit,'( a,3(1PE11.4) )')' FuPrTc: 1st FuVtot. rhoMol_cc,eta=', rhoMol_cc,eta 
 	call FuPrTcVtot(isZiter,tKelvin,1/rhoMol_Cc,xFrac,NC,FUGC,zFactor,aDep,uDep,iErrZ)
-	!pause 'check initial values'
+	!write(dumpUnit,*)'check initial values'
 	if(iErrZ > 10)then
 		iErr=13
 		if(LOUD)then
-            write(*,*)'FuPrTc: Initial FuVtot returned with error code:',iErrZ
+            write(dumpUnit,*)'FuPrTc: Initial FuVtot returned with error code:',iErrZ
 		    pause
         end if
 		goto 861
@@ -641,26 +632,26 @@ end	!Subroutine SetParPurePrTc
 	change=1234
 	itMax=55
 	NITER=0
-	pMax= -1.d11 !for crude goldenz
-	pMin=1.d11
+	pMax= -1234 !for crude goldenz
+	pMin=  1234
 	isZiter=1
-	do while(ABS(change) > 1.e-10 .and. iErr < 10)   ! This gives ~10 sig figs on rho for liq and above initialization gives exact ideal gas value when P->1E-11.
+	do while(ABS(change) > 1.D-10 .and. iErr < 10)   ! This gives ~10 sig figs on rho for liq and above initialization gives exact ideal gas value when P->1E-11.
 		NITER=NITER+1
 		if(niter > itMax)iErr=16
-		if(niter > itMax .and. LOUD)print*,'FugiPrTc: iterations exceeded. eta=',eta
+		if(niter > itMax .and. LOUD)write(dumpUnit,*)'FugiPrTc: iterations exceeded. eta=',eta
 		if(niter > itMax)exit
 		!ETA=rhoMol_Cc*bVolMix
 		if( (1-eta) < 1.d-11)then
-			if(LOUD)write(*,*) 'FuPrTc: eta > 1. nIter=',nIter
+			if(LOUD)write(dumpUnit,*) 'FuPrTc: eta > 1. nIter=',nIter
 			if(LOUD)pause
 		endif
 		rhoMol_cc=eta/bMix
 		vTotCc=totMoles/rhoMol_cc
-		if(LOUD.and.initCall)print*,'FuPrTc:',NITER,'th FuVtot. eta=', eta 
+		if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTc:',NITER,'th FuVtot. eta=', eta 
 		call FuPrTcVtot(isZiter,tKelvin,vTotCc,xFrac,NC,FUGC,zFactor,aDep,uDep,iErrZ)
 		if(iErrZ>10)then
 			iErr=13
-			if(LOUD)write(*,*)'FuPrTc: FuVtot returned with error code:',iErrZ
+			if(LOUD)write(dumpUnit,*)'FuPrTc: FuVtot returned with error code:',iErrZ
 			!call BeepMsg(errMsg(iErr))
 			cycle
 		elseif(iErrZ.ne.0)then
@@ -676,38 +667,38 @@ end	!Subroutine SetParPurePrTc
 			etaAtPmin=eta	 !for crude goldenz. ~randomly searches for hi eta min in p
 		endif
 		change=error/(error-errOld)*(eta-etaOld)
-		if(LOUD.and.initCall)write(*,'(a,2F8.4,2E11.4)')' eta,Z,error,change',eta,zFactor,error,change
-		!pause 'check error'
+		if(LOUD.and.initCall)write(dumpUnit,'(a,2F8.4,2E11.4)')' eta,Z,error,change',eta,zFactor,error,change
+		!write(dumpUnit,*)'check error'
 		etaOld=eta
 		errOld=error
         if(zFactor < 0)change=1 !force another iteration if Z < 0. This happens when P ~ 1E-12.
 		if(ABS(change/eta) > 0.1)change=eta*DSIGN(0.1d0,change)	!step limiting. 0.3>0.2 to give max looseness
 		!if(ABS(change/zFactor) > 1)change=zFactor*DSIGN(0.5d0,change)	!step limiting. Stop zFactor from going negative.
-		if(LOUD.and.initCall)print*,'Fugi:eta,change',eta,change
+		if(LOUD.and.initCall)write(dumpUnit,*)'Fugi:eta,change',eta,change
 		eta=eta-change
 		rhoMol_cc=eta/bMix
 		if(eta < 0 .or. eta > etaMax)then !NOTE: this should not happen given step limiting
 			if(niter < (itMax-1))niter=itMax-1 !restrict tries with new guess so we can crash if necessary.
-			if(LOUD)write(*,'(a,f8.4)')' Warning in FuTpt: next guess is eta=',eta
+			if(LOUD)write(dumpUnit,'(a,f8.4)')' Warning in FuTpt: next guess is eta=',eta
 			eta=0
 			if(liq==1)eta=etaMax
-			if(LOUD)write(*,*) 'Restarting iteration with eta=',eta
+			if(LOUD)write(dumpUnit,*) 'Restarting iteration with eta=',eta
 			if(LOUD)pause
 		endif
 	enddo  !iteration on eta to find P=P(input)
-	!print*,'Hello! iteration concluded. iErr,eta=',iErr,eta
+	!write(dumpUnit,*)'Hello! iteration concluded. iErr,eta=',iErr,eta
 	etaPass=eta											! Accurate rho is essential for PsatEar at low T (e.g. propane).	
 	if(iErr > 10)then ! use crude goldenz to keep iterations going. 
-		!print*,'Hello! iErr.ne.0 . LIQ,etaAtPmax,etaAtPmin=',LIQ,etaAtPmax,etaAtPmin
+		!write(dumpUnit,*)'Hello! iErr.ne.0 . LIQ,etaAtPmax,etaAtPmin=',LIQ,etaAtPmax,etaAtPmin
 		if(liq==0 .or. LIQ==2)eta=etaAtPmax  !crude goldenz
 		if(liq==1 .or. LIQ==3)eta=etaAtPmin  !crude goldenz
 		if(eta < zeroTol)eta=zeroTol
-		!print*,'Hello! iErr.ne.0. eta,bMix=',eta,bMix
+		!write(dumpUnit,*)'Hello! iErr.ne.0. eta,bMix=',eta,bMix
 		rhoMol_cc=eta/bMix
 		vTotCc=totMoles/rhoMol_cc
-		if(LOUD)write(*,'(a,i3,1x,f7.4,a,f10.5)')' FuPrTc: iErr,goldenEta=',iErr,eta
+		if(LOUD)write(dumpUnit,'(a,i3,1x,f7.4,a,f10.5)')' FuPrTc: iErr,goldenEta=',iErr,eta
 		call FuPrTcVtot(isZiter,tKelvin,vTotCc,xFrac,NC,FUGC,zFactor,aDep,uDep,iErrZ)
-		if(LOUD)write(*,'(a,f10.5)')' FuPrTc:  using goldenZ=',zFactor
+		if(LOUD)write(dumpUnit,'(a,f10.5)')' FuPrTc:  using goldenZ=',zFactor
 		iErr=10
 	endif
 	IF (eta < 0)then
@@ -738,21 +729,21 @@ end	!Subroutine SetParPurePrTc
 	!
 	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS and derivative props (cmprsblty,CvRes_R,CpRes_R passed by GlobConst) 
 	!
-	!print*,'aRes,uDep',aDep,uDep
+	!write(dumpUnit,*)'aRes,uDep',aDep,uDep
 	Sres_R=uDep-aDep					  ! A = U - TS => Sres_R = Ures/RT - Ares/RT
-	if(Loud.and.initCall)print*,'Sres,hRes',Sres_R,hRes_RT
+	if(Loud.and.initCall)write(dumpUnit,*)'Sres,hRes',Sres_R,hRes_RT
 	isZiter=0
 	call FuPrTcVtot(isZiter,tKelvin,1/rhoMol_Cc,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrZ)
-	if(LOUD.and.initCall)print*,'aRes,uDep',aRes,uRes
+	if(LOUD.and.initCall)write(dumpUnit,*)'aRes,uDep',aRes,uRes
 	if(iErrZ>10)then
 		iErr=13
 	elseif(iErrZ.ne.0)then
 		iErr=iErrZ
 	endif  	
-	zFactor=pMPa/(rhoMol_cc*rGas*tKelvin) ! Seemingly unnecessary, this should improve precision when computing rho from return. Z = 1+zRef+zAtt+zAssoc is subject to roundoff when Z->1E-9, but Z=P/(rhoRT)=>rho=P/(ZRT) with precision.
+	zFactor=pMPa/(rhoMol_cc*Rgas*tKelvin) ! Seemingly unnecessary, this should improve precision when computing rho from return. Z = 1+zRef+zAtt+zAssoc is subject to roundoff when Z->1E-9, but Z=P/(rhoRT)=>rho=P/(ZRT) with precision.
 	etaPass=eta											! Accurate rho is essential for PsatEar at low T (e.g. propane).	
 861	continue
-	if(iErrZ.and.LOUD)print*,'FugiPrTc: FuVtot last call. iErrZ=',iErrZ
+	if(iErrZ.and.LOUD)write(dumpUnit,*)'FugiPrTc: FuVtot last call. iErrZ=',iErrZ
 	initCall=0
 	IER(1)=iErr
 	RETURN

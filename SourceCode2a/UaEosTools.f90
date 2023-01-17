@@ -25,14 +25,14 @@
 	LOUDER=.TRUE.
 	LOUDER=.FALSE.
 	if(LOUDER.and.initCall)write(dumpUnit,*)'EAR method'
-	tMin=TC(1)*0.25
+	tMin=Tc(1)*0.25
 	xFrac(1)=1
 	NC=1
 	ierCode=0 
 	zCritEff=ZC(1)
 	if(iEosOpt==1 .or. iEosOpt==11)zCritEff=0.3074
 	if(iEosOpt==2 .or. iEosOpt==4)zCritEff=0.34  !ESD
-	rhoCrit=PC(1)/(zCritEff*rGas*TC(1))
+	rhoCrit=Pc(1)/(zCritEff*Rgas*Tc(1))
 	rhoVap=rhoCrit*1.000 !-ve value on input means use default value for etaHi
     if(LOUDER)then 
         if(DEBUG) then
@@ -54,8 +54,8 @@
 		if(LOUDER)write(dumpUnit,*)'Psat: calling spinodal for Liquid.'
 		call Spinodal(NC,xFrac,tK,1,rhoLiq,zLiq,aDepLiq,dU_NkT,iErrLiq)
 		if(LOUDER)close(67)
-		pMax=rGas*tK*(rhoVap*zVap) 
-		pMin=rGas*tK*(rhoLiq*zLiq)
+		pMax=Rgas*tK*(rhoVap*zVap) 
+		pMin=Rgas*tK*(rhoLiq*zLiq)
 		if(LOUDER.and.pMax < 1e-11)write(dumpUnit,*)'Psat: 0~pMax=',pMax
 		relDiffP=ABS(pMax-pMin)/pMax
 		if(iErrVap.ne.0 .or. iErrLiq.ne.0 .or. relDiffP < 1D-3)then
@@ -76,7 +76,7 @@
 			write(dumpUnit,*) 'PsatEar: error after spinodals: rhoVap/rhoLiq < 0'
 			goto 86
 		endif
-		pEubank=rGas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995), assuming 1.2x shifts on V&L relative to spinodals.
+		pEubank=Rgas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995), assuming 1.2x shifts on V&L relative to spinodals.
 		!pOld=pEubank/10  !JRE: I find Eubank overestimates P sometimes. It even gets higher than pMax
 	else ! If Tr < 0.85, compute pSatItic estimate  FPE,501:112236(19), JCP,110:3043(99)
 		pOld=1D-1 !If p < 0, then the vapor density goes negative and log(rhoLiq/rhoVap) is indeterminate.
@@ -99,12 +99,12 @@
 			return
 		endif
 		!AresLiq=Ares_RT						!AresVap  +  Zvap-1 -ln(Zvap) =AresLiq+ZLiq-1-ln(ZLiq)							 
-		!rhoLiq=pOld/(zLiq*rGas*tK)		!=>	!B2*rhoVap+B2*rhoVap+ln(rhoVap/rhoLiq) =AresLiq+0-1  
+		!rhoLiq=pOld/(zLiq*Rgas*tK)		!=>	!B2*rhoVap+B2*rhoVap+ln(rhoVap/rhoLiq) =AresLiq+0-1  
 		!rhoLiq=etaPass/bVolCC_mol(1) ! crazy precision is required for acids (ZL < 1D-7) or when etaLiq > 0.98 (and Z->0). e.g. pentanoic acid (1258)
 		etaLiq=rhoLiq*bVolCC_mol(1)
 		if(etaLiq < 0.15D0 .and. LOUDER)write(dumpUnit,*)'PsatEar: etaLiq < 0.15? pOld,etaLiq,tK=',pOld,rhoLiq*bVolCC_mol(1),tK
         rhoVap=rhoLiq*EXP( AresLiq-1 ) !pSatItic, FPE, 501:112236(19), Eq 19. Ares_RT from GlobConst
-		pSatItic=rhoVap*rGas*tK
+		pSatItic=rhoVap*Rgas*tK
 		etaVap=rhoVap*bVolCC_mol(1)
 		!call FuVtot(1,tK,pSatItic,xFrac,NC,0,FUGC,zVap,ier)
 		if(LOUDER)write(dumpUnit,601)' PsatEar: Calling init FuVtot. T,etaLiq,etaVap,aResLiq=',tK,rhoLiq*bVolCC_mol(1),rhoVap*bVolCC_mol(1),aResLiq    
@@ -116,10 +116,10 @@
 		endif ! 
 		!B2cc_mol*rhoVap=(zVap-1)
 		rhoVap=rhoLiq*exp( aResLiq-1-2*(zVap-1) )! => rhoVap=rhoLiq*EXP(AresLiq-1-2*B2*rhoVap).
-		pSatItic=rhoVap*rGas*tK*zVap
+		pSatItic=rhoVap*Rgas*tK*zVap
 		if(pSatItic > zeroTol)then
 			pTest=pSatItic
-			zLiq=pSatItic/(rhoLiq*rGas*tK) ! if Psat > 0 then zLiq > 0
+			zLiq=pSatItic/(rhoLiq*Rgas*tK) ! if Psat > 0 then zLiq > 0
 			FugcLiq=AresLiq+zLiq-1-LOG(zLiq)
 			if(LOUDER)write(dumpUnit,601)' PsatEar: Init-zVap,zLiq,Psat,FugcVap,FugcLiq=',zVap,zLiq,pSatItic,Fugc(1),FugcLiq
 		else
@@ -127,8 +127,8 @@
 			pTest=zeroTol*10
 		endif
 		if(LOUDER)write(dumpUnit,'(a,2f8.4,e11.4)')' PsatEar: pSatItic,eta,rhoLiqG/cc',pTest,rhoLiq*bVolCC_mol(1),rhoLiq*rMw(1)
-	    !pEuba2=rGas*tK/(1/rhoVap-1/rhoLiq)*( Ares_RT- 0 +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
-        !NOTE: When 1/rhoVap >> 1/rhoLiq, pEuba2=rGas*tK*rhoVap*( Ares_RT-ln(rhoVap/rhoLiq) )=pTest*( Ares_RT - (Ares_RT-1) )
+	    !pEuba2=Rgas*tK/(1/rhoVap-1/rhoLiq)*( Ares_RT- 0 +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
+        !NOTE: When 1/rhoVap >> 1/rhoLiq, pEuba2=Rgas*tK*rhoVap*( Ares_RT-ln(rhoVap/rhoLiq) )=pTest*( Ares_RT - (Ares_RT-1) )
         pOld=pTest
 	endif ! Tr > 0.85
 601 format(1x,a,6E12.4)
@@ -150,7 +150,7 @@
 		if(iErrF > 0)ierCode=3 !declare error but don't stop. if future iterations give valid fugi(), then no worries
 		!chemPotL=fugc(1)
 		!aDepLiq=aRes_RT
-		!rhoLiq=pOld/(zLiq*rGas*tK)
+		!rhoLiq=pOld/(zLiq*Rgas*tK)
 		!rhoLiq=etaPass/bVolCC_mol(1) ! crazy precision is required when etaLiq > 0.98 (and Z->0). e.g. pentanoic acid (1258)
 		!write(dumpUnit,*)'calling fugi for liquid iteration.'
 		!call Fugi(tK,pOld,xFrac,NC,0,FUGC,zVap,ier) !LIQ=2=>vapor root with no fugc calculation
@@ -175,7 +175,7 @@
 			etaLiq=rhoLiq*bVolCC_mol(1)
 			if(etaLiq < 0.15D0 .and. LOUDER)write(dumpUnit,601)'Psat: etaLiq < 0.15? pOld,zLiq,tK,etaLiq=',pOld,zLiq,tK,etaLiq
             rhoVap=rhoLiq*EXP( aResLiq+zLiq-1-aResVap+zVap-1 ) !pSatItic, FPE, 501:112236(19), Eq 19.  aDepVap might be significant for carbo acids.
-            pTest=rhoVap*rGas*tK*zVap
+            pTest=rhoVap*Rgas*tK*zVap
 			ierCode=1 ! assign warning in this case. 
 			exit
         endif
@@ -196,7 +196,7 @@
 		else
 			pOld=pOld/10
         endif
-		!pOld =rGas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
+		!pOld =Rgas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995)
 		if(ABS(change/pOld) < tol)EXIT   
 	enddo
 	pMPa=pOld
@@ -263,7 +263,7 @@
 	if(bMix < 1E-11 .and. LOUD)write(dumpUnit,*)'Spinodal: nonsense bMix=',bMix
 	if(Tc(1) < 1E-11 .and. LOUD)write(dumpUnit,*)'Spinodal: nonsense Tc(1)=',Tc(1)
 
-	Tr=tKelvin/TC(1)
+	Tr=tKelvin/Tc(1)
 	!if(isTPT)write(dumpUnit,*)'Spinodal: etaMax=',etaMax
 	if(rho<0)then !this is the signal to use default estimates, but really using rhoCrit works much better in the critical region.
 		etaLo = 1e-11
@@ -305,17 +305,17 @@
         iErr=3
         goto 86
     endif
-	pLo = minimax*rhoLo*zFactor*rGas*tKelvin
+	pLo = minimax*rhoLo*zFactor*Rgas*tKelvin
 	if(LOUD.and.initCall)write(dumpUnit,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,DUONKT,DAONKT,rhoLo*bMix
 	if(LOUD)write(67,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,DUONKT,DAONKT,rhoLo*bMix
 	call FuVtot(isZiter,tKelvin,1/rho1,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
-	p1 = minimax*rho1*zFactor*rGas*tKelvin
+	p1 = minimax*rho1*zFactor*Rgas*tKelvin
 	if(LOUD)write(67,601)tKelvin,1/rho1,minimax*p1,zFactor,DUONKT,DAONKT,rho1*bMix
 	call FuVtot(isZiter,tKelvin,1/rho2,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
-	p2 = minimax*rho2*zFactor*rGas*tKelvin
+	p2 = minimax*rho2*zFactor*Rgas*tKelvin
 	if(LOUD)write(67,601)tKelvin,1/rho2,minimax*p2,zFactor,DUONKT,DAONKT,rho2*bMix
 	call FuVtot(isZiter,tKelvin,1/rhoHi,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
-	pHi = minimax*rhoHi*zFactor*rGas*tKelvin
+	pHi = minimax*rhoHi*zFactor*Rgas*tKelvin
 	if(LOUD)write(67,601)tKelvin,1/rhoHi,minimax*pHi,zFactor,DUONKT,DAONKT,rhoHi*bMix
 	!NOTE: iErrFu=1 for liquid because -ve Z values will cause error in fugacity calculation.
 	itMax = 66-33*(14/rMw(1)) !Increase the precision for long chains cuz...
@@ -331,7 +331,7 @@
 			p1  = p2;
 			if(rho2 < 1D-33 .and. LOUD)write(dumpUnit,*)'Spinodal: 0~rho2=',rho2
 			call FuVtot(isZiter,tKelvin,1/rho2,xFrac,NC,FUGC,zFactor,aRes,uRes,iErr)
-			p2 = minimax*rho2*zFactor*rGas*tKelvin
+			p2 = minimax*rho2*zFactor*Rgas*tKelvin
 			if(LOUD)write(67,601)tKelvin,1/rho2,minimax*p2,zFactor,DUONKT,DAONKT,rho2*bMix
 		else
 			rhoHi = rho2;
@@ -341,7 +341,7 @@
 			p2  = p1;
 			if(rho2 < 1D-33 .and. LOUD)write(dumpUnit,*)'Spinodal: 0~rho1=',rho1
 			call FuVtot(isZiter,tKelvin,1/rho1,xFrac,NC,FUGC,zFactor,aRes,uRes,iErr)
-			p1 = minimax*rho1*zFactor*rGas*tKelvin
+			p1 = minimax*rho1*zFactor*Rgas*tKelvin
 			if(LOUD)write(67,601)tKelvin,1/rho1,minimax*p1,zFactor,DUONKT,DAONKT,rho1*bMix
 		endif
 		eta = bMix*(rho1+rho2)/2
@@ -352,7 +352,7 @@
 	enddo
 	!c//that's the best we can do for now folks. get props at best guess and return.
 	rho = (rho1+rho2) /2
-	zFactor = minimax*(p1+p2)/(2*rho*rGas*tKelvin)
+	zFactor = minimax*(p1+p2)/(2*rho*Rgas*tKelvin)
 	if(eta==etaHi)iErr=1 !this means there is no max from vap search b/c T>Tc.
 	if(eta==etaLo)iErr=2 !this means there is no min from liq search b/c T>Tc.
 	dA_NkT=DAONKT
@@ -366,48 +366,43 @@
 	end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	!C
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	!C	PURPOSE: COMPUTE THE COMPRESSIBILITY,rhoD2PdRho2_RT, CvRes,& CpRes BY NUMERICAL DIFFERENTIATION
+	!C	Input:
+	!C  xFrac:			mole fraction vector
+	!C	tKelvin:		T(K)
+	!C	rhoMol_cc:		density (mol/cm3)
+	!C	zFactor:		compressibility factor (used for central part of 2nd derivative)
+	!C	Output:			Values are passed through GlobConst  
+	!C  cmprsblty:		(1/RT)(dP/drho)_T dimensionless measure of compressibilty
+	!C	rhoD2PdRho2_RT: (rho/RT)(d2P/drho^2)_T, dimensionless derivative of cmprsblty
+	!C	CvRes_R:		(Cv-Cv^ig)/R, dimensionless measure of residual isochoric heat capacity.   
+	!C	CpRes_R:		(Cp-Cp^ig)/R, dimensionless measure of residual isobaric heat capacity.   
 	!C
-	!C      PURPOSE --- THIS ROUTINE RECEIVES THE XFRAC,TEMPERATURE, DENSITY,ZFACTOR,ARES,URES AS INPUT 
-	!C                           AND COMPUTES THE COMPRESSIBILITY,CVRES,CPRES BY NUMERICAL DIFFERENTIATION
-	!C                           COMPRESSIBILITY,RHOD2PDRHO2_RT,CVRES,CPRES ARE RETURNED THROUGH GlobConst.
-	!C                  		 THE INPUTS SHOULD BE COMPUTED BY FUGI(T,P,...) BEFORE CALLING THIS ROUTINE
-	!C
-	!C      CODED BY:   JRE, 4/25/2020
-	!C
-	!C
-	!C
+	!C	CODED BY:   JRE, 4/25/2020
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	!C
-	!C
-	SUBROUTINE NUMDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,cmprsbltyPas,iErr)
+	SUBROUTINE NUMDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,iErr)
 	USE GlobConst
 	IMPLICIT DOUBLEPRECISION (A-H,O-Z)
 	dimension xFrac(NC),FUGC(NC) ! ,bVol(NC)
 	data initCall/1/
 	iErr=0
-	!zeroTol=1D-11 !zeroTol is now global
-	step=1.D-3
-	!bVol=bVolCC_mol
+	step=1.D-4
 	bMix=SumProduct(NC,xFrac,bVolCC_mol)
 	eta=bMix*rhoMol_Cc
-	!etaMax=1-zeroTol
-	!if(isESD)etaMax=1/1.9D0-zeroTol
 	if(rhoMol_cc < zeroTol .or. tKelvin < zeroTol .or. eta < zeroTol .or. zFactor < zeroTol .or. eta > etaMax)then
 		if(LOUD)write(dumpUnit,*)'NUMDERVS: nonsense input. NC,T,rho,Z,eta,b,x1,bMix=',NC,tKelvin, rhoMol_cc,zFactor,eta, bVolCC_mol(1),xFrac(1),bMix
-		iErr=1
+		iErr=11
 		return 
 	endif
-	isZiter=1 !we don't need the fugacity. If you can compute the compressibility analytically, then why are you calling this routine?
-	rhoPlus  =rhoMol_cc*(1+step)
+	isZiter=1 !we don't need the fugacity.	
+	rhoPlus =rhoMol_cc*(1+step)
 	rhoMinus=rhoMol_cc*(1-step)
 	CALL FuVtot(isZiter,tKelvin,1/rhoPlus,xFrac,NC,FUGC,zPlus,aRes,uRes,iErrFu)
 	if( iErrFu.ne.0 )then
 		if(iEosOpt .ne. 5 .or. iErrFu >10)then !ignore warnings for speadmd
 			if(LOUD)write(dumpUnit,*)'NUMDERVS: error from FuVtot on first call.'
-			iErr=1
+			iErr=12
 			return
 		endif
 	endif
@@ -420,22 +415,23 @@
 		!write(dumpUnit,*)'NUMDERVS: rho+,rho-,cmprsblty',rhoPlus,rhoMinus,cmprsblty
 		write(dumpUnit,*)'NUMDERVS: cmprsblty',cmprsblty
 	endif
-	cmprsbltyPas=cmprsblty
 	rho2DZ_dRho2=(zPlus+zMinus-2*zFactor)/(rhoMol_cc*step)**2
-	RHOD2PDRHO2_RT=2*rhoDZ_dRho+rho2DZ_dRho2
-	TPlus  =tKelvin*(1+step)
+	rhoD2PdRho2_RT=2*rhoDZ_dRho+rho2DZ_dRho2
+	TPlus =tKelvin*(1+step)
 	TMinus=tKelvin*(1-step)
+	isZiter=0 ! we need uRes for these
 	CALL FuVtot(isZiter,TPlus,1/rhoMol_cc,xFrac,NC,FUGC,zPlus,aRes,uRes,iErrFu)
-	uResPlus=uRes_RT*TPlus	!uRes_RT passed through GlobConst
+	uResPlus=uRes*TPlus	!uRes_RT passed through GlobConst
 	if(initCall.and.Loud)write(dumpUnit,*)'NUMDERVS: 1-step,Tminus',1-step,Tminus
 	CALL FuVtot(isZiter,TMinus,1/rhoMol_cc,xFrac,NC,FUGC,zMinus,aRes,uRes,iErrFu)
-	uResMinus=uRes_RT*TMinus
+	uResMinus=uRes*TMinus
 	TdZ_dT=tKelvin*(zPlus-zMinus)/( TPlus-TMinus )
-	CvRes_R=(uResPlus-uResMinus)/( TPlus-TMinus )
+	CvRes_R= (uResPlus-uResMinus)/( TPlus-TMinus )
 	if( ABS(cmprsblty) < zeroTol)then
 		if(LOUD)write(dumpUnit,*)'NUMDERVS: 0~cmprsblty=',cmprsblty
 		CpRes_R=86.8686D0
-		iErr=2
+		iErr=13
+		return
 	else
 		CpRes_R=CvRes_R - 1 + (zFactor+TdZ_dT)**2/cmprsblty
 	endif
@@ -448,43 +444,45 @@
 	initCall=0
 	return
 	end
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	!C
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	!C	PURPOSE: COMPUTE THE COMPRESSIBILITY,rhoD2PdRho2_RT, CvRes,& CpRes BY NUMERICAL DIFFERENTIATION
+	!C	Input:
+	!C  xFrac:			mole fraction vector
+	!C	tKelvin:		T(K)
+	!C	rhoMol_cc:		density (mol/cm3)
+	!C	zFactor:		compressibility factor (used for central part of 2nd derivative)
+	!C	Output:			Values are passed through GlobConst  
+	!C  cmprsblty:		(1/RT)(dP/drho)_T dimensionless measure of compressibilty
+	!C	rhoD2PdRho2_RT: (rho/RT)(d2P/drho^2)_T, dimensionless derivative of cmprsblty
+	!C	CvRes:			(Cv-Cv^ig)/R, dimensionless measure of residual isochoric heat capacity.   
+	!C	CpRes:			(Cp-Cp^ig)/R, dimensionless measure of residual isobaric heat capacity.   
 	!C
-	!C      PURPOSE --- THIS ROUTINE RECEIVES THE XFRAC,TEMPERATURE, DENSITY,ZFACTOR,ARES,URES AS INPUT 
-	!C                           AND COMPUTES THE COMPRESSIBILITY,CVRES,CPRES BY NUMERICAL DIFFERENTIATION
-	!C                           COMPRESSIBILITY,RHOD2PDRHO2_RT,CVRES,CPRES ARE RETURNED THROUGH GlobConst.
-	!C                  		 THE INPUTS SHOULD BE COMPUTED BY FUGI(T,P,...) BEFORE CALLING THIS ROUTINE
-	!C
-	!C      CODED BY:   JRE, 4/25/2020
-	!C
-	!C
-	!C
+	!C	CODED BY:   JRE, 4/25/2020
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	!C
-	!C
 	SUBROUTINE FUGIDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,iErr)
 	USE GlobConst
 	!USE PhiDervs
 	IMPLICIT DOUBLEPRECISION (A-H,O-Z)
 	dimension xFrac(NC),FUGC(NC) !,bVol(NC)
 	!zeroTol=1D-11  !now global
+	iErr=0
 	step=1.D-6
 	!bVol=bVolCC_mol
 	bMix=SumProduct(NC,xFrac,bVolCc_mol)
 	eta=bMix*rhoMol_cc
 	if(rhoMol_cc < zeroTol .or. tKelvin < zeroTol .or. eta < zeroTol .or. eta > etaMax)then
-		if(LOUD)write(dumpUnit,*)'NUMDERVS: nonsense input. T,eta=',tKelvin, eta 
+		if(LOUD)write(dumpUnit,*)'NUMDERVS: nonsense input. T,eta=',tKelvin, eta
+		iErr=11
+		return 
 	endif
-	isZiter=1 !we don't need the fugacity. If you can compute the compressibility analytically, then why are you calling this routine?
-	rhoPlus  =rhoMol_cc*(1+step)
+	isZiter=1 !We don't need the fugacity or uRes yet. 
+	rhoPlus =rhoMol_cc*(1+step)
 	rhoMinus=rhoMol_cc*(1-step)
 	CALL FuVtot(isZiter,tKelvin,1/rhoPlus,xFrac,NC,FUGC,zPlus,aRes,uRes,iErrFu)
 	if( iErrFu.ne.0 )then 
 		if(LOUD)write(dumpUnit,*)'NUMDERVS: error from FuVtot on first call.'
-		iErr=1
+		iErr=12
 		return
 	endif
 	CALL FuVtot(isZiter,tKelvin,1/rhoMinus,xFrac,NC,FUGC,zMinus,aRes,uRes,iErrFu)
@@ -587,6 +585,7 @@
 	RETURN
 	END
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	DOUBLE PRECISION FUNCTION DCBRT(X)
 	IMPLICIT DOUBLEPRECISION ( A-H,O-Z)
 	PARAMETER (THRD = 1.0D0/3.0D0)
@@ -595,3 +594,192 @@
 	DCBRT=SIGN*ABS(X)**THRD
 	RETURN
 	END
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!int QueryNparPure();    //number of adjustable parameters for the current model and mixture
+	integer Function QueryNparPure()
+	USE GlobConst, only: iEosOpt !, class
+	parameter(nModels=16)
+!   cf. GlobConst for iEosOpt's as listed below
+!    1     2      3          4        5        6         7         8          9         10      11     12       13         14          15         16             17        18
+!	'PR','Esd96','PRWS','Esd-MEM2','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPR','GCESD','GcEsdTb','TffSPEAD','GcPcSaft','GcPcSaft(Tb)','PRLorraine','ESD2'/
+	integer nParInert(nModels),nParAssoc(nModels),nParPolar(nModels) ! the # of pure compound parameters for the ith iEosOpt
+	!               1 2 3 4 5  6 7 8  9 10 11 12 13 14 15 16
+	data nParInert /0,3,0,3,11,0,0,11,0, 3, 4, 3,11, 0, 3, 3/	! e.g. m, sigma, eps/kB. for PcSaft & ESD
+	data nParAssoc /0,2,0,2, 0,0,0, 0,0, 2, 0, 2, 0, 0, 2, 2/	! GC&Tff EOS's have zero adj par's even if assoc. JRE 20210421
+	data nParPolar /0,0,0,0, 0,0,0, 0,0, 2, 0, 0, 0, 0, 0, 0/	! GC&Tff EOS's have zero adj par's even if assoc. JRE 20210421
+	! PR & ESD's use Tc,Pc,w. AC models have no pure pars. 
+	! SPEAD: 11=A0coeff(3),A1coeff(3),A2Coeff(4),vEffNm3. Does not allow adjustment of Assoc parameters because these must be transferable. 
+	! tcPR has alphaN&M, Gc&Tff models have zero adj parameters 
+	QueryNparPure=nParInert(iEosOpt)+nParPolar(iEosOpt)+nParAssoc(iEosOpt) 
+	!if(class=='assoc')QueryNparPure=QueryNparPure+nParAssoc(iEosOpt)		! m, sigma, eps/kB, Kad, epsHB
+	return
+    end
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!int QueryNparMix();    //number of adjustable parameters for the current model and mixture
+	Integer Function QueryNparMix()	!NOTE: calling routine must declare "integer QueryNparMix"
+	USE GlobConst, only: iEosOpt
+	!USE BIPs      !ESD, SPEADMD,
+	!integer QueryNparMix 
+	QueryNparMix=1 ! NparMix=1 for ESD, TPT,
+	if(iEosOpt==10)then		!PcSaft(Gross)
+		!! kij(i,j)          binary correction parameter acting on dispersion term, [/]\n
+		!! lij(i,j)          asymmetric binary correction para. (Tang and Gross, 2010), [/]\n
+		!! kij_assoc(i,j)    correction para. for association energy. [/]\n
+		QueryNparMix=1		!JRE 20210531: just optimize Kij for now. We can try more parameters later.
+	elseif(iEosOpt==11)then	!tcPRq: kij (for now, could include betaij later). JRE 20210531
+		QueryNparMix=1
+	elseif(iEosOpt== 3)then !PR76+WSmixing
+		QueryNparMix=3 ! kij,tau12,tau21
+	elseif(iEosOpt==17)then		! PrLorraine
+		QueryNparMix=2	 !  age0(1,2) and age0(2,1)
+	endif
+	return
+    end
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine QueryParPure(iComp,iParm,value,iErr)
+	USE GlobConst      ! iEosOpt,
+	!USE ESDParms
+	DoublePrecision value
+	Integer iComp,iParm,iErr
+	iErr=0
+	if(isEsd)then
+		Call QueryParPureEsd(iComp,iParm,value,iErr) 
+	elseif(isTpt)then
+		Call QueryParPureSpead(iComp,iParm,value,iErr) 
+	elseif(isPcSaft)then
+		Call QueryParPurePcSaft(iComp,iParm,value,iErr) 
+	elseif(iEosOpt==11)then
+		Call QueryParPurePrTc(iComp,iParm,value,iErr)
+	else
+		iErr=1 
+	endif
+	return
+end
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine SetParPure(iComp,iParm,value,iErr)
+	USE GlobConst      ! iEosOpt,
+	!USE ESDParms
+	DoublePrecision value
+	Integer iComp,iParm,iErr
+	iErr=0
+	if(isEsd)then
+		Call SetParPureEsd(iComp,iParm,value,iErr) 
+	elseif(isTpt)then
+		Call SetParPureSpead(iComp,iParm,value,iErr) 
+	elseif(isPcSaft)then
+		Call SetParPurePcSaft(iComp,iParm,value,iErr) 
+	elseif(iEosOpt==11)then
+		Call SetParPurePrTc(iComp,iParm,value,iErr) 
+	endif
+	return
+end
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	subroutine QueryParMix(iParm,value,iErr)
+	USE GlobConst
+	USE BIPs      !ESD, SPEADMD,
+	DoublePrecision value
+	iErr=0
+	if(iParm > 1)then
+		if(isTpt)iErr=1
+		if(isEsd)iErr=1
+		if(iErr)return
+	endif
+	if(iEosOpt==10)then
+		call QueryParMixPcSaft(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, so it needs to be separate from Module BIPs. 
+		return
+	endif
+	if(iEosOpt==17)then
+		call QueryParMixPrLorraine(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, so it needs to be separate from Module BIPs. 
+		return
+	endif
+	if(iParm==1)then
+		if(iEosOpt==7)then
+			value=xsTau(1,2)
+		else
+			value=Kij(1,2)
+		endif
+		return
+	elseif(iParm==2)then
+		if(iEosOpt==7)then		!NRTL
+		elseif(iEosOpt==11)then	!tcPR, kij and betaij
+			value=Lij(1,2)
+		elseif(iEosOpt== 3)then !PR76+WSmixing
+			value=xsTau(1,2)  ! NOTE: tau12 =/= tau21
+		endif
+	elseif(iParm==3)then
+		if(iEosOpt==3)then		!NRTL
+			value=xsTau(1,2)  ! NOTE: tau12 =/= tau21
+		else
+			iErr=2
+		endif
+	endif
+	return
+	end
+    
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine SetParMix(iParm,value,iErr)
+!    1     2      3      4      5        6         7         8          9         10      11     12       13         14          15           16
+!	'PR','Esd96','PRWS','Esd','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPR','GCESD','GcEsdTb','TffSPEAD','GcPcSaft','GcPcSaft(Tb)'/
+!   Diky   12                   6                                                 25      22     23       24         18          26			   2
+	USE BIPs      !ESD, SPEADMD, PR, PRtc,
+	USE GlobConst 
+	DoublePrecision value
+	data initCall/1/
+	if(initCall)then
+		initCall=0
+		Kij=0
+		KTij=0
+		Hij=0
+		HTij=0
+		xsTau=0
+		xsTauT=0
+		xsAlpha=0
+		if(iEosOpt==2)then
+			if(ID(1)==1921 .or. ID(2)==1921)Kij(1,2)=0.2d0
+			Kij(2,1)=Kij(1,2)
+		endif
+	endif
+	iErr=0
+	if(iParm > 1)then
+		if(isTpt)iErr=1
+		if(isEsd)iErr=1
+		if(iErr)return
+	endif
+	if(iEosOpt==10)then
+		call SetParMixPcSaft(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, so it needs to be separate from Module BIPs. 
+		return
+	endif
+	if(iEosOpt==17)then
+		call SetParMixPrLorraine(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, so it needs to be separate from Module BIPs. 
+		return
+	endif
+	if(iParm==1)then
+		if(iEosOpt==7)then
+			xsTau(1,2)=value
+		else
+			Kij(1,2)=value
+			Kij(2,1)=value
+		endif
+		return
+	elseif(iParm==2)then
+		if(iEosOpt==7)then		!NRTL
+		elseif(iEosOpt==11)then	!tcPR, kij and betaij
+			Lij(1,2)=value
+			Lij(2,1)=value
+		elseif(iEosOpt== 3)then !PR76+WSmixing
+			xsTau(1,2)=value  ! NOTE: tau12 =/= tau21
+		endif
+	elseif(iParm==3)then
+		if(iEosOpt==3)then		!NRTL
+			xsTau(1,2)=value  ! NOTE: tau12 =/= tau21
+		else
+			iErr=2
+		endif
+	endif
+	return
+end	! SetParMix
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

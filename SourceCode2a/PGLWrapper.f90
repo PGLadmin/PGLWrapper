@@ -42,7 +42,7 @@
 	DEBUG=.TRUE.
 	DEBUG=.FALSE. ! read input files from c:\Projects\...\input dir.
     LOUD = .TRUE.
-    !LOUD = .FALSE.
+    LOUD = .FALSE.
 	CheckDLL=.TRUE.
 	CheckDLL=.FALSE.
 	dumpUnit=6
@@ -105,21 +105,22 @@
 		goto 86
 	endif
 	if(LOUD)write(dumpUnit,*)'calling GetEOS'
-	iErrGet=0 
-	if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
-	if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
-	if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
-	if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
-	if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms
-	if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms
-	if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms				    !Diky model 18
-	if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's PcSaft parameters			!Diky model 26
-	if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's(Tb) PcSaft parameters			!Diky model 27
+	iErrGet=0
+	if(iEosOpt==1)CALL GetPR(NC,iErrGet)
+	if(iEosOpt==2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
+	if(iEosOpt==3)CALL GetPRWS(NC,iErrGet) 
+	if(iEosOpt==4)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
+	if(iEosOpt==5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
+	if(iEosOpt==7)CALL GetNRTL (NC,ID,iErrGet)
+	if(iEosOpt==8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms
+	if(iEosOpt==9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms
+	if(iEosOpt==10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
+	if(iEosOpt==11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
+	if(iEosOpt==12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
+	if(iEosOpt==13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
+	if(iEosOpt==14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in common: TptParms, HbParms				    !Diky model 18
+	if(iEosOpt==15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's PcSaft parameters			!Diky model 26
+	if(iEosOpt==16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's(Tb) PcSaft parameters			!Diky model 27
 	!if(iEosOpt.eq.17)This is the model number for COSMOtherm, if one is required JRE 20200119.		!Diky model ??
 	!NewEos: Add here for initializing parms.
 	if(iErrGet .ne. 0)then
@@ -172,7 +173,7 @@
     endif !iProperty <= 2.	###########################################################################################################3333
     notDone=1
     line=0  !read statement	debugging
-	if( ABS(Zc(1)) > 1E-11)rhoCritG_cc = Pc(1)*rMw(1)/( Zc(1)*rGas*Tc(1) )
+	if( ABS(Zc(1)) > 1E-11)rhoCritG_cc = Pc(1)*rMw(1)/( Zc(1)*Rgas*Tc(1) )
 	if(LOUD)write(dumpUnit,*)'PGLWrapper:MW,rhoCrit',rMw(1),rhoCritG_cc
 	if(iProperty < 11)then ! calculate density, departure functions, and derivative properties given T,P
 		do while(notDone)
@@ -252,16 +253,16 @@
 					CALL FugiTP( tKelvin,pMPa,xPure2,NC,iPhase,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
 					if(LOUD)write(dumpUnit,*)'PGLWRapperMain: Check output from fugi()pure2 call. iErrF = ',iErrF
 					if(iErrF > 10)iErr=iErrF-10
-				vPure2=rGas*tKelvin*zFactor/pMPa
+				vPure2=Rgas*tKelvin*zFactor/pMPa
 				chemPoPure2=FUGC(2) ! = ln(fPure2/P)
-				hRes2 = hRes_RT*rGas*tKelvin ! from module
+				hRes2 = hRes_RT*Rgas*tKelvin ! from module
 				NC1 = 1 ! for pure compound1, we can ignore compound2. This may reduce error indications e.g. when T < Tmin for compound2 but OK for compound1. Too much trouble for compound2.
 					CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
 					if(LOUD)write(dumpUnit,*)'PGLWRapperMain: Check output from fugi()pure1 call. iErrF = ',iErrF
 					if(iErrF > 10)iErr=iErrF-10
-				vPure1=rGas*tKelvin*zFactor/pMPa
+				vPure1=Rgas*tKelvin*zFactor/pMPa
 				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
-				hRes1 = hRes_RT*rGas*tKelvin ! from module
+				hRes1 = hRes_RT*Rgas*tKelvin ! from module
 				tPrevious=tKelvin
 				pPrevious=pKPa
 			endif
@@ -282,14 +283,14 @@
 				cycle
 			endif
 																														 
-			vMix=rGas*tKelvin*zFactor/pMPa
+			vMix=Rgas*tKelvin*zFactor/pMPa
 			rhoMol_cc=1 / vMix
 			activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
 			activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
-			hResMix = hRes_RT*rGas*tKelvin ! from module
+			hResMix = hRes_RT*Rgas*tKelvin ! from module
 			vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
 			hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
-			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)*rGas*tKelvin
+			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)*Rgas*tKelvin
 			write(52,'(1x,3(E11.4,1x),a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2,iErr
 		enddo !	while(notDone)
 	elseif(iProperty == 12)then ! end iProperty=11, start iProperty = 12: rhoMol_cc,zFactor,hRes_RT
@@ -318,7 +319,7 @@
 				if(LOUD)write(dumpUnit,'(1x,3(E11.4,1x),1x,3E12.4,i8)')tKelvin,pKPa,xFrac(1),errDummy,errDummy,errDummy,iErr
 				cycle
 			endif
-			pKPa = zFactor*rhoMol_cc*rGas*tKelvin *1000
+			pKPa = zFactor*rhoMol_cc*Rgas*tKelvin *1000
 			write(52,'(1x,3(1PE11.4,1x),3(1PE11.4,1x),i8)')tKelvin,pKPa,xFrac(1),rhoMol_cc,zFactor,hRes_RT,iErr
 		enddo ! 
 	elseif(iProperty == 13)then	! compute Vex, Hex, Gex, and lnGamma's	for ternary system
@@ -346,16 +347,16 @@
 				CALL FugiTP( tKelvin,pMPa,xPure2,NC,iPhase,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
 				if(LOUD)write(dumpUnit,*)'PGLWRapperMain: Check output from fugi()pure2 call. iErrF = ',iErrF
 				if(iErrF > 10)iErr=iErrF-10
-				vPure2=rGas*tKelvin*zFactor/pMPa
+				vPure2=Rgas*tKelvin*zFactor/pMPa
 				chemPoPure2=FUGC(2) ! = ln(fPure2/P)
-				hRes2 = hRes_RT*rGas*tKelvin ! from module
+				hRes2 = hRes_RT*Rgas*tKelvin ! from module
 				NC1 = 1 ! for pure compound1, we can ignore compound2. This may reduce error indications e.g. when T < Tmin for compound2 but OK for compound1. Too much trouble for compound2.
 				CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
 				if(LOUD)write(dumpUnit,*)'PGLWRapperMain: Check output from fugi()pure1 call. iErrF = ',iErrF
 				if(iErrF > 10)iErr=iErrF-10
-				vPure1=rGas*tKelvin*zFactor/pMPa
+				vPure1=Rgas*tKelvin*zFactor/pMPa
 				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
-				hRes1 = hRes_RT*rGas*tKelvin ! from module
+				hRes1 = hRes_RT*Rgas*tKelvin ! from module
 				tPrevious=tKelvin
 				pPrevious=pKPa
 			endif
@@ -372,14 +373,14 @@
 				cycle
 			endif
 																														 
-			vMix=rGas*tKelvin*zFactor/pMPa
+			vMix=Rgas*tKelvin*zFactor/pMPa
 			rhoMol_cc=1 / vMix
 			activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
 			activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
-			hResMix = hRes_RT*rGas*tKelvin ! from module
+			hResMix = hRes_RT*Rgas*tKelvin ! from module
 			vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
 			hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
-			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)*rGas*tKelvin
+			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)*Rgas*tKelvin
 			write(52,'(1x,3(E11.4,1x),a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2,iErr
 		enddo !	while(notDone)
 	endif ! 13 < iProperty 	 (ie. mixtures) ############################################################################################

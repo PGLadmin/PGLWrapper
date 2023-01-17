@@ -1,5 +1,12 @@
 
-	subroutine GetPR(NC,iErrGet)
+MODULE PREosParms
+	USE GlobConst, only:NMX
+	Parameter( THIRD=1.D0/3,sqrt2=1.414213562373095d0,sqrt8=2*sqrt2 )
+	!etac = 1/( 1+(4-sqrt8)**third+(4+sqrt8)**third )
+	Parameter( etac=0.253076586541599d0,OMA = (40*etac+8)/(49-37*etac),OMB = etac/(etac+3)  )
+	DoublePrecision svKappa1(NMX)! For the PRsvWS model. Stryjek and Vera, can j chem eng, 64:323 (1986)
+END MODULE PREosParms
+subroutine GetPR(NC,iErrGet)
 	!  
 	!  PURPOSE:  LOOKS UP THE PR PARAMETERS AND STORES THEM IN COMMON
 	!
@@ -9,23 +16,19 @@
 	!    commons: ppData, BIPs through GetBips
 	!  Programmed by:  JRE 07/00
 	USE GlobConst
-	implicit doublePrecision(A-H,K,O-Z)
-	character bipFile*88
-	integer GetBIPs
+	USE PREosParms
+	implicit NONE !doublePrecision(A-H,K,O-Z)
+	character*88 bipFile
+	integer GetBIPs,iErrGet,NC
 	iErrGet=0
-	OMB = 0.07779607d0						  
-	if(LOUD)write(*,*)'ID  NAME       TCK   PCMPa      w     '
-	do i=1,nc
-	  if(LOUD)write(*,'(i4,1x,a11,f6.1,f6.3,1x,f6.3)')ID(i),NAME(i),TC(i),PC(i),ACEN(i)
-	  bVolCC_mol(i)=OMB*8.31434*TC(i)/PC(i)
-	enddo
-
+	etaMax=1-zeroTol
+	bVolCC_mol(1:NC)=OMB*Rgas*Tc(1:NC)/Pc(1:NC)
 	! note:  bips are passed back through common/BIPs/
-		bipFile=TRIM(PGLinputDir)//'\BipPengRob.txt' ! // is the concatenation operator
-	IERRCODE=GetBIPs(bipFile,ID,NC)
+	bipFile=TRIM(PGLinputDir)//'\BipPengRob.txt' ! // is the concatenation operator
+	iErrGet=GetBIPs(bipFile,ID,NC)
 
 	RETURN
-	END
+END	!subroutine GetPR(NC,iErrGet)
 
 	!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	!$ FuPrVtot
@@ -44,9 +47,9 @@
 	!        TC       VECTOR CRITICAL TEMPERATURES OF THE COMPONENTS
 	!        PC       VECTOR CRITICAL PRESSURES OF THE COMPONENTS
 	!        ACEN     VECTOR ACENTRIC FACTORS OF THE COMPONENTS
-	!        RGAS     GAS CONSTANT ( EG. 8.31434 CC-MPA/(GMOL-K) ) IN PHASE LIQ
-	!        tAbs     ABSOLUTE TEMPERATURE
-	!        pAbs     ABSOLUTE PRESSURE
+	!        Rgas     GAS CONSTANT ( EG. 8.31434 CC-MPA/(GMOL-K) ) IN PHASE LIQ
+	!        tKelvin  ABSOLUTE TEMPERATURE
+	!        PMPa     ABSOLUTE PRESSURE
 	!        xFrac    VECTOR MOLE FRACTIONS OF COMPONENTS IN PHASE LIQ
 	!        NC       NUMBER OF COMPONENTS
 	!        LIQ      PARAMETER SPECIFYING DESIRED PHASE TO BE CONSIDERED
@@ -66,7 +69,7 @@
 	!          IER(6) = 1 SRKNR DID NOT CONVERGE
 	!
 	!   NOTE:           UNITS OF ALL THE INPUTS SHOULD BE
-	!                   CONSISTENT WITH UNITS OF RGAS.  EXCEPT
+	!                   CONSISTENT WITH UNITS OF Rgas.  EXCEPT
 	!                   FOR THIS, THE USER MAY CHOOSE HIS OWN UNITS.
 	!
 	!   REQD. ROUTINES:
@@ -112,46 +115,35 @@
 	!         PROCEDURE 8D1.1 OF TECHNICAL DATA BOOK.
 	!
 	!****************************************************************
-	SUBROUTINE FuPrVtot(isZiter,tAbs,rhoMol_Cc,xFrac,NC,LIQ,FUGC,zFactor,aDep,uDep,IER)
+	SUBROUTINE FuPrVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,zFactor,aRes,uRes,iErr)
 	USE GlobConst
+	USE PREosParms
 	USE BIPs
-	implicit doublePrecision(A-H,K,O-Z)
-	DIMENSION FUGC(NC),xFrac(NC),IER(12)
-	DIMENSION ALA(NMX,NMX),bVol(NMX),DLALDT(NMX)
-	COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
-	COMMON/eta/etaL,etaV,zFactorL,zFactorV
+	Implicit DoublePrecision(A-H,K,O-Z)
+	DIMENSION FUGC(NC),gmol(NC)
+	!Integer IER(12) !,initKall
+	DoublePrecision xFrac(NMX),ALA(NMX,NMX),DLALDT(NMX)
+	!DoublePrecision, STATIC:: THIRD,sqrt2,sqrt8,etac,OMA,OMB ! STATIC keeps these variables in memory so they can be reused with recomputing them at every call.
+	!COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
+	!COMMON/eta/etaL,etaV,zFactorL,zFactorV
 	!  prBIPs are passed in from GetPrBIPs()
-	DATA initKALL/0/
-		!OMA = 0.45723553d0
-		!OMB = 0.07779607d0
-	IF(initKALL.EQ.0)then
-		initKALL=1
-		THIRD=1.D0/3
-		IDDum=ID(nc)
-		sqrt2=DSQRT(2.D0)
-		sqrt8=2*sqrt2
-		etac = 1+(4-sqrt8)**third+(4+sqrt8)**third	 !Jaubert, Eq.7
-		etac = 1/etac
-		OMA = (40*etac+8)/(49-37*etac)
-		OMB = etac/(etac+3)						  
-	endif
 
-	ier = 0 ! vector init
+	iErr = 0 ! vector init
 	
 	!  COMPUTE THE MOLECULAR PARAMETERS A AND B AND THEIR CROSS COEFFS
-	totMol=0
+	totMol=SUM( gmol(1:NC) )
+	rhoMol_cc=totMol/vTotCc
 	do iComp = 1,NC
-		aCrit = OMA*RGAS*RGAS*TC(iComp)*TC(iComp)/PC(iComp)
+		aCrit = OMA*Rgas*Rgas*Tc(iComp)*Tc(iComp)/Pc(iComp)
 		sTmp = 0.37464D0 + 1.54226D0*ACEN(iComp) - 0.26993D0*ACEN(iComp)*ACEN(iComp)
-		Tr=tAbs/TC(iComp)
-		ALPHA = (  1 + sTmp*( 1 - DSQRT( Tr) )  )**2
+		Tr=tKelvin/Tc(iComp)
+		ALPHA = (  1 + sTmp*( 1 - DSQRT( Tr) )  )*(  1 + sTmp*( 1 - DSQRT( Tr) )  )
 		DLALDT(iComp)= -sTmp*SQRT( Tr / ALPHA)	   !EL2ed Eq. 7.18
 		ALA(iComp,iComp) = aCrit*ALPHA
-		bVol(iComp) = OMB*RGAS*TC(iComp)/PC(iComp)
-		totMol=totMol+xFrac(iComp)
+		xFrac(iComp)=gmol(iComp)/totMol
 	enddo
 	if(ABS(totMol-1) > 1e-5)then
-		if(LOUD)pause 'FuPrVtot only works for xFrac not mole numbers. Sorry.'
+		if(LOUD)write(dumpUnit,*)'FuPrVtot only works for xFrac not mole numbers. Sorry.'
 		goto 861
 	endif
 
@@ -164,7 +156,7 @@
 			aMix = aMix + ALA(iComp,jComp)*xFrac(iComp)*xFrac(jComp)
 			daMixDt = daMixDt + ALA(iComp,jComp)*xFrac(iComp)*xFrac(jComp)*(DLALDT(iComp)+DLALDT(jComp))/2
 		enddo
-		bMix = bMix + bVol(iComp)*xFrac(iComp)
+		bMix = bMix + bVolCC_mol(iComp)*xFrac(iComp)
 	enddo
 
 	eta=bMix*rhoMol_Cc
@@ -172,19 +164,19 @@
 
 	!	qCoeff = BIGA - BIGB - BIGB*BIGB	!for SRK
 	!	rCoeff = BIGA*BIGB
-	zFactor=( 1/(1-eta)-aMix/(bMix*RGAS*tAbs)*eta/(1+2*eta-eta*eta) )!EL2ed 7.15
-	pAbs=zFactor*rhoMol_Cc*RGAS*tAbs
+	zFactor=( 1/(1-eta)-aMix/(bMix*Rgas*tKelvin)*eta/(1+2*eta-eta*eta) )!EL2ed 7.15
+	PMPa=zFactor*rhoMol_Cc*Rgas*tKelvin
 	if(isZiter)return
 	!
 	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS
 	!
-	BIGA = aMix*pAbs/(RGAS*RGAS*tAbs*tAbs)
-	BIGB = bMix*pAbs/(RGAS*tAbs)
+	BIGA = aMix*PMPa/(Rgas*Rgas*tKelvin*tKelvin)
+	BIGB = bMix*PMPa/(Rgas*tKelvin)
 	qCoeff = BIGA - 2*BIGB - 3*BIGB*BIGB
 	rCoeff = BIGB*( BIGA-BIGB*(1+BIGB) )
 
 	if(zFactor < BIGB)then
-		ier(4)=1
+		iErr=14
 		goto 861
 	endif
 	FATT= -BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
@@ -197,39 +189,25 @@
 		IF( (zFactor-BIGB) < 0 .OR. (zFactor+(1+sqrt2)*BIGB) < 0) THEN
 			!	AVOID CALCULATION OF NEGATIVE LOGARITHMS BUT INDICATE ERROR.
 			dChemPo = 0
-			IER(4) = 1
+			iErr=14
 		ELSE
-			dChemPo = bVol(iComp)/bMix*(zFactor-1) - DLOG(zFactor-BIGB) + FATT*(2*SUMXA/aMix - bVol(ICOMP)/bMix)
+			dChemPo = bVolCC_mol(iComp)/bMix*(zFactor-1) - DLOG(zFactor-BIGB) + FATT*(2*SUMXA/aMix - bVolCC_mol(ICOMP)/bMix)
 		END IF
-		IF(dChemPo .GT.  33) THEN
+		IF(dChemPo > 33) THEN
 			!	AVOID EXPONENT OVERFLOW BUT INDICATE ERROR.
-			IER(5) = 1
+			iErr=15
 			dChemPo = 0
 		endif
 		FUGC(ICOMP) = (dChemPo)
 	enddo
-	IF(IER(4).NE.0.OR.IER(5).NE.0.OR.IER(6).NE.0)IER(1)=1
-	dU_NKT= FATT*(1-daMixDt/aMix)
-	dH_NKT=dU_NKT+zFactor-1
-	dA_NKT= -LOG(1-BIGB/zFactor)+FATT
-	dS_NK=dU_NKT-dA_NKT !+LOG(zFactor)
-	aDep=dA_NKT	!to pass as calling argument as well as common
-	uDep=dU_NKT
-	sRes_R = dS_NK
-
-	if(LIQ==0 .or. LIQ==2)then
-	  etaV=BIGB/zFactor
-	  zFactorV=zFactor
-	ELSE
-	  etaL=BIGB/zFactor
-	  zFactorL=zFactor
-	ENDIF
+	aRes= -DLOG(1-eta)+FATT
+	uRes=FATT*(1-daMixDt/aMix)
 
 861	continue
 	RETURN
 	END
 
-	Subroutine FugiPR( tKelvin,pMPa,xFrac,NC,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,IER )
+	Subroutine FugiPR( tKelvin,pMPa,xFrac,NC,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr )
 	!SUBROUTINE FugiPR(tKelvin,pMPa,xFrac,NC,LIQ,FUGC,zFactor,IER)
 	!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	!$ FUGI
@@ -248,7 +226,7 @@
 	!        TC       VECTOR CRITICAL TEMPERATURES OF THE COMPONENTS
 	!        PC       VECTOR CRITICAL PRESSURES OF THE COMPONENTS
 	!        ACEN     VECTOR ACENTRIC FACTORS OF THE COMPONENTS
-	!        RGAS     GAS CONSTANT ( EG. 8.31434 CC-MPA/(GMOL-K) ) IN PHASE LIQ
+	!        Rgas     GAS CONSTANT ( EG. 8.31434 CC-MPA/(GMOL-K) ) IN PHASE LIQ
 	!        tKelvin     ABSOLUTE TEMPERATURE
 	!        pMPa     ABSOLUTE PRESSURE
 	!        xFrac    VECTOR MOLE FRACTIONS OF COMPONENTS IN PHASE LIQ
@@ -270,7 +248,7 @@
 	!          IER(6) = 1 SRKNR DID NOT CONVERGE
 	!
 	!   NOTE:           UNITS OF ALL THE INPUTS SHOULD BE
-	!                   CONSISTENT WITH UNITS OF RGAS.  EXCEPT
+	!                   CONSISTENT WITH UNITS OF Rgas.  EXCEPT
 	!                   FOR THIS, THE USER MAY CHOOSE HIS OWN UNITS.
 	!
 	!   REQD. ROUTINES:
@@ -315,36 +293,25 @@
 	!
 	!****************************************************************
 	USE GlobConst
+	USE PREosParms
 	USE BIPs
-	implicit doublePrecision(A-H,K,O-Z)
-	DIMENSION FUGC(NC),xFrac(NC),IER(12)
-	DIMENSION ALA(NMX,NMX),bVol(NMX),DLALDT(NMX)
+	Implicit DoublePrecision(A-H,K,O-Z)
+	DoublePrecision FUGC(NC),xFrac(NC) !,IER(12)
+	DoublePrecision ALA(NMX,NMX),bVol(NMX),DLALDT(NMX)
 	COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
 	COMMON/eta/etaL,etaV,zFactorL,zFactorV
 	!  prBIPs are passed in from GetPrBIPs()
-	DATA initKALL/0/
-	IF(initKALL==0)then
-		initKALL=1
-		THIRD=1.D0/3.D0
-		IDDum=ID(nc)
-		sqrt2=DSQRT(2.D0)
-		sqrt8=2.D0*sqrt2
-		etac = 1+(4-sqrt8)**third+(4+sqrt8)**third	 !Jaubert, Eq.7
-		etac = 1/etac
-		OMA = (40*etac+8)/(49-37*etac)
-		OMB = etac/(etac+3)						  
-	endif
-	IER = 0 ! vector init
-	
+	!  Note: In most cases, it's better to call FuVtot to iterate on Z, but for PREOS it really doesn't matter. 
+	iErr = 0 ! 
 	!  COMPUTE THE MOLECULAR PARAMETERS A AND B AND THEIR CROSS COEFFS
 	do iComp = 1,NC
-		aCrit = OMA*RGAS*RGAS*TC(iComp)*TC(iComp)/PC(iComp)
+		aCrit = OMA*Rgas*Rgas*Tc(iComp)*Tc(iComp)/Pc(iComp)
 		sTmp = 0.37464 + 1.54226*ACEN(iComp) - 0.26993*ACEN(iComp)*ACEN(iComp)
-		Tr = tKelvin/TC(iComp)
+		Tr = tKelvin/Tc(iComp)
 		ALPHA = (  1 + sTmp*( 1-DSQRT( Tr) )  )**2
 		DLALDT(iComp)= -sTmp*SQRT( Tr/ ALPHA) ! dAlp/dT = 2*sqrt(alp)*S*(-0.5/sqrt(Tr)) = -sqrt(alp)*S/sqrt(Tr); (T/alp)*dAlp/dT= -S*sqrt(Tr/Alp)	 EL2ed Eq.7.18,8.35
 		ALA(iComp,iComp) = aCrit*ALPHA
-		bVol(iComp) = OMB*RGAS*TC(iComp)/PC(iComp)
+		bVol(iComp) = OMB*Rgas*Tc(iComp)/Pc(iComp)
 	enddo
 
 	aMix = 0
@@ -361,38 +328,35 @@
  	!FATT= -BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
 	!dU_NKT= FATT*(1-daMixDt/aMix)	!EL2ed Eq.8.35
 
-	BIGA = aMix*pMPa/(RGAS*RGAS*tKelvin*tKelvin)
-	BIGB = bMix*pMPa/(RGAS*tKelvin)
+	BIGA = aMix*pMPa/(Rgas*Rgas*tKelvin*tKelvin)
+	BIGB = bMix*pMPa/(Rgas*tKelvin)
 
 	!	qCoeff = BIGA - BIGB - BIGB*BIGB	!for SRK
 	!	rCoeff = BIGA*BIGB
 	qCoeff = BIGA - 2*BIGB - 3*BIGB*BIGB
 	rCoeff = BIGB*(BIGA-BIGB*(1+BIGB))
-	IF(MOD(LIQ,2) == 0)THEN !LIQ=2 for spinodal vapor calc
+	IF( bEven(LIQ) )THEN !LIQ=2 for spinodal vapor calc
 		zFactor = 3
-		CALL ZITER(zFactor,BIGB,qCoeff,rCoeff,IERF)
-		IF(IERF > 9)IER(6)=1
+		CALL ZITER(zFactor,BIGB,qCoeff,rCoeff,IERZ)
+		IF(IERZ > 9)iErr=16
 	ELSE  !LIQ=3 for spinodal LIQ calc
 		zFactor=0
-		CALL ZITER(zFactor,BIGB,qCoeff,rCoeff,IERF)
-		IF(IERF > 9)IER(6)=1
+		CALL ZITER(zFactor,BIGB,qCoeff,rCoeff,IERZ)
+		IF(IERZ > 9)iErr=16
 	END IF
 
-	if(MOD(LIQ,2)==0)then
+	if( bEven(LIQ) )then
 	  etaV=BIGB/zFactor
 	  zFactorV=zFactor
 	ELSE
 	  etaL=BIGB/zFactor
 	  zFactorL=zFactor
 	ENDIF
-	!if(LIQ.gt.1)return !for spinodal, don't need fugc's
-
-
 !
 !  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS
 !
 	if(zFactor < BIGB)then
-		ier(4)=1
+		iErr=14
 		goto 861
 	endif
 	if(zFactor > 0)etaPass=BIGB/zFactor	! PsatEar needs eta directly.
@@ -415,27 +379,26 @@
 			SUMXA = SUMXA + xFrac(jComp)*ALA(iComp,jComp)
 		enddo
 		
-		IF( (zFactor-BIGB).LT. 0 .OR. (zFactor+(1+sqrt2)*BIGB).LT.0) THEN
+		IF( (zFactor-BIGB) < zeroTol .OR. (zFactor+(1+sqrt2)*BIGB) < zeroTol) THEN
 			!	AVOID CALCULATION OF NEGATIVE LOGARITHMS BUT INDICATE ERROR.
 			dChemPo = 0
-			IER(4) = 1
+			iErr = 14
 		ELSE
 			dChemPo = bVol(iComp)/bMix*(zFactor-1) - DLOG(zFactor-BIGB)- BIGMES*(2*SUMXA/aMix - bVol(ICOMP)/bMix)
 		END IF
-		IF(dChemPo .GT.  33) THEN
+		IF(dChemPo > 33) THEN
 			!	AVOID EXPONENT OVERFLOW BUT INDICATE ERROR.
-			IER(5) = 1
+			iErr = 15
 			dChemPo = 0
 		endif
 		FUGC(ICOMP) = (dChemPo)
 	enddo
-	IF(IER(4).NE.0.OR.IER(5).NE.0.OR.IER(6).NE.0)IER(1)=1
 
 861	continue
 	RETURN
 	END
 
-	SUBROUTINE ZITER(zFactor,BIGB,A1,A0,IER)
+	SUBROUTINE ZITER(zFactor,BIGB,A1,A0,iErr)
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	!
 	!  PURPOSE    - CALCULATE zFactor FROM NEWTON-RAPHSON ITERATION
@@ -443,18 +406,20 @@
 	!      IER    - 200 DIDNT CONVERGE IN 25 ITERATIONS
 	!
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	implicit doublePrecision(A-H,O-Z)
-	IER = 0
+	implicit NONE !DoublePrecision(A-H,O-Z)
+	DoublePrecision zFactor,BIGB,A1,A0, F,DF,ZN,ERR
+	Integer iErr,kount
+	iErr = 0
 	do kount=1,25
 		F = -A0 + zFactor*(  A1+zFactor*( -(1-BIGB)+zFactor )  )
 		DF = 3*zFactor*zFactor - (1-BIGB)*2*zFactor + A1
 		ZN = zFactor - F/DF
 		ERR = DABS((ZN - zFactor)/ZN)
 		zFactor = ZN
-		IF(ERR.lt. 1.D-9) GO TO 86
+		IF(ERR < 1.D-9) GO TO 86
 	enddo
-	IER = 200 !only to reach here is if do loop has exceeded iterations
-86 continue
+	iErr = 200 !only to reach here is if do loop has exceeded iterations
+86	continue
 	RETURN
 	END
 
