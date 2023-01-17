@@ -11276,7 +11276,7 @@ end subroutine GetPcSaft
  subroutine FugiPcSaftVtot(nComps,tKelvin,vTotCc,gmol,pMPa,zFactor,aRes,uRes,chemPoRes,iErr)
     use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
     use PARAMETERS, only: dp, nsite, NAV , RGAS
-    use GlobConst, only: LOUD, uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty
+    use GlobConst, only: LOUD,  cpRes_R, cvRes_R, cmprsblty	 !uRes_RT, sRes_R, aRes_RT, hRes_RT,
 	use properties !JRE add. Gives access to the chemical_potential___ and state___  subroutines.  
 	!use stability, only: get_eta  !JRE add
 	use eos_constants
@@ -11302,6 +11302,7 @@ end subroutine GetPcSaft
 	real(dp), dimension(ncomp)                      :: rhoiJre ![=] molecules/Angst^3
 	!real(dp), dimension(ncomp,ncomp)                :: w_rkrl, wig_rkrl  !JRE These are optional in chemical_potential_trho and not needed for Fugi at this time.
 	real(dp)                                        :: molar_rho,totMol,vTotCc,aRes,uRes
+	real(dp)                                        :: sRes_R,hRes_RT     !JRE Gross passes these values but PGLWrapper needs aRes,uRes
 	real(dp)                                        :: pcalc
 	logical LOUDER
 	LOUDER=.FALSE.
@@ -11338,10 +11339,8 @@ end subroutine GetPcSaft
 	if(LOUDER)print*,'pcalc,eta,Z',pcalc,eta,zFactor
 	if(LOUDER)print*,'rho_mol,S,H:',molar_rho, sRes_R,hRes_RT
 	if(LOUDER)print*,'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
-	uRes_RT = hRes_RT-(zFactor-1)
-	aRes_RT = uRes_RT - sRes_R
 	uRes = hRes_RT-(zFactor-1)
-	aRes = uRes_RT - sRes_R
+	aRes = uRes - sRes_R
 	if(LOUDER)print*,'FugiPcSaftVtot Done!'
 	!pause 'check output'
 	!JRE end
@@ -11351,7 +11350,7 @@ end subroutine FugiPcSaftVtot
 subroutine FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,chemPoRes,rhoMol_cc,zFactor,aRes,uRes,iErr)
     use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
     use PARAMETERS, only: dp, nsite, NAV, RGAS
-    use GlobConst, only: LOUD, uRes_RT, sRes_R, aRes_RT, hRes_RT, cpRes_R, cvRes_R, cmprsblty,etaPass
+    use GlobConst, only: LOUD,  cpRes_R, cvRes_R, cmprsblty !,etaPass	uRes_RT, sRes_R, aRes_RT, hRes_RT,
 	use properties !JRE add
 	use stability, only: get_eta  !JRE add
 	use eos_constants
@@ -11376,6 +11375,7 @@ subroutine FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,chemPoRes,rhoMol_cc,zFactor,
 	!real(dp), dimension(ncomp,ncomp)                :: lnphi_nj		 !JRE they can be activated by tacking them on to the end of the call to chemical_potential_tp.
 	real(dp)                                        :: molar_rho
 	real(dp)                                        :: pcalc
+	real(dp)                                        :: sRes_R,hRes_RT     !JRE Gross passes these values but PGLWrapper needs aRes,uRes
 	logical LOUDER  !JRE This can be set to LOUD in order to facilitate debugging if desired.
     LOUDER=.FALSE.
     LOUDER=LOUD
@@ -11407,11 +11407,8 @@ subroutine FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,chemPoRes,rhoMol_cc,zFactor,
 	if(LOUDER)print*,'pcalc,eta,Z',pcalc,eta,zFactor
 	if(LOUDER)print*,'rho_mol,S,H:',molar_rho, sRes_R,hRes_RT
 	if(LOUDER)print*,'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
-	etaPass=eta !Needed for PsatEar.
-    uRes_RT = hRes_RT-(zFactor-1)
-    aRes_RT = uRes_RT - sRes_R
-	aRes=aRes_RT
-	uRes=uRes_RT
+    uRes = hRes_RT-(zFactor-1)
+    aRes = uRes - sRes_R
 	rhoMol_cc=molar_rho*1.D6 ! convert from mol/m^3 to mol/cm^3
     if(LOUDER)print*,'FugiPcSaft Done!'
 	!pause 'check output'

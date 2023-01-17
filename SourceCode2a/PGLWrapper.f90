@@ -73,15 +73,15 @@
     !iProperty = 5: critical fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
     !iProperty = 6: sound speed
     !iProperty = 7: Hres/RT,CpRes_R/R,CvResR,cmprsblty given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
-	!iProperty = 11: Vex (cc/g),Hex(J/mo)
-    Property(1)='  vapor pressure (kPa) given tKelvin '
-    Property(2)='  saturated liquid density (g/cc) given tKelvin '
-    Property(3)='  vapor fluid density (g/cc) given tKelvin, pKPa, iPhase (=0 for vapor) '
-    Property(4)='  liquid fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid) '
-    Property(5)='  critical fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)'
-    Property(6)='  sound speed '
-    Property(7)='  Hres/RT,CpRes_R/R,CvResR,cmprsblty given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)	'
-	Property(11)='  Vex (cc/g),Hex(J/mo) '
+	!iProperty =11: Vex (cc/g),Hex(J/mo)
+    Property(1) =' vapor pressure(kPa) '
+    Property(2) =' saturated liquid density (g/cm3) '
+    Property(3) =' vapor fluid density (g/cm3) '
+    Property(4) =' liquid fluid density (g/cm3) '
+    Property(5) =' critical fluid density (g/cm3) '
+    Property(6) =' sound speed (m/s?)'
+    Property(7) =' Hres/RT,CpRes_R/R,CvResR,cmprsblty '
+	Property(11)=' Vex (cc/g),Hex(J/mo) '
 	if(LOUD)write(dumpUnit,*)TRIM(Property(iProperty))
 
     !iEosOpt=10 !Temporary for testing
@@ -131,13 +131,13 @@
     if(LOUD)write(dumpUnit,*)'PGLWRapperMain: Success so far... Got EOS Parms for iEosOpt=',iEosOpt
 	if(LOUD)write(dumpUnit,*)'PGLWRapperMain: starting calcs'
 	if(iProperty==1)then
-		write(52,'(2i4,i11,1x,a,1x,a)')iEosOpt, 1, localCas(1),TRIM(EosName(iEosOpt)),' = iEosOpt, iProp, idCas: T, P(expVal),pSatKPa,ierCode '
+		write(52,'(2i4,i11,1x,a,1x,a,1x,a)')iEosOpt, 1, localCas(1),TRIM(EosName(iEosOpt)),TRIM(Property(iProperty)),' = iEosOpt, iProp, idCas: T, P(expVal),pSatKPa,ierCode '
 	elseif(iProperty > 1 .and. iProperty < 6)then
-		write(52,*)iEosOpt,' = iEosOpt: T, P,expVal,rho(g/cc),ierCode '
+		write(52,*)iEosOpt,' = iEosOpt: T, P,expVal,rho(g/cc),ierCode ',TRIM(EosName(iEosOpt)),' ',TRIM(Property(iProperty))
 	elseif(iProperty>5 .and. iProperty < 11)then
-		write(52,*)iEosOpt,' = iEosOpt: T, P,expVal,hRes_RT,CpRes_R,CvRes_R,vpt,ierCode '
+		write(52,*)iEosOpt,' = iEosOpt: T, P,expVal,(uRes+zFactor-1),CpRes_R,CvRes_R,vpt,ierCode ',TRIM(EosName(iEosOpt)),' ',TRIM(Property(iProperty))
 	else
-		write(52,'(i4,a,5i11)')iEosOpt,' = iEosOpt. localCas()= ',(localCas(i),i=1,NC)
+		write(52,'(i4,a,5i11,1x,a,1x,a,1x,a)')iEosOpt,' = iEosOpt. localCas()= ',(localCas(i),i=1,NC),TRIM(EosName(iEosOpt)),TRIM(Property(iProperty))
 	endif
 	ierCode=0
 
@@ -217,9 +217,9 @@
 				vpt = 1/(cmprsblty*pKPa/zFactor)  !cmprsblty=(dP/dRho)T*(1/RT) => vpt = Z/(P/RT*dP/dRho) = 1/(rho*dP/dRho) = (1/rho)*(dRho/dP)_T
 			endif
 			! Res props are members of GlobConst, including CpRes and CvRes.
-			if(iProperty > 5.and.LOUD)write(*,*) ' tKelvin,pKPa,expRho,hRes_RT,CpRes_R,CvRes_R,vpt,ierCode '
-			if(iProperty > 5.and.LOUD)write(*,'( f8.3,1x,6(1pE11.4,1x),i4)')tKelvin,pKPa,expRho,hRes_RT,CpRes_R,CvRes_R,vpt,ierCode
-			if(iProperty > 5)write(52,'( f8.3,1x,6(1pE11.4,1x),i4)')tKelvin,pKPa,expRho,hRes_RT,CpRes_R,CvRes_R,vpt,ierCode
+			if(iProperty > 5.and.LOUD)write(*,*) ' tKelvin,pKPa,expRho,(uRes+zFactor-1),CpRes_R,CvRes_R,vpt,ierCode '
+			if(iProperty > 5.and.LOUD)write(*,'( f8.3,1x,6(1pE11.4,1x),i4)')tKelvin,pKPa,expRho,(uRes+zFactor-1),CpRes_R,CvRes_R,vpt,ierCode
+			if(iProperty > 5)write(52,'( f8.3,1x,6(1pE11.4,1x),i4)')tKelvin,pKPa,expRho,(uRes+zFactor-1),CpRes_R,CvRes_R,vpt,ierCode
 			if(LOUD)write(dumpUnit,*) 'check output.'
 		enddo !while(notDone)
 	endif ! 2 < iProperty < 11 next for mixtures	#########################################################################################################
@@ -255,14 +255,14 @@
 					if(iErrF > 10)iErr=iErrF-10
 				vPure2=Rgas*tKelvin*zFactor/pMPa
 				chemPoPure2=FUGC(2) ! = ln(fPure2/P)
-				hRes2 = hRes_RT*Rgas*tKelvin ! from module
+				hRes2 = (uRes+zFactor-1)*Rgas*tKelvin ! from module
 				NC1 = 1 ! for pure compound1, we can ignore compound2. This may reduce error indications e.g. when T < Tmin for compound2 but OK for compound1. Too much trouble for compound2.
 					CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
 					if(LOUD)write(dumpUnit,*)'PGLWRapperMain: Check output from fugi()pure1 call. iErrF = ',iErrF
 					if(iErrF > 10)iErr=iErrF-10
 				vPure1=Rgas*tKelvin*zFactor/pMPa
 				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
-				hRes1 = hRes_RT*Rgas*tKelvin ! from module
+				hRes1 = (uRes+zFactor-1)*Rgas*tKelvin ! from module
 				tPrevious=tKelvin
 				pPrevious=pKPa
 			endif
@@ -287,7 +287,7 @@
 			rhoMol_cc=1 / vMix
 			activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
 			activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
-			hResMix = hRes_RT*Rgas*tKelvin ! from module
+			hResMix = (uRes+zFactor-1)*Rgas*tKelvin ! from module
 			vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
 			hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
 			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)*Rgas*tKelvin
@@ -320,7 +320,7 @@
 				cycle
 			endif
 			pKPa = zFactor*rhoMol_cc*Rgas*tKelvin *1000
-			write(52,'(1x,3(1PE11.4,1x),3(1PE11.4,1x),i8)')tKelvin,pKPa,xFrac(1),rhoMol_cc,zFactor,hRes_RT,iErr
+			write(52,'(1x,3(1PE11.4,1x),3(1PE11.4,1x),i8)')tKelvin,pKPa,xFrac(1),rhoMol_cc,zFactor,(uRes+zFactor-1),iErr
 		enddo ! 
 	elseif(iProperty == 13)then	! compute Vex, Hex, Gex, and lnGamma's	for ternary system
 		write(52,'(a)')'      T(K)       p(kPa)         x1   phas Vex(cc/mol) rho(mol/cc)  Hex(J/mol)  Gex(J/mol)   ln(gam1)   ln(gam2) '
@@ -349,14 +349,14 @@
 				if(iErrF > 10)iErr=iErrF-10
 				vPure2=Rgas*tKelvin*zFactor/pMPa
 				chemPoPure2=FUGC(2) ! = ln(fPure2/P)
-				hRes2 = hRes_RT*Rgas*tKelvin ! from module
+				hRes2 = (uRes+zFactor-1)*Rgas*tKelvin ! from module
 				NC1 = 1 ! for pure compound1, we can ignore compound2. This may reduce error indications e.g. when T < Tmin for compound2 but OK for compound1. Too much trouble for compound2.
 				CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
 				if(LOUD)write(dumpUnit,*)'PGLWRapperMain: Check output from fugi()pure1 call. iErrF = ',iErrF
 				if(iErrF > 10)iErr=iErrF-10
 				vPure1=Rgas*tKelvin*zFactor/pMPa
 				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
-				hRes1 = hRes_RT*Rgas*tKelvin ! from module
+				hRes1 = (uRes+zFactor-1)*Rgas*tKelvin ! from module
 				tPrevious=tKelvin
 				pPrevious=pKPa
 			endif
@@ -377,7 +377,7 @@
 			rhoMol_cc=1 / vMix
 			activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
 			activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
-			hResMix = hRes_RT*Rgas*tKelvin ! from module
+			hResMix = ( uRes+zFactor-1)*Rgas*tKelvin ! from module
 			vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
 			hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
 			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)*Rgas*tKelvin

@@ -235,7 +235,7 @@
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
-	SUBROUTINE Spinodal(NC,xFrac,tKelvin,LIQ,rho,zFactor,dA_NkT,dU_NkT,iErr) 
+	SUBROUTINE Spinodal(NC,xFrac,tKelvin,LIQ,rho,zFactor,aRes,uRes,iErr) 
 	!Compute the points where dP/dRho=0 appear at given T.
 	!Method: Golden Section search
 	!Ref: NumRep 
@@ -355,10 +355,6 @@
 	zFactor = minimax*(p1+p2)/(2*rho*Rgas*tKelvin)
 	if(eta==etaHi)iErr=1 !this means there is no max from vap search b/c T>Tc.
 	if(eta==etaLo)iErr=2 !this means there is no min from liq search b/c T>Tc.
-	dA_NkT=DAONKT
-	dU_NkT=DUONKT
-	aRes_RT=dA_NKT
-	uRes_RT=dU_NKT
 601 FORMAT(f7.2,1x,2E12.4,1x,f8.4,1x,3F10.4)
 86  continue
 	initCall=0
@@ -493,9 +489,9 @@
 	TPlus  =tKelvin*(1+step)
 	TMinus=tKelvin*(1-step)
 	CALL FuVtot(isZiter,TPlus,1/rhoMol_cc,xFrac,NC,FUGC,zPlus,aRes,uRes,iErrFu)
-	uResPlus=uRes_RT*TPlus	!uRes_RT passed through GlobConst
+	uResPlus=uRes*TPlus	!uRes_RT passed through GlobConst
 	CALL FuVtot(isZiter,TMinus,1/rhoMol_cc,xFrac,NC,FUGC,zMinus,aRes,uRes,iErrFu)
-	uResMinus=uRes_RT*TMinus
+	uResMinus=uRes*TMinus
 	TdZ_dT=tKelvin*(zPlus-zMinus)/( TPlus-TMinus )
 	CvRes_R=(uResPlus-uResMinus)/( TPlus-TMinus )
 	if(cmprsblty < zeroTol)then

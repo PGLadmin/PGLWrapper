@@ -1,4 +1,48 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+MODULE GlobConst
+	!SAVE
+	!PUBLIC
+	Implicit NONE
+	DoublePrecision pi,twoPi,fourPi,AvoNum,Rgas,RgasCal,kB,half,zeroTol
+	Integer NMX 
+	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0)
+	PARAMETER (AvoNum=602.214076d0,kB=0.01380649D0,Rgas=AvoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)!kB[=]MPa.nm3/K) AvoNum[=]cm3/(nm3*mol), 
+	!          https://www.nist.gov/si-redefinition 
+    !nmx is the max allowed number of Compounds
+	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
+	!integer :: nComps, nsTypesTot,iTPT,iFlagFF,nNormGrid
+
+	DoublePrecision :: Tc(nmx), Pc(nmx), ACEN(nmx), ZC(nmx), rMw(nmx), bVolCC_mol(NMX),solParm(NMX),vLiq(NMX)
+	DoublePrecision CpRes_R, CvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)	= Z+rho*dZ/dRho
+	character*234 masterDir,PGLinputDir
+	character*30 NAME(NMX)
+	character*5 class(NMX) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. Ch06CompoundsList.xls, PGL6edClasses.xls)
+    Logical LOUD   !LOUD=.TRUE. means writing debug info to the screen.
+	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
+	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
+	DoublePrecision etaPass !TODO:Consider if rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).
+    DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS
+	DoublePrecision etaPure(NMX) !store eta for each compound at P=0 and Tmin(K). 
+	Character*15 EosName(18) 
+	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
+	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
+	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS AND DATA !!!!!!!!!!!!!
+	!LOUD = .FALSE.
+contains
+	integer function SetNewEos(newEosOpt)
+	!returns 0 if no error.
+	!USE GlobConst ! eliminated because GlobConst contains SetNewEos.
+	implicit none
+	integer newEosOpt
+	SetNewEos=0
+	isESD=.FALSE.
+	isTPT=.FALSE.
+	isPcSaft=.FALSE.
+	iEosOpt=newEosOpt
+	return
+	end function SetNewEos
+END MODULE GlobConst
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). Sums are over sites per molecule then over molecules.
 	USE GlobConst, only:nmx,isTPT,isESD,iEosOpt,LOUD,dumpUnit ! nmx is the maximum number of compounds, typically 55. 
 	implicit NONE

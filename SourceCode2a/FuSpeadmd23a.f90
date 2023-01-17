@@ -1476,7 +1476,7 @@ end	!Subroutine QueryParPureSpead
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	subroutine FuTptVtot(isZiter,zFactor,aRes,uRes,ChemPo,vTotCc,tKelvin,gmol,nComps,iErr)
 	! isZiter = 1 (omit aDep,uDep,lnPhi,derivatives), 0 (omit derivatives), -1 (compute derivatives and all) 
-	USE GlobConst, only: aRes_RT,uRes_RT,HRes_RT,Sres_R,cmprsblty,CvRes_R
+	USE GlobConst, only: cmprsblty,CvRes_R
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs !NOTE: USE Assoc is not here because no assoc is computed.
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
