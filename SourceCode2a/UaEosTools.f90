@@ -10,8 +10,6 @@
 	DIMENSION fugc(NMX),xFrac(NMX) 
 	LOGICAL LOUDER
 	CHARACTER*77 errMsg(0:23) !,errMsgPas
-	COMMON/eta/etaL,etaV,ZL,ZV
-	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	data initCall/1/
 	errMsg(11)='No spinodal max/min'
 	errMsg(12)='Psat iteration did not converge'
@@ -227,7 +225,6 @@
 	if(LOUDER.and.initCall)write(dumpUnit,*)'Psat: cmprsblty,CvRes_R=',cmprsblty,CvRes_R
 	!if(ierCode==0)call Fugi(tK,pMPa,xFrac,NC,1,FUGC,zLiq,ier) !one last call to fugi for chemPo and debugging.
 	chemPot=FUGC(1) !since chemPotL=chemPotV at pSat       
-	uSatL=DUONKT
 	if( (isTPT .or. isESD) .and. pMPa < 1.D-4 .and. LOUDER)write(dumpUnit,*)'Psat: 1.D-4 > pMpa = ',pMPa
 	if( (isTPT .or. isESD) .and. pMPa < 1.D-4)ierCode=7
 	if(iEosOpt==22 .and. pMPa < 1.D-2)ierCode=7
@@ -252,8 +249,6 @@
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	DIMENSION xFrac(*)
 	dimension FUGC(NMX) !,vMolec(NMX)
-	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
-	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	data rgold,cgold,initCall/0.61803399,0.38196602,1/
 	!open(67,file='spinodal.txt') this is opened in the calling routine. that way we can compile V and L together.
 	isZiter=2 !derivative dP_drho not necessary (although this would be easier if we used them)
@@ -311,17 +306,17 @@
         goto 86
     endif
 	pLo = minimax*rhoLo*zFactor*Rgas*tKelvin
-	if(LOUD.and.initCall)write(dumpUnit,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,DUONKT,DAONKT,rhoLo*bMix
-	if(LOUD)write(67,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,DUONKT,DAONKT,rhoLo*bMix
+	if(LOUD.and.initCall)write(dumpUnit,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,uRes,aRes,rhoLo*bMix
+	if(LOUD)write(67,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,uRes,aRes,rhoLo*bMix
 	call FuVtot(isZiter,tKelvin,1/rho1,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 	p1 = minimax*rho1*zFactor*Rgas*tKelvin
-	if(LOUD)write(67,601)tKelvin,1/rho1,minimax*p1,zFactor,DUONKT,DAONKT,rho1*bMix
+	if(LOUD)write(67,601)tKelvin,1/rho1,minimax*p1,zFactor,uRes,aRes,rho1*bMix
 	call FuVtot(isZiter,tKelvin,1/rho2,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 	p2 = minimax*rho2*zFactor*Rgas*tKelvin
-	if(LOUD)write(67,601)tKelvin,1/rho2,minimax*p2,zFactor,DUONKT,DAONKT,rho2*bMix
+	if(LOUD)write(67,601)tKelvin,1/rho2,minimax*p2,zFactor,uRes,aRes,rho2*bMix
 	call FuVtot(isZiter,tKelvin,1/rhoHi,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 	pHi = minimax*rhoHi*zFactor*Rgas*tKelvin
-	if(LOUD)write(67,601)tKelvin,1/rhoHi,minimax*pHi,zFactor,DUONKT,DAONKT,rhoHi*bMix
+	if(LOUD)write(67,601)tKelvin,1/rhoHi,minimax*pHi,zFactor,uRes,aRes,rhoHi*bMix
 	!NOTE: iErrFu=1 for liquid because -ve Z values will cause error in fugacity calculation.
 	itMax = 66-33*(14/rMw(1)) !Increase the precision for long chains cuz...
     if(itMax < 33)itMax=33  !H2 and He give problems for above formula
@@ -337,7 +332,7 @@
 			if(rho2 < 1D-33 .and. LOUD)write(dumpUnit,*)'Spinodal: 0~rho2=',rho2
 			call FuVtot(isZiter,tKelvin,1/rho2,xFrac,NC,FUGC,zFactor,aRes,uRes,iErr)
 			p2 = minimax*rho2*zFactor*Rgas*tKelvin
-			if(LOUD)write(67,601)tKelvin,1/rho2,minimax*p2,zFactor,DUONKT,DAONKT,rho2*bMix
+			if(LOUD)write(67,601)tKelvin,1/rho2,minimax*p2,zFactor,uRes,aRes,rho2*bMix
 		else
 			rhoHi = rho2;
 			rho2  = rho1;
@@ -347,7 +342,7 @@
 			if(rho2 < 1D-33 .and. LOUD)write(dumpUnit,*)'Spinodal: 0~rho1=',rho1
 			call FuVtot(isZiter,tKelvin,1/rho1,xFrac,NC,FUGC,zFactor,aRes,uRes,iErr)
 			p1 = minimax*rho1*zFactor*Rgas*tKelvin
-			if(LOUD)write(67,601)tKelvin,1/rho1,minimax*p1,zFactor,DUONKT,DAONKT,rho1*bMix
+			if(LOUD)write(67,601)tKelvin,1/rho1,minimax*p1,zFactor,uRes,aRes,rho1*bMix
 		endif
 		eta = bMix*(rho1+rho2)/2
 		if(ABS(eta-etaOld) < 1D-6)exit !close enough

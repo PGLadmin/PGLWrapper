@@ -19,7 +19,7 @@ END MODULE SpeadParms
 	!  PROGRAMMED BY:  JRE 2/02
 	!  REVISION DATE:  2/93 - FOR ESD COMPATIBILITY JRE
 	! 
-	!  LOOKS UP THE TPT PROPERTIES AND RETURNS them in commons
+	!  LOOKS UP THE TPT PROPERTIES AND RETURNS them in Assoc and SpeadParms
 	!
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
@@ -49,7 +49,7 @@ END MODULE SpeadParms
 	!  PROGRAMMED BY:  JRE 2/02
 	!  REVISION DATE:  2/93 - FOR ESD COMPATIBILITY JRE
 	! 
-	!  LOOKS UP THE TPT PROPERTIES AND RETURNS them in commons
+	!  LOOKS UP THE TPT PROPERTIES AND RETURNS them in USEd Assoc and SpeadParms
 	!
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
@@ -1564,7 +1564,7 @@ end	!Subroutine QueryParPureSpead
     uAssoc=0
     if(iErr < 11)call Wertheim(isZiter,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
 !	if( ABS(zAssoc) < 1e-11 )write(dumpUnit,*)'zAssoc ~ 0???'		 !for debugging
-	IF(iErrCode)then
+	IF(iErrCode>10)then
 		!iErr=iErrCode
 		if(LOUDER)write(dumpUnit,*) 'FuTptVtot: Wertheim gave error.'
 		iErr=12
@@ -1572,8 +1572,9 @@ end	!Subroutine QueryParPureSpead
 	endif
 	iDoSolvation=0 ! all of aBipDA is zero as of 20221226, so no need to do solvation. 
 	if ( ABS(zAssoc) > zeroTol .and. isZiter==0) then
-		if(iDoSolvation==1)call WertheimFugc(xFrac,nComps,ETA,FUGASSOC,h_nMichelsen,iErrF)
+		if(iDoSolvation==1)call WertheimFugc(xFrac,nComps,eta,fugAssoc,h_nMichelsen,iErrF)
 	endif
+	if(iErrF > 10)iErr=iErrF
 
 	if(iErr > 10)then
 		if(LOUDER)write(dumpUnit,*)errMsg(iErr)

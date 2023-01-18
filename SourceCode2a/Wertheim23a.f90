@@ -271,14 +271,14 @@
 	!	ALSO AFG COMBINED THE WERTHEIM ROUTINES OF SPEAD AND ESD INTO ONE SINGLE SUBROUTINE
 	!
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC  
-	SUBROUTINE WertheimFugc(xFrac,nComps,ETA,FUGASSOC,h_nMichelsen,iErr)
+	SUBROUTINE WertheimFugc(xFrac,nComps,eta,fugAssoc,h_nMichelsen,iErr)
 	USE GlobConst, only: avoNum,zeroTol,bVolCC_mol,ID,dumpUnit
 	USE Assoc
 	!USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	LOGICAL LOUDER
-	DIMENSION xFrac(NMX),FUGASSOC(NMX) !,vMolecNm3(NMX),NAS(NMX),NDS(NMX),ND(NMX),ralph(NMX),XAmol(NMX),XDmol(NMX)
-	!DIMENSION dFUGASSOC_dRHO(NMX),dFUGASSOC_dT(NMX) !,FUGASSOC_num(NMX)
+	DIMENSION xFrac(NMX),fugAssoc(NMX) !,vMolecNm3(NMX),NAS(NMX),NDS(NMX),ND(NMX),ralph(NMX),XAmol(NMX),XDmol(NMX)
+	!DIMENSION dfugAssoc_dRHO(NMX),dfugAssoc_dT(NMX) !,fugAssoc_num(NMX)
 	!DIMENSION dXAdRHO(NMX,maxTypes),dXDdRHO(NMX,maxTypes),dXCdRHO(NMX,maxTypes),dXAdT(NMX,maxTypes),dXDdT(NMX,maxTypes),dXCdT(NMX,maxTypes)
 
 	!ETAp=ETA !this is necessary for old method

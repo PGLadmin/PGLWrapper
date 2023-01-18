@@ -1,7 +1,7 @@
 
       Subroutine GetPRWS(NC,iErrCode)
 C  
-C  PURPOSE:  LOOKS UP THE PRWS PARAMETERS AND STORES THEM IN COMMON
+C  PURPOSE:  LOOKS UP THE PRWS PARAMETERS AND STORES THEM IN USEd
 C            BINARY INTERACTION PARAMETERS ARE STORED IN /BIPs/ AND
 C            STRYJEK-VERA PARAMETERS ARE STORED IN /PRSVWS/.
 C
@@ -16,7 +16,6 @@ C  OUTPUT
 	character bipFile*234
 	integer GetBIPs
 c	dimension IDDippr(numSV),svKap1(numSV)
-c      COMMON /PRSVWS/ svKappa1(NMX)
 C           Stryjek and Vera, can j chem eng, 64:323 (1986).
 
 	if(LOUD)write(*,*)'ID  NAME       TCK   PCMPa      w     '
@@ -38,7 +37,7 @@ c		idArray(iComp)=idDippr((iComp))
 		rewind(55)
 	enddo
 	close(55)
-c  note:  bips are passed back through common/BIPs/
+c  note:  bips are passed back through USEd BIPs/
 	bipFile=TRIM(PGLinputDir)//'\BipWongSand.txt' ! // is the concatenation operator
       IERRCODE=GetBIPs(bipFile,ID,NC)
 
@@ -71,7 +70,6 @@ C
 	dimension X(Nmx),ZR(3),AZ(3),A(Nmx),B(Nmx),fugc(Nmx)
 C
 	dimension b2KIJ(NMX,NMX),b2KTIJ(NMX,NMX)
-c      COMMON/PRSVWS/ svKappa1(NMX)
 c	data initEos/0/
 c  cf. stryjek and vera, can j chem eng., 64:323 (1986). 
       DATA  kappa0,kappa1,kappa2,kappa3
@@ -162,13 +160,13 @@ c  note:  (a/bRT)i=Ai*Ai/Bi
 	subroutine xsPRWS(fugXS,xsFreeEn,moFrac,tK,nComps)
 c  compute the excess mixture value by the PR Wong-Sandler mixture rule
 c  use NRTL style of EXPression
+	USE PREosParms
 	USE BIPs
 	implicit doubleprecision(A-H,K,O-Z)
 	double precision moFrac(Nmx)
 	integer kComp
 	dimension fugXS(nComps),xsGamma(nComps)
 	DIMENSION omega(Nmx,Nmx),sumDenom(Nmx),sumNumer(Nmx)
-      common/PRSVWS/svKappa1(Nmx)
 
 c  begin the computation of the xsGamma.  could use NRTL or anything else here.
 c  ref.  ReID et al. 1987, PGL p 274,256

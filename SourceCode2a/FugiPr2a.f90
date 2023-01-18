@@ -8,12 +8,12 @@ MODULE PREosParms
 END MODULE PREosParms
 subroutine GetPR(NC,iErrGet)
 	!  
-	!  PURPOSE:  LOOKS UP THE PR PARAMETERS AND STORES THEM IN COMMON
+	!  PURPOSE:  LOOKS UP THE PR PARAMETERS AND STORES THEM IN USEd PREosParms
 	!
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!  OUTPUT
-	!    commons: ppData, BIPs through GetBips
+	!    USEd PREosParms, GlobConst, BIPs 
 	!  Programmed by:  JRE 07/00
 	USE GlobConst
 	USE PREosParms
@@ -23,7 +23,7 @@ subroutine GetPR(NC,iErrGet)
 	iErrGet=0
 	etaMax=1-zeroTol
 	bVolCC_mol(1:NC)=OMB*Rgas*Tc(1:NC)/Pc(1:NC)
-	! note:  bips are passed back through common/BIPs/
+	! note:  bips are passed back through USEd BIPs/
 	bipFile=TRIM(PGLinputDir)//'\BipPengRob.txt' ! // is the concatenation operator
 	iErrGet=GetBIPs(bipFile,ID,NC)
 
@@ -121,8 +121,6 @@ END	!subroutine GetPR(NC,iErrGet)
 	DIMENSION FUGC(NC),gmol(NC)
 	DoublePrecision xFrac(NMX),ALA(NMX,NMX),DLALDT(NMX)
 	!DoublePrecision, STATIC:: THIRD,sqrt2,sqrt8,etac,OMA,OMB ! STATIC keeps these variables in memory so they can be reused with recomputing them at every call.
-	!COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
-	!COMMON/eta/etaL,etaV,zFactorL,zFactorV
 	!  prBIPs are passed in from GetPrBIPs()
 
 	iErr = 0 ! vector init

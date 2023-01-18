@@ -266,7 +266,6 @@ END MODULE VpDb
 	character*251 infile,dumString
 	DIMENSION IDNUM(ndb),TCD(ndb),PCD(ndb),ACEND(ndb),NAMED(ndb)
 	DIMENSION ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb)
-	!common/FloryWert/solParm(nmx),vLiq(nmx),vMolec(NMX),&
 	!	eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 	iErrCode=0
 	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
@@ -456,7 +455,6 @@ END MODULE VpDb
 	!integer GetBIPs
 	dimension idBinarY(listPool),idComp(NC),alphaDB(listPool),KIJDB(listPool),KTIJDB(listPool),&
 	wsTAUij (listPool),wsTAUji (listPool),wsTauTij(listPool),wsTauTji(listPool)
-	!common/ksvall/ks0ij,ks1ij
 	!dimension ks0ij(nmx,nmx),ks1ij(nmx,nmx)
 	!data initial/0/
 	initial=0 !just assume that the database needs to be reloaded if being called
@@ -703,7 +701,6 @@ END MODULE VpDb
 	character infile*251
 	DIMENSION IDNUM(ndb),TCD(ndb),PCD(ndb),ACEND(ndb),NAMED(ndb),iCasd(ndb)
 	DIMENSION ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) !,vLiq(NMX)
-	!common/FloryWert/solParm(nmx),vLiq(nmx),vMolec(NMX),&
 	!	eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 	iErrCode=0
 	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator

@@ -2,7 +2,7 @@
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	!C
 	!C      PURPOSE --- THIS ROUTINE CALLS THE APPROPRIATE ROUTINE FOR COMPUTING
-	!C                  FUGACITY COEFFS.  CHOICE IS DICTATED BY iEos FROM common-eosopt
+	!C                  FUGACITY COEFFS.  CHOICE IS DICTATED BY iEos FROM GlobConst-eosopt
 	!C                  iEos = 1 = PR 1976 
 	!C                  iEos = 2 = PR SV Wong-Sandler (aicheJ, 38:677, 92)
 	!C                  iEos = 3 = ESD
@@ -88,8 +88,6 @@
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	DIMENSION gmol(NC),FUGC(NC) !,dHkcalMol(NMX),KCSTARp(NMX)
 	DoublePrecision ft(3) , fv(3) , fx(3,3)	!for PrLorraine
-	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
-	COMMON/ETA2/ETA
 	nComps=NC
 	if(iEosOpt==1)then
 		call FuPrVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)

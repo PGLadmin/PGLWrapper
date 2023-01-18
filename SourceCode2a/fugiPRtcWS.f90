@@ -1,7 +1,7 @@
 
       Subroutine GetPRtcWS(NC,iErrCode)
 !C  
-!C  PURPOSE:  LOOKS UP THE PRWS PARAMETERS AND STORES THEM IN COMMON
+!C  PURPOSE:  LOOKS UP THE PRWS PARAMETERS AND STORES THEM IN USEd
 !C            BINARY INTERACTION PARAMETERS ARE STORED IN /BIPs/ AND
 !C            STRYJEK-VERA PARAMETERS ARE STORED IN /PRSVWS/.
 !C
@@ -15,7 +15,6 @@
 	character bipFile*234
 	integer GetBIPs
 !c	dimension IDDippr(numSV),svKap1(numSV)
-	!common/ParmsPrTc/zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX),OMA,OMB
 !C           This version of PRWS uses Jaubert's correlation for alpha. 
 
 	write(dumpUnit,*)'ID  NAME       TCK   PCMPa      w     '
@@ -31,7 +30,7 @@
 		if(LOUD)write(dumpUnit,*)'GetPRtcWs: failed to load pure parms.'
 		return
 	endif
-!c  note:  bips are passed back through common/BIPs/
+!c  note:  bips are passed back through USEd BIPs/
 		bipFile=TRIM(PGLinputDir)//'\BipPRtcWS.txt' ! // is the concatenation operator
 	iErrGet=GetBIPs(bipFile,ID,NC)
 	if(iErrGet.ne.0)then

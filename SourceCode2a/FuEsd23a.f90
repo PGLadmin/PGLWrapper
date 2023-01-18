@@ -452,7 +452,7 @@ end	!subroutine ExactEsd
 	! References:
 	! Elliott, J.R., S.J.Suresh, M.D.Donohue, Ind. Eng. Chem. Res., 29:1476 (1990). doi: 10.1021/ie00103a057   
 	USE GlobConst
-	USE Assoc !includes GlobConst {Tc,Pc,...} + XA,XD,XC...	 and FugiParts
+	USE Assoc !includes GlobConst {Tc,Pc,...} + XA,XD,XC...	 and FugiParts(rLnGam...)
 	USE EsdParms ! eokP,KCSTAR,DH,C,Q,VX,ND,NDS,NAS
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)

@@ -9,17 +9,16 @@ END MODULE PrTcParms
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine GetPrTc(nComps,iErrCode)
 	!  
-	!  PURPOSE:  LOOKS UP THE PrTc PARAMETERS AND STORES THEM IN COMMON
+	!  PURPOSE:  LOOKS UP THE PrTc PARAMETERS AND STORES THEM IN USEd PREosParms
 	!  Reference:   Jaubert et al., JCED,63, 3980-3988 (2018)
 	!  Background: TC stands for "translated consistent." it is a volume-translated PR EOS that uses the Twu alpha function with constraints to make the parameters "consistent."
 	!
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!  OUTPUT
-	!    commons: ppData, BIPs through GetBips
+	!    USEd: GlobConst, BIPs 
 	!  Programmed by:  JRE 07/00
-	USE PrTcParms ! GlobConst(bVol)+alphaL-M+cvol
-	USE PREosParms ! OMA,OMB, ...
+	USE PrTcParms ! GlobConst(bVol)+alphaL-M+cvol & PREosParms
 	Implicit DoublePrecision( A-H,K,O-Z)
 	character*99 bipFile,inFile,dumString
 	integer GetBIPs
@@ -27,7 +26,6 @@ subroutine GetPrTc(nComps,iErrCode)
 	LOUDER=LOUD
 	LOUDER=.TRUE.
 	NC=nComps
-	!common/ParmsPrTc/zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX),OMA,OMB
     iErrCode=0
 	etaMax=1-zeroTol
 	! note:  bips are passed back through module /BIPs/
@@ -241,9 +239,6 @@ end	!Subroutine SetParPurePrTc
 	Implicit DoublePrecision(A-H,K,O-Z)
 	DIMENSION FUGC(NC),xFrac(NC),gMol(NC) 
 	DoublePrecision ALA(NMX,NMX),TDLAL_DT(NMX),T2d2LAL_dT2(NMX),NdC_b_dni !,bVol(NMX)
-	!common/ParmsPrTc/zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX),OMA,OMB
-	COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
-	COMMON/eta/etaL,etaV,zFactorL,zFactorV
 	data initCall/1/
 	!  prBIPs are passed in from GetPrBIPs()
 	iErrZ=0
@@ -573,9 +568,6 @@ end	!Subroutine SetParPurePrTc
 	implicit doublePrecision(A-H,K,O-Z)
 	DIMENSION FUGC(NC),xFrac(NC),gMol(NC) 
 	!DIMENSION bVol(NMX),DLALDT(NMX), ALA(NMX,NMX),
-	COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
-	COMMON/eta/etaL,etaV,zFactorL,zFactorV
-	!common/ParmsPrTc/zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX),OMA,OMB
 	data initCall/1/
 	!  prBIPs are passed in from GetPrBIPs()
 	IER=0 !sets all array values to zero.

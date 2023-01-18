@@ -10,9 +10,8 @@
 	character bipFile*234 !,inFile*234
 	integer GetBIPs
 	DIMENSION idComp(nComps)
-	!common/NRTL/vLiq(nmx)
 	iErrCode=0
-!c  note:  bips are passed back through common/BIPs/
+!c  note:  bips are passed back through USEd BIPs/
 	bipFile=TRIM(PGLinputDir)//'\BipNRTL.txt' ! // is the concatenation operator
       iErrCode=GetBIPs(bipFile,idComp,nComps)
 	return                      
