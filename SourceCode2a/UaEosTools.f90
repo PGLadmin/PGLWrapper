@@ -8,19 +8,20 @@
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	!character tabChar*1
 	DIMENSION fugc(NMX),xFrac(NMX) 
-	DIMENSION IER(12)
 	LOGICAL LOUDER
-	CHARACTER*77 errMsg(0:11) !,errMsgPas
+	CHARACTER*77 errMsg(0:23) !,errMsgPas
 	COMMON/eta/etaL,etaV,ZL,ZV
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	data initCall/1/
-	errMsg(1)='No spinodal max/min'
-	errMsg(2)='Psat iteration did not converge'
-	errMsg(3)='Liquid FUGI call failed on last iteration'
-	errMsg(4)='Vapor  FUGI call failed on last iteration'
-	errMsg(5)='zVap=zLiq on last iteration'
-    errMsg(6)='PsatEar: FUGI returned T < Tmin error'
-    errMsg(7)='PsatEar: Calculated Psat < 0.0001 MPa error'
+	errMsg(11)='No spinodal max/min'
+	errMsg(12)='Psat iteration did not converge'
+	errMsg(13)='Liquid FUGI call failed on last iteration'
+	errMsg(14)='Vapor  FUGI call failed on last iteration'
+	errMsg(15)='zVap=zLiq on last iteration'
+    errMsg(16)='PsatEar: FUGI returned T < Tmin error'
+    errMsg(17)='PsatEar: Calculated Psat < 0.0001 MPa error'
+    errMsg(18)='PsatEar: Tr > 1-zeroTol'
+    errMsg(19)='PsatEar: Tr > 1-zeroTol'
 	LOUDER=LOUD
 	LOUDER=.TRUE.
 	LOUDER=.FALSE.
@@ -34,20 +35,24 @@
 	if(iEosOpt==2 .or. iEosOpt==4)zCritEff=0.34  !ESD
 	rhoCrit=Pc(1)/(zCritEff*Rgas*Tc(1))
 	rhoVap=rhoCrit*1.000 !-ve value on input means use default value for etaHi
-    if(LOUDER)then 
-        if(DEBUG) then
-	        OPEN(67,file='c:\spead\calceos\output\isotherm.txt') !bonus: write the isotherm from iterations on spinodal
-        else
-	        OPEN(67,file='spinodal.txt')
-        endif
-	    write(67,*)' T(K)    rho(mol/cc)   P(MPA)        Z     DA_NKT    DU_NKT    eta'
-    endif
 	Tr=tK/Tc(1)
-	if(Tr > 0.85)then
-		if(LOUDER)write(dumpUnit,*)'Psat: calling spinodal for vapor.'
+	if(Tr > 1-zeroTol)then
+		ierCode=19
+		if(LOUDER)write(dumpUnit,*)'Psat: Tr > 1-zeroTol. Fatal. Sorry.'
+		return
+	elseif(Tr > 0.85)then
+		if(LOUDER)then
+			if(DEBUG) then
+				OPEN(67,file='c:\spead\calceos\output\isotherm.txt') !bonus: write the isotherm from iterations on spinodal
+			else
+				OPEN(67,file='spinodal.txt')
+			endif
+			write(67,*)' T(K)    rho(mol/cc)   P(MPA)        Z     DA_NKT    DU_NKT    eta'
+		endif
+		if(LOUDER)write(dumpUnit,*)'Psat: calling spinodal for vapor.Results in spinodal.txt'
 		call Spinodal(NC,xFrac,tK,0,rhoVap,zVap,aDepVap,dU_NkT,iErrVap)
 		if(iErrVap==3)then !first definite call to fuVtot suffices to check for T < Tmin.
-			ierCode=6
+			ierCode=16
 			goto 86
 		endif
 		rhoLiq=rhoVap !-ve value on input means use default value for etaLo
@@ -59,7 +64,7 @@
 		if(LOUDER.and.pMax < 1e-11)write(dumpUnit,*)'Psat: 0~pMax=',pMax
 		relDiffP=ABS(pMax-pMin)/pMax
 		if(iErrVap.ne.0 .or. iErrLiq.ne.0 .or. relDiffP < 1D-3)then
-			ierCode=1
+			ierCode=11
 			if(LOUDER)write(dumpUnit,'(a,f8.1,a)')' PsatEar: Spinodal error at T = ',tK,' T > Tc?'
 			!if(LOUD)write(dumpUnit,*) 
 			goto 86
@@ -72,7 +77,7 @@
 		if(LOUDER)write(dumpUnit,'(a,4f11.4)')' PsatEar: after spinodal: pMin,pMax,pInit= ',pMin,pMax,pOld
 		if(LOUDER)write(dumpUnit,'(a,6E12.4)')' PsatEar: spinodal=>etaLiq,etaVap=',etaLiq,etaVap
 		if( (rhoVap/rhoLiq) < 0 .and. LOUDER)then
-			ier(1)=18
+			ierCode=18
 			write(dumpUnit,*) 'PsatEar: error after spinodals: rhoVap/rhoLiq < 0'
 			goto 86
 		endif
@@ -94,7 +99,7 @@
 			ierCode=17
 			goto 86
 		elseif(iErrF > 0)then
-			if(LOUDER)write(dumpUnit,'(a,i12)')' PsatEar: Error from ITIC call to fugi. ier=',(ier(i),i=1,7)
+			if(LOUDER)write(dumpUnit,'(a,i12)')' PsatEar: Error from ITIC call to fugi. iErrF=',iErrF
 			ierCode=19
 			return
 		endif

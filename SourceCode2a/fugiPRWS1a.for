@@ -47,7 +47,7 @@ c  note:  bips are passed back through common/BIPs/
       
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      SUBROUTINE FugiPRWS(T,P,X,NC,LIQ,FUGC,Z,IER)
+      SUBROUTINE FugiPRWS(T,P,X,NC,LIQ,FUGC,Z,iErr)
 C
 C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 C
@@ -67,7 +67,6 @@ C
 	USE PREosParms
 	USE BIPs
       IMPLICIT DOUBLEPRECISION (A-H,K,O-Z)
-	DIMENSION IER(12)
       DIMENSION bigQSum(Nmx),xsChemPo(Nmx)
 	dimension X(Nmx),ZR(3),AZ(3),A(Nmx),B(Nmx),fugc(Nmx)
 C
@@ -79,9 +78,7 @@ c  cf. stryjek and vera, can j chem eng., 64:323 (1986).
 	1  /0.378893d0,1.4897153,-0.17131848d0,0.0196554d0/
 	b2KIJ=KIJ
 	b2KTIJ=KTIJ
-	do iErr=1,6
-		ier(iErr)=0
-	enddo
+	iErr=0
 C
 	if(initEos.eq.0)then
 	  initEos=1
@@ -136,8 +133,8 @@ c  noting A/B = a/bRT = bigD, then
 C                        SET UP AND SOLVE THE CUBIC EQUATION
 C
 	AZ(1) = (-AMX+BMX+BMX*BMX)*BMX
-	AZ(2) = AMX-BMX*(3.0*BMX+2.0)
-	AZ(3) = BMX-1.0
+	AZ(2) = AMX-BMX*(3.D0*BMX+2.D0)
+	AZ(3) = BMX-1.D0
 	CALL CUBIC(AZ,ZR)
 	Z = ZR(2)
 	if(liq.eq.1)Z=ZR(1)
@@ -145,7 +142,7 @@ C
 C                        CALCULATE FUGACITIES
 C
 	QUEST=Z-BMX
-	IF(QUEST.LT.0)IER(1)=1
+	IF(QUEST < 0)iErr=11
 	TMP1 = (Z-1.D0) / BMX
 	TMP2 = -LOG(MAX(Z-BMX,1.0D-20))
 	TMP3 = -AMX * LOG((Z+CON1*BMX)/(Z-CON2*BMX)) / (CON3*BMX)

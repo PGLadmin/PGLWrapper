@@ -24,7 +24,7 @@
 	!DIMENSION BIPTMP(NMX)
 	!DIMENSION ZFEED(NMX),S(NMX)
     DoublePrecision xFrac(NMX),FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
-    INTEGER  localCas(NMX) !ier(12),
+    INTEGER  localCas(NMX) 
 	Logical CheckDLL
 	
 	COMMON/eta/etaL,etaV,ZL,ZV
@@ -189,10 +189,6 @@
 			!if(expRho/1000 < rhoCritG_cc)iPhase=0
 			pMPa=pKPa/1000
 			if(LOUD)write(*,'(a,f7.2,1x,3f9.5,i4)')'PGLWRapper: calling fugi. T,P,rhoc,expRho,iPhase:',tKelvin,pMPa,rhoCritG_cc,expRho/1000,iPhase
-	!        if(ier(1) .or. zFactor <= 0)then
-	!            write(52,*)'Unexpected error from Psat calculation. iErrCode,tKelvin,line=',ierCode,tKelvin,line
-	!            cycle
-	!        endif
 			ierCode=0
 				CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
 				if(LOUD)print*,'PGLWRapperMain: Check output from fugi()pure1 call. iErrF = ',iErrF
@@ -270,8 +266,6 @@
 			!if(expRho/1000 < rhoCritG_cc)iPhase=0
             if(LOUD)write(dumpUnit,'(a,f7.2,1x,f9.5,i4,f9.4)')' PGLWRapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
 			!call FUGI(tKelvin,pMPa,xFrac,NC,iPhase,FUGC,zFactor,ier)
-            !if(LOUD)print*,'PGLWRapperMain: Check output from fugi()mix call. ier(1) = ',ier(1)
-			!if(ier(1) > 10)iErr=iErr+100*(ier(1)-10)
 					CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
 					if(LOUD)write(dumpUnit,*)'PGLWRapperMain: Check output from fugi()mix call. iErrF = ',iErrF
 					if(iErrF > 10)iErr=iErr+100*(iErrF-10)

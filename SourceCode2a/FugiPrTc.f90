@@ -182,14 +182,12 @@ end	!Subroutine SetParPurePrTc
 	!     OUTPUT:
 	!        FUGC     log FUGACITY COEFFICIENT OF COMPONENTS
 	!        zFactor  COMPRESSIBILITY FACTOR OF MIXTURE
-	!        IER      VECTOR ERROR PARAMETERS
-	!          IER(1) = 1 IF ONE OF IER(4)-IER(6) ARE NOT ZERO
-	!          IER(2) = 1 IF LIQUID ROOT WAS FOUND BUT WAS NOT REAL
-	!          IER(3) = 1 IF VAPOR  ROOT WAS FOUND BUT WAS NOT REAL
-	!          IER(4) = 1 NEGATIVE LOG CALCULATED
-	!          IER(5) = 1 THE LOG OF THE FUGACITY COEFFICIENT CALCULATED
-	!                     TO BE LARGE ENOUGH TO INDICATE OVERFLOW.
-	!          IER(6) = 1 SRKNR DID NOT CONVERGE
+	!        iErr = 1-9 warning
+	!				12 IF LIQUID ROOT WAS FOUND BUT WAS NOT REAL
+	!				13 IF VAPOR  ROOT WAS FOUND BUT WAS NOT REAL
+	!				14 NEGATIVE LOG CALCULATED
+	!				15 THE LOG OF THE FUGACITY COEFFICIENT CALCULATED TO BE LARGE ENOUGH TO INDICATE OVERFLOW.
+	!				16 NR DID NOT CONVERGE
 	!
 	!   NOTE:           UNITS OF ALL THE INPUTS SHOULD BE
 	!                   CONSISTENT WITH UNITS OF Rgas.  EXCEPT
@@ -237,11 +235,11 @@ end	!Subroutine SetParPurePrTc
 	!         Jaubert:FPE, 429 (2016) 301-312
 	!
 	!****************************************************************
-	SUBROUTINE FuPrTcVtot(isZiter,tKelvin,vTotCc,gMol,NC,FUGC,zFactor,aDep,uDep,iErrZ)
+	SUBROUTINE FuPrTcVtot(isZiter,tKelvin,vTotCc,gMol,NC,FUGC,zFactor,aRes,uRes,iErrZ)
 	USE PrTcParms ! GlobConst(bVol)+alphaL-M+cvol
 	USE BIPs
 	Implicit DoublePrecision(A-H,K,O-Z)
-	DIMENSION FUGC(NC),xFrac(NC),gMol(NC) !,IER(*)
+	DIMENSION FUGC(NC),xFrac(NC),gMol(NC) 
 	DoublePrecision ALA(NMX,NMX),TDLAL_DT(NMX),T2d2LAL_dT2(NMX),NdC_b_dni !,bVol(NMX)
 	!common/ParmsPrTc/zRa(NMX),cVolCc_mol(NMX),alphaL(NMX),alphaM(NMX),alphaN(NMX),TminK(NMX),OMA,OMB
 	COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
@@ -403,9 +401,9 @@ end	!Subroutine SetParPurePrTc
 	!write(dumpUnit,*)'check values'
 	!BIGMESOld=BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
 	!write(dumpUnit,*)'BigMes,BigMesOld:',BigMes,BigMesOld
-	aRes_RT= -LOG(1-eta) + aResAtt
+	aRes= -LOG(1-eta) + aResAtt
 	!uDep/RT = beta*d(A/RT)/dBeta = -T*d(A/RT)/dT = -T* [ -A/RT^2 + (1/RT)*dA/dT ] = A/RT - (dA/dT)/R = A/RT*[ 1-(T/alpha)*dAlpha/dT ]  
-	uRes_RT= aResAtt*(1-TdaMixDt/aMix)	! Cv = (dU/dT) = U/T + T*d(U/T)/dT; U/RT = A/RT*(1-TdaMixDt/aMix) => Td(U/RT)/dT = T(dA/RT)/dT -(A/RT)*Td/dT[TdaMixDt/aMix] = -U/RT -A/RT*[ Td(TdaMixDt)/dT -(TdaMixDt/aMix)^2] 
+	uRes= aResAtt*(1-TdaMixDt/aMix)	! Cv = (dU/dT) = U/T + T*d(U/T)/dT; U/RT = A/RT*(1-TdaMixDt/aMix) => Td(U/RT)/dT = T(dA/RT)/dT -(A/RT)*Td/dT[TdaMixDt/aMix] = -U/RT -A/RT*[ Td(TdaMixDt)/dT -(TdaMixDt/aMix)^2] 
 	!uDep_R = aAtt*T*(1-TdLnAlpha/dT) ~ (a/bR)
 	!d(uDep_R)/dT = 
 	! Td(Ures/RT)/dT = bigmes*[ TdTdaMix_dT_dT/aMix - TdaMixDt^2/aMix^2 ] 
@@ -413,16 +411,6 @@ end	!Subroutine SetParPurePrTc
 	CvRes_R=  aResAtt*( -TdLAL_dT(1)**2 - T2d2LAL_dT2(1) )	 !todo: work on checking the generaliztion to mixtures. Above is slightly off. 
 	!T*dZ/dT = T*dZatt/dT = eta*T*d/dT[dAatt/dEta]	; dAatt/dEta= -(aMix/bRT)/denom
 	! T*d/dT[dAatt/dEta]= -T*dLnaMix/dT*(a/bRT)/denom -dAatt_dEta = (TdaMixDt/aMix)*dAatt_dEta - dAatt_dEta	= dAatt_dEta*(TdaMixDt/aMix - 1); NOTE: the -dAatt_dEta comes from the 1/T in a/bRT.
-	dA_NKT=aRes_RT
-	dU_NKT=uRes_RT	 !for passing through GlobConst
-	TdZ_dT= zAtt*(1-TdaMixDt/aMix) !since aAtt = f1(T)*f2(rho), the derivative wrt T in dZ/dT is analogous to derivative wrt T in dAatt/dT. 
-	dH_NKT=dU_NKT+zFactor-1
-	dS_NK=dU_NKT-dA_NKT !+LOG(zFactor)	  !Don't subtract lnZ here. it may cause trouble if Z < 0. 
-	hRes_RT=dH_NKT
-	sRes_R  =dS_NK
-
-	aDep=dA_NKT	!to pass as calling argument as well as common
-	uDep=dU_NKT
 
 	!zRep=eta/(1-eta) = eta*dArep/dEta
 	!d2ARep/dEta2 = 1/(1-eta)^2
@@ -442,6 +430,8 @@ end	!Subroutine SetParPurePrTc
 	!PGL6edEq.6.24=> CpRes_R = CvRes_R-1-[Z+TdZ/dT]^2/[Z+rho*dZ/dRho]
 	if( ABS(cmprsblty) > 1.D-11)then
 		!if(LOUD)write(dumpUnit,*)'(dP/dT)/rhoR=',(zFactor+TdZ_dT)
+		! Z=1/(1-eta)-a/bRT*F(eta)=> T*dZ_dT= +a/bRT*F(eta)-F(eta)/bRT*T*da/dT = ZATT*(-1+TdaMixDt/a)
+		TdZ_dT = ZATT*(-1+TdaMixDt/aMix)
 		CpRes_R = CvRes_R-1 + (zFactor+TdZ_dT)*(zFactor+TdZ_dT)/cmprsblty
 	else
 		if(LOUD)write(dumpUnit,*)'FuPrTcVtot: 0~cmprsblty=',cmprsblty
@@ -455,7 +445,7 @@ end	!Subroutine SetParPurePrTc
 		iErrZ=13
 		goto 861
 	endif
-	if(LOUD.and.initCall)write(dumpUnit,*)'aRes,uRes',aRes_RT,uRes_RT
+	if(LOUD.and.initCall)write(dumpUnit,*)'aRes,uRes',aRes,uRes
 	DO iComp = 1,NC
 		SUMXA = 0
 		DO jComp=1,NC
@@ -469,7 +459,7 @@ end	!Subroutine SetParPurePrTc
 		ELSE
 			NdC_b_dni= ( cVolCC_mol(iComp) - cMix*bVolCC_mol(iComp)/bMix )/bMix	!NOTE: declared DoublePrecision.
 			!BIGB=b*P/RT  ; c_b = cMix/bMix
-			ChemPoRes = bVolCC_mol(iComp)/bMix*(zFactor-1) - DLOG(zFactor-BIGB) & 
+			ChemPoRes = bVolCC_mol(iComp)/bMix*(zFactor-1) - DLOG(1-eta) & 
 			!+ aResAtt*( 2*SUMXA/aMix - bVolCC_mol(ICOMP)/bMix ) + zFactor*(cMix-cVolCC_mol(iComp))*rhoMol_cc	! Privat(2016a) Eq 14.
 			+ aResAtt*( 2*SUMXA/aMix - bVolCC_mol(ICOMP)/bMix - NdC_b_dni/(1+c_b) ) &
 			+ zAtt*(1-eta)*NdC_b_dni/(1+c_b)  
@@ -491,12 +481,12 @@ end	!Subroutine SetParPurePrTc
 !	ENDIF
 
 861	continue
-	initCall=0
+	initCall=0	 
 	RETURN
 	END	!Subroutine FuPrTcVtot()
 
 	!SUBROUTINE FugiPrTc(tKelvin,pMPa,gMol,NC,LIQ,FUGC,zFactor,IER)
-	Subroutine FugiPrTc( tKelvin,pMPa,gmol,NC,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,ier )	  ! JRE 2020
+	Subroutine FugiPrTc( tKelvin,pMPa,gmol,NC,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr )	  ! JRE 2020
 	!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	!$ FUGI
 	!
@@ -526,14 +516,12 @@ end	!Subroutine SetParPurePrTc
 	!     OUTPUT:
 	!        FUGC     log FUGACITY COEFFICIENT OF COMPONENTS
 	!        zFactor  COMPRESSIBILITY FACTOR OF MIXTURE
-	!        IER      VECTOR ERROR PARAMETERS
-	!          IER(1) = 1 IF ONE OF IER(4)-IER(6) ARE NOT ZERO
-	!          IER(2) = 1 IF LIQUID ROOT WAS FOUND BUT WAS NOT REAL
-	!          IER(3) = 1 IF VAPOR  ROOT WAS FOUND BUT WAS NOT REAL
-	!          IER(4) = 1 NEGATIVE LOG CALCULATED
-	!          IER(5) = 1 THE LOG OF THE FUGACITY COEFFICIENT CALCULATED
-	!                     TO BE LARGE ENOUGH TO INDICATE OVERFLOW.
-	!          IER(6) = 1 SRKNR DID NOT CONVERGE
+	!        iErr = 1-9 warning
+	!				12 IF LIQUID ROOT WAS FOUND BUT WAS NOT REAL
+	!				13 IF VAPOR  ROOT WAS FOUND BUT WAS NOT REAL
+	!				14 NEGATIVE LOG CALCULATED
+	!				15 THE LOG OF THE FUGACITY COEFFICIENT CALCULATED TO BE LARGE ENOUGH TO INDICATE OVERFLOW.
+	!				16 NR DID NOT CONVERGE
 	!
 	!   NOTE:           UNITS OF ALL THE INPUTS SHOULD BE
 	!                   CONSISTENT WITH UNITS OF Rgas.  EXCEPT
@@ -583,7 +571,7 @@ end	!Subroutine SetParPurePrTc
 	USE PrTcParms ! GlobConst(bVol)+alphaL-M+cvol
 	USE BIPs
 	implicit doublePrecision(A-H,K,O-Z)
-	DIMENSION FUGC(NC),xFrac(NC),gMol(NC),IER(12)
+	DIMENSION FUGC(NC),xFrac(NC),gMol(NC) 
 	!DIMENSION bVol(NMX),DLALDT(NMX), ALA(NMX,NMX),
 	COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
 	COMMON/eta/etaL,etaV,zFactorL,zFactorV
@@ -600,8 +588,8 @@ end	!Subroutine SetParPurePrTc
 	if( ABS(totMoles-1) > zeroTol .and. LOUD)write(dumpUnit,*)'FuPrTc: ??? totMoles,x(1)=',totMoles,xFrac(1) 
 	bMix=SUM( xFrac(1:NC)*bVolCc_mol(1:NC) )
 	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTc: bMix=',bMix
-	aRes_RT=86.8686	  ! initialize to avoid NAN on error return
-	uRes_RT=86.8686
+	aRes=86.8686	  ! initialize to avoid NAN on error return
+	uRes=86.8686
 	cvRes_R=86.8686
 	cpRes_R=86.8686
 	cmprsblty=86.8686
@@ -703,53 +691,38 @@ end	!Subroutine SetParPurePrTc
 	endif
 	IF (eta < 0)then
 		iErr=12
+		goto 861
 		!call BeepMsg(errMsg(iErr))
-	endif
-	IF (zFactor < 0 )then
-		iErr=14
-		!IF(LOUD)call BeepMsg(errMsg(iErr))
 	endif
 	!  ITERATION ON RHO HAS CONCLUDED.  GET DEPARTURES AND FUGACITY COEFFS.
 	rhoMol_cc=eta/bMix
 	vTotCc=totMoles/rhoMol_cc
-	IF (LIQ==1 .or. LIQ==3) THEN
-	  ETAL=ETA
-	  ZL=zFactor  
-	ELSE
-	  ETAV=ETA
-	  ZV=zFactor  
-	ENDIF
-	dU_RT=uDep
-	dH_RT=uDep+zFactor-1
-	dA_RT=aDep
-	aRes_RT=aDep
-	uRes_RT=uDep
-	hRes_RT=dH_RT
     if(LIQ > 1)goto 861
 	!
 	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS and derivative props (cmprsblty,CvRes_R,CpRes_R passed by GlobConst) 
 	!
-	!write(dumpUnit,*)'aRes,uDep',aDep,uDep
-	Sres_R=uDep-aDep					  ! A = U - TS => Sres_R = Ures/RT - Ares/RT
-	if(Loud.and.initCall)write(dumpUnit,*)'Sres,hRes',Sres_R,hRes_RT
 	isZiter=0
 	call FuPrTcVtot(isZiter,tKelvin,1/rhoMol_Cc,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrZ)
-	if(LOUD.and.initCall)write(dumpUnit,*)'aRes,uDep',aRes,uRes
+	IF (zFactor < 0 )then
+		iErr=14
+		goto 861
+	else
+		FUGC(1:NC)=FUGC(1:NC)-DLOG(zFactor)	! convert from T,V to T,P. 
+	endif
+	if(LOUD)write(dumpUnit,*)'aRes,uRes',aRes,uRes
 	if(iErrZ>10)then
 		iErr=13
+		goto 861
 	elseif(iErrZ.ne.0)then
 		iErr=iErrZ
 	endif  	
-	zFactor=pMPa/(rhoMol_cc*Rgas*tKelvin) ! Seemingly unnecessary, this should improve precision when computing rho from return. Z = 1+zRef+zAtt+zAssoc is subject to roundoff when Z->1E-9, but Z=P/(rhoRT)=>rho=P/(ZRT) with precision.
-	etaPass=eta											! Accurate rho is essential for PsatEar at low T (e.g. propane).	
 861	continue
-	if(iErrZ.and.LOUD)write(dumpUnit,*)'FugiPrTc: FuVtot last call. iErrZ=',iErrZ
+	if(iErr > 0 .and.LOUD)write(dumpUnit,*)'FugiPrTc: FuVtot last call. iErr,iErrZ=',iErr,iErrZ
 	initCall=0
-	IER(1)=iErr
 	RETURN
 	END
 
-	SUBROUTINE ZITERDum(zFactor,BIGB,A1,A0,IER)	 !ZITER() is defined in FugiPR. 
+	SUBROUTINE ZITERDum(zFactor,BIGB,A1,A0,iErr)	 !ZITER() is defined in FugiPR. 
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	!
 	!  PURPOSE    - CALCULATE zFactor FROM NEWTON-RAPHSON ITERATION
@@ -758,7 +731,7 @@ end	!Subroutine SetParPurePrTc
 	!
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	implicit doublePrecision(A-H,O-Z)
-	IER = 0
+	iErr = 0
 	do kount=1,25
 		F = -A0 + zFactor*(  A1+zFactor*( -(1-BIGB)+zFactor )  )
 		DF = 3*zFactor*zFactor - (1-BIGB)*2*zFactor + A1
@@ -767,7 +740,7 @@ end	!Subroutine SetParPurePrTc
 		zFactor = ZN
 		IF(ERR.lt. 1.D-9) GO TO 86
 	enddo
-	IER = 200 !only to reach here is if do loop has exceeded iterations
+	iErr = 200 !only to reach here is if do loop has exceeded iterations
 86 continue
 	RETURN
 	END

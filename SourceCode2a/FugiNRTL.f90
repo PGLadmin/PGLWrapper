@@ -20,20 +20,17 @@
 	!PROGRAMED BY AV 06/22
 	!PURPOSE: CALCULATION OF VAPOR PRESSURES AND FUGACITY COEFFICIENTS BY NRTL ACTIVITY COEFFICIENT MODEL
 
-	subroutine FuNRTL(tK,pMpa,moFrac,nComps,LIQ,FUGC,zFactor,IER)
+	subroutine FuNRTL(tK,pMpa,moFrac,nComps,LIQ,FUGC,zFactor,iErr)
 !c  use NRTL style of EXPression
 	USE GlobConst ! includes vLiq when you call CritParms first.
 	USE BIPs
 	USE VpDb ! for VpCoeffs
 	implicit doubleprecision(A-H,K,O-Z)
 	double precision moFrac(Nmx)
-	DIMENSION IER(12)
 	integer kComp
 	dimension fugc(nComps),xsGamma(nComps)
 	DIMENSION omega(Nmx,Nmx),sumDenom(Nmx),sumNumer(Nmx)
-  	do iErr=1,6
-		ier(iErr)=0
-	enddo
+	iErr=0
 	!DEBUG=.TRUE.
 	vLiqMix=0
 	do iComp = 1,nComps
@@ -44,10 +41,10 @@
 	if(LIQ==0)return ! ideal gas for vapor means... That's all folks!
 	zFactor=pMpa*vLiqMix/(rGas*tK)
 
-	sumLog=0.0
+	sumLog=0
 	do jComp=1,nComps
-		sumDenom(jComp)=0.0
-		sumNumer(jComp)=0.0
+		sumDenom(jComp)=0
+		sumNumer(jComp)=0
 		do kComp=1,nComps
 			omega(kComp,jComp)=EXP(-xsAlpha(kComp,jComp)*xsTau(kComp,jComp)/tK)
 			sumDenom(jComp)=sumDenom(jComp)+moFrac(kComp)*omega(kComp,jComp)

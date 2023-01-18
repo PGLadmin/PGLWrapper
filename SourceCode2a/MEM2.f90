@@ -447,8 +447,6 @@ END MODULE Assoc
 	Integer, STATIC:: IDold(NMX)  								            ! static is equivalent to the "SAVE" attribute
 	Integer isZiter,nComps,iErr, iComp,iType,i,j,itMax,nIter,nSitesTot,iComplex,iErrCode !,iErrMEM,moreDonors,isDonor,isAcceptor
 	LOGICAL LOUDER,isAcid
-	!DoublePrecision ralphMatch(NMX)
-    !Integer ier(12)	 !NAS(NMX),NDS(NMX),ND(NMX),
 	!  NDi     = THE DEGREE OF POLYMERIZATION OF COMPO i
 	!  fAssoc  = THE CHARACTERISTIC ASSOCIATION = 1/RALPHi(1/XAi-1)
 	!  RALPHi  = ROOT OF ALPHA WHERE ALPHAi=rho*bVoli*KADi*Ei/(1-1.9eta)

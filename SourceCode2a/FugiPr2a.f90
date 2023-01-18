@@ -59,14 +59,12 @@ END	!subroutine GetPR(NC,iErrGet)
 	!     OUTPUT:
 	!        FUGC     log FUGACITY COEFFICIENT OF COMPONENTS
 	!        zFactor  COMPRESSIBILITY FACTOR OF MIXTURE
-	!        IER      VECTOR ERROR PARAMETERS
-	!          IER(1) = 1 IF ONE OF IER(4)-IER(6) ARE NOT ZERO
-	!          IER(2) = 1 IF LIQUID ROOT WAS FOUND BUT WAS NOT REAL
-	!          IER(3) = 1 IF VAPOR  ROOT WAS FOUND BUT WAS NOT REAL
-	!          IER(4) = 1 NEGATIVE LOG CALCULATED
-	!          IER(5) = 1 THE LOG OF THE FUGACITY COEFFICIENT CALCULATED
-	!                     TO BE LARGE ENOUGH TO INDICATE OVERFLOW.
-	!          IER(6) = 1 SRKNR DID NOT CONVERGE
+	!        iErr = 1-9 warning
+	!				12 IF LIQUID ROOT WAS FOUND BUT WAS NOT REAL
+	!				13 IF VAPOR  ROOT WAS FOUND BUT WAS NOT REAL
+	!				14 NEGATIVE LOG CALCULATED
+	!				15 THE LOG OF THE FUGACITY COEFFICIENT CALCULATED TO BE LARGE ENOUGH TO INDICATE OVERFLOW.
+	!				16 NR DID NOT CONVERGE
 	!
 	!   NOTE:           UNITS OF ALL THE INPUTS SHOULD BE
 	!                   CONSISTENT WITH UNITS OF Rgas.  EXCEPT
@@ -121,7 +119,6 @@ END	!subroutine GetPR(NC,iErrGet)
 	USE BIPs
 	Implicit DoublePrecision(A-H,K,O-Z)
 	DIMENSION FUGC(NC),gmol(NC)
-	!Integer IER(12) !,initKall
 	DoublePrecision xFrac(NMX),ALA(NMX,NMX),DLALDT(NMX)
 	!DoublePrecision, STATIC:: THIRD,sqrt2,sqrt8,etac,OMA,OMB ! STATIC keeps these variables in memory so they can be reused with recomputing them at every call.
 	!COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
@@ -238,14 +235,12 @@ END	!subroutine GetPR(NC,iErrGet)
 	!     OUTPUT:
 	!        FUGC     log FUGACITY COEFFICIENT OF COMPONENTS
 	!        zFactor  COMPRESSIBILITY FACTOR OF MIXTURE
-	!        IER      VECTOR ERROR PARAMETERS
-	!          IER(1) = 1 IF ONE OF IER(4)-IER(6) ARE NOT ZERO
-	!          IER(2) = 1 IF LIQUID ROOT WAS FOUND BUT WAS NOT REAL
-	!          IER(3) = 1 IF VAPOR  ROOT WAS FOUND BUT WAS NOT REAL
-	!          IER(4) = 1 NEGATIVE LOG CALCULATED
-	!          IER(5) = 1 THE LOG OF THE FUGACITY COEFFICIENT CALCULATED
-	!                     TO BE LARGE ENOUGH TO INDICATE OVERFLOW.
-	!          IER(6) = 1 SRKNR DID NOT CONVERGE
+	!        iErr = 1-9 warning
+	!				12 IF LIQUID ROOT WAS FOUND BUT WAS NOT REAL
+	!				13 IF VAPOR  ROOT WAS FOUND BUT WAS NOT REAL
+	!				14 NEGATIVE LOG CALCULATED
+	!				15 THE LOG OF THE FUGACITY COEFFICIENT CALCULATED TO BE LARGE ENOUGH TO INDICATE OVERFLOW.
+	!				16 NR DID NOT CONVERGE
 	!
 	!   NOTE:           UNITS OF ALL THE INPUTS SHOULD BE
 	!                   CONSISTENT WITH UNITS OF Rgas.  EXCEPT
@@ -296,10 +291,9 @@ END	!subroutine GetPR(NC,iErrGet)
 	USE PREosParms
 	USE BIPs
 	Implicit DoublePrecision(A-H,K,O-Z)
-	DoublePrecision FUGC(NC),xFrac(NC) !,IER(12)
+	DoublePrecision FUGC(NC),xFrac(NC) !
 	DoublePrecision ALA(NMX,NMX),bVol(NMX),DLALDT(NMX)
-	COMMON/DEPFUN/dU_NKT,dA_NKT,dS_NK,dH_NKT
-	COMMON/eta/etaL,etaV,zFactorL,zFactorV
+	LOGICAL bEven
 	!  prBIPs are passed in from GetPrBIPs()
 	!  Note: In most cases, it's better to call FuVtot to iterate on Z, but for PREOS it really doesn't matter. 
 	iErr = 0 ! 

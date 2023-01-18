@@ -61,7 +61,7 @@ END MODULE SpeadParms
 	IMPLICIT DoublePrecision(A-H,O-Z)
 	PARAMETER(ndb=1555,listPool=1000)
 	Integer GetBIPs
-	Integer idComp(nComps) !,ier(12) !localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
+	Integer idComp(nComps)  !localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
 	DoublePrecision bondRate(nmx,maxTypes) !local to this subroutine.
 	DoublePrecision gmol(NMX),chemPo(NMX)
 	character*88 bipFile*88,bipHbFile*88,ParmsHbFile*88,ParmsTptFile*88
@@ -547,7 +547,6 @@ end	!Subroutine QueryParPureSpead
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	LOGICAL LOUDER
 	character*111 errMsg(22)
-	integer ier(12)	!assocFlag,
 	DIMENSION xFrac(NMX),gmol(NMX),chemPo(NMX)
 	DIMENSION zRefMix(5),bRef(NMX)!,aMixQuadPart(NMX),a1Mix(5),a2Mix(5)
 	data initCall/1/
@@ -822,13 +821,10 @@ end	!Subroutine QueryParPureSpead
 	RETURN
 
 86	if(LOUDER)write(dumpUnit,'(a,i4)')' FuTpt: error= ',iErr
-	IER(1)=iErr
 	RETURN
 867 continue
 	if(LOUDER)write(dumpUnit,*)'Exiting FuTpt: Please correct xFrac'
 	iErr=17
-	ier(1)=17
-	ier(7)=1
 	return
 	END	 ! Subroutine FuTpt()
 
@@ -836,28 +832,21 @@ end	!Subroutine QueryParPureSpead
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! CODED BY AV 06/26/06. cf. DannerGess/SPEADCI paper. IECR08
 ! PURPOSE: DEVELOPING SpeadGamma MODEL. cf.SPEADCI paper IECR, 47:7955 (08).
-	SUBROUTINE FuSpeadGamma(tKelvin,pMPa,xFrac,nComps,LIQ,chemPo,zFactor,ier)
+	SUBROUTINE FuSpeadGamma(tKelvin,pMPa,xFrac,nComps,LIQ,chemPo,zFactor,iErr)
 	USE SpeadParms
 	USE VpDb
 	USE Assoc
 	IMPLICIT DoublePrecision(A-H,O-Z)
-	DIMENSION xFrac(NMX),chemPo(NMX),fugcPure(NMX),fugcL(nmx),rLnGam(nmx),x(nmx),fugc(nmx),ier(12)
+	DIMENSION xFrac(NMX),chemPo(NMX),fugcPure(NMX),fugcL(nmx),rLnGam(nmx),x(nmx),fugc(nmx) 
 	iErr=0
-
-	do index=1,12
-		ier(index)=0
-	enddo      
 	!iEosOpt=5
-   
-		xInf=1e-11
-	do iPure=1,nComps
+   	do iPure=1,nComps
 		sum=0
 		do iComp=1,nComps
-			x(iComp)=xInf
+			x(iComp)=zeroTol*10
 			sum=sum+x(iComp)
 		enddo
 		x(iPure)=1-sum
-		nc=2
  		call FuTpt( tKelvin,pMPa,xFrac,nComps,1,fugcL,rhoMol_cc,zL,aRes,uRes,iErr )	  
 		!call FuTpt(tKelvin,pMPa,x,nc,1,fugcL,zL,ier)
 		fugcPure(iPure)=fugcL(iPure)
@@ -1481,7 +1470,8 @@ end	!Subroutine QueryParPureSpead
 	USE BIPs !NOTE: USE Assoc is not here because no assoc is computed.
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	!PARAMETER(etaStep=2.d0/1000.d0,maxRhoStep=1.d0/etaStep)
-	character*77 errMsg(22)
+	Character*77 errMsg(22)
+	Integer iErrF
 	LOGICAL LOUDER
 	DIMENSION xFrac(NMX),aMixQuadPart(NMX),FUGASSOC(NMX),bRef(NMX),gmol(NMX),chemPo(NMX) !,gmol_old(NMX)
 	data initCall/1/

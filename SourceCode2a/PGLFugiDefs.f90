@@ -15,17 +15,14 @@
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	!C
 	!C
-	SUBROUTINE FUGI( T,P,X,NC,LIQ,FUGC,Z,ier )
+	SUBROUTINE FUGI( T,P,X,NC,LIQ,FUGC,Z,iErr )
 	USE GlobConst
 	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
 	!USE comflash, only:ncomax ! PrLorraine's module for many constants. ncomax needed to dimension properly
 	IMPLICIT DOUBLEPRECISION( A-H,O-Z )
 	DoublePrecision X(*),fugc(*)
-	!DoublePrecision fg(ncomax) ,ft(ncomax) , fp(ncomax) , fx(ncomax,ncomax)	!for PrLorraine
-    integer ier(12) !,ier2(11)
-    ier(1)=0 !required if EOS uses iErr instead of ier().
 	CALL       FugiTP( T,P,X,NC,LIQ,rhoMol_cc,Z,aRes,FUGC,uRes,iErrF )
-	ier(1)=iErrF
+	iErr=iErrF
 	return
 	end
 	SUBROUTINE FugiTP( T,P,X,NC,LIQ,rhoMol_cc,Z,aRes,FUGC,uRes,iErr )
@@ -35,34 +32,26 @@
 	IMPLICIT DOUBLEPRECISION( A-H,O-Z )
 	DoublePrecision X(*),fugc(*)
 	DoublePrecision fg(ncomax) ,ft(ncomax) , fp(ncomax) , fx(ncomax,ncomax)	!for PrLorraine
-    integer ier(12) !,ier2(11)
-    ier(1)=0 !required if EOS uses iErr instead of ier().
 	if(iEosOpt.eq.0)iEosOpt=1
 	if(iEosOpt==1)then
-		call FugiPR( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,ier )
-		iErr=ier(1)
+		call FugiPR( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr )
 	elseif(isESD)then ! iEosOpt=2, 
 		call FugiESD(T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr)
 		!call FugiESD( T,P,X,NC,LIQ,FUGC,Z,ier )
 	!elseif(iEosOpt==4)then	!unused
 	elseif(iEosOpt==3)then
-	    call FugiPRWS( T,P,X,NC,LIQ,FUGC,Z,ier )
-		iErr=ier(1)
+	    call FugiPRWS( T,P,X,NC,LIQ,FUGC,Z,iErr )
 	elseif(iEosOpt.eq.8)then
-		call FuSpeadGamma( T,P,X,NC,LIQ,FUGC,Z,ier )
-		iErr=ier(1)
+		call FuSpeadGamma( T,P,X,NC,LIQ,FUGC,Z,iErr )
 	elseif(isTPT)then ! 
  	    call FuTpt( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr )	  !AUG 10
-	!elseif(iEosOpt.eq.6)then  ! unused
 	elseif(iEosOpt.eq.7)then
 		call FuNRTL( T,P,X,NC,LIQ,FUGC,Z,ier )
 	elseif(isPcSaft)then !iEosOpt=11,13
 		call FugiPcSaft(T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr)
-		if( iErr.ne.0)ier(1)=1
  	    !if(LOUD)print*,'Sorry: PcSaft not available at this time'!call FugiPcSaft(T,P,X,NC,LIQ,FUGC,Z,ier)	 ! Need to define this
 	elseif(iEosOpt.eq.11)then
-		call FugiPrTc( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,ier )	  ! JRE 2020
-		iErr=ier(1)
+		call FugiPrTc( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr )	  ! JRE 2020
 	elseif(iEosOpt.eq.17)then
 		icon=2 ! returns fugc and T,V derivatives. See GetPrLorraine for more options. 
 		ntyp= -1 !vapor. Note: ntyp=0 returns the min fugacity phase.
@@ -81,7 +70,7 @@
 		if(mtyp  ==   3)iErr=iErr+mTyp ! if called with mt = 1/-1 and phase is not found
 	else
 	  if(LOUD)pause 'Error in Fugi: unexpected iEosOpt'
-	  iErr=1
+	  iErr=10
 	endif
 	return
 	end
@@ -97,14 +86,13 @@
 	USE GlobConst !iEosOpt
 	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-    integer ier(12)
-	DIMENSION gmol(NC),FUGC(NC) !,dHkcalMol(NMX),KCSTARp(NMX),IER(12)
+	DIMENSION gmol(NC),FUGC(NC) !,dHkcalMol(NMX),KCSTARp(NMX)
 	DoublePrecision ft(3) , fv(3) , fx(3,3)	!for PrLorraine
 	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
 	COMMON/ETA2/ETA
 	nComps=NC
 	if(iEosOpt==1)then
-		call FuPrVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,IER)
+		call FuPrVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)
 	!elseif(iEosOpt==4)then ! unused for now.
 	elseif(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
 		call FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)
@@ -114,16 +102,14 @@
 		call FuPrTcVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)
 	elseif(isPcSaft)then
 		call FugiPcSaftVtot(NC,tKelvin,vTotCc,gmol,P,Z,aRes,uRes,FUGC,iErr)
-		if( iErr.ne.0)ier(1)=1
 	elseif(iEosOpt==17)then
 		icon=2 ! returns fugc and T,V derivatives. See GetPrLorraine for more options. 
         call FuPrLorraine_TV(icon,iErrPRL,tKelvin,vTotCc,gmol,P,Z, &
      &                 FUGC,ft,fv,fx,uRes,aRes,CvRes_R,CpRes_R,dpdRho_RT)
-		if(iErrPRL.ne.0)ier(1)=1
+		if(iErrPRL.ne.0)iErr=iErrPRL+10
 	else
 		if(LOUD)print*,'FuVtot: undefined iEosOpt=',iEosOpt
     endif
-    if(ier(1).ne.0)iErr=1
 	return
     end
 

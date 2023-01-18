@@ -313,7 +313,6 @@ end	!subroutine ExactEsd
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	DoublePrecision xFrac(NMX),FUGC(NMX) !,chemPoAssoc(nmx)
-	Integer ier(12) 
 	LOGICAL LOUDER
 	!  ND IS THE DEGREE OF POLYMERIZATION OF EACH SPECIES
 	!  eokP IS THE DISPERSE ATTRACTION OVER BOLTZ k FOR PURE SPECIES
@@ -336,7 +335,6 @@ end	!subroutine ExactEsd
 	!LOUDER=.TRUE.
 	if(LOUDER)call QueryParMix(1,checkKij12,iErrBip)
 	if(LOUDER)write(dumpUnit,*)'FugiEsd: Kij(1,2)= ',checkKij12
-	ier(1:6)=0 !vector initialization
 	iErr=0
 	!NOTE: iErrTmin is checked in FuVtot
 	sumx=SUM( xFrac(1:NC) )
@@ -389,7 +387,7 @@ end	!subroutine ExactEsd
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!   Iteration Concluded    !!!!!!!!!!!!!!!!!!!!!!!!!
 	if(eta < 0 .or. eta > 1.9)then
 		if(LOUDER)write(dumpUnit,*) 'FugiESD: eta < 0 or > 1.9 on final iteration. eta=',eta
-		ier(1)=17
+		iErr=17
 		goto 86
 	endif
 	!One last call to get FUGC.
@@ -398,8 +396,7 @@ end	!subroutine ExactEsd
 	rho=eta/bMix
 	rhoMol_cc=rho 
 	IF (rho < 0)THEN
-		ier(5)=1
-        ier(1)=15
+        iErr=15
 		if(LOUDER)write(dumpUnit,31)LIQ
 		GOTO 86
 	ENDIF
@@ -409,17 +406,15 @@ end	!subroutine ExactEsd
 	if(pMPa==0 .and. LOUDER)write(dumpUnit,*)' FugiEsd: P=0? LIQ,P=',LIQ,pMPa
 	!zFactor=P/(rho*Rgas*T)  ! add this to improve precision when computing rho from Z after return.   
 	isZiter=0
-	Call FuEsdVtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErr)
-	if(zFactor.le.0)then
-		ier(1)=11
+	Call FuEsdVtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErrF)
+	if(zFactor < zeroTol)then
+		iErr=11
 		if(LOUDER)write(dumpUnit,*)'FugiEsd: converged Z <= 0. eta,Z=',eta,zFactor
 		goto 86
 	endif
-	if(iErr > 0.or.nIter > itMax-1 .or. eta < 0)then ! if iErr still > 0 on last iteration, then declare error.
-		ier(4)=iErr
+	if(iErrF > 0.or.nIter > itMax-1 .or. eta < 0)then ! if iErr still > 0 on last iteration, then declare error.
+		iErr=iErrF
 		eta=etaBest
-		ier(11)=1
-		ier(1)=11
 	endif
 	FUGC(1:NC)=FUGC(1:NC)-DLOG(zFactor)	 !Must subtract ln(Z) when given Vtot as independent variable.
 	if(LOUDER)write(dumpUnit,'(a,f8.5,e11.4,i3,9f8.3)')' FugiEsd: eta,CHNG,niter,FUGC',eta,CHNG,niter,(FUGC(i),i=1,NC) 
@@ -429,11 +424,10 @@ end	!subroutine ExactEsd
 31	FORMAT(1X,'LIQ=',1X,I1,2X,',','WARNING! rho -VE IN FUGI')
 	IF(NITER.GE.ITMAX)THEN
 		if(LOUDER)write(dumpUnit,*)'TOO MANY Z ITERATIONS'
-		ier(6)=1
-        ier(1)=16
+        iErr=16
 	END IF
-	IF(ier(4)==1.and.LOUDER) write(dumpUnit,*)'ERROR IN FuEsdVtot'
-	if(ier(1) < 10)ier(1)=11
+	IF(iErr > 10 .and.LOUDER) write(dumpUnit,*)'ERROR IN FuEsdVtot'
+	if(iErr < 10)iErr=11
 	initial=0
 	RETURN
 	END	!Subroutine FugiESD()
@@ -463,7 +457,6 @@ end	!subroutine ExactEsd
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	DoublePrecision gmol(NMX),xFrac(NMX),FUGC(NMX),k10,k2,Zm !,KCSTARp(NMX),KVE(NMX)
-	!integer iera(12) !IER(12),
 	DoublePrecision YQVIJ(NMX,NMX),YQVI(NMX),Y(NMX,NMX),EOK(NMX,NMX)
 	DoublePrecision CVI(NMX),CVIJ(NMX,NMX),QV(NMX,NMX),fugAssoc(NMX)
 	Integer initCall
