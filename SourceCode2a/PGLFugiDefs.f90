@@ -1,21 +1,5 @@
-	!C
-	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	!C
-	!C      PURPOSE --- THIS ROUTINE CALLS THE APPROPRIATE ROUTINE FOR COMPUTING
-	!C                  FUGACITY COEFFS.  CHOICE IS DICTATED BY iEos FROM GlobConst-eosopt
-	!C                  iEos = 1 = PR 1976 
-	!C                  iEos = 2 = PR SV Wong-Sandler (aicheJ, 38:677, 92)
-	!C                  iEos = 3 = ESD
-	!C                  	
-	!C
-	!C      CODED BY:   JRE, 7/8/99
-	!C
-	!C
-	!C
-	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	!C
-	!C
 	SUBROUTINE FUGI( T,P,X,NC,LIQ,FUGC,Z,iErr )
+	! This is a dummy routine to patch legacy code through to newer FugiTP(). 
 	USE GlobConst
 	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
 	!USE comflash, only:ncomax ! PrLorraine's module for many constants. ncomax needed to dimension properly
@@ -25,6 +9,15 @@
 	iErr=iErrF
 	return
 	end
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!	PURPOSE:	CALL THE APPROPRIATE ROUTINE FOR COMPUTING PROPERTIES GIVEN T,P.   
+!	Module Use:
+!		iEosOpt:	(GlobConst) indicates the EOS option (cf.Module DLLConst)
+!	Input:
+!		LIQ:		Phase/property indicator
+!			2=>vapor  including zFactor and aRes only. 0=>vapor  also including uRes and FUGC. -2 vapor  with Z,U,A,FUGC plus CvRes, CpRes, (dP/dRho)/(RT) 	 	
+!			3=>liquid including zFactor and aRes only. 1=>liquid also including uRes and FUGC. -1 liquid with Z,U,A,FUGC plus CvRes, CpRes, (dP/dRho)/(RT) 	 	
+!                  	
 	SUBROUTINE FugiTP( T,P,X,NC,LIQ,rhoMol_cc,Z,aRes,FUGC,uRes,iErr )
 	USE GlobConst
 	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
@@ -35,10 +28,8 @@
 	if(iEosOpt.eq.0)iEosOpt=1
 	if(iEosOpt==1)then
 		call FugiPR( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr )
-	elseif(isESD)then ! iEosOpt=2, 
+	elseif(isESD)then ! iEosOpt=2,4,12,13 
 		call FugiESD(T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr)
-		!call FugiESD( T,P,X,NC,LIQ,FUGC,Z,ier )
-	!elseif(iEosOpt==4)then	!unused
 	elseif(iEosOpt==3)then
 	    call FugiPRWS( T,P,X,NC,LIQ,FUGC,Z,iErr )
 	elseif(iEosOpt.eq.8)then
@@ -73,7 +64,7 @@
 	  iErr=10
 	endif
 	return
-	end
+	end	!SUBROUTINE FugiTP() 
 
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
