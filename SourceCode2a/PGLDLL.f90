@@ -15,7 +15,7 @@ double Precision function FORTRAN_DLL1(i1, d1)
 
   ! Expose subroutine FORTRAN_Dll1 to users of this DLL
   !
-  !MS$ATTRIBUTES DLLEXPORT::FORTRAN_DLL1
+  !DEC$ATTRIBUTES DLLEXPORT::FORTRAN_DLL1
 
   ! Variables
     FORTRAN_DLL1 = i1*d1
@@ -157,7 +157,7 @@ function CalculateProperty(ieos, casrn, prp_id, var1, var2, ierr)
     double Precision CalculateProperty
     integer ieos, casrn, prp_id, ierr
     double Precision var1, var2
-  !MS$ ATTRIBUTES DLLEXPORT::CalculateProperty
+  !DEC$ ATTRIBUTES DLLEXPORT::CalculateProperty
     call CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     CalculateProperty=res
     return
@@ -332,7 +332,7 @@ function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr
     DoublePrecision var1, var2, var3, res
     !DoublePrecision xFrac(NMX),FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
 !	COMMON/eta/etaL,etaV,ZL,ZV
-  !MS$ATTRIBUTES DLLEXPORT::CalculateProperty2
+  !DEC$ATTRIBUTES DLLEXPORT::CalculateProperty2
     call CalculateProperty2local(ieos, casrn1, casrn2, prp_id, t, p, x, res, ierr)
     CalculateProperty2=res
     return
@@ -341,7 +341,7 @@ end function CalculateProperty2
 integer function Activate(hello)
     use DllConst
     character(255) hello
-    !MS$ATTRIBUTES DLLEXPORT::Activate
+    !DEC$ATTRIBUTES DLLEXPORT::Activate
     oldRN1=0
     oldRN2=0
     oldRN3=0
@@ -354,7 +354,7 @@ integer function QUERYMODEL(no, model_type, level, modelname)
     use GlobConst
     integer no, model_type, level
     character(255) modelname
-    !MS$ATTRIBUTES DLLEXPORT::QUERYMODEL
+    !DEC$ATTRIBUTES DLLEXPORT::QUERYMODEL
     QUERYMODEL=0
     if (no.eq.1) then
         model_type=1
@@ -520,7 +520,7 @@ integer function Calculate2(casrn1, casrn2, modelid, propertyid, t, p, x, res, u
 !double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
     integer modelid, casrn1, casrn2, propertyid, ierr
     double Precision t, p, x, res, uncert
-    !MS$ ATTRIBUTES DLLEXPORT::Calculate2
+    !DEC$ ATTRIBUTES DLLEXPORT::Calculate2
     if (x.le.0) x=0.000001
     if (x.ge.1) x=0.999999
     call CalculateProperty2local(modelid, casrn1, casrn2, propertyid, t, p, x, res, ierr)
@@ -534,7 +534,7 @@ integer function Calculate3(casrn1, casrn2, casrn3, modelid, propertyid, t, p, x
 !double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
     integer modelid, casrn1, casrn2, casrn3, propertyid, ierr
     double Precision t, p, x1, x2, res, uncert
-    !MS$ ATTRIBUTES DLLEXPORT::Calculate3
+    !DEC$ ATTRIBUTES DLLEXPORT::Calculate3
     call CalculateProperty3local(modelid, casrn1, casrn2, casrn3, propertyid, t, p, x1, x2, res, ierr)
     uncert=0
     Calculate2=ierr
@@ -548,7 +548,7 @@ integer function Calculate(casrn, modelid, propertyid, t, p, x, res, uncert)
 !double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
     integer modelid, casrn(255), propertyid !, ierr
     double Precision t, p, x(255), res, uncert
-    !MS$ ATTRIBUTES DLLEXPORT::Calculate
+    !DEC$ ATTRIBUTES DLLEXPORT::Calculate
     res=0
     uncert=0
     Calculate=1
@@ -560,7 +560,7 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
 !double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
     integer modelid, casrn1, propertyid, localprpid, ierr
     double Precision t, p, res, uncert
-    !MS$ ATTRIBUTES DLLEXPORT::Calculate1
+    !DEC$ ATTRIBUTES DLLEXPORT::Calculate1
     localprpid = 0
     if (propertyid.eq.1) localprpid=3
     if (propertyid.eq.2) localprpid=-3
@@ -580,28 +580,28 @@ end function Calculate1
 
 integer function FIND_COMP(name)
     character(255) name
-    !MS$ ATTRIBUTES DLLEXPORT::FIND_COMP
+    !DEC$ ATTRIBUTES DLLEXPORT::FIND_COMP
     FIND_COMP=0
     return
 end function FIND_COMP
 
 integer function SUPPORTS_COMP(modelid, id1)
     integer modelid, id1
-    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_COMP
+    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_COMP
     SUPPORTS_COMP=0
     return
 end function SUPPORTS_COMP
 
 integer function SUPPORTS_BIN(modelid, id1, id2)
     integer modelid, id1, id2
-    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_BIN
+    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_BIN
     SUPPORTS_BIN=0
     return
 end function SUPPORTS_BIN
 
 integer function SUPPORTS_PRP1(modelid, propertyid)
     integer modelid, propertyid
-    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP1
+    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP1
     SUPPORTS_PRP1=0
     if (propertyid==1) SUPPORTS_PRP1=1
     if (propertyid==2) SUPPORTS_PRP1=1
@@ -613,7 +613,7 @@ end function SUPPORTS_PRP1
 
 integer function SUPPORTS_PRP2(modelid, propertyid)
     integer modelid, propertyid
-    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP2
+    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP2
     SUPPORTS_PRP2=0
     if (propertyid==4) SUPPORTS_PRP2=1
     if (propertyid==5) SUPPORTS_PRP2=1
@@ -629,14 +629,14 @@ end function SUPPORTS_PRP2
 
 integer function SUPPORTS_PRP3(modelid, propertyid)
     integer modelid, propertyid
-    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP3
+    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP3
     SUPPORTS_PRP3=0
     return
 end function SUPPORTS_PRP3
 
 integer function SUPPORTS_PRP4(modelid, propertyid)
     integer modelid, propertyid
-    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP4
+    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP4
     SUPPORTS_PRP4=0
     return
 end function SUPPORTS_PRP4
@@ -647,7 +647,7 @@ integer function GETNPAR(modelid)
     integer nPar
     integer QueryNparPure
     integer QueryNparMix
-    !MS$ ATTRIBUTES DLLEXPORT::GETNPAR
+    !DEC$ ATTRIBUTES DLLEXPORT::GETNPAR
     iEosOpt=modelid
     if (oldRn1.gt.0.and.oldRn2.eq.0) then
         nPar=QueryNparPure()
@@ -666,7 +666,7 @@ integer function GETPAR(n, retvalue)
     integer n
     double precision retvalue
     integer res
-    !MS$ ATTRIBUTES DLLEXPORT::GETPAR
+    !DEC$ ATTRIBUTES DLLEXPORT::GETPAR
     if (oldRn1.gt.0.and.oldRn2.eq.0) then
         call QueryParPure(1,n,retvalue,res)
     elseif (oldRn1.gt.0) then
@@ -684,7 +684,7 @@ integer function SETPAR(n, newvalue)
     integer n
     double precision newvalue
     integer res
-    !MS$ ATTRIBUTES DLLEXPORT::SETPAR
+    !DEC$ ATTRIBUTES DLLEXPORT::SETPAR
     if (oldRn1.gt.0.and.oldRn2.eq.0) then
         call SetParPure(1, n, newvalue, res)
     elseif (oldRn1.gt.0) then
@@ -702,7 +702,7 @@ integer function INITIALIZE_MODEL(modelid, Rn1, Rn2, Rn3)
     use DllConst
 	IMPLICIT double Precision(A-H,K,O-Z)
     integer modelid, Rn1, Rn2, Rn3
-    !MS$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
+    !DEC$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
     integer ieos, casrn1, casrn2, casrn3, ierr
     INTEGER localCas(NMX)
 	CHARACTER*77 errMsgPas
@@ -1017,7 +1017,7 @@ end subroutine CalculateProperty3local
 integer function SETSTRING(tag, value)
 	USE GlobConst
     character*255 tag, value !, local
-    !MS$ ATTRIBUTES DLLEXPORT::SETSTRING
+    !DEC$ ATTRIBUTES DLLEXPORT::SETSTRING
     if (tag(1:8).eq.'LOCATION') then
         do i1=1,255
             if (value(i1:i1).eq.'|') then
