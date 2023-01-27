@@ -500,7 +500,6 @@ subroutine QueryParPureSpead(iComp,iParm,value,iErr)
 	! nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes)
 	! zRefCoeff(nmx,5),a1Coeff(nmx,5),a2Coeff(nmx,5),vMolecNm3(nmx),tKmin(nmx),rMw(nmx)
 	iErr=0
-    value=zRefCoeff(iComp,i)
 	do i=1,3
 		if(iParm==i)value=zRefCoeff(iComp,i)
 		if(iParm==i+3)value=a1Coeff(iComp,i)
