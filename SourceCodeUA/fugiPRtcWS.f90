@@ -86,7 +86,7 @@
 	totMol=sum(gMol)
 	DO iComp = 1, NC
 		aCrit = OMA*Rgas*Rgas*Tc(iComp)*Tc(iComp)/Pc(iComp)
-		X(i)=gMol(i)/totMol
+		X(iComp)=gMol(iComp)/totMol
 		!sTmp = 0.37464 + 1.54226*ACEN(iComp) - 0.26993*ACEN(iComp)*ACEN(iComp)
 		!DLALDT(iComp)= -sTmp*SQRT(Tr/ ALPHA) ! dAlp/dT = 2*sqrt(alp)*S*(-0.5/sqrt(Tr)) = -sqrt(alp)*S/sqrt(Tr); (T/alp)*dAlp/dT= -S*sqrt(Tr/Alp)	 EL2ed Eq.7.18,8.35
 		Tr = tKelvin / Tc(iComp)
@@ -112,8 +112,8 @@
 		!c  note: A(i) = SQRT(a*p/(RT)^2)
 		!c			B(i) = bP/(RT)
 		Pr= pMPa/ Pc(iComp)
-		A(I) =  SQRT( ALPHA*OMA*Pr ) / Tr
-		B(I) = OMB * Pr / Tr
+		A(iComp) =  SQRT( ALPHA*OMA*Pr ) / Tr
+		B(iComp) = OMB * Pr / Tr
 	enddo
 
 030   CONTINUE

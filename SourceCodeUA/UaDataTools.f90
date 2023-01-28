@@ -181,7 +181,8 @@ END MODULE VpDb
 !		READ (40,ERR=861)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 		READ (40,'(a188)',ioStat=ioErr)dumString
 		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
-			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I),tCode,pCode,vCode,form,NAMED(I)
+			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
+		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
 		CrIndex(IDnum(i))=i
 		if(ioErr.and.LOUD)write(dumpUnit,*)'GetCrit: error reading ParmsCrit.txt. line=',i
 		if(i==1.and.LOUD)write(dumpUnit,102)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
