@@ -177,6 +177,9 @@ END MODULE Assoc
 	LOUDER=LOUD	! from GlobConst
 	!LOUDER=LOUDERWert
 	!LOUDER = .TRUE. ! for local debugging.
+	FC=0 !initialize
+	FA=0
+	FD=0
 	picard=0.83D0
 	Ftol=1.D-6
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
