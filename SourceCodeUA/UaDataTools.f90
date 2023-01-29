@@ -161,7 +161,8 @@ END MODULE VpDb
 	USE CritParmsDb 
 	IMPLICIT DoublePrecision(A-H,O-Z)
 	CHARACTER*4 tCode,pCode,vCode
-	character readText*132,dumText*77,form*12 
+	character*132 readText,dumText
+	character*12  form 
 	character*251 inFile,dumString
 	iErrCode=0
 	CrIndex=ndb ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
@@ -171,8 +172,8 @@ END MODULE VpDb
 	OPEN(40,FILE=inFile)
 	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
 	I=0
-!	READ(40,ERR=861)NDECK1
-	READ(40,*,ERR=861)NDECK1
+	READ(40,'(a251)',ERR=861)dumString
+	READ(dumString,*,ERR=861)NDECK1
 	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetCrit: more data in file than allocated'
 !	open(61,file='c:\spead\CalcEos\ParmsCrit.txt')
 	DO I=1,NDECK1

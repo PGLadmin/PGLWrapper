@@ -40,9 +40,9 @@
 	DEBUG=.TRUE.
 	DEBUG=.FALSE. ! read input files from c:\Projects\...\input dir.
     LOUD = .TRUE.
-    LOUD = .FALSE.
+    !LOUD = .FALSE.
 	CheckDLL=.TRUE.
-	CheckDLL=.FALSE.
+	!CheckDLL=.FALSE.
 	dumpUnit=6
 	if(CheckDLL)then
 		LOUD=.TRUE. ! Force this, just in case forgotten above.
