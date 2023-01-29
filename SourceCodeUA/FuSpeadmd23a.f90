@@ -1573,6 +1573,8 @@ end	!Subroutine QueryParPureSpead
     aAssoc=0
     uAssoc=0
     if(iErr < 11)call Wertheim(isZiter,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
+if(LOUDER)write(dumpUnit,601) ' FuTptVtot: Wertheim gave z,a,u,lnPhi=',zAssoc,aAssoc,uAssoc,fugAssoc(1:nComps)
+601 format(1x,a,8E12.4)
 !	if( ABS(zAssoc) < 1e-11 )write(dumpUnit,*)'zAssoc ~ 0???'		 !for debugging
 	IF(iErrCode>10)then
 		!iErr=iErrCode

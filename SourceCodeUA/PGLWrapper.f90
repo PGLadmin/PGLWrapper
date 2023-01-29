@@ -37,6 +37,7 @@
 	masterDir=TRIM(curDir)
 	outFile=TRIM(masterDir)//'\output.txt' ! // is the concatenation operator
 	PGLinputDir='c:\PGLWrapper\input'
+	!PGLinputDir='C:\Soft\myPGLwrapper\PGLwrapper\input'
 	DEBUG=.TRUE.
 	DEBUG=.FALSE. ! read input files from c:\Projects\...\input dir.
     LOUD = .TRUE.
