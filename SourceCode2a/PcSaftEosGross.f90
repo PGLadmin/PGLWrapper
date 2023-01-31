@@ -11149,7 +11149,7 @@ end subroutine jacobi_eigenvalue
 subroutine GetPcSaft(nComps,casrn,iErr)
 	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	!use input_output, only: read_problem_definition
-	use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos, PGLinputDir !JRE LOUD=.FALSE. to silence I/O feedback.
+	use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos, PGLinputDir,pi,avoNum,Tc,tKmin !JRE LOUD=.FALSE. to silence I/O feedback.
 	use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
 	use PARAMETERS, only: dp, nsite
 	use eos_constants
@@ -11238,15 +11238,16 @@ subroutine GetPcSaft(nComps,casrn,iErr)
                     parameter_assigned = .true.
 					if(LOUD)print*,'Got it! iComp,compna=',i,'  ',TRIM(alias)
 					if(LOUD)write(*,*)r_mm,r_mseg,r_sigma,r_epsilon_k, r_dipole_moment,r_quadru_moment, TRIM(rest_of_line)
-					bVolCc_mol(i)=r_mseg*(r_sigma/10)**3*3.14159265D0/6*602.22 !bVol just needs to be close for eta initialization etc.
+					bVolCc_mol(i)=r_mseg*(r_sigma/10)**3*pi/avoNum !bVol just needs to be close for eta initialization etc.
             end if
-        end do
+        enddo !while .NOT.parameter_assigned
         close (53)
         if (.NOT.parameter_assigned) then
             iErr=iErr+1  !count up the number of compounds not found.
         else 
             compna_input(i) = alias   !Only compna_input is stored from this part. 
         endif
+		tKmin(i)=0.3d0*Tc(i) ! JRE is not aware of any specified guideline for PC-SAFT, so I'm just making something up here.
     enddo !i=1,nComps
     if( iErr.ne.0 )return
 	!-----------------------------------------------------------------------------

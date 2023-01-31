@@ -12,7 +12,11 @@ MODULE GlobConst
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
 	!integer :: nComps, nsTypesTot,iTPT,iFlagFF,nNormGrid
 
-	DoublePrecision :: Tc(nmx), Pc(nmx), ACEN(nmx), ZC(nmx), rMw(nmx), bVolCc_mol(nmx),solParm(nmx),vLiq(nmx)
+	DoublePrecision :: Tc(nmx), Pc(nmx), ACEN(nmx), ZC(nmx), rMw(nmx)
+	DoublePrecision bVolCc_mol(nmx)	!vdW molar volume of molecule. 
+	DoublePrecision solParm(nmx)    !solubility parameter in (J/cm3)^0.5=MPa^0.5
+	DoublePrecision vLiq(nmx)		!liquid molar volume in cm3/mol
+	DoublePrecision tKmin(nmx)		!model's minimum recommended temperature, especially for P^vp. Warning because some applications might violate, e.g., SLE.
 	DoublePrecision CpRes_R, CvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)	= Z+rho*dZ/dRho
 	character*234 masterDir,PGLinputDir
 	character*30 NAME(nmx)
@@ -22,7 +26,7 @@ MODULE GlobConst
 	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
 	DoublePrecision etaPass !TODO:Consider if rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).
     DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS
-	DoublePrecision etaPure(nmx) !store eta for each compound at P=0 and Tmin(K). 
+	DoublePrecision etaPure(nmx) !store eta for each compound at P=0.1MPa and tKmin(K). 
 	Character*15 EosName(18) 
 	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
 	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
@@ -180,6 +184,11 @@ END MODULE Assoc
 	FC=0 !initialize
 	FA=0
 	FD=0
+    zAssoc=0
+    aAssoc=0
+    uAssoc=0
+	rLnPhiAssoc(1:nComps)=0
+    iErr=0  
 	picard=0.83D0
 	Ftol=1.D-6
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
@@ -191,11 +200,6 @@ END MODULE Assoc
 		if(LOUDER)write(dumpUnit,601)TRIM(errMsg(iErr))
 		return
 	endif
-	zAssoc=0
-	aAssoc=0
-	uAssoc=0
-	rLnPhiAssoc(1:nComps)=0
-    iErr=0  
 610	format(1x,2i5,i12,i8,i11,i8,2E14.4)
 	if(LOUDER)write(dumpUnit,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
 	!XA=1  !				   ! initializing the entire array is slow.
@@ -468,6 +472,7 @@ END MODULE Assoc
 	zAssoc=0
 	aAssoc=0
 	uAssoc=0
+	rLnPhiAssoc(1:nComps)=0
     iErr=0  
 	!Note: 1st approximation assumes equal donors and acceptors on each site.
 	nSitesTot=0

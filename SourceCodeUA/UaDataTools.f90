@@ -1,10 +1,10 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE CritParmsDb
 	Integer ndb
 	Parameter (ndb=3000)
 	character*30 NAMED(ndb)	!LoadCrit() loads ParmsCrit database.
 	Integer IDnum(ndb),CrIndex(9999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
-	DoublePrecision TCD(ndb),PCD(ndb),ACEND(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) ! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
+	DoublePrecision, STATIC:: TCD(ndb),PCD(ndb),ACEND(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) ! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
 END MODULE CritParmsDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -160,13 +160,13 @@ END MODULE VpDb
 	USE GlobConst
 	USE CritParmsDb 
 	IMPLICIT DoublePrecision(A-H,O-Z)
-	CHARACTER*4 tCode,pCode,vCode
+	!CHARACTER*4 tCode,pCode,vCode
 	character*132 readText,dumText
 	character*12  form 
 	character*251 inFile,dumString
 	iErrCode=0
 	CrIndex=ndb ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
-	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
+	inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
 	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: CritFile=',TRIM(inFile)
 !	OPEN(40,FILE=inFile,FORM='BINARY')
 	OPEN(40,FILE=inFile)
@@ -180,24 +180,32 @@ END MODULE VpDb
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
 		!if(i.eq.691)write(dumpUnit,*)
 !		READ (40,ERR=861)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
-		READ (40,'(a188)',ioStat=ioErr)dumString
-		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
-			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
-		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
+		READ (40,'(a222)',ioStat=ioErr)dumString
+!		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
+!			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
+!		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
+		READ (dumString,*)IDnum(I),TCD(I),PcTemp,ACEND(I),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I),solParmD(i),rhoG_cc,rMwD(i)
+!1	190.56	4.599	0.0115	0.1473	0.9075	1.8243	-3.5604	0.2894	85	 74828	11.62	0.4224	16.04
+		PCD(I)=PcTemp !/10
+		if(rhoG_cc < zeroTol)rhoG_cc=1
+		vLiqD(i)=rMwD(i)/rhoG_cc
 		CrIndex(IDnum(i))=i
-		if(ioErr.and.LOUD)write(dumpUnit,*)'GetCrit: error reading ParmsCrit.txt. line=',i
-		if(i==1.and.LOUD)write(dumpUnit,102)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
+		if(ioErr.and.LOUD)write(dumpUnit,*)'LoadCritParmsDb: error reading ParmsCrit.txt. line=',i
+		if(i>1.and.LOUD)write(dumpUnit,602)IDnum(I),idCasDb(I),TCD(I),PCD(I),ZCD(I),ACEND(I),solParmD(I),vLiqD(i),rMwD(i) !&
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
 
 100	FORMAT(I5,2X,A20,2X,F7.2,2X,F8.4,2X,F7.4,2X,F7.4)
 101	format(i5,11f10.0,i10,3a4,1x,a12,a33)
 102	format(i5,11f10.3,i10,3a4,1x,a12,a33)
+602	format(i5,i11,11f10.3,i10,3a4,1x,a12,a33)
 599	FORMAT(3(1X,i5,1X,A20))
 	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor       Cas#  tC  pC  vC  FORM        Name 
 	CLOSE(40)
 	!if((nDeck1).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
-	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Trying ParmsCrAdd.'
+	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Skipping ParmsCrAdd.'
+	nDeckDb=NDECK1
+	return
 		inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
 		OPEN(40,FILE=inFile)
 	!ENDIF
@@ -410,7 +418,7 @@ END MODULE VpDb
     end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	SUBROUTINE GetVp(NC,ID,iErrCode) !returns VpCoeffs(NC,5)
+	SUBROUTINE GetVp(NC,ID,iErrCode) !returns VpCoeffs(NC,5) in USEd VpDb
 	!	PROGRAMMED BY: AV 06/22/06
 	!THIS SUBROUTINE GIVES VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
 	!INPUT:
@@ -563,7 +571,7 @@ END MODULE VpDb
 	enddo
 	if(id(1).eq.0)then
 		ier=1
-		if(LOUD)write(dumpUnit,*)'Did not find idcc(1)=',idcc(1)
+		if(LOUD)write(dumpUnit,*)'GetCrit:Did not find idcc(1)=',idcc(1)
 		errMsgPas=errMsg(ier)
 		return
 	endif

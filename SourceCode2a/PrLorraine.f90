@@ -7078,7 +7078,8 @@ end module
 !c  JRE20210513: Restricting GlobConst with "only" avoids conflicts with other GlobConst variables (e.g. Rgas).
 !c               FYI, SetNewEos is a function "contain"ed in GlobConst.
 Subroutine GetPrLorraine(nComps,iErr)
-	USE GlobConst, only:SetNewEos,PGLInputDir,LOUD,bVolCc_mol,zeroTol,etaMax,ID,iEosOpt
+	USE GlobConst, only:SetNewEos,PGLInputDir,LOUD,bVolCc_mol,zeroTol,etaMax,ID,iEosOpt,tKmin
+	!USE PrTcParms, only: ! so we can call GetPrTc and set tKmin
 	USE comflash
     integer :: i,fluids(ncomax),err0,ierr
 	LOGICAL LOUDER
@@ -7086,6 +7087,7 @@ Subroutine GetPrLorraine(nComps,iErr)
 	LOUDER=.TRUE.
 	!LOUDER=.FALSE.
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or isPcSaft.
+	call GetPrTc(nComps,iErrGet) ! sets tKmin, as well as some other parameters that PrLorraine doesn't really use. 
 	tmemc = 0.0d0 !Array that stores old temperatures in memory in order to	save some time
 	itempc = 0    !Both of these need to be initialized to wipe out values stored for previous compounds.
 	nco=nComps ! copies nComps from GlobConst to comflash

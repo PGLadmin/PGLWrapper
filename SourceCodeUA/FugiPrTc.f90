@@ -3,7 +3,7 @@ MODULE PrTcParms
 	USE GlobConst
 	USE BIPs
 	USE PREosParms !OMA,OMB, ...
-	DoublePrecision zRa(nmx),cVolCc_mol(nmx),alphaL(nmx),alphaM(nmx),alphaN(nmx),TminK(nmx)
+	DoublePrecision zRa(nmx),cVolCc_mol(nmx),alphaL(nmx),alphaM(nmx),alphaN(nmx) !,TminK(nmx)
 	DoublePrecision Tcj(nmx),Pcj(nmx),acenj(nmx)
 END MODULE PrTcParms
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -55,7 +55,7 @@ subroutine GetPrTc(nComps,iErrCode)
 			if(ioErr)write(dumpUnit,*)'GetPrTc: i,j,ioErr,String: ',iComp,jComp,ioErr,TRIM(dumString)
 
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!  NOTE!  Jaubert replaces Tc,Pc,acen with his values!!!      !!!!!!!!!!!!!!!!!
-			read(dumString,*,ioStat=ioErr)idBase,Tcj(iComp),PcBar,acenj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),zRa(iComp),TminK(iComp)
+			read(dumString,*,ioStat=ioErr)idBase,Tcj(iComp),PcBar,acenj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),zRa(iComp),tKmin(iComp)
 			!if( TminK(iComp) < 50.and.LOUD) write(dumpUnit,*)TRIM(dumString)
 			!if( TminK(iComp) < 50.and.LOUD)write(dumpUnit,*)'GetPrTc: Warning 50>Tmin=',TminK(iComp)
 			if(cVolCc_mol(iComp)==86)cVolCc_mol(iComp)=0
@@ -65,7 +65,7 @@ subroutine GetPrTc(nComps,iErrCode)
 			IF(idBase==id(iComp))THEN
 				iGotIt=1  !this will kick us to the next component
 				bVolCc_mol(iComp)=OMB*Rgas*TCj(iComp)/PCj(iComp)-cVolCc_mol(iComp)
-				if(LOUDER)write(dumpUnit,'(i7,5f13.4)')ID(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),TminK(iComp)
+				if(LOUDER)write(dumpUnit,'(i7,5f13.4)')ID(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),tKmin(iComp)
 				if(LOUDER)write(dumpUnit,'(a,5f13.4)')' Jaubert Tc,Pc,acen,bVol= ', Tcj(iComp),Pcj(iComp),acenj(iComp),bVolCc_mol(iComp)
 				if(bVolCc_mol(iComp) < 1)then
 					iErrCode=8686
@@ -261,7 +261,7 @@ end	!Subroutine SetParPurePrTc
 	do iComp = 1,NC
 		if(PCj(iComp)==0)then
 			iErrZ=11
-			if(LOUD)write(dumpUnit,'(a,F7.2,5F8.3)')' FuPrTcVtot: nonsense input. Tc,Pc,L,M,N,c: ',TCj(iComp),PCj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),TminK(iComp)
+			if(LOUD)write(dumpUnit,'(a,F7.2,5F8.3)')' FuPrTcVtot: nonsense input. Tc,Pc,L,M,N,c: ',TCj(iComp),PCj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),tKmin(iComp)
 			cycle
 		endif
 		if(Tcj(iComp) < TcVolatile)then
@@ -295,9 +295,9 @@ end	!Subroutine SetParPurePrTc
 		bMix=bMix+xFrac(iComp)*bVolCc_mol(iComp)
 		FUGC(iComp)=0 !initial to zero for isZiter=1.
 	enddo
-	if( tKelvin < TminK(iVolatile) )iErrTmin=1
+	if( tKelvin < tKmin(iVolatile) )iErrTmin=1
 	if(iErrTmin.ne.0)then
-		if(LOUD.and.initCall)write(dumpUnit,'(a,5f8.2)' )' FuVtot: T,Tmin(i)',tKelvin,( TminK(i),i=1,NC)
+		if(LOUD.and.initCall)write(dumpUnit,'(a,5f8.2)' )' FuVtot: T,Tmin(i)',tKelvin,( tKmin(i),i=1,NC)
 		iErrZ=5
 	endif
 	if(iErrZ>10)return

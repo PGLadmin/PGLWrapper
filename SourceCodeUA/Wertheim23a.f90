@@ -13,11 +13,12 @@
 	DoublePrecision xaOld(nmx,maxTypes),xdOld(nmx,maxTypes) !,alphAD(nmx,maxTypes),alphDA(nmx,maxTypes)
     DoublePrecision rdfContact,dAlpha,eta
     DoublePrecision tKelvin,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij
-    !DoublePrecision alphADii,alphDAii,alphCCii,dAlphADii,dAlphDAii,dAlphCCii
     DoublePrecision rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc	!dimension FAsolv(nmx,maxTypes),FDsolv(nmx,maxTypes),deltaAlphaA(nmx,maxTypes),deltaAlphaD(nmx,maxTypes) ! solvation factors: e.g. FAsolv = sum(xj*Ndj*XDj*alphADij) = (-1+1/XAi) ~ sqrt(alphaii)*Fassoc
 	data initCall/1/
 	LouderWert=LOUD
 	!LouderWert=.TRUE.
+	LOUDER=LouderWert
+	!LOUDER=.TRUE.
 
 	! NDi		= THE DEGREE OF POLYMERIZATION OF COMPO i
 	! fAssoc	= THE CHARACTERISTIC ASSOCIATION = 1/ralphi(1/XAi-1)
@@ -52,7 +53,10 @@
 	sumx=SUM( xFrac(1:nComps) )
 	if( ABS(sumx-1) > zeroTol .and. sumx > zeroTol)xFrac(1:nComps)=xFrac(1:nComps)/sumx 
 	bVolMix=SUM( xFrac(1:nComps)*bVolCc_mol(1:nComps) )
-	!sumx=0
+    zAssoc=0 !initialize to zero as base assumption.
+	aAssoc=0
+	uAssoc=0
+	rLnPhiAssoc(1:nComps)=0
 	nSitesTot=0
 	nAccTot=0
 	nDonTot=0
@@ -77,9 +81,6 @@
 		nAccTot=nAccTot+nAccComp
 		nDonTot=nDonTot+nDonComp
 	enddo
-    zAssoc=0 !initialize to zero as base assumption.
-    aAssoc=0
-    uAssoc=0
 	HyBond=.false. ! then check if any prospect for HyBonding, association or solvation 
 	if(nDonTot*nAccTot > 0)HyBond=.true.
 	if(.not.HyBond)then
@@ -97,25 +98,25 @@
 	if(bVolMix.le.0)iErrCode=1
 	if(sumx.le.0)iErrCode=1
 	if(iErrCode==1)then
-		if(LouderWert)write(dumpUnit,'(a,f10.2)')' Wertheim: bVolMixCc_mol= ',bVolMix
-		if(LouderWert)write(dumpUnit,'(a,1PE11.4,a,0Pf7.2,a,f7.4)')' eta=',eta,' tKelvin=',tKelvin,' sumx=',sumx
-		if(LouderWert)write(dumpUnit,'(a,11F8.4)')' vMolecNm3=',(vMolecNm3(iComp),iComp=1,nComps)
+		if(LOUDER)write(dumpUnit,'(a,f10.2)')' Wertheim: bVolMixCc_mol= ',bVolMix
+		if(LOUDER)write(dumpUnit,'(a,1PE11.4,a,0Pf7.2,a,f7.4)')' eta=',eta,' tKelvin=',tKelvin,' sumx=',sumx
+		if(LOUDER)write(dumpUnit,610)' vMolecNm3=',(vMolecNm3(iComp),iComp=1,nComps)
 		!call BeepMsg(errMsg(iErrCode))
-		if(LouderWert)write(dumpUnit,*)errMsg(iErrCode)
-		if(LouderWert)write(dumpUnit,*)
+		if(LOUDER)write(dumpUnit,*)errMsg(iErrCode)
+		if(LOUDER)write(dumpUnit,*)
 	endif
 	if(iErrCode.ne.0)return !sorry for bad return
+610	format(1x,a,8E12.4)
 	
 	rhoMol_cc=eta/bVolMix
-	!write(dumpUnit,*) 'Calling MEM1'
-	if(LouderWert)call MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErrMEM1 )! XA,XD USE Assoc
-	if(LouderWert)write(dumpUnit,'(a,8f9.4)')' Wertheim-MEM1:eta,fAssoc,zAssoc,aAssoc,uAssoc',eta,fAssoc,zAssoc,aAssoc,uAssoc
-	!write(dumpUnit,*) 'Results from MEM1'
-	!if(LouderWert.and.initCall)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
-	if(LouderWert.and.initCall)write(dumpUnit,*) 'Wertheim: MEM1 estimate. Calling MEM2'
+	!write(dumpUnit,*) 'Wertheim: Calling MEM1'
+	if(LOUDER)call MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErrMEM1 )! XA,XD USE Assoc
+	if(LOUDER)write(dumpUnit,'(a,8f9.4)')' Wertheim-MEM1:eta,fAssoc,zAssoc,aAssoc,uAssoc',eta,fAssoc,zAssoc,aAssoc,uAssoc
+	!write(dumpUnit,*) 'Wertheim:Results from MEM1'
+	if(LOUDER)write(dumpUnit,610)' Wertheim-MEM1:fAssoc,zAssoc=',fAssoc,zAssoc 
 	call MEM2(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErr )!,rLnPhiAssoc,ier)
-	if(LouderWert)write(dumpUnit,'(a,8f9.4)')' Wertheim-MEM2:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
-	!if(LouderWert)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
+	if(LOUDER)write(dumpUnit,610)' Wertheim-MEM2:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
+	!if(LOUDER)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
 	!if(LouderWert)write(dumpUnit,*) 'Wertheim: MEM2 estimate. Calling XsolJre'
     iDoSolvation=0
     if(isESD)iDoSolvation=0
@@ -157,7 +158,7 @@
 		!XA=1 !set to unity means no association	          
 		!XD=1 !set to unity means no association	          
 		!XC=1 !set to unity means no association	          
-		if(LouderWert.and.initCall) write(dumpUnit,'(a,5F10.6,3F10.1)')'Wertheim:solvation. X(1),X(2)=',xFrac(1),xFrac(2)
+		if(LOUDER.and.initCall) write(dumpUnit,'(a,5F10.6,3F10.1)')'Wertheim:solvation. X(1),X(2)=',xFrac(1),xFrac(2)
 		!write(dumpUnit,*) 'Results from MEM1'
 		!write(dumpUnit,'Wert:uAssoc,CvAssoc',uAssoc,CvAssoc
 		!write(dumpUnit,'uAssoc,b_xaDxa_db',uAssoc,b_xaDxa_db
@@ -241,9 +242,9 @@
 			enddo
 		enddo
 		uAssoc= -half*(uAssocAD+uAssocDA)	!this appears to be faulty. TODO: fix. JRE 20191008			
-	endif
-	if(LouderWert)write(dumpUnit,'(a,8f9.4)')' Wertheim-Xsol:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
-	if(LouderWert)write(dumpUnit,*) 'Wertheim: After Calling XsolJre'
+	endif !iDoSolvation > 0
+	if(LOUDER)write(dumpUnit,610)' Wertheim-Xsol:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
+	if(LOUDER)write(dumpUnit,*) 'Wertheim: Returning.'
 	initCall=0
 	RETURN
 	END	 ! subroutine Wertheim()
@@ -291,9 +292,12 @@
 	!C     THIS IS NOT EXACTLY EQUAL TO THE DERIVATIVE
 	!C     IT IS EQUAL TO eta/g TIMES THE DERIVATIVE OF g WRT eta
 
+	!LOUDER=LOUD
 	LOUDER=LouderWert
 	!LOUDER=.TRUE.
 	iErr=0
+	fugAssoc(1:nComps)=0
+	h_nMichelsen=0
 
 	needDerivs=0
 	if(needDerivs==0)return	! Let's forget about derivatives etc. for now and stick to VLE calculations.
@@ -301,8 +305,7 @@
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
 	Call RdfCalc(rdfContact,dAlpha,eta)
 	rho=eta/bVolMix
-	one=1.d0
-	half=one/2.d0	 !defined in GlobConst 9/24/19
+	half=1.d0/2.d0	 !defined in GlobConst?
 
 	call RdfCalc(rdfContact,dAlpha,eta)	!dAlpha=eta/alpha*(dAlpha/dEta)=1+eta/g*(dg/dEta)
 	h_nMichelsen=0.d0           !M&H Eq 11.
@@ -311,7 +314,8 @@
 			h_nMichelsen=h_nMichelsen+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)*(1.d0-XA(iComp,iType))+nDonors(iComp,iType)*(1.d0-XD(iComp,iType))+(1.d0-XC(iComp,iType)) )          !M&H Eq 11.
 		enddo
 	enddo
-	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' WertheimFugc: fugAssocBefore=',(fugAssoc(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,610)' WertheimFugc: fugAssocBefore=',(fugAssoc(i),i=1,nComps)
+610 format(1x,a,8E12.4)
 	aAssoc=0
 	isAcid=0
 	do iComp=1,nComps		 
@@ -333,12 +337,12 @@
 		fugAssoc(iComp)=sumLnXi-half*h_nMichelsen*(dAlpha-1)*bVolCc_mol(iComp)/bVolMix  !Eq 13
 	enddo
 	if(LOUDER)then
-		write(dumpUnit,'(a,8F9.6,3f7.3)')' XAs&XDs1,...',(XA(1,i),i=1,4),(XD(1,i),i=1,4)
-		write(dumpUnit,'(a,8F9.6,3f7.3)')' XAs&XDs2,...',(XA(2,i),i=1,4),(XD(2,i),i=1,4)
-		if(isAcid==1)write(dumpUnit,'(a,3E12.4)')' Fugc: XC= ',XCtemp
+		write(dumpUnit,610)' XAs&XDs1',(XA(1,i),i=1,4),(XD(1,i),i=1,4)
+		write(dumpUnit,610)' XAs&XDs2',(XA(2,i),i=1,4),(XD(2,i),i=1,4)
+		if(isAcid==1)write(dumpUnit,610)' Fugc: XC= ',XCtemp
 	endif
-	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' WertheimFugc: hMich,aAssoc=',h_nMichelsen,aAssoc
-	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' WertheimFugc: fugAssocAfter =',(fugAssoc(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,610)' WertheimFugc: hMich,aAssoc=',h_nMichelsen,aAssoc
+	if(LOUDER)write(dumpUnit,610)' WertheimFugc: fugAssocAfter =',(fugAssoc(i),i=1,nComps)
 
 	return 
 	end           

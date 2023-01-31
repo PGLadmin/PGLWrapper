@@ -66,7 +66,8 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 		!write(dumpUnit,*),*)IDA(I),CA(I),QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I)  ,idCasa(i)
 		if(ioErr .and. LOUDER)write(dumpUnit,'(a,a)')' GetESD: error reading ',TRIM(inFile),' line=',TRIM(dumString)
 		if(  ( idCasa(i)==id(1) .or. idCasa(i)==id(2) ) .and. LOUDER  )write(dumpUnit,*)'Found in ParmsEsd idCas=',idCasa(i) 
-	enddo
+		tKmin(i)=0.4d0*Tc(i) ! this is the general rule for ESD.
+	enddo !i=1,NC
 	NDI=0
 	I=0  !overrides headerless reading. Set I=1 to re-activate.
 	DO while(I > 0) !reads to end of file w/o reading nDeck
