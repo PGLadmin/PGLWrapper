@@ -43,7 +43,7 @@
     LOUD = .TRUE.
     LOUD = .FALSE.
 	CheckDLL=.TRUE.
-	!CheckDLL=.FALSE.
+	CheckDLL=.FALSE.
 	dumpUnit=6
 	if(CheckDLL)then
 		LOUD=.TRUE. ! Force this, just in case forgotten above.

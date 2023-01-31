@@ -7084,7 +7084,7 @@ Subroutine GetPrLorraine(nComps,iErr)
     integer :: i,fluids(ncomax),err0,ierr
 	LOGICAL LOUDER
 	LOUDER=LOUD
-	LOUDER=.TRUE.
+	!LOUDER=.TRUE.
 	!LOUDER=.FALSE.
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or isPcSaft.
 	call GetPrTc(nComps,iErrGet) ! sets tKmin, as well as some other parameters that PrLorraine doesn't really use. 
