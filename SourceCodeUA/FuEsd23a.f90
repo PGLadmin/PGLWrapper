@@ -87,7 +87,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	if(iEosOpt > 4)then
 		ierCompExact=1 ! Set error for all comps. Declare error because iEosOpt > 4 means using only GC parameters from one of ParmsEsdEmami__
 	else
-		if(Tc(1) < 4)call GetCritCas(NC,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
+		if(Tc(1) < 4)call GetCritCas(NC,idCas,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
 		call ExactEsd(NC,vx,c,q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc or Asso+. Wait to see if Parms are in ParmsEsd before failing.
 		!mShape(1:nmx)=Q(1:nmx)
 		if(LOUDER.and.iErrExact)write(dumpUnit,*)'GetESDWarning: iErrExact=',iErrExact,' Checking database for iComp='	,( ierCompExact(iComp),iComp=1,NC)

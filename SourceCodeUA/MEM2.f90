@@ -4,9 +4,10 @@ MODULE GlobConst
 	!PUBLIC
 	Implicit NONE
 	DoublePrecision pi,twoPi,fourPi,avoNum,Rgas,RgasCal,kB,half,zeroTol
-	Integer nmx 
+	Integer nmx,nCritSet 
 	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0)
-	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)!kB[=]MPa.nm3/K) avoNum[=]cm3/(nm3*mol), 
+	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)!kB[=]MPa.nm3/K) avoNum[=]cm3/(nm3*mol). cf. PGL6ed, Table 6.1
+	PARAMETER (nCritSet=1725) ! This is the number of compounds that should be found in LoadCritParmsDb. Change this parameter if you add more compounds.
 	!          https://www.nist.gov/si-redefinition 
     !nmx is the max allowed number of Compounds
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
