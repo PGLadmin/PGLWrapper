@@ -9,7 +9,7 @@ MODULE DLLConst
 	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
 END MODULE DLLConst
 
-double Precision function FORTRAN_DLL1(i1, d1)
+double Precision function Sample_Function(i1, d1)
     integer i1
     double Precision d1
 
@@ -18,9 +18,9 @@ double Precision function FORTRAN_DLL1(i1, d1)
   !DEC$ATTRIBUTES DLLEXPORT::FORTRAN_DLL1
 
   ! Variables
-    FORTRAN_DLL1 = i1*d1
+    Sample_Function = i1*d1
     return
-end function FORTRAN_DLL1
+end function Sample_Function
 
 subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 !	CalculateProperty1 & local is for pure compounds.
@@ -61,7 +61,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   READY TO CALCULATE   !!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(iProperty==1 .or. iProperty==2)then
+    if(iProperty==1 .or. iProperty==2 .or. iProperty==6)then
         notDone=1
         line=0  !read statement
 !        do while(notDone)
@@ -75,7 +75,8 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
             endif
             pKPa=pMPa*1000
             if(iProperty==1) res=pKPa
-            if(iProperty==2) res=1000*rhoLiq
+            if(iProperty==2) res=1000*rhoLiq*rMw(1)
+            if(iProperty==6) res=1000*rhoVap*rMw(1)
             return
 !        enddo
     endif !iProperty <= 2.
@@ -511,7 +512,7 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     if (propertyid.eq.1) localprpid=3
     if (propertyid.eq.2) localprpid=-3
     if (propertyid.eq.3) localprpid=2
-    if (propertyid.eq.4) localprpid=-2
+    if (propertyid.eq.4) localprpid=6
     if (propertyid.eq.8) localprpid=1
     if (localprpid.eq.0) then
         res=0
