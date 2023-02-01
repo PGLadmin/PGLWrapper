@@ -66,7 +66,8 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 		!write(dumpUnit,*),*)IDA(I),CA(I),QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I)  ,idCasa(i)
 		if(ioErr .and. LOUDER)write(dumpUnit,'(a,a)')' GetESD: error reading ',TRIM(inFile),' line=',TRIM(dumString)
 		if(  ( idCasa(i)==id(1) .or. idCasa(i)==id(2) ) .and. LOUDER  )write(dumpUnit,*)'Found in ParmsEsd idCas=',idCasa(i) 
-	enddo
+		tKmin(i)=0.4d0*Tc(i) ! this is the general rule for ESD.
+	enddo !i=1,NC
 	NDI=0
 	I=0  !overrides headerless reading. Set I=1 to re-activate.
 	DO while(I > 0) !reads to end of file w/o reading nDeck
@@ -86,7 +87,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	if(iEosOpt > 4)then
 		ierCompExact=1 ! Set error for all comps. Declare error because iEosOpt > 4 means using only GC parameters from one of ParmsEsdEmami__
 	else
-		if(Tc(1) < 4)call GetCritCas(NC,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
+		if(Tc(1) < 4)call GetCritCas(NC,idCas,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
 		call ExactEsd(NC,vx,c,q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc or Asso+. Wait to see if Parms are in ParmsEsd before failing.
 		!mShape(1:nmx)=Q(1:nmx)
 		if(LOUDER.and.iErrExact)write(dumpUnit,*)'GetESDWarning: iErrExact=',iErrExact,' Checking database for iComp='	,( ierCompExact(iComp),iComp=1,NC)

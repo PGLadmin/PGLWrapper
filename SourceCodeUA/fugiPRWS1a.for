@@ -40,7 +40,7 @@ c		idArray(iComp)=idDippr((iComp))
 c  note:  bips are passed back through USEd BIPs/
 	bipFile=TRIM(PGLinputDir)//'\BipWongSand.txt' ! // is the concatenation operator
       IERRCODE=GetBIPs(bipFile,ID,NC)
-
+	tKmin(1:NC)=0.4d0*Tc(1:NC)
       RETURN
       END
       

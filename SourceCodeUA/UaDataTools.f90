@@ -1,10 +1,10 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE CritParmsDb
 	Integer ndb
 	Parameter (ndb=3000)
-	character*30 NAMED(ndb)	!LoadCrit() loads ParmsCrit database.
-	Integer IDnum(ndb),CrIndex(9999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
-	DoublePrecision TCD(ndb),PCD(ndb),ACEND(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) ! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
+	character*30, STATIC:: NAMED(ndb)	!LoadCrit() loads ParmsCrit database.
+	Integer, STATIC:: IDnum(ndb),CrIndex(9999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
+	DoublePrecision, STATIC:: TCD(ndb),PCD(ndb),ACEND(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) ! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
 END MODULE CritParmsDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -71,7 +71,7 @@ END MODULE VpDb
 	end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine GetTmHfus(id,Tm,Hfus,iErr)
-	USE GlobConst, Only:DEBUG,PGLinputDir,LOUD,dumpUnit 
+	USE GlobConst, Only:PGLinputDir,LOUD,dumpUnit 
 	! Purpose: Read Tm(K) and Hfus(J/mol) from input file.
 	Implicit DoublePrecision(a-h,o-z)
 	Character*77 HfusFile,FN !,inFile77
@@ -99,8 +99,8 @@ END MODULE VpDb
 			exit ! leave if done.
 		endif
 	enddo
-	if(notFound==1)iErr=1
-	if(ioErr /= 0)iErr=2
+	if(notFound==1)iErr=11
+	if(ioErr /= 0)iErr=12
 	close(inUnitHfus)
 	return
 	end
@@ -115,15 +115,23 @@ END MODULE VpDb
 	end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	subroutine IdDipprLookup(NC,idCas,ier,errMsgPas)
-    USE GlobConst, only:ID,nmx,LOUD,dumpUnit
+	subroutine IdDipprLookup(NC,idCas,iErr,errMsgPas)
+    USE GlobConst, only:ID,nmx,LOUD,dumpUnit,nCritSet
 	USE CritParmsDb, only:idCasDb,IDnum,CrIndex,nDeckDb
-    integer ier,	idCas(nmx)
-	character*77 errMsg(0:11),errMsgPas
+	Implicit NONE
+    integer idCas(nmx),iErr,NC,iComp,iGotIt,I
+	character*77 errMsg(0:22),errMsgPas
 	errMsg(0)='No Problem'
-	errMsg(1)='IdDipprLookup Error: at least one id not found'
-	ier=0
-	!write(dumpUnit,*)'IdLookup: nDeck=',nDeck
+	errMsg(11)='IdDipprLookup Error: at least one id not found'
+	errMsg(12)='IdDipprLookup: You must call LoadCritParmsDb first. Goodbye!'
+	iErr=0
+	!write(dumpUnit,*)'IdLookup: nDeckDb=',nDeckDb
+	if(nDeckDb.ne.nCritSet)then
+		iErr=12
+		if(LOUD)write(dumpUnit,*)TRIM(errMsg(iErr))
+		goto 861
+	endif
+
 	do iComp=1,NC
 		iGotIt=0
 		do i=1,nDeckDb
@@ -134,12 +142,11 @@ END MODULE VpDb
 				exit ! breaks the inner loop only?
 			endif
 		enddo
-		if(iGotIt==0)ier=1 !only way here is if cycle failed => iGotIt==0.
-		if(LOUD.and.ier>0)write(dumpUnit,*)'Did not find idCas(i).i,id=',iComp,id(i)
-		if(ier > 0)goto 861
+		if(iGotIt==0)iErr=11 !only way here is if cycle failed => iGotIt==0.
+		if(LOUD.and.iErr>0)write(dumpUnit,*)'Did not find idCas(i).i,id=',iComp,id(i)
+		if(iErr > 0)goto 861
 	enddo
-861	errMsgPas=errMsg(ier)
-	close(50)
+861	errMsgPas=TRIM(errMsg(iErr))
 	return
 	end
 
@@ -157,16 +164,16 @@ END MODULE VpDb
 	!C    PC - CRITICAL PRESSURE
 	!C    ACEN - ACENTRIC FACTOR
 	!C    NAME - COMPONENT NAME
-	USE GlobConst
+	USE GlobConst, ONLY:LOUD,dumpUnit,zeroTol,PGLinputDir,nCritSet
 	USE CritParmsDb 
 	IMPLICIT DoublePrecision(A-H,O-Z)
-	CHARACTER*4 tCode,pCode,vCode
-	character*132 readText,dumText
-	character*12  form 
+	!CHARACTER*4 tCode,pCode,vCode
+	!character*132 readText,dumText
+	!character*12  form 
 	character*251 inFile,dumString
 	iErrCode=0
 	CrIndex=ndb ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
-	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
+	inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
 	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: CritFile=',TRIM(inFile)
 !	OPEN(40,FILE=inFile,FORM='BINARY')
 	OPEN(40,FILE=inFile)
@@ -180,51 +187,32 @@ END MODULE VpDb
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
 		!if(i.eq.691)write(dumpUnit,*)
 !		READ (40,ERR=861)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
-		READ (40,'(a188)',ioStat=ioErr)dumString
-		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
-			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
-		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
+		READ (40,'(a222)',ioStat=ioErr)dumString
+!		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
+!			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
+!		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
+		READ (dumString,*)IDnum(I),TCD(I),PcTemp,ACEND(I),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I),solParmD(i),rhoG_cc,rMwD(i)
+!1	190.56	4.599	0.0115	0.1473	0.9075	1.8243	-3.5604	0.2894	85	 74828	11.62	0.4224	16.04
+		PCD(I)=PcTemp !/10
+		if(rhoG_cc < zeroTol)rhoG_cc=1
+		vLiqD(i)=rMwD(i)/rhoG_cc
 		CrIndex(IDnum(i))=i
-		if(ioErr.and.LOUD)write(dumpUnit,*)'GetCrit: error reading ParmsCrit.txt. line=',i
-		if(i==1.and.LOUD)write(dumpUnit,102)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
+		if(ioErr.and.LOUD)write(dumpUnit,*)'LoadCritParmsDb: error reading ParmsCrit.txt. line=',i
+		if(i>1.and.LOUD)write(dumpUnit,602)IDnum(I),idCasDb(I),TCD(I),PCD(I),ZCD(I),ACEND(I),solParmD(I),vLiqD(i),rMwD(i) !&
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
 
 100	FORMAT(I5,2X,A20,2X,F7.2,2X,F8.4,2X,F7.4,2X,F7.4)
 101	format(i5,11f10.0,i10,3a4,1x,a12,a33)
 102	format(i5,11f10.3,i10,3a4,1x,a12,a33)
+602	format(i5,i11,11f10.3,i10,3a4,1x,a12,a33)
 599	FORMAT(3(1X,i5,1X,A20))
 	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor       Cas#  tC  pC  vC  FORM        Name 
 	CLOSE(40)
 	!if((nDeck1).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
-	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Trying ParmsCrAdd.'
-		inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
-		OPEN(40,FILE=inFile)
-	!ENDIF
-	READ(40,*,ERR=862)dumText
-
-	nDeck2=0
-	DO while(nDeck2.ge.0) !use while loop to avoid adding/incrementing compd counter at beginning
-		!Note: formatted read of tab delimited text did not work(?) JRE 042806
-		!ADVANCE feature did not work either b/c it can't accept unformatted read (list directed i/o). 
-		!READ(dumString,101,ERR=862,ADVANCE='NO')IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I),rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas
-		READ(40,'(A132)',ERR=862,END=200)readText
-		nDeck2=nDeck2+1
-		I=nDeck1+nDeck2
-		read(readText,*,ERR=862)IDnum(I),TCD(I),PCD(I),ZCD(I) &
-			,ACEND(I),rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas
-		if(IDnum(i) > 9999)then
-			nDeck2=nDeck2-1 ! Take one step back!
-			cycle ! LoadCritParmsDb does not permit this because CrIndex is limited to 9999.
-		endif
-		CrIndex(IDnum(i))=i
-		indChars=INDEX(readText,'P 5',BACK=.TRUE.)
-		read(readText,'(a<indChars+3>,a12,a25)')dumText,form,NAMED(I)
-		cycle
-200		EXIT !terminate loop
-	enddo
-	close(40)
-	nDeckDb=nDeck1+nDeck2
+	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Skipping ParmsCrAdd.'
+	nDeckDb=NDECK1
+	if(nDeckDb.ne.nCritSet.and.LOUD)write(dumpUnit,*) 'LoadCritParmsDb: nCritSet is inconsistent.nDeck,nCrit=',nDeckDb,nCritSet
 	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: Success! DB is loaded.'
 	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in ParmsCrAdd file'
 	!write(dumpUnit,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
@@ -233,19 +221,19 @@ END MODULE VpDb
 861	continue
 	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
 	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
-	iErrCode=1
+	iErrCode=11
 	!write(dumpUnit,*)
 	return                      
 862	continue
 	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
 	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
-	iErrCode=1
+	iErrCode=12
 	!write(dumpUnit,*)
 	return                      
 	END
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	SUBROUTINE GETCRIT(NC,iErrCode)
+	SUBROUTINE GETCRIT(NC,iErrCode)	! ID() from USEd GlobConst
 	!C  
 	!C  PROGRAMMED BY:  A.S. PUHALA - AUG 93
 	!C  REVISION DATE:  2/93 - FOR ESD COMPATIBILITY JRE
@@ -261,116 +249,42 @@ END MODULE VpDb
 	!C    ACEN - ACENTRIC FACTOR
 	!C    NAME - COMPONENT NAME
 	USE GlobConst
-	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
-	CHARACTER NAMED*30,tCode*4,pCode*4,vCode*4,form*12
-	character readText*132,dumText*77 
-	PARAMETER(ndb=1555)
-	character*251 inFile,dumString
-	DIMENSION IDnum(ndb),TCD(ndb),PCD(ndb),ACEND(ndb),NAMED(ndb)
-	DIMENSION ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb)
+	USE CritParmsDb
+	Implicit DoublePrecision(A-H,O-Z)
 	!	eHbKcalMol(nmx),bondVolNm3(nmx),ND(nmx),NDS(nmx),NAS(nmx)
+	if(nDeckDb.ne.nCritSet)Call LoadCritParmsDb(iErrLoadCrit)
+	if(iErrLoadCrit > 0)then
+		if(LOUD)write(dumpUnit,*)'GetCrit: error from LoadCritParmsDb. Thats all folks!'
+		return
+	endif
 	iErrCode=0
-	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
-	if(LOUD)write(dumpUnit,'(2a)')' CritFile=',TRIM(inFile)
-	OPEN(40,FILE=inFile)
-	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
-	I=0
-!	READ(40,ERR=861)NDECK1
-	READ(40,*,ERR=861)NDECK1
-	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetCrit: more data in file than allocated'
-!	open(61,file='c:\spead\CalcEos\ParmsCrit.txt')
-	DO I=1,NDECK1
-		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
-		!if(i.eq.691)write(dumpUnit,*)
-!		READ (40,ERR=861)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
-		READ (40,'(a188)',ioStat=ioErr)dumString
-		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
-			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas
-		READ (dumString,'(a126,3a4,a12,a30)',ioStat=ioErr)readText,tCode,pCode,vCode,form,NAMED(I)
-		if(ioErr.and.LOUD)write(dumpUnit,*)'GetCrit: error reading ParmsCrit.txt. line=',i
-		if(i==1.and.LOUD)write(dumpUnit,102)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) !&
-		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
-	enddo
-
-100	FORMAT(I5,2X,A20,2X,F7.2,2X,F8.4,2X,F7.4,2X,F7.4)
-101	format(i5,11f10.0,i10,3a4,1x,a12,a33)
-102	format(i5,11f10.0,i10,3a4,1x,a12,a33)
-599	FORMAT(3(1X,i5,1X,A20))
-	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor       Cas#  tC  pC  vC  FORM        Name 
-	IF(ID(1)==0)THEN
-		DO I=1,NDECK1,3
-			IF(LOUD)write(dumpUnit,599)IDnum(I),NAMED(I),IDnum(I+1),NAMED(I+1),IDnum(I+2),NAMED(I+2)
-			!IF(((I-1)/45)*45.EQ.(I-1))write(dumpUnit,*)
-		enddo
-		RETURN
-	END IF
-	CLOSE(40)
-	!if((nDeck1).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
-
-	inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
-	OPEN(40,FILE=inFile)
-	READ(40,*,ERR=862)dumText
-
-	nDeck2=0
-	DO while(nDeck2.ge.0) !use while loop to avoid adding/incrementing compd counter at beginning
-		!Note: formatted read of tab delimited text did not work(?) JRE 042806
-		!ADVANCE feature did not work either b/c it can't accept unformatted read (list directed i/o). 
-		!READ(dumString,101,ERR=862,ADVANCE='NO')IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I),rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas
-		READ(40,'(A132)',ERR=862,END=200)readText
-		nDeck2=nDeck2+1
-		I=nDeck1+nDeck2
-		read(readText,*,ERR=862)IDnum(I),TCD(I),PCD(I),ZCD(I) &
-			,ACEND(I),rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas
-		indChars=INDEX(readText,'P 5',BACK=.TRUE.)
-		read(readText,'(a<indChars+3>,a12,a25)')dumText,form,NAMED(I)
-		cycle
-200		EXIT !terminate loop
-	enddo
-	close(40)
-	nDeck=nDeck1+nDeck2
-	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in ParmsCrAdd file'
-	!write(dumpUnit,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
-
 	DO iComp=1,NC
-		iGotIt=0
-		DO J=1,NDECK
-			IF(IDnum(J).EQ.ID(iComp)) THEN
-				NAME(iComp)=NAMED(J)
-				Tc(iComp)=TCD(J)
-				Pc(iComp)=PCD(J)
-				ID(iComp)=IDnum(J)
-				ACEN(iComp)=ACEND(J)
-				ZC(iComp)=ZCD(J)
-				rMw(iComp)=rMwD(j)
-				solParm(iComp)=solParmD(j)
-				vLiq(iComp)=vLiqD(j)
-				iGotIt=1
-			ENDIF
-		enddo
-		if(iGotIt.eq.0)then
-			iErrCode=iErrCode*10+iComp
+		J=CrIndex(ID(iComp)) !USEd from CritParmsDb
+		if(J==ndb)then		 !This is the indicator that ID(iComp) is not found in Db. cf. LoadCritParmsDb
+			iGotIt=0
+		else
+			NAME(iComp)=NAMED(J)
+			Tc(iComp)=TCD(J)
+			Pc(iComp)=PCD(J)
+			ID(iComp)=IDnum(J)
+			ACEN(iComp)=ACEND(J)
+			ZC(iComp)=ZCD(J)
+			rMw(iComp)=rMwD(j)
+			solParm(iComp)=solParmD(j)
+			vLiq(iComp)=vLiqD(j)
+			iGotIt=1
+		endif
+		if(iGotIt==0)then
+			iErrCode=iErrCode*100+iComp*10
 			!write(dumpUnit,*)'Error in GetCrit: not found for iComp=',iComp
 			!write(dumpUnit,*)
 		endif
 		if(LOUD)write(dumpUnit,'(1x,i5,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp),Tc(iComp),Pc(iComp),acen(iComp),ZC(iComp)
 	enddo
 	RETURN
-861	continue
-	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
-	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
-	iErrCode=1
-	!write(dumpUnit,*)
-	return                      
-862	continue
-	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
-	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
-	iErrCode=1
-	!write(dumpUnit,*)
-	return                      
-	END
+	END	!GetCrit()
 
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	SUBROUTINE GetVpDb(iErrCode)
 	!	PROGRAMMED BY: AV 06/22/06
 	!THIS SUBROUTINE GIVES VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
@@ -410,7 +324,7 @@ END MODULE VpDb
     end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	SUBROUTINE GetVp(NC,ID,iErrCode) !returns VpCoeffs(NC,5)
+	SUBROUTINE GetVp(NC,ID,iErrCode) !returns VpCoeffs(NC,5) in USEd VpDb
 	!	PROGRAMMED BY: AV 06/22/06
 	!THIS SUBROUTINE GIVES VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
 	!INPUT:
@@ -563,7 +477,7 @@ END MODULE VpDb
 	enddo
 	if(id(1).eq.0)then
 		ier=1
-		if(LOUD)write(dumpUnit,*)'Did not find idcc(1)=',idcc(1)
+		if(LOUD)write(dumpUnit,*)'GetCrit:Did not find idcc(1)=',idcc(1)
 		errMsgPas=errMsg(ier)
 		return
 	endif
@@ -674,17 +588,16 @@ END MODULE VpDb
 	end
 
 
+SUBROUTINE GetCritCas(NC,idCas,iErrCode)	!GetCritCas assumes ID(GlobConst)=IdCas
 	!**********************************************
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	
 	!C      AARON'S SUBROUTINE
 	!C      $GETCRIT.FOR   VERSION 1.4
-	SUBROUTINE GETCRITCAS(NC,iErrCode)	!GetCritCas assumes ID(GlobConst)=IdCas
-
 	!C  
 	!C  PROGRAMMED BY:  A.S. PUHALA - AUG 93
 	!C  REVISION DATE:  2/93 - FOR ESD COMPATIBILITY JRE
 	!C  REVISION DATE:  2/02 - FOR binary data file
+	!C                  1/23 - To use CritParmsDb and GetCrit()
 	!C 
 	!C  LOOKS UP THE CRITICAL PROPERTIES AND RETURNS JUST TC,PC,ACEN,NAME
 	!C
@@ -695,114 +608,25 @@ END MODULE VpDb
 	!C    PC - CRITICAL PRESSURE
 	!C    ACEN - ACENTRIC FACTOR
 	!C    NAME - COMPONENT NAME
-	USE GlobConst
-	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
-	CHARACTER NAMED*30,tCode*4,pCode*4,vCode*4,form*12
-	character*132 readText,dumText 
-	PARAMETER(ndb=1555)
-	character inFile*251
-	DIMENSION IDnum(ndb),TCD(ndb),PCD(ndb),ACEND(ndb),NAMED(ndb),iCasd(ndb)
-	DIMENSION ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) !,vLiq(nmx)
-	!	eHbKcalMol(nmx),bondVolNm3(nmx),ND(nmx),NDS(nmx),NAS(nmx)
+	USE GlobConst, ONLY:LOUD,dumpUnit,nmx 
+	USE CritParmsDb
+	IMPLICIT DoublePrecision(A-H,O-Z)
+	character*77 errMsgPas
+	integer idCas(nmx),NC,iErrCode,iErrCrit
 	iErrCode=0
-	inFile=TRIM(PGLinputDir)//'\ParmsCrit.txt' ! // is the concatenation operator
-	!write(dumpUnit,*)'CritFile=',TRIM(inFile)
-	!OPEN(40,FILE=inFile)
-	OPEN(40,FILE=inFile)
-	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
-	I=0
-	READ(40,*,ERR=861)NDECK1
-	write(dumpUnit,*)'nDeck1=',nDeck1
-	write(dumpUnit,*)'ID(1)=',ID(1)
-	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetCrit: more data in file than allocated'
-!	open(61,file='c:\spead\CalcEos\ParmsCrit.txt')
-	DO I=1,NDECK1
-		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
-		!if(i.eq.691)write(dumpUnit,*)
-		READ (40,'(a188)',ioStat=ioErr)readText
-		READ (readText,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
-			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
-!		write(61,102)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
-!			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
-	enddo
-100	FORMAT(I5,2X,A20,2X,F7.2,2X,F8.4,2X,F7.4,2X,F7.4)
-101	format(i5,11f10.0,i10,3a4,1x,a12,a33)
-102	format(i5,11f10.0,i10,3a4,1x,a12,a33)
-599	FORMAT(3(1X,i5,1X,A20))
-	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor       Cas#  tC  pC  vC  FORM        Name 
-	IF(ID(1).EQ.0)THEN
-		DO I=1,NDECK1,3
-			if(LOUD)write(dumpUnit,599)IDnum(I),NAMED(I),IDnum(I+1),NAMED(I+1),IDnum(I+2),NAMED(I+2)
-			!IF(((I-1)/45)*45.EQ.(I-1))write(dumpUnit,*)
-		enddo
-		RETURN
-	ENDIF
-	CLOSE(40)
-	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
-
-		inFile=TRIM(PGLinputDir)//'\ParmsCrAdd.TXT' ! // is the concatenation operator
-		OPEN(40,FILE=inFile)
-	READ(40,*,ERR=862)readText	! clear the header
-
-	nDeck2=0
-	DO while(nDeck2.ge.0) !use while loop to avoid adding/incrementing compd counter at beginning
-		!Note: formatted read of tab delimited text did not work(?) JRE 042806
-		!ADVANCE feature did not work either b/c it can't accept unformatted read (list directed i/o). 
-		!READ(dumString,101,ERR=862,ADVANCE='NO')IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I),rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas
-		READ(40,'(A132)',ERR=862,END=200)readText
-		nDeck2=nDeck2+1
-		I=nDeck1+nDeck2
-		read(readText,*,ERR=862)IDnum(I),TCD(I),PCD(I),ZCD(I) &
-			,ACEND(I),rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCasd(I)
-		indChars=INDEX(readText,'P 5',BACK=.TRUE.)
-		read(readText,'(a<indChars+3>,a12,a25)')dumText,form,NAMED(I)
-		cycle
-200		EXIT !terminate loop
-	enddo
-	close(40)
-	nDeck=nDeck1+nDeck2
-	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in ParmsCrAdd file'
-	if(LOUD)write(dumpUnit,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
-
-	DO iComp=1,NC
-		iGotIt=0
-		DO J=1,NDECK
-			IF(ICasd(J).EQ.ID(iComp)) THEN
-				NAME(iComp)=NAMED(J)
-				Tc(iComp)=TCD(J)
-				Pc(iComp)=PCD(J)
-				ID(iComp)=IDnum(J)
-				ACEN(iComp)=ACEND(J)
-				ZC(iComp)=ZCD(J)
-				rMw(iComp)=rMwD(j)
-				solParm(iComp)=solParmD(j)
-				vLiq(iComp)=vLiqD(j)
-				iGotIt=1
-				exit
-			ENDIF
-		enddo
-		if(iGotIt.eq.0)then
-			iErrCode=iErrCode*10+iComp
-			!write(dumpUnit,*)'Error in GetCrit: not found for iComp=',iComp
-			!write(dumpUnit,*)
-		endif
-		if(LOUD)write(dumpUnit,'(1x,i11,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp) &
-		,Tc(iComp),Pc(iComp),acen(iComp),ZC(iComp)
-	enddo
-	RETURN
-861	continue
-	if(LOUD)write(dumpUnit,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
-	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
-	iErrCode=1
-	!write(dumpUnit,*)
+	Call IdDipprLookup(NC,idCas,iErrCode,errMsgPas) ! ID passed through USEd GlobConst
+	if(iErrCode.ne.0)then 
+		if(LOUD)write(dumpUnit,*)'GetCritCas: iErr(IdDipprLookup)=',iErrCode,TRIM(errMsgPas)
+		return
+	endif
+	Call GetCrit(NC,iErrCrit)
+	if(iErrCrit.ne.0)then 
+		if(LOUD)write(dumpUnit,*)'GetCritCas: iErr(GetCrit)=',iErrCrit
+		iErrCode=iErrCrit
+		return
+	endif
 	return                      
-862	continue
-	if(LOUD)write(dumpUnit,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
-	if(LOUD)write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
-	iErrCode=1
-	!write(dumpUnit,*)
-	return                      
-END ! subroutine GetCrit
+END ! subroutine GetCritCas()
 
       DOUBLE PRECISION FUNCTION AvgAbsRelDev(N,X,Y)
       INTEGER N

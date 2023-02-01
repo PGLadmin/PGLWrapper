@@ -13,7 +13,10 @@
 	iErrCode=0
 !c  note:  bips are passed back through USEd BIPs/
 	bipFile=TRIM(PGLinputDir)//'\BipNRTL.txt' ! // is the concatenation operator
-      iErrCode=GetBIPs(bipFile,idComp,nComps)
+     iErrCode=GetBIPs(bipFile,idComp,nComps)
+	do i=1,nComps
+		tKmin(i)=0.4d0*Tc(i)
+	enddo 
 	return                      
 	END
 	!PROGRAMED BY AV 06/22

@@ -1,9 +1,10 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE SpeadParms
-	USE GlobConst, only:nmx,ID,Tc,CvRes_R,etaMax,Rgas,RgasCal,zeroTol,etaPure,bVolCc_mol,LOUD !need most of GlobConst here  
+	USE GlobConst, only:nmx,ID,Tc,CvRes_R,etaMax,Rgas,RgasCal,zeroTol,etaPure,bVolCc_mol,LOUD,tKmin !need most of GlobConst here  
 	USE Assoc !need all of assoc so USE SpeadParms automatically includes Assoc
-	DoublePrecision zRefCoeff(nmx,5),a1Coeff(nmx,5),a2Coeff(nmx,5),vMolecNm3(nmx),tKmin(nmx) !,rMwPlus(nmx)
-	DoublePrecision ks0,ks1	      ! Parameters to estimate Sxs of Vahid and Elliott (2014)
+	DoublePrecision zRefCoeff(nmx,5),a1Coeff(nmx,5),a2Coeff(nmx,5),vMolecNm3(nmx) !,rMwPlus(nmx)
+	!,tKmin(nmx) !promoted to GlobConst
+	DoublePrecision ks0,ks1	       ! Parameters to estimate Sxs of Vahid and Elliott (2014)
 	!Parameter(ks0= -0.04d0,ks1=0) ! best I could do based on avg of the entire system AV 11/29/08
 	Integer nTptCoeffs
 	LOGICAL bGaussEx
@@ -1569,23 +1570,21 @@ end	!Subroutine QueryParPureSpead
 	
 	!C We define a flag for association term here to avoid calling Werthiem routine when it is not necessary...
 	!write(dumpUnit,*)'FuTptVtot: calling Wertheim'
-    zAssoc=0
-    aAssoc=0
-    uAssoc=0
     if(iErr < 11)call Wertheim(isZiter,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,fugAssoc,iErrCode)
-if(LOUDER)write(dumpUnit,601) ' FuTptVtot: Wertheim gave z,a,u,lnPhi=',zAssoc,aAssoc,uAssoc,fugAssoc(1:nComps)
+	if(LOUDER)write(dumpUnit,601) ' FuTptVtot: Wertheim gave z,a,u,lnPhi=',zAssoc,aAssoc,uAssoc,fugAssoc(1:nComps)
 601 format(1x,a,8E12.4)
-!	if( ABS(zAssoc) < 1e-11 )write(dumpUnit,*)'zAssoc ~ 0???'		 !for debugging
+	!	if( ABS(zAssoc) < 1e-11 )write(dumpUnit,*)'zAssoc ~ 0???'		 !for debugging
 	IF(iErrCode>10)then
 		!iErr=iErrCode
 		if(LOUDER)write(dumpUnit,*) 'FuTptVtot: Wertheim gave error.'
 		iErr=12
 		return
 	endif
-	iDoSolvation=0 ! all of aBipDA is zero as of 20221226, so no need to do solvation. 
+	iDoSolvation=0 ! all of aBipDA is zero as of 20221226, so no need to do solvation. Change to 1 if situation changes. 
 	if ( ABS(zAssoc) > zeroTol .and. isZiter==0) then
 		if(iDoSolvation==1)call WertheimFugc(xFrac,nComps,eta,fugAssoc,h_nMichelsen,iErrF)
 	endif
+	if(LOUDER)write(dumpUnit,601) ' FuTptVtot: WertheimFugc gave z,a,u,lnPhi=',zAssoc,aAssoc,uAssoc,fugAssoc(1:nComps)
 	if(iErrF > 10)iErr=iErrF
 
 	if(iErr > 10)then
@@ -1616,6 +1615,7 @@ if(LOUDER)write(dumpUnit,601) ' FuTptVtot: Wertheim gave z,a,u,lnPhi=',zAssoc,aA
 		chemPo(iComp)=FUGREP+FUGATT+FUGQUAD+fugAssoc(iComp) !+(zNC-aDepNC)*bVolk/bVolMix+2.d0*aDepNC 
 		if(LOUDER)write(dumpUnit,'(a,5E12.4)')' FuVtot:fugrep,fugatt,fugquad,fugbon,Z',fugrep,fugatt,fugquad,fugbon,zFactor
 	enddo
+	if(LOUDER)write(dumpUnit,601) ' FuTptVtot: total z,a,u,lnPhi=',zFactor,aRes,uRes,chemPo(1:nComps)
 
 	if(isZiter < 0)then
 		if(LOUDER.and.initCall)write(dumpUnit,*)'FuTptVtot: T,rho,z=',tKelvin,rhoMol_cc,zFactor

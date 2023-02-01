@@ -26,6 +26,7 @@ subroutine GetPR(NC,iErrGet)
 	! note:  bips are passed back through USEd BIPs/
 	bipFile=TRIM(PGLinputDir)//'\BipPengRob.txt' ! // is the concatenation operator
 	iErrGet=GetBIPs(bipFile,ID,NC)
+	tKmin(1:NC)=0.4d0*Tc(1:NC)
 
 	RETURN
 END	!subroutine GetPR(NC,iErrGet)
