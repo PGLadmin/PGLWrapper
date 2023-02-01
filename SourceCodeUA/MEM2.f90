@@ -22,7 +22,7 @@ MODULE GlobConst
 	character*234 masterDir,PGLinputDir
 	character*30 NAME(nmx)
 	character*5 class(nmx) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. Ch06CompoundsList.xls, PGL6edClasses.xls)
-    Logical LOUD   !LOUD=.TRUE. means writing debug info to the screen.
+    Logical LOUD,CheckDLL   !LOUD=.TRUE. means writing debug info. CheckDLL=.TRUE. means direct debug info to DebugDLL.txt
 	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
 	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
 	DoublePrecision etaPass !TODO:Consider if rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).

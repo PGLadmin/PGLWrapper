@@ -24,7 +24,7 @@ end function FORTRAN_DLL1
 
 subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 !	CalculateProperty1 & local is for pure compounds.
-	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
+	!USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	USE GlobConst
     USE DllConst
 	IMPLICIT double Precision(A-H,K,O-Z)
@@ -32,18 +32,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     double Precision var1, var2, res
     double Precision xFrac(nmx),FUGC(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER localCas(nmx)
-	CHARACTER*77 errMsgPas
-!	COMMON/eta/etaL,etaV,ZL,ZV
-	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-    IF (LOUD) return
-	DEBUG=.FALSE.
-	!  Get current directory
-	CURDIR = FILE$CURDRIVE
-	iStat = GETDRIVEDIRQQ(CURDIR)
-	!iChange=VERIFY('C:\MYPROJEX\CalcEos',CURDIR)
-	!iChange2=VERIFY('C:\MYPROJEX\CALCEOS',CURDIR)
-	!if(iChange2.eq.0)iChange=0
-	!if(iChange.eq.0 .or. iChange.gt.26)DEBUG=.TRUE.
+	if(LOUD.and. .NOT.CheckDLL)return
     NC=1 !assume one component for all calculations (as of 1/1/2020 this is all we need).
     xFrac(1)=1  !   "
     iEosOpt=ieos
@@ -53,7 +42,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     !iProperty = 1: vapor pressure (kPa) given tKelvin
     !iProperty = 2: saturated liquid density (g/cc) given tKelvin
     !iProperty = 3: fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
-    !iProperty = 4: Hres/RT,CpRes/R,CvResR,cmprsblty given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
+    !iProperty = 4: Hres/RT(41),CpRes/R(42),CvResR(43),cmprsblty(44) given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
     iPhase=1
     if (prp_id < 0) iPhase=0   !vapor or gas
     res=0
@@ -61,38 +50,10 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 	
 	INITIAL=0
     if(casrn.ne.oldRN1.or.iEosOpt.ne.oldEOS)then
-	    call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
-	    if(iErrCas/=0)then
+		Call PGLWrapperStartup(NC,iEosOpt,localCas,iErrStart) !LoadCritParmsDb,IdDipprLookup,GetCrit
+	    if(iErrStart/=0)then
             ierr=1
             return
-        endif
-	    CALL GETCRIT(NC,iErrCrit)
-	    if(iErrCrit/=0)then
-		    ierr=2
-		    return
-	    endif
-	    iErrGet=0 
-	    if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	    if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
-	    if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
-	    if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
-!	    if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
-	    if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms				    !Diky model 18
-	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 26
-	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 27
-	    !NewEos: Add here for initializing parms.
-	    if(iErrGet.NE.0)then
-		    ierr=3
-            oldEOS=0
-		    return
         endif
         oldEOS=iEosOpt
         oldRN1=casrn
@@ -157,7 +118,8 @@ function CalculateProperty(ieos, casrn, prp_id, var1, var2, ierr)
     double Precision CalculateProperty
     integer ieos, casrn, prp_id, ierr
     double Precision var1, var2
-  !DEC$ ATTRIBUTES DLLEXPORT::CalculateProperty
+	!DEC$ ATTRIBUTES DLLEXPORT::CalculateProperty
+    !!MS$ ATTRIBUTES DLLEXPORT::CalculateProperty
     call CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     CalculateProperty=res
     return
@@ -174,7 +136,7 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
     double Precision var1, var2, var3
     double Precision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER localCas(nmx)
-	CHARACTER*77 errMsgPas
+	!CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
     IF (LOUD) return
@@ -204,36 +166,9 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 	
 	INITIAL=0
 
-	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
-	if(iErrCas)then
-        ierr=1
-        return
-    endif
-	CALL GETCRIT(NC,iErrCrit)
-	if(iErrCrit)then
-		ierr=2
-		return
-	endif
-	iErrGet=0 
     if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldEOS.ne.ieos) then
-	    if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	    if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
-	    if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
-	    if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
-!	    if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
-	    if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms				    !Diky model 18
-	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 26
-	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 27
-	    !NewEos: Add here for initializing parms.
-	    if(iErrGet.NE.0)then
+		Call PGLWrapperStartup(NC,iEosOpt,localCas,iErrStart) !LoadCritParmsDb,IdDipprLookup,GetCrit
+	    if(iErrStart.NE.0)then
 		    ierr=3
 		    return
         endif
@@ -329,24 +264,26 @@ function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
     DoublePrecision CalculateProperty2
     integer ieos, casrn1, casrn2, prp_id, ierr
-    DoublePrecision var1, var2, var3, res
+    DoublePrecision var1, var2, var3, res ! t,p,x, result
     !DoublePrecision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
 !	COMMON/eta/etaL,etaV,ZL,ZV
   !DEC$ATTRIBUTES DLLEXPORT::CalculateProperty2
-    call CalculateProperty2local(ieos, casrn1, casrn2, prp_id, t, p, x, res, ierr)
+  !!MS$ATTRIBUTES DLLEXPORT::CalculateProperty2
+    call CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var3, res, ierr)
     CalculateProperty2=res
     return
 end function CalculateProperty2
 
 integer function Activate(hello)
     use DllConst
-    character(255) hello
+    character(255) hello,local
     !DEC$ATTRIBUTES DLLEXPORT::Activate
     oldRN1=0
     oldRN2=0
     oldRN3=0
     oldEOS=0
     Activate=1
+	local=TRIM(hello)
     return
 end function Activate
 
@@ -521,6 +458,7 @@ integer function Calculate2(casrn1, casrn2, modelid, propertyid, t, p, x, res, u
     integer modelid, casrn1, casrn2, propertyid, ierr
     double Precision t, p, x, res, uncert
     !DEC$ ATTRIBUTES DLLEXPORT::Calculate2
+    !!MS$ ATTRIBUTES DLLEXPORT::Calculate2
     if (x.le.0) x=0.000001
     if (x.ge.1) x=0.999999
     call CalculateProperty2local(modelid, casrn1, casrn2, propertyid, t, p, x, res, ierr)
@@ -546,12 +484,19 @@ end function Calculate3
 integer function Calculate(casrn, modelid, propertyid, t, p, x, res, uncert)
 !int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
 !double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
-    integer modelid, casrn(255), propertyid !, ierr
+    integer modelid, casrn(255), propertyid,localCas !, ierr
     double Precision t, p, x(255), res, uncert
     !DEC$ ATTRIBUTES DLLEXPORT::Calculate
+    !!MS$ ATTRIBUTES DLLEXPORT::Calculate
     res=0
     uncert=0
     Calculate=1
+	ieos=modelid
+	localCas=casrn(1)
+	var1=t
+	var2=p
+	var3=x(1)
+	prp_id=propertyid
     return
 end function Calculate
 
@@ -561,6 +506,7 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     integer modelid, casrn1, propertyid, localprpid, ierr
     double Precision t, p, res, uncert
     !DEC$ ATTRIBUTES DLLEXPORT::Calculate1
+    !!MS$ ATTRIBUTES DLLEXPORT::Calculate1
     localprpid = 0
     if (propertyid.eq.1) localprpid=3
     if (propertyid.eq.2) localprpid=-3

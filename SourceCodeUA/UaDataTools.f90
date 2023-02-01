@@ -22,7 +22,7 @@ MODULE BIPs
 	Integer iDat(maxPts)  ! sometimes need to indicate whether the data are for comp1 or comp2. e.g. SLE.
 END MODULE BIPs
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE VpDb
 	USE GlobConst, only:nmx !,dumpUnit
 	IMPLICIT NONE !DoublePrecision(A-H,O-Z)
@@ -32,6 +32,102 @@ MODULE VpDb
 	DoublePrecision, STATIC:: rMINTD(nVpDb) ,VALMIND(nVpDb) ,rMAXTD(nVpDb),VALMAXD(nVpDb),AVGDEVD(nVpDb),vpCoeffsd(nVpDb,5)
 	DoublePrecision vpCoeffs(nmx,5)
 END MODULE VpDb
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	Subroutine PGLWrapperStartup(NC,iEosLocal,localCas,ierCode)
+	!Purpose: CALL EOS Get___ ROUTINES, also includes LoadCritParmsDb(if needed),GetCrit, GetBips, BipIo, 
+	!	SETS UP THE CRITS, EOSPARMS, bips, DEBUG status, FUGI(iEosOpt)
+	!	Echoes user IO to Output.txt, and reports error checks. 
+	!	INITIALIZATION AND CALLING SEQUENCE FOR VLE, LLE, VLLE SUBROUTINES.
+	!reqd routines:
+	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
+	!	LmDifEzCov2.for, Mintools.for
+	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
+	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
+	USE PORTLIB
+	USE GlobConst
+	USE CritParmsDb
+	USE BIPs
+	USE EsdParms
+	Implicit DoublePrecision(A-H,K,O-Z)
+
+	CHARACTER($MAXPATH) CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
+	!CHARACTER*1 ANSWER
+	!CHARACTER*2 calcType
+	CHARACTER*77 errMsgPas !,readString,Property(22)
+	CHARACTER*251 dumpFile
+	!CHARACTER*3 aPhase
+
+	!DIMENSION BIPTMP(NMX)
+	!DIMENSION ZFEED(NMX),S(NMX)
+    !DoublePrecision xFrac(NMX),FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
+    Integer  localCas(NMX),iEosLocal,ierCode,NC 
+	!Logical CheckDLL
+	
+	!  Get current directory
+	CURDIR = FILE$CURDRIVE
+	iStat = GETDRIVEDIRQQ(CURDIR)
+	masterDir=TRIM(curDir)
+	PGLinputDir='c:\PGLWrapper\input'
+	!PGLinputDir='C:\Soft\myPGLwrapper\PGLwrapper\input'
+
+	INITIAL=0
+	iEosOpt=iEosLocal
+	ierCode=0 ! Initialize to failure in the iEosOpt write slot to make it easier to terminate if any Get_ functions fail.
+	iErrCrit=0
+	if(nDeckDb.ne.nCritSet)call LoadCritParmsDb(iErrCrit) !nDeckDb.ne.nCritSet indicates that LoadCrit has not been called.
+	idCas(1:NC)=localCas(1:NC)
+	if(iErrCrit > 0)then
+		if(LOUD)write(dumpUnit,*)'PGLWRapperStartup: Error from LoadCritParmsDb, iErrCrit=',iErrCrit
+		ierCode=11
+		goto 86
+	endif
+	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
+	if(LOUD)write(dumpUnit,*)'PGLWRapperStartup:localCas,idDippr=',(localCas(i),id(i), i=1,NC)
+	if(iErrCas)then
+        if(LOUD)write(dumpUnit,*)' Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
+        write(52,*)ierCode,' PGLWRapperStartup:Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
+		ierCode=12
+        goto 86
+    endif
+	if(LOUD)write(dumpUnit,*)'idDippr,class=',ID(1),TRIM(class(1))
+	CALL GETCRIT(NC,iErrCrit)
+	if(iErrCrit)then
+		if(LOUD)write(dumpUnit,*)'Error in Main: ErrorCode from GetCrit = ',iErrCrit
+		write(52,*)ierCode,' Error in Main: ErrorCode from GetCrit = ',iErrCrit
+		ierCode=13
+		goto 86
+	endif
+	if(LOUD)write(dumpUnit,*)'calling GetEOS'
+	iErrGet=0
+	if(iEosOpt==1)CALL GetPR(NC,iErrGet)
+	if(iEosOpt==2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USEd EsdParms					!Diky model 12
+	if(iEosOpt==3)CALL GetPRWS(NC,iErrGet) 
+	if(iEosOpt==4)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USEd EsdParms					!Diky model 12
+	if(iEosOpt==5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)   !Results placed in USEd: SpeadParms, Assoc					!Diky model 6
+	if(iEosOpt==7)CALL GetNRTL (NC,ID,iErrGet)
+	if(iEosOpt==8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc
+	if(iEosOpt==9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc
+	if(iEosOpt==10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
+	if(iEosOpt==11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
+	if(iEosOpt==12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms, Assoc					 !Diky model 23
+	if(iEosOpt==13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms, Assoc					 !Diky model 24
+	if(iEosOpt==14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc				    !Diky model 18
+	if(iEosOpt==15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's PcSaft parameters			!Diky model 26
+	if(iEosOpt==16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's(Tb) PcSaft parameters			!Diky model 27
+	!if(iEosOpt.eq.17)This is the model number for COSMOtherm, if one is required JRE 20200119.		!Diky model ??
+	!NewEos: Add here for initializing parms.
+	if(iErrGet .ne. 0)then
+		if(LOUD)write(dumpUnit,*)ierCode,' Error in Main: failed to get required dbase props.'
+		write(52,*)iErrGet,' PGLWrapperStartup:Get(EOS) failed. iErrGet=',iErrGet
+		ierCode=iErrGet*10
+		goto 86
+	endif
+    if(LOUD)write(dumpUnit,*)'PGLWrapperStartup: Success so far... Got EOS Parms for iEosOpt=',iEosOpt
+86	return
+	end
+
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine ReadNext(inUnit,nexString3,maxLines,maxVars,bHeader,header77,nVars,var,nLines,iErr)

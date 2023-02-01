@@ -30,12 +30,12 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 	IMPLICIT double Precision(A-H,K,O-Z)
     integer ieos, casrn, prp_id, ierr
     double Precision var1, var2, res
-    double Precision xFrac(NMX),FUGC(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
-    INTEGER localCas(NMX)
+    double Precision xFrac(nmx),FUGC(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
+    INTEGER localCas(nmx)
 	CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-	LOUD=.FALSE.
+    IF (LOUD) return
 	DEBUG=.FALSE.
 	!  Get current directory
 	CURDIR = FILE$CURDRIVE
@@ -49,12 +49,11 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     iEosOpt=ieos
     iProperty=ABS(prp_id)
     localCas(1)=casrn
-	Call LoadCritParmsDb(iErrCrit) !This includes the ID() and idCas() xrefs. 
     !write(*,*)casrn
     !iProperty = 1: vapor pressure (kPa) given tKelvin
     !iProperty = 2: saturated liquid density (g/cc) given tKelvin
     !iProperty = 3: fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
-    !iProperty = 4: Hres/RT,CpRes/R,CvResR,cmprsblty given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
+    !iProperty = 4: Hres/RT(41),CpRes/R(42),CvResR(43),cmprsblty(44) given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
     iPhase=1
     if (prp_id < 0) iPhase=0   !vapor or gas
     res=0
@@ -136,7 +135,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         rhoG_cc=rhoMol_cc*rMw(1)
 		hRes_RT=uRes_RT+zFactor-1
 		iErrDerv=0
-		if(iProperty > 41)CALL NUMDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,iErrDerv) !cmprsblty,CpRes_R,CvRes_R
+		if(iProperty > 41)CALL NUMDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,iErrDerv) !cmprsblty,CpRes_R,CvRes_R USEd in GlobConst
 		if(iErrDerv > 0)then
 			iErr=5
 			return
@@ -173,8 +172,8 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
     double Precision res
     integer ieos, casrn1, casrn2, prp_id, ierr
     double Precision var1, var2, var3
-    double Precision xFrac(NMX),FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
-    INTEGER localCas(NMX)
+    double Precision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
+    INTEGER localCas(nmx)
 	CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
@@ -331,7 +330,7 @@ function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr
     DoublePrecision CalculateProperty2
     integer ieos, casrn1, casrn2, prp_id, ierr
     DoublePrecision var1, var2, var3, res
-    !DoublePrecision xFrac(NMX),FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
+    !DoublePrecision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
 !	COMMON/eta/etaL,etaV,ZL,ZV
   !DEC$ATTRIBUTES DLLEXPORT::CalculateProperty2
     call CalculateProperty2local(ieos, casrn1, casrn2, prp_id, t, p, x, res, ierr)
@@ -705,7 +704,7 @@ integer function INITIALIZE_MODEL(modelid, Rn1, Rn2, Rn3)
     integer modelid, Rn1, Rn2, Rn3
     !DEC$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
     integer ieos, casrn1, casrn2, casrn3, ierr
-    INTEGER localCas(NMX)
+    INTEGER localCas(nmx)
 	CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
@@ -852,8 +851,8 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
     double Precision res
     integer ieos, casrn1, casrn2, casrn3, prp_id, ierr
     double Precision var1, var2, var3, var4
-    double Precision xFrac(NMX),FUGC(NMX),xPure1(NMX),xPure2(NMX),xPure3(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
-    INTEGER localCas(NMX)
+    double Precision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx),xPure3(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
+    INTEGER localCas(nmx)
 	CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.

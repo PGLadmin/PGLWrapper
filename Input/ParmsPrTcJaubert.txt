@@ -1,4 +1,4 @@
-1725 idDip 	Tc	PcMPa	 acen 	 TwuL 	TwuM  	TwuN  	c(cc/mol)	zRa	    Tmin 	idCas 	J/cc	g/cc  	Mw
+1725 idDip 	Tc	PcMPa	 acen 	 TwuL 	TwuM  	TwuN  	c(cc/mol)	zRa	    Tmin 	idCas 	rtMPa	g/cc  	Mw
 1	190.56	4.599	0.0115	0.1473	0.9075	1.8243	-3.5604	0.2894	85	 74828	11.62	0.4224	16.04
 2	305.32	4.872	0.0995	0.3041	0.8694	1.3340	-3.6754	0.2817	144	 74840	12.38	0.5445	30.07
 3	369.83	4.248	0.1523	0.7212	0.9076	0.7830	-3.7399	0.2774	182	 74986	13.09	0.5826	44.10
