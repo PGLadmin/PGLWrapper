@@ -45,6 +45,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         goto 86
     endif
     iProperty=ABS(prp_id)
+    if (prp_id==-2) iProperty=3
     localCas(1)=casrn
     !write(*,*)casrn
     !iProperty = 1: vapor pressure (kPa) given tKelvin
@@ -70,7 +71,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   READY TO CALCULATE   !!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(iProperty==1 .or. iProperty==2)then
+    if(iProperty==1 .or. iProperty==2 .or. iProperty==3)then
         notDone=1
         line=0  !read statement
 !        do while(notDone)
@@ -85,7 +86,8 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
             endif
             pKPa=pMPa*1000
             if(iProperty==1) res=pKPa
-            if(iProperty==2) res=1000*rhoLiq
+            if(iProperty==2) res=1000*rhoLiq*rMw(1)
+            if(iProperty==3) res=1000*rhoVap*rMw(1)
             goto 86
 !        enddo
     endif !iProperty <= 2.
