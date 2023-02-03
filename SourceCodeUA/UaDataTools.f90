@@ -43,17 +43,11 @@ END MODULE VpDb
 	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
 	!	LmDifEzCov2.for, Mintools.for
 	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
-	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
-	USE PORTLIB
 	USE GlobConst
 	USE CritParmsDb
 	USE BIPs
 	USE EsdParms
 	Implicit DoublePrecision(A-H,K,O-Z)
-
-	CHARACTER($MAXPATH) CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-	!CHARACTER*1 ANSWER
-	!CHARACTER*2 calcType
 	CHARACTER*77 errMsgPas !,readString,Property(22)
 	CHARACTER*251 dumpFile
 	!CHARACTER*3 aPhase
@@ -64,10 +58,8 @@ END MODULE VpDb
     Integer  localCas(NMX),iEosLocal,ierCode,NC 
 	!Logical CheckDLL
 	
-	!  Get current directory
-	CURDIR = FILE$CURDRIVE
-	iStat = GETDRIVEDIRQQ(CURDIR)
-	masterDir=TRIM(curDir)
+	idCas(1:NC)=localCas(1:NC)
+    if(LOUD)write(dumpUnit,*)'PGLWrapperStartup: starting.NC,iEosOpt,idCas=',NC,iEosOpt ,idCas(1:NC)
 	PGLinputDir='c:\PGLWrapper\input'
 	!PGLinputDir='C:\Soft\myPGLwrapper\PGLwrapper\input'
 
@@ -76,7 +68,6 @@ END MODULE VpDb
 	ierCode=0 ! Initialize to failure in the iEosOpt write slot to make it easier to terminate if any Get_ functions fail.
 	iErrCrit=0
 	if(nDeckDb.ne.nCritSet)call LoadCritParmsDb(iErrCrit) !nDeckDb.ne.nCritSet indicates that LoadCrit has not been called.
-	idCas(1:NC)=localCas(1:NC)
 	if(iErrCrit > 0)then
 		if(LOUD)write(dumpUnit,*)'PGLWRapperStartup: Error from LoadCritParmsDb, iErrCrit=',iErrCrit
 		ierCode=11
@@ -294,7 +285,7 @@ END MODULE VpDb
 		vLiqD(i)=rMwD(i)/rhoG_cc
 		CrIndex(IDnum(i))=i
 		if(ioErr.and.LOUD)write(dumpUnit,*)'LoadCritParmsDb: error reading ParmsCrit.txt. line=',i
-		if(i>1.and.LOUD)write(dumpUnit,602)IDnum(I),idCasDb(I),TCD(I),PCD(I),ZCD(I),ACEND(I),solParmD(I),vLiqD(i),rMwD(i) !&
+		if(i==1.and.LOUD)write(dumpUnit,602)IDnum(I),idCasDb(I),TCD(I),PCD(I),ZCD(I),ACEND(I),solParmD(I),vLiqD(i),rMwD(i) !&
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
 

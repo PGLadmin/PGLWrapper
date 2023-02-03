@@ -610,7 +610,11 @@
 	! PR & ESD's use Tc,Pc,w. AC models have no pure pars. 
 	! SPEAD: 11=A0coeff(3),A1coeff(3),A2Coeff(4),vEffNm3. Does not allow adjustment of Assoc parameters because these must be transferable. 
 	! tcPR has alphaN&M, Gc&Tff models have zero adj parameters 
-	QueryNparPure=nParInert(iEosOpt)+nParPolar(iEosOpt)+nParAssoc(iEosOpt) 
+    if(iEosOpt < 1)then
+        QueryNparPure=86
+    else
+        QueryNparPure=nParInert(iEosOpt)+nParPolar(iEosOpt)+nParAssoc(iEosOpt) 
+    endif
 	!if(class=='assoc')QueryNparPure=QueryNparPure+nParAssoc(iEosOpt)		! m, sigma, eps/kB, Kad, epsHB
 	return
     end

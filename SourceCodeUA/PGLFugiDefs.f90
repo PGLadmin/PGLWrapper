@@ -25,6 +25,9 @@
 	IMPLICIT DOUBLEPRECISION( A-H,O-Z )
 	DoublePrecision X(*),FUGC(*)
 	DoublePrecision fg(ncomax) ,ft(ncomax) , fp(ncomax) , fx(ncomax,ncomax)	!for PrLorraine
+    if(LOUD)write(dumpUnit,*)'FUGI: NC,isZiter=',NC,isZiter 
+    if(LOUD)write(dumpUnit,610)'FUGI: T,P,gmol=',tKelvin,P,X(1:NC)
+610 format(1x,a,12E12.4)
 	if(iEosOpt.eq.0)iEosOpt=1
 	if(iEosOpt==1)then
 		call FugiPR( T,P,X,NC,LIQ,FUGC,rhoMol_cc,Z,aRes,uRes,iErr )
@@ -63,6 +66,8 @@
 	  if(LOUD)pause 'Error in Fugi: unexpected iEosOpt'
 	  iErr=10
 	endif
+    if(LOUD)write(dumpUnit,*)'FUGI: Done. iErr=',iErr 
+    if(LOUD)write(dumpUnit,610)'FUGI: Z,A,U,FUGC=',Z,aRes,uRes,FUGC(1:NC)
 	return
 	end	!SUBROUTINE FugiTP() 
 
@@ -76,9 +81,14 @@
 	SUBROUTINE FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)
 	USE GlobConst !iEosOpt
 	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
-	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	DIMENSION gmol(NC),FUGC(NC) !,dHkcalMol(NMX),KCSTARp(NMX)
+	IMPLICIT DoublePrecision(A-H,K,O-Z)
+	DoublePrecision gmol(NC),FUGC(NC) !,dHkcalMol(NMX),KCSTARp(NMX)
 	DoublePrecision ft(3) , fv(3) , fx(3,3)	!for PrLorraine
+    Integer initCall,iErr,isZiter
+    data initCall/11/
+    if(LOUD)write(dumpUnit,*)'FuVtot: NC,isZiter=',NC,isZiter 
+    if(LOUD)write(dumpUnit,610)'FuVtot: T,V,gmol=',tKelvin,vTotCc,gmol(1:NC)
+610 format(1x,a,12E12.4)
 	nComps=NC
 	if(iEosOpt==1)then
 		call FuPrVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)
@@ -99,6 +109,13 @@
 	else
 		if(LOUD)print*,'FuVtot: undefined iEosOpt=',iEosOpt
     endif
+    if(initCall>0)then !this is it keep DebugDLL.txt down to a reasonable size
+        initCall=initCall-1 ! We can set initCall to finite value in data statement, then count down.
+        if(LOUD)close(dumpUnit)
+        LOUD=.FALSE.
+    endif
+    if(LOUD)write(dumpUnit,*)'FuVtot: Done. initCall,iErr=',initCall,iErr 
+    if(LOUD)write(dumpUnit,610)'FuVtot: Z,A,U,FUGC=',Z,aRes,uRes,FUGC(1:NC)
 	return
     end
 

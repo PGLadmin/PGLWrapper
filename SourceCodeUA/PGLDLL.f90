@@ -9,7 +9,7 @@ MODULE DLLConst
 	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
 END MODULE DLLConst
 
-double Precision function Sample_Function(i1, d1)
+double Precision function FORTRAN_DLL1(i1, d1)
     integer i1
     double Precision d1
 
@@ -18,9 +18,9 @@ double Precision function Sample_Function(i1, d1)
   !DEC$ATTRIBUTES DLLEXPORT::FORTRAN_DLL1
 
   ! Variables
-    Sample_Function = i1*d1
+    FORTRAN_DLL1 = i1*d1
     return
-end function Sample_Function
+end function FORTRAN_DLL1
 
 subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 !	CalculateProperty1 & local is for pure compounds.
@@ -32,10 +32,18 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     double Precision var1, var2, res
     double Precision xFrac(nmx),FUGC(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER localCas(nmx)
-	if(LOUD.and. .NOT.CheckDLL)return
+	if (LOUD.and. dumpUnit==6)return
+    if(LOUD)write(dumpUnit,*)'CalculateProperty1local: ieos,casrn,prp_id=',ieos,casrn 
+    if(LOUD)write(dumpUnit,610)'CalculateProperty1local: var1,var2=',var1,var2
+610 format(1x,a,12E12.4)
+
     NC=1 !assume one component for all calculations (as of 1/1/2020 this is all we need).
     xFrac(1)=1  !   "
-    iEosOpt=ieos
+    if(iEosOpt/=ieos)then
+        if(LOUD)write(dumpUnit,611)'CalculateProperty1local: failed ieos check. iEosOpt=',iEosOpt
+        iErr=15
+        goto 86
+    endif
     iProperty=ABS(prp_id)
     localCas(1)=casrn
     !write(*,*)casrn
@@ -51,9 +59,10 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 	INITIAL=0
     if(casrn.ne.oldRN1.or.iEosOpt.ne.oldEOS)then
 		Call PGLWrapperStartup(NC,iEosOpt,localCas,iErrStart) !LoadCritParmsDb,IdDipprLookup,GetCrit
+        if(LOUD)write(dumpUnit,*)'CalculateProperty1local: After Start, iErr,ID=',iErrStart,ID(1:NC) 
 	    if(iErrStart/=0)then
             ierr=1
-            return
+            goto 86
         endif
         oldEOS=iEosOpt
         oldRN1=casrn
@@ -61,25 +70,26 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   READY TO CALCULATE   !!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(iProperty==1 .or. iProperty==2 .or. iProperty==6)then
+    if(iProperty==1 .or. iProperty==2)then
         notDone=1
         line=0  !read statement
 !        do while(notDone)
             tKelvin=var1
             line=line+1
             call PsatEar(tKelvin,pMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCode)
+            if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After Psat, iErr,P,rhoL,rhoV=',ierCode,pMPa,rhoLiq,rhoVap 
             if(ierCode.NE.0)then
 !                write(52,*)'Unexpected error from Psat calculation. iErrCode,tKelvin,line=',ierCode,tKelvin,line
                 ierr=3
-                return
+                goto 86
             endif
             pKPa=pMPa*1000
             if(iProperty==1) res=pKPa
-            if(iProperty==2) res=1000*rhoLiq*rMw(1)
-            if(iProperty==6) res=1000*rhoVap*rMw(1)
-            return
+            if(iProperty==2) res=1000*rhoLiq
+            goto 86
 !        enddo
     endif !iProperty <= 2.
+611 format(1x,a,i11,12E12.4)
     notDone=1
     line=0  !read statement
 !    do while(notDone)
@@ -89,18 +99,22 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         pMPa=pKPa/1000
         !call FUGI(tKelvin,pMPa,xFrac,NC,iPhase,FUGC,zFactor,iErrF)
 		CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+        if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After FugiTP, iErr,Z,rho(g/cc)=',iErrF,zFactor,rhoMol_cc*rMw(1) 
         if(iErrF > 0 .or. zFactor <= 0)then
 !            write(52,*)'Unexpected error from Psat calculation. iErrCode,tKelvin,line=',ierCode,tKelvin,line
             iErr=4
-            return
+            goto 86
         endif
         rhoG_cc=rhoMol_cc*rMw(1)
 		hRes_RT=uRes_RT+zFactor-1
 		iErrDerv=0
-		if(iProperty > 41)CALL NUMDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,iErrDerv) !cmprsblty,CpRes_R,CvRes_R
+		if(iProperty > 41)then
+            CALL NUMDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,iErrDerv) !cmprsblty,CpRes_R,CvRes_R
+            if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After NUMDERVS, iErr,...=',iErrDerv,cmprsblty,CpRes_R,CvRes_R 
+        endif
 		if(iErrDerv > 0)then
 			iErr=5
-			return
+			goto 86
 		endif
         if (iProperty==3) res=1000*rhoG_cc
         !if(iProperty==4)write(52,*)tKelvin,pKPa,hRes_RT,CpRes_R,CvRes_R,cmprsblty  !cmprsblty=(dP/dRho)T*(1/RT)
@@ -109,6 +123,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         if (iProperty==43) res=CvRes_R
         if (iProperty==44) res=1/(cmprsblty*pKPa/zFactor)  !cmprsblty=(dP/dRho)T*(1/RT)
 !    enddo
+86  if(LOUD)write(dumpUnit,611)'CalculateProperty1local: returning, iErr,result=',iErr,res 
     return
 end subroutine CalculateProperty1local
 
@@ -140,7 +155,7 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 	!CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-    IF (LOUD) return
+    IF (LOUD.and.dumpUnit==6) return
 	DEBUG=.FALSE.
 	!  Get current directory
 	CURDIR = FILE$CURDRIVE
@@ -277,14 +292,23 @@ end function CalculateProperty2
 
 integer function Activate(hello)
     use DllConst
+    use GlobConst
     character(255) hello,local
     !DEC$ATTRIBUTES DLLEXPORT::Activate
+    LOUD=.FALSE.
+    !LOUD=.TRUE.
+    if (LOUD)then
+        dumpUnit=686
+        open(dumpUnit,file='c:\myprojex\pgldll\pgldll\DebugDLL.txt')
+        write(dumpUnit,*)'Activate: DLL has started.'
+    endif
     oldRN1=0
     oldRN2=0
     oldRN3=0
     oldEOS=0
     Activate=1
 	local=TRIM(hello)
+    
     return
 end function Activate
 
@@ -512,7 +536,7 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     if (propertyid.eq.1) localprpid=3
     if (propertyid.eq.2) localprpid=-3
     if (propertyid.eq.3) localprpid=2
-    if (propertyid.eq.4) localprpid=6
+    if (propertyid.eq.4) localprpid=-2
     if (propertyid.eq.8) localprpid=1
     if (localprpid.eq.0) then
         res=0
@@ -643,32 +667,21 @@ integer function SETPAR(n, newvalue)
     return
 end function SETPAR
 
-integer function INITIALIZE_MODEL(modelid, Rn1, Rn2, Rn3)
-	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
+integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 	USE GlobConst
     use DllConst
 	IMPLICIT double Precision(A-H,K,O-Z)
-    integer modelid, Rn1, Rn2, Rn3
+    integer iEosLocal, Rn1, Rn2, Rn3
     !DEC$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
     integer ieos, casrn1, casrn2, casrn3, ierr
     INTEGER localCas(nmx)
-	CHARACTER*77 errMsgPas
-!	COMMON/eta/etaL,etaV,ZL,ZV
-	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-    IF (LOUD) then
+    IF (LOUD.and.dumpUnit==6) then
 	    INITIALIZE_MODEL=5
 	    return
     endif
+    if (LOUD)write(dumpUnit,*)'INITIALIZE_MODEL: starting'
     INITIALIZE_MODEL=0
-	DEBUG=.FALSE.
-	!  Get current directory
-	CURDIR = FILE$CURDRIVE
-	iStat = GETDRIVEDIRQQ(CURDIR)
-	!iChange=VERIFY('C:\MYPROJEX\CalcEos',CURDIR)
-	!iChange2=VERIFY('C:\MYPROJEX\CALCEOS',CURDIR)
-	!if(iChange2.eq.0)iChange=0
-	!if(iChange.eq.0 .or. iChange.gt.26)DEBUG=.TRUE.
-	ieos=modelid
+	ieos=iEosLocal
     casrn1=Rn1
     casrn2=Rn2
     casrn3=Rn3
@@ -688,41 +701,12 @@ integer function INITIALIZE_MODEL(modelid, Rn1, Rn2, Rn3)
     elseif (Rn3.eq.0) then
         NC=2 !no of components
     endif
-	call LoadCritParmsDb(iErrCrit)
-	if(iErrCrit > 0 .and. LOUD)print*,'UaWrapperMain: From LoadCritParmsDb, iErrCrit=',iErrCrit
-	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
-	if(iErrCas)then
-	        INITIALIZE_MODEL=1
-	        return
-	    endif
-	CALL GETCRIT(NC,iErrCrit)
-	if(iEosOpt.ne.10)then
-	    if(iErrCrit)then
-		    INITIALIZE_MODEL=2
-		    return
-	    endif
-	endif
-	iErrGet=0 
-    if (Rn2.eq.0) then
-        if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldEOS.ne.ieos) then
-	        if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	        if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
-	        if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
-	        if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	        if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
-!	        if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
-	        if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	        if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	        if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	        if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	        if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms				    !Diky model 18
-	        if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 26
-	        if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 27
-	    endif
-	        if(iErrGet.NE.0)then
+	iErrLoad=0 
+    if (NC==1) then
+        if (oldRN1.ne.casrn1 .or. oldEOS.ne.ieos) then
+	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
+	        if(iErrLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, iErrCrit=',iErrCrit
+	        if(iErrLoad.NE.0)then
 		        INITIALIZE_MODEL=3
 		        return
             endif
@@ -730,26 +714,12 @@ integer function INITIALIZE_MODEL(modelid, Rn1, Rn2, Rn3)
             oldRN2=0
             oldRN3=0
             oldEOS=ieos
-    elseif (Rn3.eq.0) then
+        endif
+    elseif (NC==2) then
         if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldEOS.ne.ieos) then
-	        if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	        if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
-	        if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
-	        if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	        if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
-!	        if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
-	        if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	        if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	        if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	        if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	        if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms				    !Diky model 18
-	        if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 26
-	        if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 27
-	        !NewEos: Add here for initializing parms.
-	        if(iErrGet.NE.0)then
+	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
+	        if(iErrLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, iErrCrit=',iErrCrit
+	        if(iErrLoad.NE.0)then
 		        INITIALIZE_MODEL=3
 		        return
             endif
@@ -760,24 +730,9 @@ integer function INITIALIZE_MODEL(modelid, Rn1, Rn2, Rn3)
 	    endif
     else
         if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldRN3.ne.casrn3 .or. oldEOS.ne.ieos) then
-	        if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	        if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
-	        if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
-	        if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	        if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
-!	        if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
-	        if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	        if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	        if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	        if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	        if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms				    !Diky model 18
-	        if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 26
-	        if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 27
-	        !NewEos: Add here for initializing parms.
-	        if(iErrGet.NE.0)then
+	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
+	        if(iErrLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, iErrCrit=',iErrCrit
+	        if(iErrLoad.NE.0)then
 		        INITIALIZE_MODEL=3
 		        return
             endif
@@ -787,6 +742,7 @@ integer function INITIALIZE_MODEL(modelid, Rn1, Rn2, Rn3)
             oldEOS=ieos
 	    endif
     endif
+	if (LOUD)write(dumpUnit,*)'InitializeModel: returning. iErr=',INITIALIZE_MODEL
     return
     end function INITIALIZE_MODEL
 
@@ -803,7 +759,7 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 	CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-    IF (LOUD) return
+    IF (LOUD.and.dumpUnit==6) return
 	DEBUG=.FALSE.
 	!  Get current directory
 	CURDIR = FILE$CURDRIVE
@@ -965,18 +921,20 @@ integer function SETSTRING(tag, value)
 	USE GlobConst
     character*255 tag, value !, local
     !DEC$ ATTRIBUTES DLLEXPORT::SETSTRING
+    if(LOUD)write(dumpUnit,*)'SETSTRING: value,tag',value,' ',tag 
     if (tag(1:8).eq.'LOCATION') then
         do i1=1,255
-            if (value(i1:i1).eq.'|') then
+            if (value(i1:i1).eq.'|'.and. .NOT. LOUD) then !if(LOUD), assume debugging and use hard coded PGLInputDir
                 masterDir=value(1:i1-1)
                 PGLInputDir=trim(masterDir)//'\input'
                 goto 666
             end if
         enddo
-666 continue        
+666     continue        
         SETSTRING=1
-        return
+    else
+        SETSTRING=0
     endif
-    SETSTRING=0
+    if(LOUD)write(dumpUnit,*)'SetString: returning. SETSTRING=',SETSTRING 
     return
     end function SETSTRING

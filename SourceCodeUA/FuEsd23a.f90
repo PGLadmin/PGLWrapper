@@ -33,6 +33,9 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or isPcSaft.
 	isESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI
 	if(LOUDER)write(dumpUnit,*)' GetEsdCas: idCas()=',idCas(1:NC) 
+	if(LOUDER)write(dumpUnit,*)' GetEsdCas: ID()=',ID(1:NC) 
+	if(LOUDER)write(dumpUnit,610)' GetEsdCas: Tc()=',Tc(1:NC)
+610 format(1x,a,12E12.4)
 	etaMax=1/1.9D0-zeroTol
 	isMEM2=.FALSE.
 	if(iEosOpt==4)isMEM2=.TRUE.
@@ -56,17 +59,16 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 		else ! iEosOpt=2,12,13 all use ESD96.
 			READ(dumString,*,ioStat=ioErr)IDA(I),CAi,QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I) ,idCasa(i)
 			!READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I),NDA(I),NASA(I),idCasa(i)
-			if(LOUDER)write(dumpUnit,602)'GetEsdCas: inFile~',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
 			if(NASA(I).ne.NDSA(I))NASA(I)=0	 ! ESD96 requires that NAS=NDS for all compounds.
 			NDSA(I)=NASA(I)
 			eAccEpsK(i)=DHA(I)*1000/RgasCal
 			eDonEpsK(i)=eAccEpsK(i)
 			NDSA(I)=NASA(I)
+			if(LOUDER)write(dumpUnit,603)'GetEsdCas: inFile~',i,IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
 		endif
 		!write(dumpUnit,*),*)IDA(I),CA(I),QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I)  ,idCasa(i)
-		if(ioErr .and. LOUDER)write(dumpUnit,'(a,a)')' GetESD: error reading ',TRIM(inFile),' line=',TRIM(dumString)
+		if(ioErr .and. LOUDER)write(dumpUnit,'(a,a)')' GetESDCas: error reading ',TRIM(inFile),' line=',TRIM(dumString)
 		if(  ( idCasa(i)==id(1) .or. idCasa(i)==id(2) ) .and. LOUDER  )write(dumpUnit,*)'Found in ParmsEsd idCas=',idCasa(i) 
-		tKmin(i)=0.4d0*Tc(i) ! this is the general rule for ESD.
 	enddo !i=1,NC
 	NDI=0
 	I=0  !overrides headerless reading. Set I=1 to re-activate.
@@ -85,7 +87,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
     !  Begin by computing corr states values.  these will be replaced if in dbase
     ierCompExact=0
 	if(iEosOpt > 4)then
-		ierCompExact=1 ! Set error for all comps. Declare error because iEosOpt > 4 means using only GC parameters from one of ParmsEsdEmami__
+		ierCompExact=11 ! Set error for all comps. Declare error because iEosOpt > 4 means using only GC parameters from one of ParmsEsdEmami__
 	else
 		if(Tc(1) < 4)call GetCritCas(NC,idCas,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
 		call ExactEsd(NC,vx,c,q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc or Asso+. Wait to see if Parms are in ParmsEsd before failing.
@@ -120,6 +122,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 				epsD_kB(J)=eDonEpsK(I)
 				ND(J)=NDA(i)
 				DH(J)=DHA(I)*1000/RgasCal/ Tc( j)			! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
+        		tKmin(J)=0.4d0*Tc(J) ! this is the general rule for ESD.
 				NAS(J)=NASA(I)
 				NDS(J)=NDSA(I)
 				iComplex=0
@@ -153,15 +156,16 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
     enddo
 601 format(1x,a,8e12.4)
 602 format(1x,a,i11,8e12.4)
+603 format(1x,a,2i11,8e12.4)
 	if(iErr)then
 		if(LOUDER)write(dumpUnit,*) 'GetEsd2: error for at least one compound'
 		continue
 	endif
         
 	if(LOUDER)then
-        write(dumpUnit,*)'  ID     NAME       mESD    eok      bVol    Nd   KADnm3   eHB/k(kK)'
+        write(dumpUnit,*)'  ID     NAME       mESD    eok      bVol    Nd   KADnm3   eDon   eAcc(kcal/mol)'
 	    do i=1,NC
-		    write(dumpUnit,606)IDCas(i),NAME(i),q(i),eokP(i),vx(i),NDS(i),NAS(i),KadNm3(i),epsD_kB(i),epsA_kB(i) !/1000
+		    write(dumpUnit,606)IDCas(i),NAME(i),q(i),eokP(i),vx(i),NDS(i),NAS(i),KadNm3(i),eDonorKcal_mol(i,1),eAcceptorKcal_mol(i,1) !/1000
         enddo
     end if
 606	format(i9,1x,a11,f9.3,f8.2,f8.2,2i3,1x,f8.6,2f8.0)
