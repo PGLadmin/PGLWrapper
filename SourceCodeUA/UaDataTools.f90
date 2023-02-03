@@ -60,7 +60,7 @@ END MODULE VpDb
 	
 	idCas(1:NC)=localCas(1:NC)
     if(LOUD)write(dumpUnit,*)'PGLWrapperStartup: starting.NC,iEosOpt,idCas=',NC,iEosOpt ,idCas(1:NC)
-	PGLinputDir='c:\PGLWrapper\input'
+	!PGLinputDir='c:\PGLWrapper\input'
 	!PGLinputDir='C:\Soft\myPGLwrapper\PGLwrapper\input'
 
 	INITIAL=0
