@@ -50,18 +50,10 @@ END MODULE VpDb
 	Implicit DoublePrecision(A-H,K,O-Z)
 	CHARACTER*77 errMsgPas !,readString,Property(22)
 	CHARACTER*251 dumpFile
-	!CHARACTER*3 aPhase
-
-	!DIMENSION BIPTMP(NMX)
-	!DIMENSION ZFEED(NMX),S(NMX)
-    !DoublePrecision xFrac(NMX),FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
     Integer  localCas(NMX),iEosLocal,ierCode,NC 
-	!Logical CheckDLL
 	
 	idCas(1:NC)=localCas(1:NC)
     if(LOUD)write(dumpUnit,*)'PGLWrapperStartup: starting.NC,iEosOpt,idCas=',NC,iEosOpt ,idCas(1:NC)
-	!PGLinputDir='c:\PGLWrapper\input'
-	!PGLinputDir='C:\Soft\myPGLwrapper\PGLwrapper\input'
 
 	INITIAL=0
 	iEosOpt=iEosLocal
