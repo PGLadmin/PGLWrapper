@@ -369,7 +369,6 @@ END MODULE Assoc
 	hDA=0
 	hCC=0
 	do i=1,nComps  ! XA and XD USE Assoc.
-		sumLnXi=0
 		do j=1,nTypes(i)
 			XA(i,j)= 1/(1+ralphA(i,j)*FA)
 			XD(i,j)= 1/(1+ralphD(i,j)*FD)
@@ -408,11 +407,11 @@ END MODULE Assoc
 			bepsA=(eAcceptorKcal_mol(i,j)/RgasCal*1000/tKelvin)
 			dLnAlpha_dLnBeta=DEXP(bepsA)	! Eqs. 44,45
 			if(bepsA > 1.D-4)dLnAlpha_dLnBeta=dLnAlpha_dLnBeta*(bepsA)/(dLnAlpha_dLnBeta-1)
-			betadFA_dBeta=betadFA_dBeta+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*XA(i,j)*ralphA(i,j)*dLnAlpha_dLnBeta
+			betadFD_dBeta=betadFD_dBeta+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*XA(i,j)*ralphA(i,j)*dLnAlpha_dLnBeta
 			bepsD=(eDonorKcal_mol(i,j)/RgasCal*1000/tKelvin)
 			dLnAlpha_dLnBeta=DEXP(bepsD)
 			if(bepsD > 1.D-4)dLnAlpha_dLnBeta=dLnAlpha_dLnBeta*(bepsD)/(dLnAlpha_dLnBeta-1)
-			betadFD_dBeta=betadFD_dBeta+xFrac(i)*nDegree(i,j) * nDonors(i,j) *XD(i,j)*ralphD(i,j)*dLnAlpha_dLnBeta
+			betadFA_dBeta=betadFA_dBeta+xFrac(i)*nDegree(i,j) * nDonors(i,j) *XD(i,j)*ralphD(i,j)*dLnAlpha_dLnBeta
 			if(idType(i,j)==1603)then
 				bepsC=3*(eDonorKcal_mol(i,j)+eDonorKcal_mol(i,j))/(2*RgasCal/1000*tKelvin)
 				dLnAlpha_dLnBeta=DEXP(bepsC)
@@ -420,12 +419,15 @@ END MODULE Assoc
 				betadFC_dBeta=betadFC_dBeta+xFrac(i) *nDegree(i,j) *XC(i,j)*ralphC*dLnAlpha_dLnBeta
 			endif
 		enddo
+		if(LOUDER)write(dumpUnit,611)'i,sumLnXi=',i,sumLnXi
 		aAssoc=aAssoc+xFrac(i)*sumLnXi	! ln(XD)=ln(XA) so *2.
 		rLnPhiAssoc(i)=sumLnXi-(hAD+hDA+hCC)/2*(dAlpha-1)*bVolCc_mol(i)/bVolMix !*( 1+(dAlpha-1)*rhoMol_cc*bVolCc_mol(1:nComps) )	! Eq. 42
 	enddo
+611 format(1x,a,i11,12E12.4)
 	aAssoc=  aAssoc+(hAD+hDA+hCC)/2  ! Eqs. 1 & 40
 	uAssoc= -( FA*betadFD_dBeta+FD*betadFA_dBeta+FC*betadFC_dBeta )/2 ! Eq. 43
 	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' MEM2: aAssoc,fugAssoc= ',aAssoc,(rLnPhiAssoc(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' MEM2: BdFA/dB,BdFD/dB=',betadFA_dBeta,betadFD_dBeta
 	if(ABS(hAD-hDA) > Ftol)then
 		iErr=2 !Warning
 		if(LOUDER)write(dumpUnit,*)'MEM2: Failed bond site balance.'
