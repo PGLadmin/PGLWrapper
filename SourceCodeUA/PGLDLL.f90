@@ -9,19 +9,6 @@ MODULE DLLConst
 	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
 END MODULE DLLConst
 
-double Precision function FORTRAN_DLL1(i1, d1)
-    integer i1
-    double Precision d1
-
-  ! Expose subroutine FORTRAN_Dll1 to users of this DLL
-  !
-  !DEC$ATTRIBUTES DLLEXPORT::FORTRAN_DLL1
-
-  ! Variables
-    FORTRAN_DLL1 = i1*d1
-    return
-end function FORTRAN_DLL1
-
 subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 !	CalculateProperty1 & local is for pure compounds.
 	!USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
@@ -53,7 +40,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     !iProperty = 3: fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
     !iProperty = 4: Hres/RT(41),CpRes/R(42),CvResR(43),cmprsblty(44) given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
     iPhase=1
-    if (prp_id < 0) iPhase=0   !vapor or gas
+    if (prp_id==3) iPhase=0   !vapor or gas
     res=0
     ierr=0
 	
@@ -71,7 +58,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   READY TO CALCULATE   !!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(iProperty==1 .or. iProperty==2 .or. iProperty==3)then
+    if(iProperty==1 .or. iProperty==2 .or. iProperty==13)then
         notDone=1
         line=0  !read statement
 !        do while(notDone)
@@ -87,7 +74,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
             pKPa=pMPa*1000
             if(iProperty==1) res=pKPa
             if(iProperty==2) res=1000*rhoLiq*rMw(1)
-            if(iProperty==3) res=1000*rhoVap*rMw(1)
+            if(iProperty==13) res=1000*rhoVap*rMw(1)
             goto 86
 !        enddo
     endif !iProperty <= 2.
@@ -101,6 +88,10 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         pMPa=pKPa/1000
         !call FUGI(tKelvin,pMPa,xFrac,NC,iPhase,FUGC,zFactor,iErrF)
 		CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+        if (iErrF.ne.0) then
+            iPhase=1-iPhase
+            CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+        endif
         if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After FugiTP, iErr,Z,rho(g/cc)=',iErrF,zFactor,rhoMol_cc*rMw(1) 
         if(iErrF > 0 .or. zFactor <= 0)then
 !            write(52,*)'Unexpected error from Psat calculation. iErrCode,tKelvin,line=',ierCode,tKelvin,line
@@ -119,6 +110,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 			goto 86
 		endif
         if (iProperty==3) res=1000*rhoG_cc
+        if (iProperty==4) res=1000*rhoG_cc
         !if(iProperty==4)write(52,*)tKelvin,pKPa,hRes_RT,CpRes_R,CvRes_R,cmprsblty  !cmprsblty=(dP/dRho)T*(1/RT)
         if (iProperty==41) res=hRes_RT
         if (iProperty==42) res=CpRes_R
@@ -535,11 +527,11 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     !DEC$ ATTRIBUTES DLLEXPORT::Calculate1
     !!MS$ ATTRIBUTES DLLEXPORT::Calculate1
     localprpid = 0
-    if (propertyid.eq.1) localprpid=3
-    if (propertyid.eq.2) localprpid=-3
-    if (propertyid.eq.3) localprpid=2
-    if (propertyid.eq.4) localprpid=-2
-    if (propertyid.eq.8) localprpid=1
+    if (propertyid.eq.1) localprpid=4   !L
+    if (propertyid.eq.2) localprpid=3   !G
+    if (propertyid.eq.3) localprpid=2   !L+G
+    if (propertyid.eq.4) localprpid=13   !G+L
+    if (propertyid.eq.8) localprpid=1   !VP
     if (localprpid.eq.0) then
         res=0
         Calculate1=1
