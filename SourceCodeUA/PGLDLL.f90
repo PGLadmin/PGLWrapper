@@ -54,10 +54,19 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         endif
         oldEOS=iEosOpt
         oldRN1=casrn
-	endif
+    endif
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   READY TO CALCULATE   !!!!!!!!!!!!!!!!!!!!!!!!!!
+    if (iProperty==34)then
+        tKelvin=var2
+        vTotCc = 1000*rMw(1)/var1
+        isZiter=0
+        call FuVtot(isZiter,tKelvin,vTotCc,xFrac,NC,FUGC,Z,aRes,uRes,iErr)
+        res=Z*rGas*tKelvin*var1/rMw(1)
+        goto 86
+    endif
+
     if(iProperty==1 .or. iProperty==2 .or. iProperty==13)then
         notDone=1
         line=0  !read statement
@@ -532,6 +541,7 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     if (propertyid.eq.3) localprpid=2   !L+G
     if (propertyid.eq.4) localprpid=13   !G+L
     if (propertyid.eq.8) localprpid=1   !VP
+    if (propertyid.eq.34) localprpid=34   !fluid pressure
     if (localprpid.eq.0) then
         res=0
         Calculate1=1
@@ -573,6 +583,7 @@ integer function SUPPORTS_PRP1(modelid, propertyid)
     if (propertyid==3) SUPPORTS_PRP1=1
     if (propertyid==4) SUPPORTS_PRP1=1
     if (propertyid==8) SUPPORTS_PRP1=1
+    if (propertyid==34) SUPPORTS_PRP1=1 !fluid pressure
     return
 end function SUPPORTS_PRP1
 
