@@ -14,11 +14,13 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 	!USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	USE GlobConst
     USE DllConst
-	IMPLICIT double Precision(A-H,K,O-Z)
+	Implicit NONE
     integer ieos, casrn, prp_id, ierr
     double Precision var1, var2, res
     double Precision xFrac(nmx),FUGC(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER localCas(nmx)
+    integer NC,IPROPERTY,IPHASE,INITIAL,iErrStart,line,ierCode,iErrF,iErrDerv,isZiter,notDone
+    double Precision tKelvin,vTotCc,Z,aRes,uRes,rhoLiq,rhoVap,uSatL,uSatV,chemPot,pKPa,pMPa,zFactor,aRes_RT,uRes_RT,rhoMol_cc,rhoG_cc,hRes_RT
 	if (LOUD.and. dumpUnit==6)return
     if(LOUD)write(dumpUnit,*)'CalculateProperty1local: ieos,casrn,prp_id=',ieos,casrn 
     if(LOUD)write(dumpUnit,610)'CalculateProperty1local: var1,var2=',var1,var2
@@ -125,6 +127,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         if (iProperty==42) res=CpRes_R
         if (iProperty==43) res=CvRes_R
         if (iProperty==44) res=1/(cmprsblty*pKPa/zFactor)  !cmprsblty=(dP/dRho)T*(1/RT)
+        if (iProperty==45) res=CpRes_R
 !    enddo
 86  if(LOUD)write(dumpUnit,611)'CalculateProperty1local: returning, iErr,result=',iErr,res 
     return
@@ -531,6 +534,8 @@ end function Calculate
 integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
 !int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
 !double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
+	USE GlobConst
+    Implicit NONE
     integer modelid, casrn1, propertyid, localprpid, ierr
     double Precision t, p, res, uncert
     !DEC$ ATTRIBUTES DLLEXPORT::Calculate1
@@ -541,12 +546,17 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     if (propertyid.eq.3) localprpid=2   !L+G
     if (propertyid.eq.4) localprpid=13   !G+L
     if (propertyid.eq.8) localprpid=1   !VP
+    if (propertyid.eq.12) localprpid=42   !CP
+    if (propertyid.eq.14) localprpid=45   !CP
     if (propertyid.eq.34) localprpid=34   !fluid pressure
     if (localprpid.eq.0) then
         res=0
         Calculate1=1
     else
         call CalculateProperty1local(modelid, casrn1, localprpid, t, p, res, ierr)
+        if (propertyid.eq.12)then
+            res=res*rGas
+        endif
         uncert=0
         Calculate1=ierr
     end if
@@ -583,6 +593,8 @@ integer function SUPPORTS_PRP1(modelid, propertyid)
     if (propertyid==3) SUPPORTS_PRP1=1
     if (propertyid==4) SUPPORTS_PRP1=1
     if (propertyid==8) SUPPORTS_PRP1=1
+    if (propertyid==12) SUPPORTS_PRP1=1
+    if (propertyid==14) SUPPORTS_PRP1=1
     if (propertyid==34) SUPPORTS_PRP1=1 !fluid pressure
     return
 end function SUPPORTS_PRP1
