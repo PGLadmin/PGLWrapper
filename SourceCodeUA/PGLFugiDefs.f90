@@ -25,8 +25,8 @@
 	IMPLICIT DOUBLEPRECISION( A-H,O-Z )
 	DoublePrecision X(*),FUGC(*)
 	DoublePrecision fg(ncomax) ,ft(ncomax) , fp(ncomax) , fx(ncomax,ncomax)	!for PrLorraine
-    if(LOUD)write(dumpUnit,*)'FUGI: NC,isZiter=',NC,isZiter 
-    if(LOUD)write(dumpUnit,610)'FUGI: T,P,gmol=',tKelvin,P,X(1:NC)
+    if(LOUD)write(dumpUnit,*)'FUGITP: NC,LIQ=',NC,LIQ 
+    if(LOUD)write(dumpUnit,610)'FUGITP: T,P,gmol=',T,P,X(1:NC)
 610 format(1x,a,12E12.4)
 	if(iEosOpt.eq.0)iEosOpt=1
 	if(iEosOpt==1)then
