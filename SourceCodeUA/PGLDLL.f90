@@ -549,7 +549,16 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     if (propertyid.eq.12) localprpid=42   !CP
     if (propertyid.eq.14) localprpid=45   !CP
     if (propertyid.eq.34) localprpid=34   !fluid pressure
-    if (localprpid.eq.0) then
+    if (propertyid.eq.5) then
+        res=Tc(1)
+        Calculate1=0
+    else if (propertyid.eq.6) then
+        res=1000*Pc(1)
+        Calculate1=0
+    else if (propertyid.eq.7) then
+        res=1000*Pc(1)*rMw(1)/(Zc(1)*Rgas*Tc(1))
+        Calculate1=0
+    else if (localprpid.eq.0) then
         res=0
         Calculate1=1
     else
@@ -592,6 +601,9 @@ integer function SUPPORTS_PRP1(modelid, propertyid)
     if (propertyid==2) SUPPORTS_PRP1=1
     if (propertyid==3) SUPPORTS_PRP1=1
     if (propertyid==4) SUPPORTS_PRP1=1
+    if (propertyid==5) SUPPORTS_PRP1=1
+    if (propertyid==6) SUPPORTS_PRP1=1
+    if (propertyid==7) SUPPORTS_PRP1=1
     if (propertyid==8) SUPPORTS_PRP1=1
     if (propertyid==12) SUPPORTS_PRP1=1
     if (propertyid==14) SUPPORTS_PRP1=1
