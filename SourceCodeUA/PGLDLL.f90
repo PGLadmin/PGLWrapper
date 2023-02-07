@@ -21,7 +21,6 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     INTEGER localCas(nmx)
     integer NC,IPROPERTY,IPHASE,INITIAL,iErrStart,line,ierCode,iErrF,iErrDerv,isZiter,notDone
     double Precision tKelvin,vTotCc,Z,aRes,uRes,rhoLiq,rhoVap,uSatL,uSatV,chemPot,pKPa,pMPa,zFactor,aRes_RT,uRes_RT,rhoMol_cc,rhoG_cc,hRes_RT
-	if (LOUD.and. dumpUnit==6)return
     if(LOUD)write(dumpUnit,*)'CalculateProperty1local: ieos,casrn,prp_id=',ieos,casrn 
     if(LOUD)write(dumpUnit,610)'CalculateProperty1local: var1,var2=',var1,var2
 610 format(1x,a,12E12.4)
@@ -34,13 +33,15 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         goto 86
     endif
     iProperty=ABS(prp_id)
-    if (prp_id==-2) iProperty=3
+    if (prp_id== -2) iProperty=3
     localCas(1)=casrn
     !write(*,*)casrn
     !iProperty = 1: vapor pressure (kPa) given tKelvin
-    !iProperty = 2: saturated liquid density (g/cc) given tKelvin
-    !iProperty = 3: fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
-    !iProperty = 4: Hres/RT(41),CpRes/R(42),CvResR(43),cmprsblty(44) given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
+    !iProperty = 2: saturated liquid density (kg/m3) given tKelvin
+    !iProperty = 13: saturated vapor density (kg/m3) given tKelvin
+    !iProperty = 3: vapor density (kg/m3) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
+    !iProperty = 4: liquid density (kg/m3) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
+    !iProperty = 4_: Hres/RT(41),CpRes/R(42),CvResR(43),cmprsblty(44) given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
     iPhase=1
     if (prp_id==3) iPhase=0   !vapor or gas
     res=0
@@ -65,7 +66,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         vTotCc = 1000*rMw(1)/var1
         isZiter=0
         call FuVtot(isZiter,tKelvin,vTotCc,xFrac,NC,FUGC,Z,aRes,uRes,iErr)
-        res=Z*rGas*tKelvin*var1/rMw(1)
+        res=Z*rGas*tKelvin*var1/rMw(1)	!returns pKPa.
         goto 86
     endif
 
@@ -90,45 +91,41 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 !        enddo
     endif !iProperty <= 2.
 611 format(1x,a,i11,12E12.4)
-    notDone=1
-    line=0  !read statement
-!    do while(notDone)
-        tKelvin=var1
-        pKPa=var2
-        line=line+1
-        pMPa=pKPa/1000
-        !call FUGI(tKelvin,pMPa,xFrac,NC,iPhase,FUGC,zFactor,iErrF)
+
+! All iProperty > 2 are handled below.
+	tKelvin=var1
+	pKPa=var2
+	pMPa=pKPa/1000
+	if(pMPa > Pc(1))iPhase=1 ! Force iPhase=1 even when "vapor" density is requested, so the liquid root of EOS is returned.
+	CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+	if (iErrF.ne.0) then
+		iPhase=1-iPhase
 		CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
-        if (iErrF.ne.0) then
-            iPhase=1-iPhase
-            CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
-        endif
-        if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After FugiTP, iErr,Z,rho(g/cc)=',iErrF,zFactor,rhoMol_cc*rMw(1) 
-        if(iErrF > 0 .or. zFactor <= 0)then
-!            write(52,*)'Unexpected error from Psat calculation. iErrCode,tKelvin,line=',ierCode,tKelvin,line
-            iErr=4
-            goto 86
-        endif
-        rhoG_cc=rhoMol_cc*rMw(1)
-		hRes_RT=uRes_RT+zFactor-1
-		iErrDerv=0
-		if(iProperty > 41)then
-            CALL NUMDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,iErrDerv) !cmprsblty,CpRes_R,CvRes_R
-            if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After NUMDERVS, iErr,...=',iErrDerv,cmprsblty,CpRes_R,CvRes_R 
-        endif
-		if(iErrDerv > 0)then
-			iErr=5
-			goto 86
-		endif
-        if (iProperty==3) res=1000*rhoG_cc
-        if (iProperty==4) res=1000*rhoG_cc
-        !if(iProperty==4)write(52,*)tKelvin,pKPa,hRes_RT,CpRes_R,CvRes_R,cmprsblty  !cmprsblty=(dP/dRho)T*(1/RT)
-        if (iProperty==41) res=hRes_RT
-        if (iProperty==42) res=CpRes_R
-        if (iProperty==43) res=CvRes_R
-        if (iProperty==44) res=1/(cmprsblty*pKPa/zFactor)  !cmprsblty=(dP/dRho)T*(1/RT)
+	endif
+	if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After FugiTP, iErr,Z,rho(g/cc)=',iErrF,zFactor,rhoMol_cc*rMw(1) 
+	if(iErrF > 0 .or. zFactor <= 0)then
+		iErr=4
+		goto 86
+	endif
+	rhoG_cc=rhoMol_cc*rMw(1)
+	hRes_RT=uRes_RT+zFactor-1
+	iErrDerv=0
+	if(iProperty > 41)then
+		CALL NUMDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,iErrDerv) !cmprsblty,CpRes_R,CvRes_R
+		if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After NUMDERVS, iErr,...=',iErrDerv,cmprsblty,CpRes_R,CvRes_R 
+	endif
+	if(iErrDerv > 0)then
+		iErr=5
+		goto 86
+	endif
+	if (iProperty==3) res=1000*rhoG_cc
+	if (iProperty==4) res=1000*rhoG_cc
+	!if(iProperty==4)write(52,*)tKelvin,pKPa,hRes_RT,CpRes_R,CvRes_R,cmprsblty  !cmprsblty=(dP/dRho)T*(1/RT)
+	if (iProperty==41) res=hRes_RT
+	if (iProperty==42) res=CpRes_R
+	if (iProperty==43) res=CvRes_R
+	if (iProperty==44) res=1/(cmprsblty*pKPa/zFactor)  !cmprsblty=(dP/dRho)T*(1/RT)
         if (iProperty==45) res=CpRes_R
-!    enddo
 86  if(LOUD)write(dumpUnit,611)'CalculateProperty1local: returning, iErr,result=',iErr,res 
     return
 end subroutine CalculateProperty1local
@@ -730,12 +727,12 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
     elseif (Rn3.eq.0) then
         NC=2 !no of components
     endif
-	iErrLoad=0 
+	ierLoad=0 
     if (NC==1) then
         if (oldRN1.ne.casrn1 .or. oldEOS.ne.ieos) then
 	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
-	        if(iErrLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, iErrCrit=',iErrCrit
-	        if(iErrLoad.NE.0)then
+	        if(ierLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, ierLoad=',ierLoad
+	        if(ierLoad.NE.0)then
 		        INITIALIZE_MODEL=3
 		        return
             endif
@@ -747,8 +744,8 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
     elseif (NC==2) then
         if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldEOS.ne.ieos) then
 	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
-	        if(iErrLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, iErrCrit=',iErrCrit
-	        if(iErrLoad.NE.0)then
+	        if(ierLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, ierLoad=',ierLoad
+	        if(ierLoad.NE.0)then
 		        INITIALIZE_MODEL=3
 		        return
             endif
@@ -760,8 +757,8 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
     else
         if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldRN3.ne.casrn3 .or. oldEOS.ne.ieos) then
 	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
-	        if(iErrLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, iErrCrit=',iErrCrit
-	        if(iErrLoad.NE.0)then
+	        if(ierLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, ierLoad=',ierLoad
+	        if(ierLoad.NE.0)then
 		        INITIALIZE_MODEL=3
 		        return
             endif

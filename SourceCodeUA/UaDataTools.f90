@@ -49,7 +49,7 @@ END MODULE VpDb
 	USE EsdParms
 	Implicit DoublePrecision(A-H,K,O-Z)
 	CHARACTER*77 errMsgPas !,readString,Property(22)
-	CHARACTER*251 dumpFile
+	!CHARACTER*251 dumpFile
     Integer  localCas(NMX),iEosLocal,ierCode,NC 
 	
 	idCas(1:NC)=localCas(1:NC)
@@ -108,7 +108,7 @@ END MODULE VpDb
 	endif
     if(LOUD)write(dumpUnit,*)'PGLWrapperStartup: Success so far... Got EOS Parms for iEosOpt=',iEosOpt
 86	return
-	end
+	end	   !PGLWrapperStartup
 
 
 
@@ -302,11 +302,13 @@ END MODULE VpDb
 	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
 	iErrCode=11
 	!write(dumpUnit,*)
+	close(40)
 	return                      
 862	continue
 	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
 	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
 	iErrCode=12
+	close(40)
 	!write(dumpUnit,*)
 	return                      
 	END

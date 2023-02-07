@@ -87,8 +87,9 @@ END MODULE SpeadParms
 	errMsg(4)='GetTpt: nTypesTot > maxTypes'
 	errMsg(5)='GetTpt: a1 > 0 for at least one component when 0 < eta < 0.85'
 	errMsg(6)='GetTpt: a2 > 0 for at least one component when 0 < eta < 0.85'
-		ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTpt.txt' ! // is the concatenation operator
-		if(iEosOpt==14)ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTptTransPGL6ed.txt' ! // is the concatenation operator
+
+	ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTpt.txt' ! // is the concatenation operator
+	if(iEosOpt==14)ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTptTransPGL6ed.txt' ! // is the concatenation operator
 	if(LOUDER)write(dumpUnit,*)'ParmsTptFile=',TRIM(ParmsTptFile)
 	OPEN(40,FILE=ParmsTptFile,ERR=861)
 
@@ -491,7 +492,7 @@ subroutine QueryParPureSpead(iComp,iParm,value,iErr)
 	USE SpeadParms      !Just for Spead
 	IMPLICIT NONE
 	DoublePrecision value
-	integer iComp,iParm,iErr,i
+	integer iComp,iParm,iErr !,i
 	!-----------------------------------------------------------------------------
 	! pure component parameters
 	!-----------------------------------------------------------------------------
@@ -678,7 +679,7 @@ end	!Subroutine QueryParPureSpead
 	eta=pb_rt/1.5d0 ! keep initial guess on the low side to avoid metastable region. 
 	etaHi=1.2D0*bVolMix/Vmix+0.24d0*( exp(-PMPa/100) ) !increase the initial guess for high pressure. etaMax might be less than 1 for some compounds.
 	if(etaHi < 0.6d0)etaHi=0.6d0
-	if(etaHi > etaMax)etaHi=etaMax/1.1d0
+	if(etaHi > etaMax)etaHi=etaMax/1.01d0
 	IF(LIQ==1.or.LIQ==3.or.eta > etaMax)eta=etaHi
 	etaRef=eta*bRefMix/bVolMix
 	IF (eta > etaMax .or. etaRef > etaMax .or. eta < 0)then
@@ -756,11 +757,11 @@ end	!Subroutine QueryParPureSpead
 		!if(ABS(change/zFactor) > 1)change=zFactor*DSIGN(0.5d0,change)	!step limiting. Stop zFactor from going negative.
 		eta=eta-change
 		rhoMol_cc=eta/bVolMix
-		if(eta < 0 .or. eta > etaHi)then !NOTE: this should not happen given step limiting
+		if(eta < 0 .or. eta > etaMax)then !NOTE: this should not happen given step limiting
 			if(niter < (itMax-1))niter=itMax-1 !restrict tries with new guess so we can crash if necessary.
 			if(LOUDER)write(dumpUnit,'(a,f8.4)')' Warning in FuTpt: next guess is eta=',eta
 			eta=0
-			if(liq==1.or.liq==3)eta=etaHi
+			if(liq==1.or.liq==3)eta=etaMax/1.01D0
 			if(LOUDER)write(dumpUnit,*) 'Restarting iteration with eta=',eta
 			if(LOUDER)write(dumpUnit,*)
 		endif

@@ -16,6 +16,7 @@
 	CURDIR = FILE$CURDRIVE
 	iStat = GETDRIVEDIRQQ(CURDIR)
 	masterDir=TRIM(curDir)
+	PGLinputDir='c:\PGLWrapper\input'
 	DEBUG=.TRUE.
 	DEBUG=.FALSE. ! read input files from c:\Projects\...\input dir.
     LOUD = .TRUE.
@@ -55,22 +56,24 @@
 	endif
 	errDummy=86.86D0
 	prp_id=iProperty				!iPhase=1 (liquid)
-	if(iProperty==3)prp_id= -3		!prp_id = 1: vapor pressure (kPa) given tKelvin
-	if(iProperty==4)prp_id=  3		!prp_id = 2: saturated liquid density (g/cc) given tKelvin
-	if(iProperty==5)prp_id=  3		!prp_id = 3: fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
-	if(iProperty==6)prp_id=  44		 !prp_id = 41-44: Hres/RT(41),CpRes/R(42),CvResR(43),cmprsblty(44) given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
-	if(iProperty==7)prp_id=  41		 !iPhase=0 (vapor
-	if(iProperty==8)prp_id=  42		 !prp_id = -prp_id above
-	if(iProperty==9)prp_id=  43
-	if(iProperty==10)prp_id= 44
-	!if(iProperty==11)prp_id= 5		 Mixture calculations are deprecated for PGLWrapperMain
-	!if(iProperty==12)prp_id= 6
+    !iProperty = 1: vapor pressure (kPa) given tKelvin
+    !iProperty = 2: saturated liquid density (kg/m3) given tKelvin
+    !iProperty = 13: saturated vapor density (kg/m3) given tKelvin
+    !iProperty = 3: vapor density (kg/m3) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
+    !iProperty = 4: liquid density (kg/m3) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
+    !iProperty = 4_: Hres/RT(41),CpRes/R(42),CvResR(43),cmprsblty(44) given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   READY TO CALCULATE   !!!!!!!!!!!!!!!!!!!!!!!!!!
     notDone=1
     line=0  !read statement	debugging
 	if(NC==1)then
 		do while(notDone>0)
-			read(51,*,ioStat=ioErr)tKelvin,var2
+			if(iProperty < 3)then
+				read(51,*,ioStat=ioErr)var1	  !tKelvin
+				var2=0
+			else
+				read(51,*,ioStat=ioErr)var1,var2 !tKelvin,pMPa
+			endif
+			tKelvin=var1		!This appears to be universally true.
 			if(ioErr < 0)then   !this means we reached the end of the file
 				notDone=0
 				exit            !break the loop and return to remaining execution 
@@ -79,8 +82,8 @@
 				cycle
 			endif
 			line=line+1
-			result = CalculateProperty(ieosOpt, localCas(1), prp_id, tKelvin, var2, ierCode)
-			write(52,'( 3(1pE11.4,1x),i4)')tKelvin,var2,result,ierCode
+			result = CalculateProperty(ieosOpt, localCas(1), prp_id, var1, var2, ierCode)
+			write(52,'( 3(1pE11.4,1x),i4)')var1,var2,result,ierCode
 		enddo
 	else
 		write(52,*)'PGLWrapper: Sorry, mixture calculations are not supported by PGLWrapperMain now. Try PGLDLL.'
