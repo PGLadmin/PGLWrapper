@@ -44,6 +44,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     !iProperty = 4_: Hres/RT(41),CpRes/R(42),CvResR(43),cmprsblty(44) given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
     iPhase=1
     if (prp_id==3) iPhase=0   !vapor or gas
+    if (prp_id==40) iPhase=0  !vapor or gas
     res=0
     ierr=0
 	
@@ -121,6 +122,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 	if (iProperty==3) res=1000*rhoG_cc
 	if (iProperty==4) res=1000*rhoG_cc
 	!if(iProperty==4)write(52,*)tKelvin,pKPa,hRes_RT,CpRes_R,CvRes_R,cmprsblty  !cmprsblty=(dP/dRho)T*(1/RT)
+	if (iProperty==40) res=hRes_RT
 	if (iProperty==41) res=hRes_RT
 	if (iProperty==42) res=CpRes_R
 	if (iProperty==43) res=CvRes_R
@@ -546,13 +548,27 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     if (propertyid.eq.12) localprpid=42   !CP
     if (propertyid.eq.14) localprpid=45   !CP
     if (propertyid.eq.34) localprpid=34   !fluid pressure
-    if (localprpid.eq.0) then
+    if (propertyid.eq.49) localprpid=41   !H(liq)
+    if (propertyid.eq.51) localprpid=40   !H(gas)
+    if (propertyid.eq.5) then
+        res=Tc(1)
+        Calculate1=0
+    else if (propertyid.eq.6) then
+        res=1000*Pc(1)
+        Calculate1=0
+    else if (propertyid.eq.7) then
+        res=1000*Pc(1)*rMw(1)/(Zc(1)*Rgas*Tc(1))
+        Calculate1=0
+    else if (localprpid.eq.0) then
         res=0
         Calculate1=1
     else
         call CalculateProperty1local(modelid, casrn1, localprpid, t, p, res, ierr)
-        if (propertyid.eq.12)then
+        if (propertyid.eq.12) then
             res=res*rGas
+        else if (propertyid.eq.49.or.propertyid.eq.51) then
+            res=0.001*res*Rgas*t
+            Calculate1=0
         endif
         uncert=0
         Calculate1=ierr
@@ -589,10 +605,15 @@ integer function SUPPORTS_PRP1(modelid, propertyid)
     if (propertyid==2) SUPPORTS_PRP1=1
     if (propertyid==3) SUPPORTS_PRP1=1
     if (propertyid==4) SUPPORTS_PRP1=1
+    if (propertyid==5) SUPPORTS_PRP1=1
+    if (propertyid==6) SUPPORTS_PRP1=1
+    if (propertyid==7) SUPPORTS_PRP1=1
     if (propertyid==8) SUPPORTS_PRP1=1
     if (propertyid==12) SUPPORTS_PRP1=1
     if (propertyid==14) SUPPORTS_PRP1=1
     if (propertyid==34) SUPPORTS_PRP1=1 !fluid pressure
+    if (propertyid==49) SUPPORTS_PRP1=1
+    if (propertyid==51) SUPPORTS_PRP1=1
     return
 end function SUPPORTS_PRP1
 
