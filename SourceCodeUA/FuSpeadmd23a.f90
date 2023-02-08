@@ -79,7 +79,6 @@ END MODULE SpeadParms
 	bGaussEx=.FALSE.
 	if(iEosOpt==20)bGaussEx=.TRUE.
 	iErrCode=0
-	errMsgPas=TRIM( errMsg(iErrCode) )
 	errMsg(0)='GetTpt: Success!'
 	errMsg(1)='GetTpt: error reading ParmsTpt.txt. Path? Debug?'
 	errMsg(2)='GetTpt: error reading ParmsHb4.txt. Path?'
@@ -87,6 +86,26 @@ END MODULE SpeadParms
 	errMsg(4)='GetTpt: nTypesTot > maxTypes'
 	errMsg(5)='GetTpt: a1 > 0 for at least one component when 0 < eta < 0.85'
 	errMsg(6)='GetTpt: a2 > 0 for at least one component when 0 < eta < 0.85'
+
+	dumString=TRIM(PGLinputDir)//'\ParmsTptEosCrit.txt' 
+	open(501,file=dumString)
+	read(501,*)nDeckParmsCrit
+	TcEos(1:nComps)=Tc(1:nComps) !initialize
+	PcEos(1:nComps)=Pc(1:nComps)
+	ZcEos(1:nComps)=Zc(1:nComps)
+	do iComp=1,nComps
+		do j=1,nDeckParmsCrit
+			read(501,*)idDb,TcEosDb,PcEosDb,ZcEosDb,acenEosDb
+			if(ID(iComp)==idDb)then
+				TcEos(iComp)=TcEosDb
+				PcEos(iComp)=PcEosDb
+				ZcEos(iComp)=ZcEosDb
+				exit
+			endif
+		enddo
+	enddo
+	close(501)
+
 
 	ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTpt.txt' ! // is the concatenation operator
 	if(iEosOpt==14)ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTptTransPGL6ed.txt' ! // is the concatenation operator
@@ -179,6 +198,7 @@ END MODULE SpeadParms
 	endif
 	CLOSE(40)
         
+	errMsgPas=TRIM( errMsg(iErrCode) )
 	if(iErrCode.ne.0)return
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

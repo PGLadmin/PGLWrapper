@@ -22,6 +22,12 @@ C           Stryjek and Vera, can j chem eng, 64:323 (1986).
 	do 8 i=1,nc
 	  if(LOUD)write(*,606) ID(i),NAME(i),Tc(i),Pc(i),ACEN(i)
 8	continue
+
+	nComps=NC
+	TcEos(1:nComps)=Tc(1:nComps) !This EOS is consistent with experimental values for critical properties.
+	PcEos(1:nComps)=Pc(1:nComps)
+	ZcEos(1:nComps)=Zc(1:nComps)
+
 606	format(i4,1x,a11,f6.1,f6.3,1x,f6.3,f8.2,f6.1,f8.1,i4,f8.6,f8.4)
 	GetPRSVWS=0
 		bipFile=TRIM(PGLinputDir)//'\ParmsPrws.txt' ! // is the concatenation operator

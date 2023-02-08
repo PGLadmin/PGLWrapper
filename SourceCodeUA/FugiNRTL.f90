@@ -17,6 +17,11 @@
 	do i=1,nComps
 		tKmin(i)=0.4d0*Tc(i)
 	enddo 
+
+	TcEos(1:nComps)=Tc(1:nComps) !This EOS is consistent with experimental values for critical properties.
+	PcEos(1:nComps)=Pc(1:nComps)
+	ZcEos(1:nComps)=Zc(1:nComps)
+
 	return                      
 	END
 	!PROGRAMED BY AV 06/22

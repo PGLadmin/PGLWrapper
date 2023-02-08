@@ -33,7 +33,7 @@
 	if(iEosOpt==2 .or. iEosOpt==4)zCritEff=0.34  !ESD
 	rhoCrit=Pc(1)/(zCritEff*Rgas*Tc(1))
 	rhoVap=rhoCrit*1.000 !-ve value on input means use default value for etaHi
-	Tr=tK/Tc(1)
+	Tr=tK/TcEos(1)
 	if(Tr > 1-zeroTol)then
 		ierCode=19
 		if(LOUDER)write(dumpUnit,*)'Psat: Tr > 1-zeroTol. Fatal. Sorry.'
@@ -53,7 +53,7 @@
 			ierCode=16
 			goto 86
 		endif
-		rhoLiq=rhoVap !-ve value on input means use default value for etaLo
+		rhoLiq=rhoVap !-ve value on input means use default value for etaLo. Here we specify the vapor spinodal as the lower limit.
 		if(LOUDER)write(dumpUnit,*)'Psat: calling spinodal for Liquid.'
 		call Spinodal(NC,xFrac,tK,1,rhoLiq,zLiq,aDepLiq,dU_NkT,iErrLiq)
 		if(LOUDER)close(67)
@@ -261,9 +261,9 @@
 		bMix=bMix+xFrac(i)*bVolCc_mol(i)
 	enddo
 	if(bMix < 1E-11 .and. LOUD)write(dumpUnit,*)'Spinodal: nonsense bMix=',bMix
-	if(Tc(1) < 1E-11 .and. LOUD)write(dumpUnit,*)'Spinodal: nonsense Tc(1)=',Tc(1)
+	if(TcEos(1) < 1E-11 .and. LOUD)write(dumpUnit,*)'Spinodal: nonsense TcEos(1)=',TcEos(1)
 
-	Tr=tKelvin/Tc(1)
+	Tr=tKelvin/TcEos(1)
 	!if(isTPT)write(dumpUnit,*)'Spinodal: etaMax=',etaMax
 	if(rho<0)then !this is the signal to use default estimates, but really using rhoCrit works much better in the critical region.
 		etaLo = 1e-11
@@ -284,14 +284,14 @@
 		etaHi=etaCrit !if LIQ=0 and rho>0, then use the given value as the guess for rhoVapHi
 		if(LIQ==1)then
 			etaLo=etaCrit
-			etaHi=etaMax
+			etaHi=etaMax/1.01
 			!etaHi=0.77
 			!if(isESD)etaHi=0.52
 			!if(iEosOpt==1.or.iEosOpt==11)etaHi=0.99
 		endif
 	endif
 	minimax= -1	!routine was written to minimize, therefore take -ve to maximize.
-	if(LIQ)minimax=1
+	if(LIQ>0)minimax=1
 	if(LOUD.and.initCall)write(dumpUnit,*)'Spinodal: LIQ,etaLo,etaHi',LIQ,etaLo,etaHi
 	rhoLo = etaLo/bMix;
 	rhoHi = etaHi/bMix;

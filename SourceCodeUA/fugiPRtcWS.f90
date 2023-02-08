@@ -25,6 +25,12 @@
 	iErrCode=0
 	Call GetPRtc(NC,iErrGet) !use the existing code to USE PrTcParms
 
+	nComps=NC
+	TcEos(1:nComps)=Tc(1:nComps) !This EOS is consistent with experimental values for critical properties.
+	PcEos(1:nComps)=Pc(1:nComps)
+	ZcEos(1:nComps)=Zc(1:nComps)
+
+
 	if(iErrGet.ne.0)then
 		iErrCode=1
 		if(LOUD)write(dumpUnit,*)'GetPRtcWs: failed to load pure parms.'

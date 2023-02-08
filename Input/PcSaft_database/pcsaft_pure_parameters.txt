@@ -823,3 +823,4 @@
 141-97-9    ethyl-acetoacetate    DIPPR    130.142    4.33451    3.4211    264.641    2.95997    0.0     0
 5878-19-3    1-methoxyacetone    DIPPR    88.1051    3.32901    3.34252    262.274    2.41031    0.0     0
 696-29-7    1-methyl-ethylCyclohexane    DIPPR    126.239    3.24694    4.0461    285.842    0.0    0.0     0
+696-29-7    (1-methyl-ethyl)cyclohexane    DIPPR    126.239    3.24694    4.0461    285.842    0.0    0.0     0

@@ -259,7 +259,7 @@ end subroutine load_pure_and_binary_parameters
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
 subroutine pcsaft_pure_parameters
-
+  USE GlobConst, only:PGLinputDir,iEosOpt  !JRE
   use PARAMETERS, only: str30, nsite
   implicit none
 
@@ -281,6 +281,7 @@ subroutine pcsaft_pure_parameters
   character(LEN=str10)                       :: r_CAS_name
 
   character (LEN=300)                        :: entire_line
+  character (LEN=300)                        :: inFile
   character (LEN=100)                        :: rest_of_line
   integer                                    :: pos
   integer                                    :: nhb_no_var1, nhb_no_var2
@@ -300,7 +301,10 @@ subroutine pcsaft_pure_parameters
      !--------------------------------------------------------------------------
      ! Open parameter-input file and irgnore first line
      !--------------------------------------------------------------------------
-     call file_open ( 53, './Input/PcSaft_database/pcsaft_pure_parameters.txt' )   !JRE
+	 inFile=TRIM(PGLinputDir)//'\PcSaft_database/pcsaft_pure_parameters.txt'
+	if(iEosOpt==15)inFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGc.txt' 
+	if(iEosOpt==16)inFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGcTb.txt'
+     call file_open ( 53, inFile )   !JRE
 
      parameter_assigned = .false.
      read_info = 0
@@ -319,7 +323,8 @@ subroutine pcsaft_pure_parameters
              r_parameter_set, r_mm, r_mseg, r_sigma, r_epsilon_k,  &
              r_dipole_moment, r_quadru_moment, rest_of_line
 			 if(read_info /= 0)then
-			   write (*,*) ' pcsaft_pure_parameters: bad line in pcsaft_pure_parameters.txt. Offender is:'
+			   write (*,*) 'inFile=',TRIM(PGLinputDir)//'\PcSaft_database/pcsaft_pure_parameters.txt'
+			   write (*,*) ' pcsaft_pure_parameters: bad line in inFile. Offender is:'
 			   write (*,*) TRIM(entire_line)
 			   pause 'Possible offense: comma(s) in compound name.' 
                stop
@@ -587,7 +592,6 @@ end subroutine pcsaft_binary_parameters
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
 subroutine file_open ( file_number, filename )
-
   !-----------------------------------------------------------------------------
   integer, intent(in)                             :: file_number
   character (LEN=*), intent(in)                   :: filename
@@ -8415,6 +8419,7 @@ subroutine chemical_potential_trho ( tF, rhoi_in, mu_res, mu, w_rkrl, wig_rkrl )
   !-----------------------------------------------------------------------------
 
   eta = PI_6 * sum( rhoi( 1:ncomp ) * mseg( 1:ncomp ) * dhs( 1:ncomp )**3 )
+  !if(eta > 1) pause 'chemical_potential_trho: eta > 1???'
 
   call density_terms ( eta )
 
@@ -8621,6 +8626,7 @@ subroutine state_trho ( tF, rhoi_in, pcalc, molar_rho, s, h, s_res, cp )
 
   xF( 1:ncomp ) = rhoi_in( 1:ncomp ) / sum( rhoi_in(1:ncomp) )
   eta = PI_6 * sum( rhoi_in( 1:ncomp ) * mseg( 1:ncomp ) * dhs( 1:ncomp )**3 )
+  !if(eta > 1) pause 'chemical_potential_trho: eta > 1???'
 
   !-----------------------------------------------------------------------------
   ! obtain parameters and density independent expressions
@@ -8731,6 +8737,7 @@ subroutine state_trhoJre ( tF, rhoi_in, pcalc, molar_rho, eta, ztot, sRes_R, hRe
 
   xF( 1:ncomp ) = rhoi_in( 1:ncomp ) / sum( rhoi_in(1:ncomp) )
   eta = PI_6 * sum( rhoi_in( 1:ncomp ) * mseg( 1:ncomp ) * dhs( 1:ncomp )**3 )
+  !if(eta > 1) pause 'chemical_potential_trho: eta > 1???'
 
   !-----------------------------------------------------------------------------
   ! obtain parameters and density independent expressions
@@ -11149,7 +11156,7 @@ end subroutine jacobi_eigenvalue
 subroutine GetPcSaft(nComps,casrn,iErr)
 	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	!use input_output, only: read_problem_definition
-	use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos, PGLinputDir,pi,avoNum,Tc,tKmin !JRE LOUD=.FALSE. to silence I/O feedback.
+	use GlobConst !, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos, PGLinputDir,pi,avoNum,Tc,Pc,Zc,TcEos,PcEos,ZcEos,tKmin,ID !JRE LOUD=.FALSE. to silence I/O feedback.
 	use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
 	use PARAMETERS, only: dp, nsite
 	use eos_constants
@@ -11170,6 +11177,7 @@ subroutine GetPcSaft(nComps,casrn,iErr)
     real(dp)                                   :: r_mm
     real(dp)                                   :: r_mseg
     real(dp)                                   :: r_sigma
+    real(dp)                                   :: sigmaNm3
     real(dp)                                   :: r_epsilon_k
     real(dp)                                   :: r_dipole_moment
     real(dp)                                   :: r_quadru_moment
@@ -11179,37 +11187,60 @@ subroutine GetPcSaft(nComps,casrn,iErr)
     !real(dp)                                   :: r_kap_hb
     !real(dp), dimension(nsite,nsite)           :: r_eps_hb
 	CHARACTER($MAXPATH)  parmFile,readFile !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-	integer line
+	Integer line,nDeckParmsCrit,iComp,j,idDb
+	DoublePrecision TcEosDb,PcEosDb,ZcEosDb,AcenEosDb
 	!-----------------------------------------------------------------------------
 	! read definition of problem
 	!-----------------------------------------------------------------------------
 	!call read_problem_definition - already done
 	!  Get current directory
     if(LOUD)print*,'GetPcSaft: nComps,casrn=',nComps,casrn
-	parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parameters.txt' 
-	if(LOUD)print*,'parmFile=',TRIM(parmFile)
 	isPcSaft=.FALSE.
     iErr=0
 	if(iEosOpt.ne.10 .and. iEosOpt.ne.15 .and. iEosOpt.ne.16)iErr=1
 	if(LOUD.and.iErr==1)print*,'GetPcSaft: wrong iEosOpt=',iEosOpt
 	if(iErr==1)return
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or other similar.
+	etaMax=0.5D0 ! based on slight extrapolation from "eta_start =" in CalculateSinglePhase. See also Jaubert's paper on anomalies.
 	isPcSaft=.TRUE.
-	if(iEosOpt==10)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGross.txt' 
-	if(iEosOpt==15)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGc.txt' 
-	if(iEosOpt==16)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGcTb.txt'
-	open(551,file=readFile)
-	open(661,file=parmFile)
-	read_info=0 
-	do while(read_info==0)
-		read (551, '(a)', IOSTAT = read_info) entire_line
-		write(661,'(a)') TRIM(entire_line)
-	enddo
-	close(661)
-	close(551)
+	parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGross.txt' 
+	if(LOUD)print*,'parmFile=',TRIM(parmFile)
+	if(iEosOpt/=10)then
+		if(iEosOpt==15)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGc.txt' 
+		if(iEosOpt==16)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGcTb.txt'
+		parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parameters.txt' 
+		open(551,file=readFile)
+		open(661,file=parmFile)
+		read_info=0 
+		do while(read_info==0)
+			read (551, '(a)', IOSTAT = read_info) entire_line
+			write(661,'(a)') TRIM(entire_line)
+		enddo
+		close(661)
+		close(551)
+	endif ! iEosOpt /= 10
 	ncomp=nComps
 	if ( .not. allocated(compna_input) ) allocate( compna_input( ncomp ) )  !names
 	!if (.not. allocated(x_input)) allocate( x_input( ncomp ) )       ! mole fractions
+	readFile=TRIM(PGLinputDir)//'\ParmsCritPcSaftEos.txt' 
+	open(501,file=readFile)
+	read(501,*)readFile
+	read(readFile,*)nDeckParmsCrit
+	TcEos(1:nComps)=Tc(1:nComps) !initialize
+	PcEos(1:nComps)=Pc(1:nComps)
+	ZcEos(1:nComps)=Zc(1:nComps)
+	do iComp=1,nComps
+		do j=1,nDeckParmsCrit
+			read(501,*)idDb,TcEosDb,PcEosDb,ZcEosDb,acenEosDb
+			if(ID(iComp)==idDb)then
+				TcEos(iComp)=TcEosDb
+				PcEos(iComp)=PcEosDb
+				ZcEos(iComp)=ZcEosDb
+				exit
+			endif
+		enddo
+	enddo
+	close(501)
 	do i=1,nComps
         !create casrn string and find compound alias
         write(aString, *) casrn(i)
@@ -11238,7 +11269,8 @@ subroutine GetPcSaft(nComps,casrn,iErr)
                     parameter_assigned = .true.
 					if(LOUD)print*,'Got it! iComp,compna=',i,'  ',TRIM(alias)
 					if(LOUD)write(*,*)r_mm,r_mseg,r_sigma,r_epsilon_k, r_dipole_moment,r_quadru_moment, TRIM(rest_of_line)
-					bVolCc_mol(i)=r_mseg*(r_sigma/10)**3*pi/avoNum !bVol just needs to be close for eta initialization etc.
+					sigmaNm3=(r_sigma/10)**3
+					bVolCc_mol(i)=r_mseg*sigmaNm3*3.14159265d0/6*602.2147d0 !bVol just needs to be close for eta initialization etc.
             end if
         enddo !while .NOT.parameter_assigned
         close (53)
@@ -11316,7 +11348,7 @@ end subroutine GetPcSaft
     molar_rho = totMol/vTotCc*1.D6 ! [=] gmol/m^3
     do i=1,ncomp
         x_input(i) = gmol(i)/totMol
-        rhoiJre(i)=gmol(i)/totMol*molar_rho*(NAV/1.D30)
+        rhoiJre(i)=gmol(i)/totMol*molar_rho*(NAV/1.D30)	! convert to molecules/nm3(?)
     enddo
     !call initialize_unit xxx must call GetPcSaft before Fugi.
     iErr=0
@@ -11410,7 +11442,7 @@ subroutine FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,chemPoRes,rhoMol_cc,zFactor,
 	if(LOUDER)print*,'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
     uRes = hRes_RT-(zFactor-1)
     aRes = uRes - sRes_R
-	rhoMol_cc=molar_rho*1.D6 ! convert from mol/m^3 to mol/cm^3
+	rhoMol_cc=molar_rho/1.D6 ! convert from mol/m^3 to mol/cm^3
     if(LOUDER)print*,'FugiPcSaft Done!'
 	!pause 'check output'
 	!JRE end

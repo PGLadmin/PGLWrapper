@@ -19,11 +19,17 @@ subroutine GetPR(NC,iErrGet)
 	USE PREosParms
 	Implicit NONE !doublePrecision(A-H,K,O-Z)
 	character*88 bipFile
-	integer GetBIPs,iErrGet,NC
+	integer GetBIPs,iErrGet,NC,nComps
 	iErrGet=0
 	etaMax=1-zeroTol
 	bVolCc_mol(1:NC)=OMB*Rgas*Tc(1:NC)/Pc(1:NC)
 	! note:  bips are passed back through USEd BIPs/
+
+	nComps=NC
+	TcEos(1:nComps)=Tc(1:nComps) !This EOS is consistent with experimental values for critical properties.
+	PcEos(1:nComps)=Pc(1:nComps)
+	ZcEos(1:nComps)=Zc(1:nComps)
+
 	bipFile=TRIM(PGLinputDir)//'\BipPengRob.txt' ! // is the concatenation operator
 	iErrGet=GetBIPs(bipFile,ID,NC)
 	tKmin(1:NC)=0.4d0*Tc(1:NC)

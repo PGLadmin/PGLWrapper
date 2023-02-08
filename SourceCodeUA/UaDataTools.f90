@@ -35,7 +35,7 @@ END MODULE VpDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine PGLWrapperStartup(NC,iEosLocal,localCas,ierCode)
-	!Purpose: CALL EOS Get___ ROUTINES, also includes LoadCritParmsDb(if needed),GetCrit, GetBips, BipIo, 
+	!Purpose: CALL EOS Get___ ROUTINES, also includes LoadCritParmsDb(if needed),GetCrit, Get(EOS), GetBips, BipIo, 
 	!	SETS UP THE CRITS, EOSPARMS, bips, DEBUG status, FUGI(iEosOpt)
 	!	Echoes user IO to Output.txt, and reports error checks. 
 	!	INITIALIZATION AND CALLING SEQUENCE FOR VLE, LLE, VLLE SUBROUTINES.

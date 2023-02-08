@@ -29,6 +29,11 @@ subroutine GetPrTc(nComps,iErrCode)
     iErrCode=0
 	etaMax=1-zeroTol
 	! note:  bips are passed back through module /BIPs/
+
+	TcEos(1:nComps)=Tc(1:nComps) !This EOS is consistent with experimental values for critical properties.
+	PcEos(1:nComps)=Pc(1:nComps)
+	ZcEos(1:nComps)=Zc(1:nComps)
+
 		inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
 		bipFile=TRIM(PGLinputDir)//'\BipPRtc.txt' ! // is the concatenation operator
 	if(LOUD)write(dumpUnit,*)'GetPrTc: inFile= ',TRIM(inFile)

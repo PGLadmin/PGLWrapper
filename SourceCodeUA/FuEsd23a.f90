@@ -40,6 +40,11 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	isMEM2=.FALSE.
 	if(iEosOpt==4)isMEM2=.TRUE.
 	
+	nComps=NC
+	TcEos(1:nComps)=Tc(1:nComps) !This EOS is consistent with experimental values for critical properties.
+	PcEos(1:nComps)=Pc(1:nComps)
+	ZcEos(1:nComps)=Zc(1:nComps)
+
 	inFile=TRIM(PGLinputDir)//'\ParmsEsd96.TXT'
 	if(iEosOpt==12)inFile=TRIM(PGLinputDir)//'\ParmsEsdEmami.txt' ! // is the concatenation operator
 	if(iEosOpt==13)inFile=TRIM(PGLinputDir)//'\ParmsEsdEmamiTb.txt' ! // is the concatenation operator
