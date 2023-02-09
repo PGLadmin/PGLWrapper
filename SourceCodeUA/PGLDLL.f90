@@ -71,7 +71,7 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
         goto 86
     endif
 
-    if(iProperty==1 .or. iProperty==2 .or. iProperty==13)then
+    if(iProperty==1 .or. iProperty==2 .or. iProperty==13 .or. iProperty==18)then
         notDone=1
         line=0  !read statement
 !        do while(notDone)
@@ -85,6 +85,9 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
                 if(iProperty==1) res=pKPa
                 if(iProperty==2) res=1000*rhoLiq*rMw(1)
                 if(iProperty==13) res=1000*rhoVap*rMw(1)
+                if(iProperty==18) then
+                    res=0.001*(rGas*(uSatV-uSatL)*var1+pMPa*(1/rhoVap-1/rhoLiq))
+                end if
             endif
             goto 86
 !        enddo
@@ -549,6 +552,7 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     if (propertyid.eq.8) localprpid=1   !VP
     if (propertyid.eq.12) localprpid=42   !CP
     if (propertyid.eq.14) localprpid=45   !CP
+    if (propertyid.eq.18) localprpid=18   !Hvap
     if (propertyid.eq.34) localprpid=34   !fluid pressure
     if (propertyid.eq.49) localprpid=41   !H(liq)
     if (propertyid.eq.51) localprpid=40   !H(gas)
@@ -615,6 +619,7 @@ integer function SUPPORTS_PRP1(modelid, propertyid)
     if (propertyid==8) SUPPORTS_PRP1=1
     if (propertyid==12) SUPPORTS_PRP1=1
     if (propertyid==14) SUPPORTS_PRP1=1
+    if (propertyid==18) SUPPORTS_PRP1=1
     if (propertyid==34) SUPPORTS_PRP1=1 !fluid pressure
     if (propertyid==49) SUPPORTS_PRP1=1
     if (propertyid==51) SUPPORTS_PRP1=1
