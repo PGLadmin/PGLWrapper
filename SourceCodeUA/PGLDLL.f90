@@ -79,15 +79,13 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
             line=line+1
             call PsatEar(tKelvin,pMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCode)
             if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After Psat, iErr,P,rhoL,rhoV=',ierCode,pMPa,rhoLiq,rhoVap 
-            if(ierCode.NE.0)then
-!                write(52,*)'Unexpected error from Psat calculation. iErrCode,tKelvin,line=',ierCode,tKelvin,line
-                ierr=3
-                goto 86
+            ierr=ierCode
+            if(ierCode==0.or.ierCode==7)then
+                pKPa=pMPa*1000
+                if(iProperty==1) res=pKPa
+                if(iProperty==2) res=1000*rhoLiq*rMw(1)
+                if(iProperty==13) res=1000*rhoVap*rMw(1)
             endif
-            pKPa=pMPa*1000
-            if(iProperty==1) res=pKPa
-            if(iProperty==2) res=1000*rhoLiq*rMw(1)
-            if(iProperty==13) res=1000*rhoVap*rMw(1)
             goto 86
 !        enddo
     endif !iProperty <= 2.
@@ -100,14 +98,17 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 	if(pMPa > Pc(1))iPhase=1 ! Force iPhase=1 even when "vapor" density is requested, so the liquid root of EOS is returned.
 	CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
 	if (iErrF.ne.0) then
-		iPhase=1-iPhase
-		CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+		!iPhase=1-iPhase
+		!CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
 	endif
 	if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After FugiTP, iErr,Z,rho(g/cc)=',iErrF,zFactor,rhoMol_cc*rMw(1) 
 	if(iErrF > 0 .or. zFactor <= 0)then
-		iErr=4
-		goto 86
-	endif
+        if (iErrF.ne.5)then
+		    iErr=1
+		    goto 86
+        end if
+    endif
+    iErr=iErrF
 	rhoG_cc=rhoMol_cc*rMw(1)
 	hRes_RT=uRes_RT+zFactor-1
 	iErrDerv=0
@@ -115,10 +116,11 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 		CALL NUMDERVS(NC,xFrac,tKelvin,rhoMol_cc,zFactor,iErrDerv) !cmprsblty,CpRes_R,CvRes_R
 		if(LOUD)write(dumpUnit,611)'CalculateProperty1local: After NUMDERVS, iErr,...=',iErrDerv,cmprsblty,CpRes_R,CvRes_R 
 	endif
-	if(iErrDerv > 0)then
-		iErr=5
+	if(iErrDerv > 0.and.iErrDerv.ne.5)then
+		iErr=1
 		goto 86
 	endif
+    iErr=iErrF
 	if (iProperty==3) res=1000*rhoG_cc
 	if (iProperty==4) res=1000*rhoG_cc
 	!if(iProperty==4)write(52,*)tKelvin,pKPa,hRes_RT,CpRes_R,CvRes_R,cmprsblty  !cmprsblty=(dP/dRho)T*(1/RT)
@@ -571,6 +573,8 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
             Calculate1=0
         endif
         uncert=0
+        if(ierr==7)ierr=-7
+        if(ierr==5)ierr=-5
         Calculate1=ierr
     end if
     return
