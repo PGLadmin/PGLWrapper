@@ -685,7 +685,7 @@ end	!Subroutine QueryParPureSpead
 	
 	!  INITIATE SECANT ITERATION ON eta
 
-	IF (Rgas.Le.0 .or. tKelvin.le.0)then
+	IF (Rgas < zeroTol .or. tKelvin < zeroTol)then
 		iErr=11
 		if(LOUDER)write(dumpUnit,*)' FuTpt: Nonsense. Rgas=',Rgas,' tKelvin=',tKelvin
 		!call BeepMsg(errMsg(iErr))

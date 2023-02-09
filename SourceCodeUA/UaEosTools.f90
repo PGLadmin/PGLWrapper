@@ -11,6 +11,10 @@
 	LOGICAL LOUDER
 	CHARACTER*77 errMsg(0:23) !,errMsgPas
 	data initCall/1/
+	errMsg( 2)='Warning from fugacity calculation. Probably T < Tmin.'
+	errMsg( 3)='Warning from fugacity calculation. Probably T < Tmin.'
+	errMsg( 4)='Warning from fugacity calculation. Probably T < Tmin.'
+	errMsg( 9)='Warning from fugacity calculation. Probably T < Tmin.'
 	errMsg(11)='No spinodal max/min'
 	errMsg(12)='Psat iteration did not converge'
 	errMsg(13)='Liquid FUGI call failed on last iteration'
@@ -19,7 +23,8 @@
     errMsg(16)='PsatEar: FUGI returned T < Tmin error'
     errMsg(17)='PsatEar: Calculated Psat < 0.0001 MPa error'
     errMsg(18)='PsatEar: Tr > 1-zeroTol'
-    errMsg(19)='PsatEar: Tr > 1-zeroTol'
+    errMsg(19)='Critical Error from fugacity calculation'
+    errMsg(20)='rhoVap/rhoLiq < 0'
 	LOUDER=LOUD
 	LOUDER=.TRUE.
 	LOUDER=.FALSE.
@@ -35,7 +40,7 @@
 	rhoVap=rhoCrit*1.000 !-ve value on input means use default value for etaHi
 	Tr=tK/TcEos(1)
 	if(Tr > 1-zeroTol)then
-		ierCode=19
+		ierCode=18
 		if(LOUDER)write(dumpUnit,*)'Psat: Tr > 1-zeroTol. Fatal. Sorry.'
 		return
 	elseif(Tr > 0.85)then
@@ -88,18 +93,17 @@
 		!if(LOUDER)write(dumpUnit,601)'PsatEar:eAcc,eDon',(eAcceptorKcal_mol(1,j),j=1,nTypes(1)),(eDonorKcal_mol(1,j),j=1,nTypes(1))
 		!call FUGI(tK,pOld,xFrac,NC,1,FUGC,zLiq,ier) !LIQ=1=>liquid root with fugc calculation so we get Ares.
 		CALL FugiTP( tK,Pold,xFrac,NC,1,rhoLiq,zLiq,aResLiq,FUGC,uSatL,iErrF )
-		if(iErrF==2)then
+		if(iErrF > 10)then
+			if(LOUDER)write(dumpUnit,'(a,i12)')' PsatEar: Error from ITIC call to fugi. iErrF=',iErrF
+			ierCode=19
+			goto 86
+		elseif(iErrF > 0)then
 			if(LOUDER)write(dumpUnit,*)'PsatEar:T < Tmin? Sorry.'
-			ierCode=16
-			return
+			ierCode=9
 		elseif(zLiq < zeroTol)then
 			if(LOUDER)write(dumpUnit,601)' PsatEar: Initial call to fugi. 0 > zLiq=',zLiq
 			ierCode=17
 			goto 86
-		elseif(iErrF > 0)then
-			if(LOUDER)write(dumpUnit,'(a,i12)')' PsatEar: Error from ITIC call to fugi. iErrF=',iErrF
-			ierCode=19
-			return
 		endif
 		!AresLiq=Ares_RT						!AresVap  +  Zvap-1 -ln(Zvap) =AresLiq+ZLiq-1-ln(ZLiq)							 
 		!rhoLiq=pOld/(zLiq*Rgas*tK)		!=>	!B2*rhoVap+B2*rhoVap+ln(rhoVap/rhoLiq) =AresLiq+0-1  
@@ -112,11 +116,18 @@
 		!call FuVtot(1,tK,pSatItic,xFrac,NC,0,FUGC,zVap,ier)
 		if(LOUDER)write(dumpUnit,601)' PsatEar: Calling init FuVtot. T,etaLiq,etaVap,aResLiq=',tK,rhoLiq*bVolCc_mol(1),rhoVap*bVolCc_mol(1),aResLiq    
 		call FuVtot(1,tK,1/rhoVap,xFrac,NC,FUGC,zVap,aRes,uRes,iErrF)		!isZiter=1=>vapor Z with no fugc calculation. zVap far from zero.
-		if(iErrF > 9)then
-			if(LOUDER)write(dumpUnit,'(a,i4)')' PsatEar: Initial Vapor FuVtot Error=',iErrF
+		if(iErrF > 10)then
+			if(LOUDER)write(dumpUnit,'(a,i12)')' PsatEar: Error from ITIC call to fugi. iErrF=',iErrF
 			ierCode=19
-			return
-		endif ! 
+			goto 86
+		elseif(iErrF > 0)then
+			if(LOUDER)write(dumpUnit,*)'PsatEar:T < Tmin? Sorry.'
+			ierCode=9
+		elseif(zVap < zeroTol)then
+			if(LOUDER)write(dumpUnit,601)' PsatEar: Initial call to FuVtot. 0 > zVap=',zVap
+			ierCode=17
+			goto 86
+		endif
 		!B2cc_mol*rhoVap=(zVap-1)
 		rhoVap=rhoLiq*exp( aResLiq-1-2*(zVap-1) )! => rhoVap=rhoLiq*EXP(AresLiq-1-2*B2*rhoVap).
 		pSatItic=rhoVap*Rgas*tK*zVap
@@ -165,7 +176,7 @@
 		if( (rhoVap/rhoLiq) < 0 )then
 			write(dumpUnit,601)' PsatEar: rho < 0? rhoVap,Liq=',rhoVap,rhoLiq
 			If(LOUDER)write(dumpUnit,*) 'Psat error : rhoVap/rhoLiq < 0'
-			ierCode=19
+			ierCode=20
 			goto 86
 		endif
 		if(ABS(zVap-zLiq) < 1e-3)then
@@ -212,6 +223,7 @@
 	!iter=0                                  
 	!check that Fugi did not give warning on last call
 86	continue
+	if(ierCode > 10)return
 	if(LOUDER.and.initCall)write(dumpUnit,*) 'Psat: P,rhoVap,rhoLiq',pMPa,rhoVap,rhoLiq
 	if(LOUDER)write(dumpUnit,'(a,3f9.5)') ' Psat: P,etaVap,etaLiq',pMPa,rhoVap*bVolCc_mol(1),rhoLiq*bVolCc_mol(1)
 	isZiter=0
@@ -221,6 +233,8 @@
 		FUGC(1) = aResLiq+zLiq-1 -DLOG(zLiq)
 	else
 		if(LOUDER)write(dumpUnit,*) 'Psat: error zLiq < 0 after converging Psat.'
+		ierCode=20
+		goto 86
 	endif
 	if(LOUDER.and.initCall)write(dumpUnit,*)'Psat: cmprsblty,CvRes_R=',cmprsblty,CvRes_R
 	!if(ierCode==0)call Fugi(tK,pMPa,xFrac,NC,1,FUGC,zLiq,ier) !one last call to fugi for chemPo and debugging.
