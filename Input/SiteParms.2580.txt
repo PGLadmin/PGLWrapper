@@ -1,0 +1,264 @@
+ 263  4 1.2 1.5 1.8 2.0 <-nTypesTot,nWells,lamdas/mainType subtype eok's diam     mw     bondRadex.                                               
+  0  0     234    234      0      0      1  14.0269      1 Tang    Tangent Sphere Site Type                                                                
+  0  1     152  101.5   51.1    0.6  .3674  16.0428      0 CH4     Methane                                                                                 
+  0  2   145.1   79.7   51.4   41.2  0.282  22.0000  0.116 c(=O)   half of CO2                                                                             
+  0  3   267.3  222.7  103.7   31.4  0.335  17.0306      0 NH3     Ammonia  (2301 for N2)                                                                  
+  0  4   283.6  194.9   99.4    0.0  0.3715 34.0758      0 H2S     062060ads/Hydrogen Sulfide                                                              
+  0  5    29.7   37.0   24.0    3.3  0.281  15.9994 0.0604 O=      half of O2 Dickerson et al (1974) p409                                 
+  0  6    -5.4   24.1    9.1    1.0  0.22    2.016  0.0371 H2      spherical H2 Dickerson et al (1974) p409                                                  
+  0  7     152  101.5   51.1    0.6  0.283  14.0053 0.0564 CO      half of CO Dickerson et al (1974) p417                                                  
+  0  8     173   173    90.9   11.0  0.282  38.0718  0.116 c(=S)   half of CS2 Dickerson et al (1974) p417  mw=20.0109                                     
+  0  9    16.7   49.2   17.0   12.9  0.264  18.9984 0.0709 F=?     half of F2? Dickerson et al (1974) p409                                                 
+  0 10   128.1     99   69.8   40.7  .3256  35.4527 0.0994 Cl=?    half of Cl2? Dickerson et al (1974) p409                                                
+  0 11    2500   2500   2500   2500  0.027        1  0.027 2BD-    Liu's HB donor Ind. Eng. Chem. Res. 1994 33 pp 957-964                                  
+  0 12    2500   2500   2500   2500  0.027        1  0.027 4BD-    Hydrogen Bonding Donor - 4B model (water)                                               
+  0 13    2500   2500   2500   2500  0.027        1  0.027 2BA-    Liu's HB acceptor Ind. Eng. Chem. Res. 1994 33 pp 957-964                               
+  0 14    2500   2500   2500   2500  0.027        1  0.027 4BA-    Hydrogen Bonding Acceptor - 4B model (water)                                            
+  0 15    2500   2500   2500   2500  0.027        1  0.027 D-      Unused donor                                                                            
+  0 16   -0.84   3.76   1.42   0.16  0.276   4.0026      0 He      Helium4                                                                                 
+  0 17    26.3   27.5   12.0    0.0  0.270  20.1797      0 Ne      Neon                                                                                    
+  0 18   111.6   98.1   27.7    3.0  0.3345 39.948       0 Ar      Argon                                                                                   
+  0 19   133.2  107.3   46.5   13.2  0.358  83.8         0 Kr      Krypton                                                                                 
+  0 20     181	 181	31.5   31.5  0.385  131.290      0 Xe      Xenon                                                                                   
+  1  0    65.5   54.6   43.7   32.8  .3630  15.0349  .0770 CH3et   Half of Ethane                                                                          
+  1  1    64.7   54.5   44.4   34.2  .3630  15.0349  .0770 CH3a-   1' terminus e.g. end groups of nOctane cis2butene                                                                                                          
+  1  2    55.3   48.4   41.5   34.6  .3630  15.0349  .0770 CH3b-   2' branch e.g. all CH3's in iButane or 23 dimethylbutane also the branched end                                                                             
+  1  3    43.0   43.0   43.0   43.0  .3630  15.0349  .0770 CH3c-   3' branch e.g. Neopentane or 22 dimethylHexane                                                                                                             
+  1  4    48.9   48.4   48.0   47.5  .3630  15.0349  .0770 CH3d-   Bonded to aromatic ring, e.g. toluene pXylene cf Gray05                                                                                                    
+  1  5    46.9   46.9   46.9   46.9  .3630  15.0349  .0770 CH3e-   unused/Formerly In methyl phenol e.g. 3MethylPhenol                                     
+  1  6   112.0   80.0   48.0   16.0  .3630  15.0349  .0770 CH3f-   Methyl ether,ester, or carbonate e.g. MethylButyrate
+  1  7   144.4  102.6   60.7   18.9  .3630  15.0349  .0770 CH3g-   In 2Alkyne, e.g. 2Butyne 2Pentyne 2Hexyne (necessary for 180'bond angle)                                                                                   
+  1  8    64.4   52.1   39.9   27.6  .3630  15.0349  .0770 CH3h-   Bonded to S, e.g. MethylEthylSulfide                                                    
+  1  9   138.7   93.0   47.3    1.6  .3630  15.0349  .0770 CH3i-   In an acetate, e.g. HexylAcetate                                                        
+  1 10    97.7   71.2   44.6   18.1  .3630  15.0349  .0770 CH3j-   ortho to nitro in nitrotoluenes (jre nitro)                                             
+  1 11    90.9     66   41.1   16.2  0.363  15.0349  0.077 CH3k-   bonded to silicon                                                                       
+  1 12    55.9   51.1   46.4   41.7  0.363  15.0349  0.077 CH3l-   Me in ORTHO Xylene cf Gray05                                                            
+  1 13    48.4   47.3   46.3   45.2  .3630  15.0349  .0770 CH3m-   In 2ol, e.g. 2butanol (see also 117)                                                    
+  1 14    42.6   42.6   42.6   42.6  .3630  15.0349  .0770 CH3n-   cumene(branched appendage raises vp)/(formerly tButylAcetate or PropylMethAcrylate)     
+  1 15      38   35.1   32.1   29.2  0.363  15.0349  0.077 CH3o-   11DiMeCycloHexane                                                                       
+  1 16    54.7   54.7   54.7   54.7  .3630  15.0349  .0770 CH3p-   bonded to pentagonal ring, propyleneCarbonate (formerly acetamide)                                                             
+  1 17   122.8   91.2   59.7   28.1  .3630  15.0349  .0770 CH3q-   2ketone, e.g. acetone and 2Butanone                                                     
+  1 18    69.5   58.7   47.8     37  0.363  15.0349  0.077 CH3r-   In Phosphate, e.g. TriMePhosphate                                                       
+  1 19    50.2   50.2   50.2   50.2  .3630  15.0349  .0770 CH3s-   unused                                                                                  
+  1 20   120.7   81.7   42.8    3.8  .3630  15.0349  .0770 CH3t-   Bonded to a halogen                                                                     
+  1 21       0      0      0      0    0.3     14.5    0.3 CH3u-   Liu's (Me) Ind. Eng. Chem. Res. 1994 33 pp 957-964                                      
+  1 22   110.4   77.7   45.1   12.4  .3630  15.0349  .0770 CH3v-   081706jre/2-alkene, extra well for cis-bonded CH3, e.g. cis2Butene                                                                                         
+  1 23     123   85.8   48.6   11.4  0.363  15.0349  0.077 CH3j-   Bonded to nitrogen, e.g. MethylEthylAmine                                               
+  2  1    34.1   28.4   22.8   17.1  .3570  14.0269  .0770 >CH2a   Alkyl, ether, ester. e.g. nOctane                                                                                                                          
+  2  2    13.0   12.4   11.8   11.2  0.357  14.0269  0.077 >CH2e   UNUSED previously for ethanol(1402 RESERVED for ParmsHb)                                
+  2  3    40.9   35.0   29.0   23.1  .3570  14.0269  .0770 >CH2o   Bonded to OH, e.g. nPropanol, nButanol                                                                                                                     
+  2  4    23.4   23.4   23.4   23.4  .3570  14.0269  .0770 >CH2b   Bonded to olefin, e.g. 1-hexene, 2hexene                                                                                                                   
+  2  5    33.1   30.3   27.4   24.6  0.357  14.0269  0.077 >CH2s   CH2's next to Sulfur, e.g. DiEthylSulfide                                               
+  2  6    56.4   43.3   30.3   17.2  .3620  14.0269  .0770 >CH2k   CH2 next to carbonyl carbon, e.g. 2Pentanone                                            
+  2  7    63.0   50.9   38.8   26.7  .3570  14.0269  .0770 >CH2y   CH2 in alkyne, e.g. 2Pentyne, 3Hexyne (for 180'bond angle)                                                                                                 
+  2  8    21.6   21.6   21.6   21.6  .3570  14.0269  .0770 >CH2ar  Bonded to aromatic ring, e.g. EthylBenzene                                                                                                                 
+  2  9    27.6   25.9   24.2   22.5  .3570  14.0269  .0770 >CH2r   In a non-aromatic ring (see also 2-14,19,21)                                                                                                               
+  2 10    38.5   31.0   23.6   16.1  .3570  14.0269  .0770 >CH2h   bonded to a halogen                                                                     
+  2 11    46.8   33.8   20.9    7.9  .3570  14.0269  .0770 >CH2n   Bonded to nitrogen or amine, e.g. 1AminoPentane                                         
+  2 12    33.1   30.3   27.4   24.6  0.357  14.0269  0.077 >CH2Si  Bonded to silicon                                                                       
+  2 13    28.5   28.4   28.3   28.2  0.357  14.0269  0.077 >CH2do  Ortho bonded to an aromatic ring, e.g. OrthoXylene                                      
+  2 14    33.1   30.3   27.4   24.6  0.357  14.0269  0.077 >CH2p   Bonded to oxygen in a pentagonal ring, eg. THF                                          
+  2 15      21     21     21     21  0.357  14.0269  0.077 >CH2sa  Branched acetate i.e. 2-ethylhexyl Acetate                                              
+  2 16      32     32     32     32  0.357  14.0269  0.077 >CH2se  Between two ester oxygens (i.e. in EtGlycolDiAcetate) Between double bounded CH and Este
+  2 17    58.6   39.5   20.5    1.4  .3620  14.0269  .0770 >CH2al  Bonded to aldehyde, e.g.ButyrAldehyde                                                                                                                      
+  2 18    37.5   30.2   22.9   15.6  .3570  14.0269  .0770 >CH2am  Beta carbon in amide, e.g. ButyrAmide                                                   
+  2 19    26.7   26.7   26.6   26.6  .3570  14.0269  .0770 >CH2rb  Bonded to a nonaromatic ring, e.g. EthylCycloHexane                                                                                                        
+  2 20    26.6     25   23.4   21.8  0.357  14.0269  0.077 >CH2ph  Phospho ether -CH2-[ O-(P=O)< ] triEthylPhosphate triEthylPhosphite                     
+  2 21   43.88     35     26  17.12  0.357  14.0269  0.077 >CH25r  In a pentagonal ring eg. cycloPentane                                                   
+  2 22    45.9   30.6   15.3     .0  .3570  14.0269  .0770 >CH2ac  Bonded to >C= of carboxy acid e.g. propanoic acid butanoic acid                         
+  2 23    26.6     25   23.4   21.8  0.357  14.0269  0.077 >CH2pn  Bonded to P                                                                             
+  2 24      29   27.3   25.7     24  0.357  14.0269  0.077 >CH2f   Bonded to F                                                                             
+  2 25    76.8   58.8   40.9   22.9  .3570  14.0269  .0770 >CH2no  Bonded to NO2                                                                           
+  3  1     6.2    6.2    6.2    6.2  .3900  13.0191  .0770 >CH-a   Alkyl branch, e.g. iButane, 2MethylHexane                                                                                                                  
+  3  2     6.2    6.2    6.2    6.2  .3900  13.0191  .0770 >CH-b   unused                                                                                  
+  3  3      .1     .1     .1     .1  .3900  13.0191  .0770 >CH-d   2'alcohol branch, e.g. 2Butanol, 4Me2Pentanol, 3Me2Butanol, 13ButaneDiol
+  3  6     7.4    7.4    7.5    7.5  .3900  13.0191  .0770 >CH-r   In a non-aromatic ring e.g. MethylCycloHexane, Decalin                                  
+  3  4    13.1    9.2    5.3    1.4  .3900  13.0191  .0770 >CH-es  2'Ester branch e.g. ethylideneDiAcetate                                           
+  3  5    40.3   36.2   32.1     28   0.39  13.0191  0.077 >CH-yn  Bonded to alkyne, e.g. iPentyne (35)                                                    
+  3  7     1.5    1.5    1.5    1.5   0.39  13.0191  0.077 >CH-ar  Bonded to an aromatic ring, e.g. cumene                                                 
+  3  8     8.9    8.1    7.4    6.6  .3900  13.0191  .0770 >CH-h   Bonded to a halogen                                                                     
+  3  9    31.5   22.5   13.4    4.4   0.39  13.0191  0.077 >CH-su  Bonded to sulfur                                                                        
+  3 10     8.9    8.1    7.4    6.6   0.39  13.0191  0.077 >CH-CL3 Chloroform, pentafluoroEthane, ..., distinct from 308 for distinct HB                                                                                  
+  3 11     8.7    7.9    7.1    6.3  .3900  13.0191  .0770 >CH-n   Bonded to nitrogen, eg. 3NitroPentane, 3AminoPentane                                    
+  3 12    31.5   22.5   13.4    4.4   0.39  13.0191  0.077 >CH-si  Bonded to silicon                                                                       
+  3 13   28.87   20.2   11.6   2.89   0.39  13.0191  0.077 >CH-et  Bonded to an ether oxygen, e.g. diisopropylether                                        
+  3 14   23.03   16.1    9.2    2.3   0.39  13.0191  0.077 >CH-5r  In a non-aromatic 5 membered ring e.g. MethylCycloPentane                               
+  3 15    11      7.5    4.6   10.6  .3900  13.0191  .0770 >CH-    Adamantane                                                                                  
+  3 16    11.5   22.5   13.4    5.1   0.39  13.0191  0.077 >CH-s   pentagonal oxy ring, e.g. propylene carbonate, meTHF
+  3 17    31.5   22.5   13.4    4.4   0.39  13.0191  0.077 >CH-    unused
+  3 18    31.5   22.5   13.4    4.4   0.39  13.0191  0.077 >CH-    unused
+  3 19    31.5   22.5   13.4    4.4   0.39  13.0191  0.077 >CH-    unused
+  3 20    31.5   22.5   13.4    4.4   0.39  13.0191  0.077 >CH-    unused
+  4  1      .2     .2     .1     .1  .3425  12.0112  .0770 >C<a    3' alkyl branch, e.g. 22DiMethylHexane,                                                                                                                    
+  4  2     8.5      8    7.6    7.1 0.3425  12.0112  0.077 >C<r    In a non-aromatic ring, e.g. 11diMeCyHex                                                
+  4  3      .0     .0    6.5   18.8  .3425  12.0112  .0770 >C<F    Bonded to a perflouro                                                                   
+  4  4     8.5      8    7.6    7.1 0.3425  12.0112  0.077 >C<su   Bonded to sulfur                                                                        
+  4  5     8.5      8    7.6    7.1 0.3425  12.0112  0.077 >C<n    Bonded to nitrogen, e.g. tButylAmine                                                    
+  4  6       8    7.7    7.3      7 0.3425  12.0112  0.077 >C<s    In an ester (i.e. tert butyl)                                                           
+  4  7     8.5      8    7.6    7.1 0.3425  12.0112  0.077 >C<h    bonded to halogen(nonperfl)                                                             
+  4  8      .5     .5     .5     .5  .3425  12.0112  .0770 >C<     tButylBenzene                                                                                  
+  5  1    28.7   26.5   24.2   22.0  .3425  13.0191  .0700 =ACH-b  Aromatic carbon, e.g. benzene                                                                                                                              
+  5  2    27.4   26.7   26.1   25.4  .3425  13.0191  .0700 =ACH-d  Ring diene  eg. cyclopentadiene, thiophene                                              
+  5  3    22.6   19.0   15.5   11.9  .3425  13.0191  .0700 =ACH-o  in aromatic ether                                                                       
+  5  4    21.5   23.6   25.8   27.9  .3425  13.0191  .0700 =ACH-u  unused                                                                                  
+  5  5    75.3   52.6   29.9    7.2  .3425  13.0191  .0700 =ACH-q  Between OH and Me in m-MethylPhenol                                                     
+  6  1    15.4   14.5   13.6   12.7  .3300  12.0112  .0700 >AC=t   Aromatic branch, e.g. Toluene                                                                                                                              
+  6  2    13.1   12.3   11.6   10.8  .3300  12.0112  .0700 >AC=o   Bonded to oxygen e.g. Phenol, PhenylAcetate                                             
+  6  3     4.9    4.9    4.9    4.9  .3300  12.0112  .0700 >AC=h   Bonded to a halogen                                                                     
+  6  4   111.5  111.4  111.3  111.2  .3300  12.0112  .0700 >AC=n   Bonded to nitrogen, e.g. nitro, pyridine, aniline?                                      
+  6  5    22.9   21.7   20.6   19.4  .3300  12.0112  .0700 >AC=a   Between rings aromatic carbon, e.g. naphthalene, ~diphenyl                                                                                                 
+  7  1    61.6   50.1   38.6   27.1  .3500  14.0270  .0670 CH2=a   Alpha olefin bonded to =CH-, e.g. 1Hexene                                                                                                                  
+  7  2    90.9     63     35    7.1   0.35   14.027  0.067 CH2=b   bonded to =C< (to make equivalent UNIFAC group)                                         
+  7  3      65     51     37     23   0.35   14.027  0.067 CH2=vo  Vinyl ester, e.g. ButylAcrylate                                                         
+  7  4    91.0   54.1   28.2   45.0  .3500  14.0270  .0670 CH2=c   in styrene                                                                              
+  7  5      65     51     37     23   0.35   14.027  0.067 CH2=d   unused                                                                                  
+  8  1    22.8   22.1   21.4   20.7  .3500  13.0191  .0705 =CH-a   Alkene, e.g. 3Pentene                                                                                                                                      
+  8  2    45.9   34.7   23.6   12.4  .3500  13.0191  .0705 =CH-de  Diene, singly bonded to another -CH=, e.g. 13Butadiene.                                                                                                    
+  8  3    25.6   23.9   22.2   20.5   0.35  13.0191   0.07 =CH-am  FormAmide singly bonded to N and double bonded to O                                     
+  8  4     6.3    2.3    1.3     .2  .3500  13.0191  .0700 =CH-fo  In formate carbonyl, e.g. ButylFormate                                                  
+  8  5    32.6   27.5   22.4   17.3  .3500  13.0191  .0700 =CH-al  In formic acid or aldehyde, e.g. ButyrAldehyde                                                                                                             
+  8  6    25.6   24.6   23.5   22.5   0.35  13.0191   0.07 =CH-vo  Double bonded to CH2=,  singly to CO  e.g. vinylacetate                                 
+  9  1     9.1    8.9    8.9    8.8  .3500  12.0112  .0670 =C<a    Alkene or acrylate branch, e.g. Isobutylene, MethylMethAcrylate, 2Me2Butene                         
+  9  2     6.1    5.2    4.2    3.3  0.345  12.0112  0.067 =C<h    bonded to a halogen                                                                     
+  9  3    20.8   18.1   15.5   12.8  .3450  12.0112  .0670 =C<k    In a ketone, e.g.acetone)                                                               
+  9  4    49.0    7.7    3.9    1.6  .3450  12.0112  .0670 =C<s    In an ester or acid, e.g. ButylAcetate                                                  
+  9  5    10.8    7.4    4.0     .6  .3450  12.0112  .0670 =C<am   Amide alpha carbon, e.g. ButyrAmide                                                     
+ 10  1      47     36     25     14  0.345  12.0112  0.067 =C=     e.g. 23Butadiene (a rare allene group), e.g. 12Butadiene                                
+ 10  2      33   24.4   15.8    7.2  0.345  12.0112  0.067 =C=     unused                                                                                  
+ 10  3      33   24.4   15.8    7.2  0.345  12.0112  0.067 =C=     unused                                                                                  
+ 10  4      33   24.4   15.8    7.2  0.345  12.0112  0.067 =C=     unused                                                                                  
+ 10  5      33   24.4   15.8    7.2  0.345  12.0112  0.067 =C=     unused                                                                                  
+ 11  1   102.4   69.0   35.5    2.1  .3300  13.0191  .0600 <CHyne  unlu/Triple bond, e.g. MethylAcetylene                                                                                                                     
+ 11  2   115.6   82.2   48.8   15.4   0.35  13.0191   0.06 <CHb    HC in H<CN>                                                                                  
+ 11  3   115.6   82.2   48.8   15.4   0.35  13.0191   0.06 <CHc    unused                                                                                  
+ 11  4   115.6   82.2   48.8   15.4   0.35  13.0191   0.06 <CHd    unused                                                                                  
+ 11  5   115.6   82.2   48.8   15.4   0.35  13.0191   0.06 <CHe    unused                                                                                  
+ 12  1    38.5   26.2   14.0    1.7  .3500  12.0112  .0600 <C-yne  Triple bond, e.g. MethylAcetylene                                                                                                                          
+ 12  2   111.0   85.0   59.0   33.0   0.35  12.0112   0.06 <C-cy   Bonded to N, e.g. cyanide                                                               
+ 12  3    81.5   56.3     31    5.8   0.35  12.0112   0.06 <C-vi   unlu/vinylAcetylene triple bond e.g. vinylacetylene                                     
+ 12  4      72   54.7   37.3     20   0.32  12.0112   0.06 <C-2yn  unlu/bonded to CH3 e.g. 2-Alkyne  CH3-C><C-R                                            
+ 12  5      72   54.7   37.3     20   0.35  12.0112   0.06 <C-e    unused                                                                                  
+ 13  0   168.0  138.9  109.8   80.6   0.30  18.0152  0.063 H2O     single site model, old jre model                                                                     
+ 13  1   266.0  266.0  164.0   31.6   0.30  18.0152  0.063 H2O     single site model, amir's model                                                                       
+ 14  1   179.0  125.8   72.5   19.3  0.285  17.0073  0.063 OHm     MeOH, reserved for ParmsHb                                                              
+ 14  2   242.0   48.7   24.3    9.0  0.285  17.0073  0.066 OHe     EtOH, reserved for ParmsHb                                                              
+ 14  3   154.3  105.4   56.5    7.6  .2850  17.0073  .0660 OHa     Primary alcohol, e.g. nButanol                                                                                                                             
+ 14  4   272.2  222.0  171.8  121.6  .2850  17.0073  .0660 OHb     2' alcohol e.g. iPropanol                                                                                                                                  
+ 14  5   111.0  79.0    47.0   15.0  0.285  17.0073  0.066 OHc     3' alcohol e.g. tButanol                                                                
+ 14  6   185.3  138.8   92.3   45.8  .2850  17.0073  .0660 OHp     Bonded to aromatic ring, e.g. Phenol                                                    
+ 14  7     111   75.7   40.4    5.1  0.285  17.0073  0.066 OHs     Active for intrabonding, as in an ester like EtLactate. Hardcode activates intra assessm
+ 14  8     111   75.7   40.4    5.1  0.285  17.0073  0.066 OHr     2' alcohol attached to a non-aromatic ring                                              
+ 14  9     191   75.7   40.4   59.1  0.285  17.0073  0.066 OH      Not Used                                                                                
+ 14 10   371.8  291.0  210.3  129.5  .2850  17.0073  .0660 OH      NO2?, Carbinol (e.g., 2ButoxyEthanol)                                                                                
+ 14 11     185  126.2   67.4    8.6  0.285  17.0073   0.15 OH94    Liu's (OH) Ind. Eng. Chem. Res. 1994 33 pp 957-964                                      
+ 14 12   265.7  177.2   88.6     .1  .2500  17.0073  .0690 OHac    Carboxy Acid WARNING:ref to this idType is hardcoded in CalcEos. e.g. butanoic acid =   
+ 15  1   146.0   99.3   52.7    6.0  .2700  15.9994  .0680 O<e     Ether oxygen, e.g.  DiEthylEther                                                                                                                           
+ 15  2    81.6   68.6   35.4    3.1  .2700  15.9994  .0660 O<s     Ester oxygen, e.g. MethylAcetate                                                        
+ 15  3      70   54.8   39.7   24.5   0.27  15.9994  0.066 O<ep    epoxide, e.g. EpoxyButane                                                               
+ 15  4   239.8  167.9   95.9  23.98   0.27  15.9994  0.066 O<6r    In a hexagonal ring, e.g. 14-Dioxane                                                    
+ 15  5      70   54.8   39.7   24.5   0.27  15.9994  0.066 O<su    bonded to sulfur                                                                        
+ 15  6      70   54.8   39.7   24.5   0.27  15.9994  0.066 O<si    bonded to silicon                                                                       
+ 15  7   158.0  108.0   58.0    8.0   0.27  15.9994  0.063 O<5r    In a pentagonal ring eg. TetraHydroFuran                                                
+ 15  8      78   62.7   47.3     32   0.27  15.9994  0.065 O<ph    Phosphate (starting from ester O<)                                                      
+ 15  9   349.5  277.6  158.1   41.1  .2700  15.9994  .0650 O<ae    Formate, e.g. ButylFormate                                                              
+ 15 10     166  115.7   65.3     15   0.27  15.9994  0.065 O<ar    Ether attached to aromatic ring, e.g. anisole/(formerly for VinylAcetate)               
+ 16  0    87.5   56.2   27.9  .0000  .3120  15.9994  .0620 O=k     Acetone (For ParmsHb. Use 1601 to simulate.)                                            
+ 16  1    88.5   59.0   29.5   5.10  .3120  15.9994  .0620 O=k     Ketone e.g. Butanone                                                                    
+ 16  2    76.5   56.8   47.8   35.1  .2700  15.9994  .0620 O=s     Ester Carbonyl oxygen, e.g. MethylAcetate, EthylFormate                                 
+ 16  3   117.9   78.9   39.8     .8  .2500  15.9994  .0620 O=ac    Acid Carbonyl oxygen WARNING:ref to this idType is hardcoded in CalcEos.  AceticAcid = C
+ 16  4      42   38.3   34.7     31   0.29  15.9994  0.062 O=ph    Phosphate Oxygen                                                                        
+ 16  5   147.7  137.1  126.6  116.0  .2900  15.9994  .0620 O=am    Amide, e.g. ButyrAmide                                                                  
+ 16  6   128.9  107.8   86.8   65.7  .3120  15.9994  .0620 O=al    Aldehyde, e.g. ButyrAldehyde                                                                                                                               
+ 16  7    29.7   29.7   29.7   29.7  .2850  15.9994  .0620 O=na    Aliphatic nitro; nitroethane(special site/21-3 1.5 bond order)                          
+ 16  8     3.2    3.2    3.2    3.2  .2850  15.9994  .0620 O=nar   Aromatic nitro(special site/21-3 1.5 bond order);nitrobenzene                           
+ 16  9     111   54.8   39.7   34.5  .270   15.9994  0.062 O=ca    94.5... Carbonate (Formerly Phosgene: 7,24.5,0.27)                                                                                
+ 16 10      46  168.3  150.7     33  .312   15.9994  0.062 O=6r    186&133 Ring-one eg. CycloHexanone                                                              
+ 17  1    93.1   93.1   93.1   93.1  .3260  32.0662  .1040 >Sa     In sulfide, e.g. DiEthylSulfide                                                         
+ 17  2      70   54.8   39.7   24.5  0.326  32.0662  0.104 >So     Bonded to O, e.g. ButylSulfate                                                          
+ 17  3     111   97.7   84.3     71  0.326  32.0662  0.104 >Sar    In aromatic ring eg. Thiophene                                                          
+ 17  4      70   54.8   39.7   24.5  0.385  32.0662  0.104 >Sf6    SF6                                                                                     
+ 17  5     190  141.5   92.9   44.4  0.363  38.0718  0.104 >Sc     Half of CS2                                                                             
+ 18  1   108.0  107.3  106.7  106.0  .3600  33.0748  .1040 SHa     1' sulfur, e.g. PropaneThiol                                                            
+ 18  2     111     93     75     57    0.4  33.0748  0.104 SHb     2' thiol, e.g. 3PentaneThiol, cyhexThiol                                                
+ 18  3      70   54.8   39.7   24.5  0.375  33.0748  0.104 SH-     unused                                                                                  
+ 18  4      70   54.8   39.7   24.5  0.375  33.0748  0.104 SH-     unused                                                                                  
+ 18  5      70   54.8   39.7   24.5  0.375  33.0748  0.104 SH-     Sulfur in Thione                                                                        
+ 19  1    97.7   81.7   81.8   81.8  .3100  16.0227  .0700 NH2a    81.7*** 1' amine, e.g. nPropylAmine, EthylAmine                                                 
+ 19  2    11.5    7.8    4.1     .4  .3100  16.0227  .0700 NH2ar   Bonded to an aromatic ring, e.g. aniline                                                
+ 19  3   152.2  139.1  126.1  113.0  .3100  16.0227  .0700 NH2am   Amide, e.g. ButyrAmide                                                                  
+ 19  4   219.5  147.9   76.2    4.6  .3100  16.0227  .0700 NH2b    2' amine, e.g. 3aminoPentane                                                            
+ 19  5      98   54.8   39.7   84.5   0.31  16.0227   0.07 NH2-    unused                                                                                  
+ 20  1    49.6   49.7   49.7   49.8  .3100  15.0147  .0700 >NHa    Diamine, e.g. dimethylamine, diethylamine                                               
+ 20  2      70   54.8   39.7   24.5   0.31  15.0147   0.07 >NHr    In a non-aromatic ring e.g. pyrolidine                                                  
+ 20  3   101.4   84.5   67.6   50.7   0.31  15.0147   0.07 >NHam   amide                                                                                   
+ 20  4      70   54.8   39.7   24.5   0.31  15.0147   0.07 >NHpy   In pentadiene, pyrrole
+ 20  5      70   54.8   39.7   24.5   0.31  15.0147   0.07 >NHe    unused                                                                                  
+ 21  1    31.3   25.4   19.5   13.6  .3100  14.0067  .0700 >N-a    TriAmine, e.g. TriMethylAmine                                                           
+ 21  2   151.4  151.4  151.4  151.4   0.31  14.0067   0.07 >N-az   Azo e.g. HMX,RDX                                                                        
+ 21  3    51.8   51.8   51.8   51.8  .3100  14.0067  .0700 >N-no   Nitro N bonded to oxygen e.g. NO2, nitroethane (special site/16-8 1.5 bond orde         
+ 21  4      70   48.2   26.3    4.5   0.31  14.0067   0.07 >N-am   3' amide, e.g. DMF                                                                      
+ 21  5      70   54.8   39.7   24.5   0.31  14.0067   0.07 >N-e    unspecified amine                                                                       
+ 22  1   224.6  150.4   76.2    2.0  .3000  14.0067  .0680 -AN=p   e.g. Pyridine  
+ 22  2      70   54.8   39.7   24.5   0.31  14.0067  0.065  =AN-az azo; imidazole; pyrazole                                                                
+ 22  3      70   54.8   39.7   24.5   0.31  14.0067  0.065  =AN-q  double substituted pyridine                                                             
+ 22  4      70   54.8   39.7   24.5   0.31  14.0067  0.065  =AN-   unused                                                                                  
+ 22  5      70   54.8   39.7   24.5   0.31  14.0067  0.065  =AN-   unused                                                                                  
+ 23  1    32.6   22.5   22.5    0.3  0.308  14.0067  0.055 <N      half of N2                                                                              
+ 23  2      62     42     22      2  0.308  14.0067  0.055 <N      e.g. acetonitrile                                                                       
+ 23  3      33   24.5   16.1    7.6  0.308  14.0067  0.055 <N      unused                                                                                  
+ 23  4      70   54.8   39.7   24.5   0.31  14.0067  0.055 <N      unused                                                                                  
+ 23  5      70   54.8   39.7   24.5   0.31  14.0067  0.055 <N      unused                                                                                  
+ 24  1   166.3  128.6   90.9   53.2  .3330  35.4527  .1040 Cl-1'   1'Cl e.g. EthylChloride                                                                 
+ 24  2    89.3   89.5   89.7   89.9  .3330  35.4527  .1040 Cl-2'   2'Cl e.g. 2ChloroButane                                                                 
+ 24  3   184.9  132.4   80.0   27.5  .3330  35.4527  .1040 Cl-d    Dichloro e.g 11dichloropropane                                                          
+ 24  4   147.7  109.2   70.7   32.2  .3330  35.4527  .1040 Cl-t    Trichloro e.g. 111trichloroethane (&chloroform) [163.8 114.7 65.5 16.4]                 
+ 24  5   242.0  170.5   98.9   27.4  .3330  35.4527  .1040 Cl-ar   aromatic Cl eg. chlorobenzene                                                           
+ 24  6   196.4  137.5   78.5   19.6  0.333  35.4527  0.104 Cl-di   Special site for dichloromethane                                                        
+ 24  7   167.4  118.5   69.5   20.6  .3330  35.4527  .1040 Cl-c    Special site for chloroform                                                             
+ 25  1   184.9  124.0   63.1    2.2  .2600  18.9984  .0600 F-1'    1' F                                                                                    
+ 25  2      .0    2.4   31.0   32.5  .2500  18.9984  .0600 F-ar    Bonded to aromatic ring, e.g. perfluorobenzene                                          
+ 25  3      .0    1.1   18.2   26.8  .2570  18.9984  .0600 F-pc    Perfluorocyclobutane                                                                    
+ 25  4      .0     .0   19.2   23.7  .2500  18.9984  .0600 F-P2    CF2 perfluorostraight chain                                                             
+ 25  5      .0    3.4    3.7   36.8  .2500  18.9984  .0600 F-P3    CF3 perfluorostraight chain                                                             
+ 25  6    31.8     27   22.2   17.4  0.264  18.9984   0.06 F-f6    SF6                                                                                     
+ 25  7      19     19     19     19  0.264  18.9984   0.06 F-HCl   In CHFCl group, cf. UNIFAC                                                              
+ 25  8       0      1     16  27.95  0.257  18.9984   0.06 F-Cl2   In CFCl2 group, cf. UNIFAC                                                              
+ 25  9       0      1     16  27.95  0.264  18.9984   0.06 F-FCl   In CClF2 group, cf. UNIFAC                                                              
+ 25 10       0      1     16  27.95  0.257  18.9984   0.06 F       2'F in CF3CHFCF3                                                                        
+ 25 11       0      1     16  27.95  0.257  18.9984   0.06 F       unused                                                                                  
+ 26  0      22   21.7   21.3     21    0.4  30.9738   0.11 >P-     PH3                                                                                     
+ 26  1      22   21.7   21.3     21    0.4  30.9738   0.11 >P<a    P in trimethyl phosphate                                                                
+ 26  2      22   21.7   21.3     21    0.4  30.9738   0.11 >P-i    061306jre/tri alkyl phosphite                                                           
+ 26  3      22   21.7   21.3     21    0.4  30.9738   0.11 >P-n    alkyl phosphine                                                                         
+ 26  4      22   21.7   21.3     21    0.4  30.9738   0.11 >P-a    aromatic phosphine                                                                      
+ 26  5      22   21.7   21.3     21    0.4  30.9738   0.11 >P-     unspecified phosphate                                                                   
+ 27  1   227.2  159.8   92.5   25.1  0.346   79.904  0.114 Br-H    Half of Br2 Dickerson et al (1974) p409                                                 
+ 27  2   124.6  124.3  124.1  123.8  .3540  79.9040  .1130 Br-1'   Bromine bonded to a chain                                                               
+ 27  3   233.3  178.0  122.8   67.5  .3540  79.9040  .1130 Br-ar   Bromine bonded to an aromatic ring                                                      
+ 27  4      70   54.8   39.7   24.5  0.354   79.904  0.113 Br-     unspecified bromine                                                                     
+ 27  5      70   54.8   39.7   24.5  0.354   79.904  0.113 Br-     unspecified bromine                                                                     
+ 28  1      70   54.8   39.7   24.5  0.375  126.904 0.1333 I-H     Half of I2 Dickerson et al (1974) p409                                                  
+ 28  2   281.5  213.2  144.9   76.6  .3650 126.9040  .1270 I-1'    Iodine bonded to a chain                                                                
+ 28  3     122    122    122    122  0.365  126.904  0.127 I-a     Iodine bonded to an aromatic ring                                                       
+ 28  4   225.4  172.7    120   67.3  0.365  126.904  0.127 I-2'    Secondary Iodine in a chain                                                             
+ 28  5   338.1  236.8  135.6   34.3  0.365  126.904  0.127 I-r     Iodine bonded to a nonaromatic ring                                                     
+ 29  1      70   54.8   39.7   24.5  0.425  31.1099  0.112 SiH3a   on a chain end                                                                          
+ 29  2      70   54.8   39.7   24.5  0.425  31.1099  0.112 SiH3b   branched on a chain                                                                     
+ 29  3      70   54.8   39.7   24.5  0.375  31.1099  0.112 SiH3c   bonded to O                                                                             
+ 29  4      70   54.8   39.7   24.5  0.375  31.1099  0.112 SiH3d   unspecified Silicon                                                                     
+ 29  5      70   54.8   39.7   24.5  0.375  31.1099  0.112 SiH3e   unspecified Silicon                                                                     
+ 30  1      70   54.8   39.7   24.5  0.375  30.0061    0.1 >SiH2   on a chain                                                                              
+ 30  2      70   54.8   39.7   24.5  0.375  30.0061    0.1 >SiH2   branched on a chain                                                                     
+ 30  3      70   54.8   39.7   24.5  0.375  30.0061    0.1 >SiH2   bonded to O                                                                             
+ 30  4      70   54.8   39.7   24.5  0.375  30.0061    0.1 >SiH2   unspecified Silicon                                                                     
+ 30  5      70   54.8   39.7   24.5  0.375  30.0061    0.1 >SiH2   unspecified Silicon                                                                     
+ 31  1      70   54.8   39.7   24.5  0.375   29.094    0.1 >SiH-   on a chain                                                                              
+ 31  2      70   54.8   39.7   24.5  0.375   29.094    0.1 >SiH-   branched on a chain                                                                     
+ 31  3      70   54.8   39.7   24.5  0.375   29.094    0.1 >SiH-   bonded to O                                                                             
+ 31  4      70   54.8   39.7   24.5  0.375   29.094    0.1 >SiH-   unspecified Silicon                                                                     
+ 31  5      70   54.8   39.7   24.5  0.375   29.094    0.1 >SiH-   unspecified Silicon                                                                     
+ 32  1      70   54.8   39.7   24.5  0.375   28.086    0.1 >Si<    on a chain                                                                              
+ 32  2      70   54.8   39.7   24.5  0.375   28.086    0.1 >Si<    branched on a chain                                                                     
+ 32  3      70   54.8   39.7   24.5  0.375   28.086    0.1 >Si<    bonded to O                                                                             
+ 32  4      70   54.8   39.7   24.5  0.375   28.086    0.1 >Si<    unspecified Silicon                                                                     
+ 32  5      70   54.8   39.7   24.5  0.375   28.086    0.1 >Si<    unspecified Silicon                                                                     
