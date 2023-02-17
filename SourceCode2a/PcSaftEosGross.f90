@@ -11187,7 +11187,7 @@ subroutine GetPcSaft(nComps,casrn,iErr)
     !real(dp)                                   :: r_kap_hb
     !real(dp), dimension(nsite,nsite)           :: r_eps_hb
 	CHARACTER($MAXPATH)  parmFile,readFile !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-	Integer line,nDeckParmsCrit,iComp,j,idDb
+	Integer line,nDeckParmsCrit,iComp,j,idCompDb,ioErr
 	DoublePrecision TcEosDb,PcEosDb,ZcEosDb,AcenEosDb
 	!-----------------------------------------------------------------------------
 	! read definition of problem
@@ -11224,15 +11224,16 @@ subroutine GetPcSaft(nComps,casrn,iErr)
 	!if (.not. allocated(x_input)) allocate( x_input( ncomp ) )       ! mole fractions
 	readFile=TRIM(PGLinputDir)//'\ParmsCritPcSaftEos.txt' 
 	open(501,file=readFile)
-	read(501,*)readFile
-	read(readFile,*)nDeckParmsCrit
 	TcEos(1:nComps)=Tc(1:nComps) !initialize
 	PcEos(1:nComps)=Pc(1:nComps)
 	ZcEos(1:nComps)=Zc(1:nComps)
 	do iComp=1,nComps
+		rewind(UNIT=501)
+		read(501,*)readFile
+		read(readFile,*,ioStat=ioErr)nDeckParmsCrit
 		do j=1,nDeckParmsCrit
-			read(501,*)idDb,TcEosDb,PcEosDb,ZcEosDb,acenEosDb
-			if(ID(iComp)==idDb)then
+			read(501,*,ioStat=ioErr)idCompDb,TcEosDb,PcEosDb,ZcEosDb,acenEosDb
+			if(ID(iComp)==idCompDb)then
 				TcEos(iComp)=TcEosDb
 				PcEos(iComp)=PcEosDb
 				ZcEos(iComp)=ZcEosDb

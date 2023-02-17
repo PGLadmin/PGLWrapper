@@ -28,7 +28,7 @@ END MODULE SpeadParms
 	USE GlobConst,  only: PGLinputDir,idCas,ID
 	USE Assoc
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
-	PARAMETER(ndb=1555,listPool=1000)
+	!PARAMETER(ndb=1555,listPool=1000)
 	character*77 errMsgPas
 	!	integer GetBIPs
 	integer idComp(nComps),idCasPas(nComps) !localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
@@ -60,7 +60,7 @@ END MODULE SpeadParms
 	USE BIPs
 	USE VpDb	   ! For iEosOpt=8, SpeadGamma
 	IMPLICIT DoublePrecision(A-H,O-Z)
-	PARAMETER(ndb=1555,listPool=1000)
+	!PARAMETER(ndb=1555,listPool=1000)
 	Integer GetBIPs
 	Integer idComp(nComps),iErrCode,nComps  !localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
 	DoublePrecision bondRate(nmx,maxTypes) !local to this subroutine.
@@ -87,16 +87,22 @@ END MODULE SpeadParms
 	errMsg(5)='GetTpt: a1 > 0 for at least one component when 0 < eta < 0.85'
 	errMsg(6)='GetTpt: a2 > 0 for at least one component when 0 < eta < 0.85'
 
-	dumString=TRIM(PGLinputDir)//'\ParmsTptEosCrit.txt' 
-	open(501,file=dumString)
-	read(501,*)nDeckParmsCrit
+	ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTptEosCrit.txt' 
+	open(501,file=ParmsTptFile)
 	TcEos(1:nComps)=Tc(1:nComps) !initialize
 	PcEos(1:nComps)=Pc(1:nComps)
 	ZcEos(1:nComps)=Zc(1:nComps)
 	do iComp=1,nComps
+		rewind(UNIT=501)
+		read(501,*)nDeckParmsCrit
 		do j=1,nDeckParmsCrit
-			read(501,*)idDb,TcEosDb,PcEosDb,ZcEosDb,acenEosDb
-			if(ID(iComp)==idDb)then
+			read(501,'(a133)',ioStat=ioErr)dumString
+			if(ioErr/=0)then
+				write(dumpUnit,*)'GetTpt: (ioErr) for inFile=(',ioErr,')',TRIM(dumString)
+				cycle 
+			endif
+			read(dumString,*,ioStat=ioErr)idCompDb,TcEosDb,PcEosDb,ZcEosDb,acenEosDb
+			if(ID(iComp)==idCompDb)then
 				TcEos(iComp)=TcEosDb
 				PcEos(iComp)=PcEosDb
 				ZcEos(iComp)=ZcEosDb
