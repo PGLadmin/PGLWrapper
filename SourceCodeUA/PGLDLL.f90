@@ -273,6 +273,7 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 			!write(52,'(1x,2f8.3,F7.4,1x,a3,1x,7E12.4)')tKelvin,pKPa,xFrac(1),aPhase,vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
             if (iProperty==4) res = exp(activity1)
             if (iProperty==5) res = exp(activity2)
+            if (iProperty==6) res = Rgas*(xFrac(1)*(activity1)+xFrac(2)*(activity2))
             if (iProperty==81) res = 1000*rhoMol_cc
             if (iProperty==89) res = 0.000001*vXsCc_mol
             if (iProperty==36) res = 0.001*hXsJ_mol
