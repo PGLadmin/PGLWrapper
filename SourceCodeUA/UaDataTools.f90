@@ -8,11 +8,11 @@ MODULE CritParmsDb
 END MODULE CritParmsDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-MODULE BIPs
+MODULE BIPs	 ! For molecular level binary interaction parameters.
 	USE GlobConst, only: nmx 
 	integer nConverged,maxPts,nPtsBipDat
 	parameter(maxPts=1777) ! this defines the max allowed # of experimental data points in a single binary system.
-	DoublePrecision KIJ(nmx,nmx),KTIJ(nmx,nmx),kETAij(nmx,nmx) !usual dispersive BIPs & k^eta_ij
+	DoublePrecision KIJ(nmx,nmx),KTIJ(nmx,nmx),kETAij(nmx,nmx) !usual dispersive BIPs & k^eta_ij(for speadmd)
 	DoublePrecision KS0IJ(nmx,nmx),KS1IJ(nmx,nmx)              !entropic BIPs & k^eta_ij
 	DoublePrecision HIJ(nmx,nmx),HTIJ(nmx,nmx) !molecular hBonding BIPs for ESD. (Spead aBipAd,aBipDa are site based.)
 	DoublePrecision Lij(nmx,nmx) !covolume adjustment.  bVolMix=sum(sum(xi*xj*bij)); bij=(1-Lij)*(bi+bj)/2
@@ -494,12 +494,13 @@ END MODULE VpDb
 			xsAlpha(iComp,jComp)=0.3d0
 			KIJ (iComp,jComp)=0
 			KTIJ(iComp,jComp)=0
-			KS0IJ(iComp,jComp)=0
-			KS1IJ(iComp,jComp)=0
 			xsTau (iComp,jComp)=0
 			xsTau (jComp,iComp)=0
 			xsTauT(iComp,jComp)=0
 			xsTauT(jComp,iComp)=0
+			kETAij(iComp,jComp)=0	! For speadmd.
+			KS0IJ(iComp,jComp)=0
+			KS1IJ(iComp,jComp)=0
 
 			if(itemFound > 0)then
 				xsAlpha(iComp,jComp)=alphaDB(itemFound)

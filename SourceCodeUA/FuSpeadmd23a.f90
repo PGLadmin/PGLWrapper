@@ -64,7 +64,7 @@ END MODULE SpeadParms
 	Integer GetBIPs
 	Integer idComp(nComps),iErrCode,nComps  !localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
 	DoublePrecision bondRate(nmx,maxTypes) !local to this subroutine.
-	DoublePrecision gmol(nmx),chemPo(nmx),bVolRef
+	DoublePrecision gmol(nmx),chemPo(nmx),solParEntro(nmx),bVolRef
     DoublePrecision etaStd,eta,a0i,a1i,a2i,z0i,z1i,z2i,zFactorLo,zFactorHi,aRes,uRes
 	character*88 bipFile,bipHbFile,ParmsHbFile,ParmsTptFile
 	character*366 dumString
@@ -218,7 +218,7 @@ END MODULE SpeadParms
  
  	!ref part done.  do att part.
 				
-		ParmsHbFile=TRIM(PGLinputDir)//'\ParmsHb4.txt' ! // is the concatenation operator
+	ParmsHbFile=TRIM(PGLinputDir)//'\ParmsHb4.txt' ! // is the concatenation operator
     inHbFile=40
 	if(LOUDER)write(dumpUnit,*)'ParmsHbFile=',TRIM(ParmsHbFile)
 	OPEN(inHbFile,FILE=ParmsHbFile)
@@ -316,8 +316,35 @@ END MODULE SpeadParms
 	nC=nComps
 
 !  note:  bips USE BIPs
-		bipFile=TRIM(PGLinputDir)//'\BipSpead.txt' ! // is the concatenation operator
+	bipFile=TRIM(PGLinputDir)//'\BipSpead.txt' ! // is the concatenation operator
 	iErrCode=GetBIPs(bipFile,ID,nC)
+	!Special for speadmd repulsive term:
+	!ks0= -0.04*18*nComps/ SUM(bRef(1:nComps)) !ks0= -0.04*18*Nc/sum(bRef) is a crude rule so that kijS0->0 for polymer blends
+	ks0= -0.04*18*nComps/ SUM(bVolCC_mol(1:nComps)) ! This rule fails Michelsen-Kistenmacher for a ternary mixture !!!!
+	ks1=0 ! see data statement
+	!if(LOUD)write(dumpUnit,*)'Enter estimate for ks0'
+	!read(*,*)ks0
+	!if(LOUD)write(dumpUnit,*)'kSo=',ks0
+	etaStd=0.4D0
+    etaRefStd=etaStd
+	!write(dumpUnit,*)'MixRule: Calling TptTerms for SolPar calcs.'
+	do iComp=1,nComps
+		call TptTerms(isZiter,iComp,etaStd,etaRefStd,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
+		solParEntro(iComp)=SQRT( a0i*RgasCal*298.d0*etaRefStd/bVolCC_mol(iComp) )
+		!solParEnerg(iComp)=SQRT(-a1i*RgasCal*etaStd/bVolCc_mol(iComp) )
+		!if(LOUD)write(dumpUnit,'(a,i4,2(f8.2))')' i,delSi,delUi',iComp,solParEntro(iComp),solParEnerg(iComp)
+	enddo
+	do iComp=1,nComps
+		do jComp=1,nComps
+		   	vij=(bVolCc_mol(iComp)+bVolCc_mol(jComp))/2
+			chiS=vij*(solParEntro(iComp)-solParEntro(jComp))**2/(RgasCal*298)	! chis=0 if iComp=jComp
+			ks0ij(iComp,jComp)=0
+			ks0ij(iComp,jComp)=0
+			if(iComp.ne.jComp)ks0ij(iComp,jComp)=ks0*chiS  !only use ks0 when i.ne.j !!!
+			if(iComp.ne.jComp)ks1ij(iComp,jComp)=ks1
+		enddo
+	enddo
+
 	!Note: no need to check for switching because kij and ktij are symmetric
 	if(iErrCode > 10)then
 		iErr=11 ! 
@@ -970,8 +997,9 @@ end	!Subroutine QueryParPureSpead
 		if(LOUD)write(dumpUnit,*)TRIM( errMsg(iErr) )
 	endif
 	a0i=0.5d0*(c1+c2+c3)/void2-(c2+2*c3)/void-c3*LOG(void)-0.5d0*(c1-c2-3*c3)
+	!when void=1, a0i=0.5d0*(c1+c2+c3)-(c2+2*c3)-0.5d0*(c1-c2-3*c3) = 0.5*(c1-c1)+c2*(0.5-1+0.5)+c3*(0.5-2+0.5*3)=0 OK! 
 	dA0iDeta=(c1+etaRef*(c2+etaRef*c3))/void3  ! =zRef/eta	 
-	etaDA0iDeta=etaRef*dA0iDeta  ! =zRef	 
+	etaDA0iDeta=etaRef*dA0iDeta  ! =zRef... See 28 lines below	 
 
 	eta2=eta*eta
 	eta3=eta2*eta
@@ -1115,17 +1143,17 @@ end	!Subroutine QueryParPureSpead
 	end
 
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	subroutine MixRule(isZiter,gmol,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErr) 
+	subroutine MixRule(isZiter,gmol,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aRepQuadPart,aAttQuadPart,iErr) 
 	!need bVolMix to get rho from eta because alpha(i) ~ rho*bondVol(i) ~ eta*bondVol(i)/bVolMix
 	!need vMolecNm3 in Wertheim	just because Marty wrote the code badly.  
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	character*77 errMsg(22)
-	DoublePrecision xFrac(nmx),aMixQuadPart(nmx),gmol(nmx)
-	DoublePrecision, STATIC:: solParEntro(nmx),solParEnerg(nmx) !STATIC keeps these in memory even after initCall
+	DoublePrecision xFrac(nmx),aRepQuadPart(nmx),aAttQuadPart(nmx),gmol(nmx)
+	!DoublePrecision, STATIC:: solParEntro(nmx),solParEnerg(nmx),etaStd,etaRefStd, !STATIC keeps these in memory even after initCall
 	DoublePrecision bRef(nmx),bVolRef,tKelvin,eta,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix
-    DoublePrecision etaRef,a0j,a1j,a2j,z0j,z1j,z2j,etaStd,etaRefStd,a0i,a1i,a2i,z0i,z1i,z2i
+    DoublePrecision etaRef,a0j,a1j,a2j,z0j,z1j,z2j,a0i,a1i,a2i,z0i,z1i,z2i
 	data initCall/1/		! best I could do based on avg of the entire system AV 11/29/08
 							! Note that polymer solutions are very sensitive to the BIPs and these values should be optimized via KD option
 	iErr=0
@@ -1160,30 +1188,6 @@ end	!Subroutine QueryParPureSpead
     etaRef=eta*bRefMix/bVolMix	! etaRef has been corrected for temperature-dependent softness, important for H2,He,... 
     rhoMol_cc=eta/bVolMix
 	!if(LOUD)write(dumpUnit,*)'init,ks0=',init,ks0
-	if(initCall)then
-		ks0= -0.04*18*nComps/ SUM(bRef) !ks0= -0.04*18*Nc/sum(bRef) is a crude rule so that kijS0->0 for polymer blends
-		ks1=0 ! see data statement
-		!if(LOUD)write(dumpUnit,*)'Enter estimate for ks0'
-		!read(*,*)ks0
-		!if(LOUD)write(dumpUnit,*)'kSo=',ks0
-		do iComp=1,nComps
-			do jComp=1,nComps
-				KS0IJ(iComp,jComp)=0
-				KS1IJ(iComp,jComp)=0
-				if(iComp.ne.jComp)ks0ij(iComp,jComp)=ks0  !only use ks0 when i.ne.j !!!
-				if(iComp.ne.jComp)ks1ij(iComp,jComp)=ks1
-			enddo
-		enddo
-		etaStd=0.4D0
-        etaRefStd=etaStd*bRefMix/bVolMix
-		!write(dumpUnit,*)'MixRule: Calling TptTerms for SolPar calcs.'
-		do iComp=1,nComps
-			call TptTerms(isZiter,iComp,etaStd,etaRefStd,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
-			solParEntro(iComp)=SQRT( a0i*RgasCal*298.d0*etaRefStd/bRef(iComp) )
-			solParEnerg(iComp)=SQRT(-a1i*RgasCal*etaStd/bVolCc_mol(iComp) )
-			!if(LOUD)write(dumpUnit,'(a,i4,2(f8.2))')' i,delSi,delUi',iComp,solParEntro(iComp),solParEnerg(iComp)
-		enddo
-	endif 
 
 	if(eta > etaMax .or. eta < 0)then
 		iErr=15
@@ -1211,7 +1215,8 @@ end	!Subroutine QueryParPureSpead
 	a2KijMix=0 ! new for kij=kij(eta)
 	do iComp=1,nComps
 		bVoli=bVolCc_mol(iComp)
-		aMixQuadPart(iComp)=0.d0
+		aRepQuadPart(iComp)=0.d0
+		aAttQuadPart(iComp)=0.d0
 		!write(dumpUnit,*)'MixRule: Calling TptTerms for Compo ai zi calcs. iComp=',iComp
 		call TptTerms(isZiter,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
 		if(iErrTpt.ne.0)then
@@ -1239,7 +1244,8 @@ end	!Subroutine QueryParPureSpead
 			z0Mix=z0i !*(1-bipKii)
 			z1Mix=z1i*(1-bipKii)
 			z2Mix=z2i*(1-bipKii)
-			aMixQuadPart=a0i+(a1i+a2i/tKelvin)/tKelvin
+			aRepQuadPart(1)=a0i
+			aAttQuadPart(1)=(a1i+a2i/tKelvin)/tKelvin
 			goto 100 !skip the mixture calculation and go to derivative calcs.
 		!Analytical second and third virial coefficients
 			!B2=((zRefCoeff(1,1)+3))+(a1Coeff(1,1)+a1Coeff(1,2))/tKelvin+(a2Coeff(1,1))/(tKelvin*tKelvin) 
@@ -1255,29 +1261,35 @@ end	!Subroutine QueryParPureSpead
 			bVolj=bVolCc_mol(jComp)
 			!write(dumpUnit,*)'MixRule: Calling TptTerms for jComp calcs. jComp=',jComp
 			call TptTerms(isZiter,jComp,eta,etaRef,a0j,a1j,a2j,z0j,z1j,z2j,iErrTpt)
-		   	vij=(bRef(iComp)+bRef(jComp))/2
-			chiS=vij*(solParEntro(iComp)-solParEntro(jComp))**2/(RgasCal*298)
-			!ks0= -0.04*18*nComps/ SUM(bRef) !ks0= -0.04*18*Nc/sum(bRef) is a crude rule so that kijS0->0 for polymer blends
-			ksij=( ks0ij(iComp,jComp)+etaRef*ks1ij(iComp,jComp) )*chiS
-			! ksij =  -0.04*18*nComps/ SUM(bRef) *chiS=  -0.04*18*nComps/ SUM(bRef) *vij(deliS-deljS)^2/298R =  
+			!ks0= -0.04*18*nComps/ SUM(bRef) !ks0= -0.04*18*Nc/sum(bRef) is a crude rule such that kijS0->0 for polymer blends
+			!ksij=( ks0ij(iComp,jComp)+etaRef*ks1ij(iComp,jComp) )*chiS			! so ksij=0 if iComp=jComp
+			! ksij =  -0.04*18*nComps/ SUM(bRef) *chiS=  -0.04*18*nComps/ SUM(bRef) *vij(deliS-deljS)^2/298R   
 			!solParEntro(iComp)=SQRT( a0i*RgasCald0*298.d0*etaStd/bRef(iComp) )
 			! => ksij =  -0.04*18*nComps/ SUM(bRef) *vij(a0i/bi-a0j/bj)^2*298R*0.4/298R =  -0.04*0.4*(bi+bj)*(a0i/bi-a0j/bj)^2*18*nComps/ SUM(bRef) 
-			!NOTE: genlzd value for ksij is -0.04, but only when i.ne.j!!!!!!!!!!!!!!!!!!!!!!
+			!NOTE: generalized value for ksij is -0.04, but only when i.ne.j!!!!!!!!!!!!!!!!!!!!!!
+			!_ASSERT( (a0i*a0j) > 0 )
+			ksij=( ks0ij(iComp,jComp) )			! so ksij=0 if iComp=jComp
 			!ksij=0 ! this is what Neil assumes.
-			!_ASSERT( (a0i*a0j).gt.0 )
-			aRefij=SQRT( bRef(iComp)*bRef(jComp)*a0i*a0j )/bRefMix  !NOTE: genlzd value for ksij is -0.04
-			a0Mix=a0Mix+xFrac(iComp)*xFrac(jComp)*aRefij*(1.d0-ksij) !moved 1-ksij to here so dKijDeta works right for z0Mix JRE 2012-07
+			if(iComp==jComp .and. ksij /= 0 )write(*,*)'Mixrule: ksii =/= 0????'
 			if((ABS(a0i)<1e-22 .or. ABS(a0j)<1e-22) .and. LOUD)write(dumpUnit,*) 'MixRule:a0i or a0j ~ 0. Watch for divide error.' 
-			zRefij=SQRT( bRef(iComp)*bRef(jComp)/(a0i*a0j) ) /2.d0
-			zRefij=zRefij*( z0i*a0j+a0i*z0j )/bRefMix*(1-ksij)	! check: a0j/sqrt(a0ij) and sqrt(bi*bj)/bMix cancel so units are zRef. 
-			z0Mix=z0Mix+xFrac(iComp)*xFrac(jComp)*( zRefij+kETAij(iComp,jComp)*aRefij )
-			aMixQuadPart(iComp)=aMixQuadPart(iComp)+xFrac(jComp)*aRefij*(1-ksij)
+			!zRefij=SQRT( bRef(iComp)*bRef(jComp)/(a0i*a0j) ) /2.d0
+			!zRefij=zRefij*( z0i*a0j+a0i*z0j )/bRefMix*(1-ksij)	! check: a0j/sqrt(a0ij) and sqrt(bi*bj)/bMix cancel so units are zRef. 
+			!z0Mix=z0Mix+xFrac(iComp)*xFrac(jComp)*( zRefij+kETAij(iComp,jComp)*aRefij )
+			a0ij=SQRT( bRef(iComp)*bRef(jComp)*a0i*a0j )*(1-ksij)  !NOTE: genlzd value for ksij is -0.04
+			a0Mix=a0Mix+xFrac(iComp)*xFrac(jComp)*a0ij/bRefMix !moved 1-ksij to here so dKijDeta works right for z0Mix JRE 2012-07
+			z0ij=0.5d0*( z0i/a0i+z0j/a0j )*a0ij/bRefMix	! check: a0j/sqrt(a0ij) and sqrt(bi*bj)/bMix cancel so units are zRef. 
+			z0Mix=z0Mix+xFrac(iComp)*xFrac(jComp)*z0ij
+			!Alt
+			!a0Mix=a0Mix+xFrac(iComp)*xFrac(jComp)*a0ij/bRefMix
+			!z0ij=0.5d0*(z0i/a0i+z0j/a0j)*a0ij/bRefMix
+			!z0Mix=z0Mix+xFrac(iComp)*xFrac(jComp)*z0ij
+			aRepQuadPart(iComp)=aRepQuadPart(iComp)+xFrac(jComp)*a0ij/bRefMix
 			!a0KijMix=a0KijMix+xFrac(iComp)*xFrac(jComp)*aRefij*dKijDeta 	!this is a new term b/c kij=kij(eta)
 			!Ref part done. Do att part.
 			!	bipKij=KU0IJ(iComp,jComp)+KU1IJ(iComp,jComp)*eta
 			!Inserted by AV 8/5/07 to get rid of the SpeadGamma model
-            bipKij=KIJ(iComp,jComp)+KTIJ(iComp,jComp)*eta !NOTE: nComps==1 omits this part by goto 100
-			if(iComp==jComp.and.nComps==2)bipKij=0
+            bipKij=KIJ(iComp,jComp)+KTIJ(iComp,jComp)/tKelvin !NOTE: nComps==1 omits this part by goto 100
+			if(iComp==jComp.and. nComps > 1)bipKij=0
 			if(a1j > 0 .or. a2j > 0)then
 				if(LOUD)write(dumpUnit,*)'Mixrule: a1j or a2j .ge. 0. a1j,a2j',a1j,a2j
 				if(LOUD)write(dumpUnit,*) 'Check your parmstpt.'
@@ -1290,25 +1302,30 @@ end	!Subroutine QueryParPureSpead
 				iErr=13
 				exit
 			else
-				a1ij= -SQRT(a1ijSq)*(1-bipKij)/bVolMix
+				a1ij= -SQRT(a1ijSq)*(1-bipKij)
 			endif
 							
 			!a1ij=0.5*(a1i+a1j)*(1-bipKij)		!jre082304
-			a1Mix=a1Mix+xFrac(iComp)*xFrac(jComp)*a1ij
 			!z1ij=eta*da1ij/dEta
 			!z1ij=(1-bipKij)*( etaDA1jDeta+etaDA1iDeta )/2								!jre082304
 			if( (a1i/a1j) < 0 .and. LOUD)write(dumpUnit,*) 'MixRule: a1i/a1j < 0'
-			z1ij=(1-bipKij)*( z1j*SQRT(a1i/a1j)+z1i*SQRT(a1j/a1i) )/2.d0
-			z1ij=z1ij*SQRT( bVoli*bVolj )/bVolMix !this should be same result as form for z0, but simpler connection to old molfrac basis. 
-			z1Mix=z1Mix+xFrac(iComp)*xFrac(jComp)*(z1ij+kETAij(iComp,jComp)*a1ij)
-			a1KijMix=a1KijMix+xFrac(iComp)*xFrac(jComp)*a1ij*kETAij(iComp,jComp) 	!this is a new term b/c kij=kij(eta)
+			!z1ij=(1-bipKij)*( z1j*SQRT(a1i/a1j)+z1i*SQRT(a1j/a1i) )/2.d0	!=(1-kij)*(z1j*a1i+x1i*a1j)/SQRT(a1i*a1j)=(1-kij)*SQRT(a1i*a1j)*(z1j*a1i+x1i*a1j)/(a1i*a1j)
+			!z1ij=z1ij*SQRT( bVoli*bVolj )/bVolMix !this should be same result as form for z0, but simpler connection to old molfrac basis. 
+			!a0Mix=a0Mix+xFrac(iComp)*xFrac(jComp)*a0ij/bRefMix
+			!z0ij=0.5d0*(z0i/a0i+z0j/a0j)*a0ij/bRefMix
+			!z0Mix=z0Mix+xFrac(iComp)*xFrac(jComp)*z0ij
+			a1Mix=a1Mix+xFrac(iComp)*xFrac(jComp)*a1ij/bVolMix
+			z1ij=0.5d0*(z1i/a1i+z1j/a1j)*a1ij/bVolMix
+			z1Mix=z1Mix+xFrac(iComp)*xFrac(jComp)*z1ij  !(z1ij+kETAij(iComp,jComp)*a1ij)
+			!a1KijMix=a1KijMix+xFrac(iComp)*xFrac(jComp)*a1ij*kETAij(iComp,jComp) 	!this is a new term b/c kij=kij(eta)
+   			aAttQuadPart(iComp)=aAttQuadPart(iComp)+xFrac(jComp)*a1ij/bVolMix/tKelvin
 			a2ijSq=( bVoli*bVolj * a2i*a2j )
 			if(a2ijSq < 0)then
 				if(LOUD)write(dumpUnit,*) 'MixRule Error:sqArg < 0 for a2ijSq'
 				iErr=13
 				exit
 			else
-				a2ij=-SQRT(a2ijSq)*(1-bipKij)/bVolMix
+				a2ij= -SQRT(a2ijSq)*(1-bipKij)/bVolMix
 			endif
 			!a2ij=(a2i+a2j)/2*(1-bipKij)
 			a2Mix=a2Mix+xFrac(iComp)*xFrac(jComp)*a2ij
@@ -1320,7 +1337,7 @@ end	!Subroutine QueryParPureSpead
 			z2ij=z2ij*SQRT( bVoli*bVolj )/bVolMix !this should be same result as form for z0, but simpler connection to old molfrac basis. 
 			z2Mix=z2Mix+xFrac(iComp)*xFrac(jComp)*(z2ij+kETAij(iComp,jComp)*a2ij)
 			a2KijMix=a2KijMix+xFrac(iComp)*xFrac(jComp)*a2ij*kETAij(iComp,jComp) 	!this is a new term b/c kij=kij(eta)
-   			aMixQuadPart(iComp)=aMixQuadPart(iComp)+xFrac(jComp)*(a1ij+a2ij/tKelvin)/tKelvin
+   			aAttQuadPart(iComp)=aAttQuadPart(iComp)+xFrac(jComp)*a2ij/tKelvin/tKelvin
 		enddo  !jComp
 	enddo !iComp
 	!if(LOUD.and.init)write(dumpUnit,*)'MixRule: Calling all done except derivative calcs. isZiter = ',isZiter
@@ -1348,7 +1365,7 @@ end	!Subroutine QueryParPureSpead
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	character*77 errMsg(11)
 	!doublePrecision KIJ,KTIJ
-	DoublePrecision xFrac(nmx),aMixQuadPart(nmx),bRef(nmx),bVolRef,tKelvin
+	DoublePrecision xFrac(nmx),bRef(nmx),bVolRef,tKelvin  !,aMixQuadPart(nmx)
 	DoublePrecision solParEntro(nmx),solParEnerg(nmx) !,zRefMix(5), !a1Mix(5),a2Mix(5),
     DoublePrecision etaStd,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,etaDA0iDeta,etaDA1iDeta,etaDA2iDeta,a0j,a1j,a2j,z0j,z1j,z2j,eta
     do i=1,nComps
@@ -1396,7 +1413,7 @@ end	!Subroutine QueryParPureSpead
 	a2KijMix=0 ! new for kij=kij(eta)
 	do iComp=1,nComps
 		bVoli=bVolCc_mol(iComp)
-		aMixQuadPart(iComp)=0
+		!aMixQuadPart(iComp)=0
 		call TptTerms(isZiter,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
 		if(a0i.le.0 .or. a1i.ge.0 .or. a2i.ge.0)then
 			if(LOUD)write(dumpUnit,*)'FuTptVtot error:a0i<0 or a1i or a2i .ge. 0. a0i,a1i,a2i'
@@ -1521,8 +1538,9 @@ end	!Subroutine QueryParPureSpead
 	Character*77 errMsg(22)
 	Integer iErrF
 	LOGICAL LOUDER
-	DoublePrecision xFrac(nmx),aMixQuadPart(nmx),fugAssoc(nmx),bRef(nmx),gmol(nmx),chemPo(nmx) !,gmol_old(nmx)
+	DoublePrecision xFrac(nmx),aRepQuadPart(nmx),aAttQuadPart(nmx),bRef(nmx),gmol(nmx),chemPo(nmx) !,gmol_old(nmx)
     DoublePrecision bVolRef,tKelvin,eta,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,zAssoc,aAssoc,uAssoc,zFactor,rhoMol_cc,aRes,uRes
+	common/FugiParts/fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),Zrep,Zatt,Zassoc,aRep,aAtt,aAssoc
 	data initCall/1/
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
@@ -1576,7 +1594,7 @@ end	!Subroutine QueryParPureSpead
 
 	!call XsAs(nComps,iErrXs)  !for debugging
 	!write(dumpUnit,*)'FuTptVtot: calling MixRule'
-	call MixRule(isZiter,xFrac,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
+	call MixRule(isZiter,xFrac,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aRepQuadPart,aAttQuadPart,iErrMix)
 	if(iErrMix > 10)then
 		iErr=13
         if(LOUDER)write(dumpUnit,*)'FuTptVtot: iErrMix=',iErrMix
@@ -1633,8 +1651,9 @@ end	!Subroutine QueryParPureSpead
 	!if(LOUDER)write(dumpUnit,*)'uAtt,uAssoc',uAtt,uAssoc,uDep
 	zFactor=(1.d0+zRep+zAtt+zAssoc) !+zNC
 	PMpa=(zFactor)*Rgas*rhoMol_cc*tKelvin
-	if(isZiter > 0)return 
-	aRes=aTvRef+aAtt+aAssoc !+aDepNC
+	if(isZiter > 0)return
+	aRep=aTvRef 
+	aRes=aRep+aAtt+aAssoc !+aDepNC
 	uRes=uAtt+uAssoc
 	
 	aRes_RT=aRes
@@ -1644,14 +1663,13 @@ end	!Subroutine QueryParPureSpead
 	DO iComp=1,nComps
 		bVolk=bVolCc_mol(iComp) 
 		bRefk=bVolRef(iComp,tKelvin) !Function bVolRef()...
-		FUGREP=bRefk/bRefMix*(z0Mix-a0Mix)
-		!FUGREP=bVolk/bVolMix*(z0Mix-a0Mix)
-		FUGATT=bVolk/bVolMix*(zAtt - aAtt)
+		fugRep(iComp)=bRefk/bRefMix*(z0Mix-a0Mix)+2*aRepQuadPart(iComp)
+		!fugRep(iComp)=bVolk/bVolMix*(z0Mix-a0Mix)+2*aRepQuadPart(iComp)
+		fugAtt(iComp)=bVolk/bVolMix*(zAtt - aAtt) + 2*aAttQuadPart(iComp)
 		!aAttQuadPart=aAttQuadPart+etaPow*aMixQuadPart(kComp,iCoeff)
-		FUGQUAD=2.d0*aMixQuadPart(iComp) !we lump all the quadparts together in the current version.  
 		FUGBON=fugAssoc(iComp)
-		chemPo(iComp)=FUGREP+FUGATT+FUGQUAD+fugAssoc(iComp) !+(zNC-aDepNC)*bVolk/bVolMix+2.d0*aDepNC 
-		if(LOUDER)write(dumpUnit,'(a,5E12.4)')' FuVtot:fugrep,fugatt,fugquad,fugbon,Z',fugrep,fugatt,fugquad,fugbon,zFactor
+		chemPo(iComp)=FUGREP(iComp)+FUGATT(iComp)+fugAssoc(iComp) !+(zNC-aDepNC)*bVolk/bVolMix+2.d0*aDepNC 
+		if(LOUDER)write(dumpUnit,'(a,5E12.4)')' FuVtot:fugrep,fugatt,fugbon,Z',fugrep(iComp),fugatt(iComp),fugbon,zFactor
 	enddo
 	if(LOUDER)write(dumpUnit,601) ' FuTptVtot: total z,a,u,lnPhi=',zFactor,aRes,uRes,chemPo(1:nComps)
 
@@ -1681,7 +1699,7 @@ end	!Subroutine QueryParPureSpead
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	character*77 errMsg(11)
 	!DIMENSION XA(nmx,maxTypes),XD(nmx,maxTypes),XC(nmx,maxTypes)
-	DoublePrecision a0Pure(2),a1Pure(2),a2Pure(2),xFrac(nmx),aMixQuadPart(nmx),a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,tKelvin,bVolMix,eta
+	DoublePrecision a0Pure(2),a1Pure(2),a2Pure(2),xFrac(nmx),aRepQuadPart(nmx),aAttQuadPart(nmx),a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,tKelvin,bVolMix,eta
 	errMsg(1)='XsAs Error: This routine permits only 2 components.'
 	iErr=0
 	if(nComps.ne.2)then
@@ -1697,12 +1715,12 @@ end	!Subroutine QueryParPureSpead
 		xFrac(1)=0
 		xFrac(2)=0
 		xFrac(iComp)=1
-		call MixRule(isZiter,xFrac,tKelvin,eta,nComps,bVolMix,a0Pure(iComp),a1Pure(iComp),a2Pure(iComp),z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
+		call MixRule(isZiter,xFrac,tKelvin,eta,nComps,bVolMix,a0Pure(iComp),a1Pure(iComp),a2Pure(iComp),z0Mix,z1Mix,z2Mix,aRepQuadPart,aAttQuadPart,iErrMix)
 	enddo
 	do iFrac=0,10,1
 		xFrac(1)=float(iFrac)/10.0
 		xFrac(2)=1-xFrac(1)
-		call MixRule(isZiter,xFrac,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
+		call MixRule(isZiter,xFrac,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aRepQuadPart,aAttQuadPart,iErrMix)
 		a0xs=a0Mix-( xFrac(1)*a0Pure(1)+xFrac(2)*a0Pure(2) )
 		a1xs=a1Mix-( xFrac(1)*a1Pure(1)+xFrac(2)*a1Pure(2) )
 		a2xs=a2Mix-( xFrac(1)*a2Pure(1)+xFrac(2)*a2Pure(2) )
@@ -1768,7 +1786,7 @@ end	!Subroutine QueryParPureSpead
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,O-Z)
 	DoublePrecision xFracPert(nmx),chemPo(nmx),xFrac(nmx),gmol(nmx),bRef(nmx),bVolRef
-	DoublePrecision aMixQuadPart(nmx),zPlus,zMinus,zMid !,zRefMix(5)!,a1Mix(5),a2Mix(5)
+	DoublePrecision aRepQuadPart(nmx),aAttQuadPart(nmx),zPlus,zMinus,zMid !,zRefMix(5)!,a1Mix(5),a2Mix(5)
     DoublePrecision tKelvin,etaPlus,etaMinus,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix
 
 	iErr=0
@@ -1783,7 +1801,7 @@ end	!Subroutine QueryParPureSpead
         bRefMix=bRefMix+xFrac(i)*bRef(i)
 	ENDDO
 	!Basis: 1mole to start. Central diff.
-	redStep=1e-4
+	redStep=1D-4
 	do k=1,nComps
 		do i=1,nComps
 			dn=0
@@ -1791,7 +1809,7 @@ end	!Subroutine QueryParPureSpead
 			xFracPert(i)=xFrac(i)*(1-dn)/(1-redStep)
 		enddo
 		etaMinus=eta*(1-redStep*bVolCc_mol(k)/bVolMix)
-		call MixRule(isZiter,xFracPert,tKelvin,etaMinus,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
+		call MixRule(isZiter,xFracPert,tKelvin,etaMinus,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aRepQuadPart,aAttQuadPart,iErrMix)
 		if(iErrMix > 10 .and. LOUD)write(dumpUnit,*) 'ChemPoPhysNum: fatal error from MixRule.'
 		aMinus=a0Mix+(a1Mix+a2Mix/tKelvin)/tKelvin
 		zMinus=1+z0Mix+(z1Mix+z2Mix/tKelvin)/tKelvin
@@ -1801,7 +1819,7 @@ end	!Subroutine QueryParPureSpead
 			xFracPert(i)=xFrac(i)*(1+dn)/(1+redStep)
 		enddo
 		etaPlus=eta*(1+redStep*bVolCc_mol(k)/bVolMix)
-		call MixRule(isZiter,xFracPert,tKelvin,etaPlus,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aMixQuadPart,iErrMix)
+		call MixRule(isZiter,xFracPert,tKelvin,etaPlus,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aRepQuadPart,aAttQuadPart,iErrMix)
 		if(iErrMix > 10 .and. LOUD)write(dumpUnit,*) 'ChemPoPhysNum: fatal error from MixRule.'
 		aPlus=a0Mix+(a1Mix+a2Mix/tKelvin)/tKelvin
 		zPlus=1+z0Mix+(z1Mix+z2Mix/tKelvin)/tKelvin

@@ -1,3 +1,7 @@
+MODULE GibbsMin	! for passing variables related to Gibbs minimization by generic codes like GoldenMin or LmDiff
+	USE GlobConst, only:nmx
+	DoublePrecision tKelvin,pMPa, d2G_dx1,dG_dx1,Gmix,constant,slope,GPure(nmx)	
+END MODULE GibbsMin
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	SUBROUTINE PsatEar(tK,pMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCode)
 	!COMPUTE VAPOR PRESSURE GIVEN tK AND INITIAL GUESS (IE.pMPa)
@@ -374,8 +378,8 @@
 	initCall=0
 	return
 	end
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	!C	PURPOSE: COMPUTE THE COMPRESSIBILITY,rhoD2PdRho2_RT, CvRes,& CpRes BY NUMERICAL DIFFERENTIATION
 	!C	Input:

@@ -470,11 +470,12 @@ end	!subroutine ExactEsd
 	Implicit DoublePrecision(A-H,K,O-Z)
 	DoublePrecision gmol(nmx),xFrac(nmx),FUGC(nmx),k10,k2,Zm !,KCSTARp(nmx),KVE(nmx)
 	DoublePrecision YQVIJ(nmx,nmx),YQVI(nmx),Y(nmx,nmx),EOK(nmx,nmx)
-	DoublePrecision CVI(nmx),CVIJ(nmx,nmx),QV(nmx,nmx),fugAssoc(nmx)
+	DoublePrecision CVI(nmx),CVIJ(nmx,nmx),QV(nmx,nmx)
     DoublePrecision voidFrac,tKelvin,zAssoc,aAssoc,uAssoc,rho,fAssoc,zFactor
 	Integer initCall
 	DoublePrecision k1(nmx) 
 	LOGICAL LOUDER
+	common/FugiParts/fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),Zrep,Zatt,Zassoc,aRep,aAtt,aAssoc
 	DATA K10,K2,ZM,initCall/1.7745D0,1.0617D0,9.5D0,1/
 
 	LOUDER=LOUD
@@ -595,16 +596,16 @@ end	!subroutine ExactEsd
 			CVI(I)=CVI(I) + CVIJ(I,J)*xFrac(J)
  		enddo
 	enddo
-	FATT= -ZM*YQVM/K1YVM*DLOG(1.d0+K1YVM*rho)
-	FREP= -4.d0/1.9D0*DLOG(voidFrac)*CVM/VM
-	FREP= -4.d0/1.9D0*DLOG(voidFrac)*Cmix
+	aAtt= -ZM*YQVM/K1YVM*DLOG(1.d0+K1YVM*rho)
+	!aRep= -4.d0/1.9D0*DLOG(voidFrac)*CVM/VM
+	aRep= -4.d0/1.9D0*DLOG(voidFrac)*Cmix
 	UATT= -ZM*YQVM*rho/(1+K1YVM*rho)*UATT/K1YVM	!uAtt=...uAtt/k1YVM where uAtt defined in 3rd line of above do loop.
 
 	!     CALLING ASSYMU IF NUMBER OF DONOR SITES AND ACCEPTOR SITES ARE NOT EQUAL 
 	!      IF(IFLAG.EQ.2)CALL ASSYMU(ALPHAD,ALPHDA,XA,XD,X,ND,NC,QIJ,uAssoc)
 
 	uRes=UATT+uAssoc
-	aRes=FREP+FATT+aAssoc !-DLOG(Z) !don't subtract log(z) for aRes(T,V). Important for EAR.
+	aRes=aRep+aAtt+aAssoc !-DLOG(Z) !don't subtract log(z) for aRes(T,V). Important for EAR.
 	if(LOUDER)write(dumpUnit,601)' FuEsdVtot: zAssoc,aAssoc,uAssoc=',zAssoc,aAssoc,uAssoc
 
 	if (isZiter==0) then
@@ -617,12 +618,12 @@ end	!subroutine ExactEsd
 		if(LOUDER)write(dumpUnit,'(a,f10.5)')' i,lnGamRep,lnGamAtt,lnGamBon.'
 		DO I=1,NC
 			!FUGREP(I)=FREP*( 2.d0*C(I)/Cmix-vx(I)/VM ) + zRep*vx(I)/VM
-			FUGREP=FREP*( C(I)/Cmix ) + zRep*vx(I)/VM ! For pure i, FugRepi= -4ci/1.9*ln(1-1.9eta) + 4ci*eta/(1-1.9eta) 
-			FUGATT=FATT*( 2*YQVI(I)/YQVM-K1(I)*Y(I,I)*vx(I)/K1YVM )+zAtt*K1(I)*Y(I,I)*vx(I)/K1YVM !91-pres form, complete w/o dNk1YbNk, cf. EL99 p559 & S&E91apx
+			fugRep(i)=aRep*( C(I)/Cmix ) + zRep*vx(I)/VM ! For pure i, FugRepi= -4ci/1.9*ln(1-1.9eta) + 4ci*eta/(1-1.9eta) 
+			fugAtt(i)=aAtt*( 2*YQVI(I)/YQVM-K1(I)*Y(I,I)*vx(I)/K1YVM )+zAtt*K1(I)*Y(I,I)*vx(I)/K1YVM !91-pres form, complete w/o dNk1YbNk, cf. EL99 p559 & S&E91apx
 			!fugAssoc(i)=ND(i)*2*DLOG(XA(i,1)) + zAssoc*1.9D0*vx(i)*rho !JRE'96 Eq.43.
-			FUGC(I)=FUGREP+FUGATT+fugAssoc(I)  ! -DLOG(Z)  Don't subtract ln(Z) when given Vtot as independent variable.
-			rLnGamRep(i)=FUGREP-zRep*vx(i)/VM  ! cf. Bala and Lira (2016), Eqs A6-A14. to correct from constant volume to P.
-			rLnGamAtt(i)=FUGATT-zAtt*vx(i)/VM
+			FUGC(I)=FUGREP(I)+FUGATT(I)+fugAssoc(I)  ! -DLOG(Z)  Don't subtract ln(Z) when given Vtot as independent variable.
+			rLnGamRep(i)=FUGREP(i)-zRep*vx(i)/VM  ! cf. Bala and Lira (2016), Eqs A6-A14. to correct from constant volume to P.
+			rLnGamAtt(i)=FUGATT(i)-zAtt*vx(i)/VM
 			rLnGamAssoc(i)=fugAssoc(i)-zAssoc*vx(i)/VM
 			IF(LOUDER)write(dumpUnit,'(i3,f7.4,9f10.4)')i,xFrac(i),rLnGamRep(i),rLnGamAtt(i),rLnGamAssoc(i) !,ralpha(i),ralphd(i)
 		ENDDO
