@@ -63,7 +63,7 @@ END MODULE SpeadParms
 	!PARAMETER(ndb=1555,listPool=1000)
 	Integer GetBIPs
 	Integer idComp(nComps),iErrCode,nComps  !localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
-	DoublePrecision bondRate(nmx,maxTypes) !local to this subroutine.
+	!DoublePrecision bondRate(nmx,maxTypes) !local to this subroutine.
 	DoublePrecision gmol(nmx),chemPo(nmx),solParEntro(nmx),bVolRef
     DoublePrecision etaStd,eta,a0i,a1i,a2i,z0i,z1i,z2i,zFactorLo,zFactorHi,aRes,uRes
 	character*88 bipFile,bipHbFile,ParmsHbFile,ParmsTptFile
@@ -87,11 +87,11 @@ END MODULE SpeadParms
 	errMsg(5)='GetTpt: a1 > 0 for at least one component when 0 < eta < 0.85'
 	errMsg(6)='GetTpt: a2 > 0 for at least one component when 0 < eta < 0.85'
 
-	ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTptEosCrit.txt' 
-	open(501,file=ParmsTptFile)
 	TcEos(1:nComps)=Tc(1:nComps) !initialize
 	PcEos(1:nComps)=Pc(1:nComps)
 	ZcEos(1:nComps)=Zc(1:nComps)
+	ParmsTptFile=TRIM(PGLinputDir)//'\ParmsTptEosCrit.txt' 
+	open(501,file=ParmsTptFile)
 	do iComp=1,nComps
 		rewind(UNIT=501)
 		read(501,*)nDeckParmsCrit
@@ -216,8 +216,7 @@ END MODULE SpeadParms
 	endif
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
  
- 	!ref part done.  do att part.
-				
+ 	!phys part done.  do chem part.
 	ParmsHbFile=TRIM(PGLinputDir)//'\ParmsHb4.txt' ! // is the concatenation operator
     inHbFile=40
 	if(LOUDER)write(dumpUnit,*)'ParmsHbFile=',TRIM(ParmsHbFile)
@@ -248,12 +247,14 @@ END MODULE SpeadParms
 			!NAS(iComp)=0
 
 			iGotIt=0  !we may have valid idTypes with no hbonding. These will be set to zero hbonding.
-			rewind(UNIT=40)
+			rewind(UNIT=inHbFile)
 			read(inHbFile,*,ERR=862)nDeck
 			DO jType=1,nDeck
-				read(inHbFile,*,ERR=862)mainType,iSubType,ndsBase,nasBase,bondVolDb,bondRateDb,dHDonorKcalDb,dHAcceptorKcalDb
+				read(inHbFile,'(a222)')dumString
+				if(LOUDER)write(dumpUnit,*)TRIM(dumString)
+				read(dumString,*,ERR=862)mainType,iSubType,ndsBase,nasBase,bondVolDb,bondRateDb,dHDonorKcalDb,dHAcceptorKcalDb
 				idTypeDb=mainType*100+iSubType
-				IF(idTypeDb.EQ.idType(iComp,iType))THEN
+				IF(idTypeDb==idType(iComp,iType))THEN
 					iGotIt=1
 					eDonorKcal_mol(iComp,iType)=dHDonorKcalDb  
 					eAcceptorKcal_mol(iComp,iType)=dHAcceptorKcalDb 
@@ -419,8 +420,8 @@ END MODULE SpeadParms
 	return                      
 862	continue
 	iErrCode=2
-	if(LOUD)write(dumpUnit,*)TRIM( errMsg(2) )
-	if(LOUD)write(dumpUnit,*)'nDeck,iCompo',NDECK,jComp
+	if(LOUD)write(dumpUnit,*)TRIM( errMsg(iErrCode) )
+	if(LOUD)write(dumpUnit,*)'nDeck,iComp,jLine',NDECK,iComp,jType
 	if(LOUD)write(dumpUnit,*)
 	errMsgPas=TRIM( errMsg(iErrCode) )
 	return                      

@@ -459,7 +459,7 @@ end subroutine pcsaft_pure_parameters
 
 subroutine pcsaft_binary_parameters
 
-  use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, ID !JRE LOUD=.FALSE. to silence I/O feedback.
+  use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, ID, PGLinputDir !JRE LOUD=.FALSE. to silence I/O feedback.
   implicit none
 
   !-----------------------------------------------------------------------------
@@ -469,7 +469,7 @@ subroutine pcsaft_binary_parameters
   character(LEN=25)                               :: species_1, species_2
   !character(LEN=10)                               :: CAS_No1, CAS_No2
   character(LEN=10)                               :: par_set_1, par_set_2
-  character(LEN=150)                              :: entireline
+  character(LEN=150)                              :: entireline, parmFile
   logical                                         :: parameter_assigned
   logical                                         :: verbose
   logical                                         :: LOUDER
@@ -493,7 +493,9 @@ subroutine pcsaft_binary_parameters
         ! Open parameter-input file and irgnore first line
         !-----------------------------------------------------------------------
 		if(LOUDER)print*,'pcsaft_binary... opening ./Input/PcSaft_database/pcsaft_binary_parametersJre.txt'  !JRE
-        call file_open ( 54, './Input/PcSaft_database/pcsaft_binary_parametersJre.txt' )				   !JRE
+		parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_binary_parametersJre.txt' 
+        !call file_open ( 54, './Input/PcSaft_database/pcsaft_binary_parametersJre.txt' )				   !JRE
+        call file_open ( 54, parmFile )				   !JRE
 
         parameter_assigned = .false.
         read_info = 0

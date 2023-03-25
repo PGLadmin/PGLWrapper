@@ -654,6 +654,8 @@ END MODULE GibbsMin
 		QueryNparMix=3 ! kij,tau12,tau21
 	elseif(iEosOpt==17)then		! PrLorraine
 		QueryNparMix=2	 !  age0(1,2) and age0(2,1)
+	elseif(iEosOpt==19)then		! LsgMem2
+		QueryNparMix=2	 !  age0(1,2) and age0(2,1)
 	endif
 	return
     end
@@ -703,8 +705,8 @@ end
 	DoublePrecision value
 	iErr=0
 	if(iParm > 1)then
-		if(isTpt)iErr=1
-		if(isEsd)iErr=1
+		if(isTpt)iErr=11
+		if(isEsd)iErr=11
 		if(iErr)return
 	endif
 	if(iEosOpt==10)then
@@ -716,25 +718,30 @@ end
 		return
 	endif
 	if(iParm==1)then
-		if(iEosOpt==7)then
+		if(iEosOpt==7.or.iEosOpt==19)then
 			value=xsTau(1,2)
 		else
 			value=Kij(1,2)
 		endif
 		return
 	elseif(iParm==2)then
-		if(iEosOpt==7)then		!NRTL
+		if(iEosOpt==7.or.iEosOpt==19)then		!NRTL or LSG
+			value=xsTau(2,1)
 		elseif(iEosOpt==11)then	!tcPR, kij and betaij
 			value=Lij(1,2)
 		elseif(iEosOpt== 3)then !PR76+WSmixing
-			value=xsTau(1,2)  ! NOTE: tau12 =/= tau21
+			value=xsTau(1,2)	! NOTE: tau12 =/= tau21
 		endif
 	elseif(iParm==3)then
-		if(iEosOpt==3)then		!NRTL
-			value=xsTau(1,2)  ! NOTE: tau12 =/= tau21
+		if(iEosOpt==3)then		!PR76+WSmixing
+			value=xsTau(2,1)	! NOTE: tau12 =/= tau21
+		elseif(iEosOpt==7)then	!NRTL
+			value=xsAlpha(1,2)	! NOTE: tau12 =/= tau21
 		else
-			iErr=2
+			iErr=12
 		endif
+	else
+		iErr=13
 	endif
 	return
 	end
@@ -757,10 +764,6 @@ subroutine SetParMix(iParm,value,iErr)
 		xsTau=0
 		xsTauT=0
 		xsAlpha=0
-		if(iEosOpt==2)then
-			if(ID(1)==1921 .or. ID(2)==1921)KIJ(1,2)=0.2d0
-			KIJ(2,1)=KIJ(1,2)
-		endif
 	endif
 	iErr=0
 	if(iParm > 1)then
@@ -777,7 +780,7 @@ subroutine SetParMix(iParm,value,iErr)
 		return
 	endif
 	if(iParm==1)then
-		if(iEosOpt==7)then
+		if(iEosOpt==7.or.iEosOpt==19)then	!NRTL and LSG
 			xsTau(1,2)=value
 		else
 			KIJ(1,2)=value
@@ -785,16 +788,20 @@ subroutine SetParMix(iParm,value,iErr)
 		endif
 		return
 	elseif(iParm==2)then
-		if(iEosOpt==7)then		!NRTL
-		elseif(iEosOpt==11)then	!tcPR, kij and betaij
+		if(iEosOpt==7.or.iEosOpt==19)then	!NRTL and LSG
+			xsTau(2,1)=value
+		elseif(iEosOpt==11)then				!tcPR, kij and betaij
 			Lij(1,2)=value
 			Lij(2,1)=value
-		elseif(iEosOpt== 3)then !PR76+WSmixing
-			xsTau(1,2)=value  ! NOTE: tau12 =/= tau21
+		elseif(iEosOpt== 3)then				!PR76+WSmixing
+			xsTau(1,2)=value	! NOTE: tau12 =/= tau21
 		endif
 	elseif(iParm==3)then
-		if(iEosOpt==3)then		!NRTL
-			xsTau(1,2)=value  ! NOTE: tau12 =/= tau21
+		if(iEosOpt==7)then		!NRTL
+			xsAlpha(2,1)=value  ! NOTE: 
+			xsAlpha(1,2)=value
+		elseif(iEosOpt==3)then		!PRWS
+			xsTau(2,1)=value	! NOTE: tau12 =/= tau21
 		else
 			iErr=2
 		endif

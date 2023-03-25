@@ -4,10 +4,11 @@ MODULE GlobConst
 	!PUBLIC
 	Implicit NONE
 	DoublePrecision pi,twoPi,fourPi,avoNum,Rgas,RgasCal,kB,half,zeroTol
-	Integer nmx,nCritSet 
+	Integer nmx,nCritSet,nModels 
 	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0)
 	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)!kB[=]MPa.nm3/K) avoNum[=]cm3/(nm3*mol). cf. PGL6ed, Table 6.1
-	PARAMETER (nCritSet=1730) ! This is the number of compounds that should be found in LoadCritParmsDb. Change this parameter if you add more compounds.
+	PARAMETER (nCritSet=1731) ! This is the number of compounds that should be found in LoadCritParmsDb. Change this parameter if you add more compounds.
+	Parameter (nModels=19)
 	!          https://www.nist.gov/si-redefinition 
     !nmx is the max allowed number of Compounds
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
@@ -28,9 +29,14 @@ MODULE GlobConst
 	DoublePrecision etaPass !TODO:Consider if rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).
     DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS
 	DoublePrecision etaPure(nmx) !store eta for each compound at P=0.1MPa and tKmin(K). 
-	Character*15 EosName(18) 
-	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
-	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
+	Character*9  form600 
+	Character*13 form602 
+	Character*11 form610 
+	Character*14 form611 
+	Character*15 EosName(nModels)
+	data form600,form602,form610,form611/'(12E12.4)','(2i7,12E12.4)','(a,12E12.4)','(a,i8,12E12.4)'/ 
+	!              1     2       3       4          5          6         7           8              9        10       11      12       13          14         15           16            17        18		19
+	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2'/
 	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS AND DATA !!!!!!!!!!!!!
 	!LOUD = .FALSE.
 contains
@@ -63,7 +69,7 @@ MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) ba
 	Integer localType(localPool),idLocalType(maxTypes)	!these are to accumulate site lists in Wertheim so the aBipAd,aBipDa arrays don't get too large. cf. AlphaSp
 	DoublePrecision aBipAD(maxTypes,maxTypes),aBipDA(maxTypes,maxTypes) !association bips
 	DoublePrecision XA(nmx,maxTypes),XD(nmx,maxTypes),XC(nmx,maxTypes),cvAssoc
-	DoublePrecision rLnGamRep(nmx),rLnGamAtt(nmx),rLnGamAssoc(nmx) ! These replace .../FugiParts/
+	DoublePrecision rLnGamRep(nmx),rLnGamAtt(nmx),rLnGamAssoc(nmx),bondRate(nmx,maxTypes) ! These replace .../FugiParts/
 	LOGICAL LOUDERWert
 	 
 	!localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
@@ -95,12 +101,14 @@ contains
 		iRdfOpt=2	!CS form
 	elseif(iEosOpt==6)then
 		iRdfOpt=3	!activity model
+	elseif(iEosOpt==19)then
+		iRdfOpt=2	!LSG-MEM2 model
 	endif
 
-	if(iRdfOpt.eq.0)then
+	if(iRdfOpt==0)then
 		iErrCode=11
 		if(LOUD)write(dumpUnit,*) 'Error in RdfCalc: iRdfOpt not specified'
-		if(LOUD)write(dumpUnit,*) '1=ESD form, 2=CS form, 3=activity coeff form, 4=ESD+geometric association'
+		if(LOUD)write(dumpUnit,*) '1=ESD form, 2=CS form, 3=(rdf=1), 4=ESD+geometric association'
 		return
 	endif
 	!alpha=eta*rdf*kAD*yHB => (eta/alpha)*(dAlpha/deta) = 1+(eta/rdf)*(dRdf/deta)
@@ -468,7 +476,7 @@ END MODULE Assoc
 	eta=rhoMol_cc*bVolMix
 	Call RdfCalc(rdfContact,dAlpha,eta)
 	if(rdfContact < 1)then
-		if(LOUDER)write(dumpUnit,'(a,3f9.4)')' MEM1: Returning zero. eta,rdfContact(<1)=',eta,rdfContact
+		if(LOUDER)write(dumpUnit,610)' MEM1: Returning zero. eta,rdfContact(<1)=',eta,rdfContact
 		if(LOUDER)write(dumpUnit,*)
 		return
 	endif
@@ -509,14 +517,15 @@ END MODULE Assoc
 			iComplex=nAcceptors(iComp,iType)*nDonors(iComp,iType)
 			if(iComplex.ne.0)then !only apply symmetric rule when acceptors AND donors on a site.
 				FA0=FA0+xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)*ralph(iComp,iType) !/(1+fAssoc*ralph(iComp,iType))
-				if(LOUDER)write(dumpUnit,'(a,2i3,8E12.4)')' MEM1: iComp,iType,ralph',iComp,iType,ralph(iComp,iType)
+				if(LOUDER)write(dumpUnit,612)' MEM1: iComp,iType,ralph',iComp,iType,ralph(iComp,iType)
 				if(ralph(iComp,iType) > ralphMean)ralphMean=ralph(iComp,iType) ! Infinity norm for initial estimate.
 			endif
 		enddo
 	enddo
 	errOld=fAssoc-FA0
 	fOld=fAssoc
-	IF(ABS(errOld) < 1.D-9.and.LOUDER)write(dumpUnit,601)' MEM1: No assoc? FA0=',FA0	!don't iterate if errOld < 1D-9
+	SUMA=FA0
+	IF(ABS(errOld) < 1.D-9.and.LOUDER)write(dumpUnit,610)' MEM1: No assoc? FA0=',FA0	!don't iterate if errOld < 1D-9
 	IF(ABS(errOld) > 1.D-9)then	!don't iterate if errOld < 1D-9
 		fAssoc1=2*FA0/( 1+DSQRT(1+4*ralphMean*FA0) )  ! Eq.23 where FD0=FA0. This is exact for binary like benzene+methanol.
 		fAssoc=fAssoc1 
@@ -525,7 +534,7 @@ END MODULE Assoc
 		itMax=123
 		do while(ABS(ERR) > 1.D-9.AND.nIter < itMax) ! Don't use ERR/fAssoc because:(1)fAssoc~0 sometimes (2) max(fAssoc) ~ 1 which isn't "large."
 			nIter=nIter+1                  
-			sumA=0
+			sumA=0 ! = SUM( xi*NDi*NAi*ralphi/(1+ralphi*FA) ) = FA = FA0 if no association
 			DO iComp=1,nComps
 				do iType=1,nTypes(iComp)      
 					iComplex=nAcceptors(iComp,iType)*nDonors(iComp,iType)
@@ -536,9 +545,9 @@ END MODULE Assoc
 			enddo
 			ERR=fAssoc-sumA
 			!checkSum=FA0/(1+fAssoc*ralphMean)
-			if( ABS((ERR-errOld)/errOld) < zeroTol .and. LOUDER)write(dumpUnit,601)'MEM1: err~errOld=',ERR,errOld
+			if( ABS((ERR-errOld)/errOld) < zeroTol .and. LOUDER)write(dumpUnit,610)'MEM1: err~errOld=',ERR,errOld
 			change=ERR/(ERR-errOld)*(fAssoc-fOld)
-			if(LOUDER)write(dumpUnit,601)' MEM1: FA,sumA',fAssoc,sumA 
+			if(LOUDER)write(dumpUnit,610)' MEM1: FA,sumA',fAssoc,sumA 
 			fOld=fAssoc
 			errOld=ERR
 			fAssoc=fAssoc-change
@@ -554,13 +563,15 @@ END MODULE Assoc
 
 	!fAssoc ITERATION HAS CONCLUDED
 	if(fAssoc < zeroTol)then
-		if(LOUDER)write(dumpUnit,601)' MEM1: 0 > FA=',fAssoc
+		if(LOUDER)write(dumpUnit,610)' MEM1: 0 > FA=',fAssoc
 	endif
-601 format(1x,a,8E12.4)
+610 format(1x,a,8E12.4)
+611 format(1x,a,i8,8E12.4)
+612 format(1x,a,2i8,8E12.4)
 
 	!Elliott'96 Eq.35 (mod for CS or ESD rdf)
 	zAssoc= -fAssoc*fAssoc*dAlpha
-	if(LOUDER)write(dumpUnit,601)'MEM1: eta,fAssoc,zAssoc=',eta,fAssoc,zAssoc
+	if(LOUDER)write(dumpUnit,610)'MEM1: eta,fAssoc,zAssoc=',eta,fAssoc,zAssoc
 	if(isZiter==1)return
 	!XA=1 !set to unity means no association !Setting the entire array to 1 is slow.	          
 	!XD=1 !set to unity means no association	          
@@ -573,10 +584,10 @@ END MODULE Assoc
 			XC(i,j)=1
 			hAD=hAD+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*(1-XA(i,j))
 		enddo
-		if(LOUDER)write(dumpUnit,'(a,i3,4F10.7)')' MEM1: i,XA(i,j)=',i,(XA(i,j),j=1,nTypes(i))
+		if(LOUDER)write(dumpUnit,611)' MEM1: i,XA(i,j)=',i,(XA(i,j),j=1,nTypes(i))
 	enddo
 
-	if(LOUDER)write(dumpUnit,'(a,8f10.4)')' MEM1:fAssoc,zAssoc,dAlpha,h^M,sumLnXi',fAssoc,zAssoc,dAlpha,hAD+hDA,sumLnXi
+	if(LOUDER)write(dumpUnit,610)' MEM1:fAssoc,zAssoc,dAlpha,h^M,sumLnXi',fAssoc,zAssoc,dAlpha,hAD+hDA,sumLnXi
 	hDA=hAD
 	zAssoc= -dAlpha*(hAD+hDA)/2 ! check same?
 	!aAssoc= 0 	!already initialized
@@ -584,7 +595,7 @@ END MODULE Assoc
 		sumLnXi=0.d0
 		do j=1,nTypes(i)
 			if( XA(i,j) < zeroTol)then
-				if(LOUDER)write(dumpUnit,'(a,2i3,8E12.4)')' MEM1: XAij < 0? i,j,XA=',i,j,XA(i,j)
+				if(LOUDER)write(dumpUnit,612)' MEM1: XAij < 0? i,j,XA=',i,j,XA(i,j)
 				iErr=14
 				return
 			endif
@@ -592,10 +603,10 @@ END MODULE Assoc
 		enddo
 		aAssoc=aAssoc+xFrac(i)*sumLnXi	! ln(XD)=ln(XA) so *2.
 		rLnPhiAssoc(i)=sumLnXi-(hAD+hDA)/2*(dAlpha-1)*bVolCc_mol(i)/bVolMix !*( 1+(dAlpha-1)*rhoMol_cc*bVolCc_mol(1:nComps) )	! Eq. 42
-		!write(dumpUnit,'(a,i3,6E12.4)')' MEM1: iComp,sumLnXi,lnPhi=',i,sumLnXi,rLnPhiAssoc(i)
+		!write(dumpUnit,611)' MEM1: iComp,sumLnXi,lnPhi=',i,sumLnXi,rLnPhiAssoc(i)
 	enddo
 	aAssoc=  aAssoc+(hAD+hDA)/2  ! Eqs. 1 & 40
-	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' MEM1:         fugAssocBefore=',(rLnPhiAssoc(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,610)' MEM1:         fugAssocBefore=',(rLnPhiAssoc(i),i=1,nComps)
 	
 	betadFA_dBeta=0	!cf E'96(19)
 	do i=1,nComps !cf E'96(19)	 TODO: rewrite this in terms of ralph.
@@ -612,7 +623,7 @@ END MODULE Assoc
 	IDold(1:nComps)=ID(1:nComps)
 	etaOld=eta
 	rdfOld=rdfContact
-	if(LOUDER)write(dumpUnit,'(a,I4,2F10.6,2E12.4)')' MEM1:F1,fAssoc,zAssoc,rmsErr,nIter=',nIter,fAssoc1,fAssoc,zAssoc
+	if(LOUDER)write(dumpUnit,611)' MEM1:nIter,F1,fAssoc,zAssoc,rmsErr=',nIter,fAssoc1,fAssoc,zAssoc
 	return
 	end	!subroutine MEM1()
 

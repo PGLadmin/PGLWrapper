@@ -1,4 +1,4 @@
-55	neAs	neDs	bondVNm3	bVolSlo	pDonorKcal_mol	pAcceptorKcal_mol 	
+56	neAs	neDs	bondVNm3	bVolSlo	pDonorKcal_mol	pAcceptorKcal_mol 	
  0 2	0	1	0.000500	0	0	.7	CO2
 23 1	0	1	0.000500	0	0	1.7	N2
  0 7	0	1	0.000500	0	0	.8	CO
@@ -13,41 +13,42 @@
 12 2	1	1	0.000800	0	.3	1.7	Alkyne C≡ of <CN> in nitrile (with 2302)
 12 3	1	0	0.000003 	0	0	0	Alkyne C≡, vinylacetylene 
 12 4	1	0	0.000800 	0	0	0	Alkyne C≡, 2alkyne
-13 2	2	2	0.001800	0	3.2	3.2	H2O  old version
+13 2	2	2	0.001800	0	4.2	2.2	H2O  old version
 13 1	2	2	0.001070	0	3.8	1.8	H2O  AB Amir Version
 14 1	1	1	0.001000	0	5	5	MeOH
 14 2	1	1	0.000700	0	5.3	5.3	EtOH
 14 3	1	1	0.000700	0	4.8	4.8	nC4OH,nC5OH,(todo: resim C4OH w/203site&reoptimize,1ols
 14 4	1	1	0.000120	0	4	6	iPrOH 0.000500, 2-butanol, ...	
 14 5	1	1	0.000500	0	6	6	tBuOH 
-14 6	1	1	0.000500	0	3.7	4.3	HO- phenol
+14 6	1	1	0.000800	0	3.7	4.3	HO- phenol
 14 7	1	1	0.000500	0	4.0	4.0	HO- lactate mostly intramolecular
 14 8	1	1	0.001500	0	5	5	OH- attached to non-aromatic ring, e.g. cyclohexanol
 14 9	1	1	0.000400	0	4.7	4.7	glycerol
 14 10	1	1	0.000200	0	2.5	2.5	NO2 (dimerizes to N2O4), also used for carbinol (e.g., __oxyEthanol)
 14 11	1	1	0.002500	0	5	5	Glycol
 15 1	0	1	0.000700	0	0	2.3	>O aliphatic ether (nAs=0 => double the energy vs HB3???), MTBE
-15 4	0	1	0.000700	0	0	1.3	>O 6ring ether, dioxane
+15 4	0	1	0.000700	0	0	2.3	>O 6ring ether, dioxane
 15 7	0	1	0.000700	0	0	1.3	>O 5ring ether, THF
 16 1	0	1	0.002500	0	0	1.3	O= 3.2 2-Butanone?
 16 2	0	1	0.000800	0	0	2.0	O= Ester, incl formate (strongly affects W+acetate LLE)
 16 3	1	1	0.000000053	-10	7.5	7.5	O= in carboxy acid !eDon&eAcc required! same bondVol used for C-C (dimer) site on this interaction, eHbCC=3*eHbAD.
 16 5	0	1	0.000800	0	0	4.5	O= Amide (incl DMF, donor on 1903)
 16 6	1	1	0.000100	123	1.5	1.5	O= Aldehyde(.0005,53,2)
-16 10	0	1	0.004300	0	1.8	1.8	O= middle -ketones &ring-ones?
+16 10	0	1	0.004300	0	2.6	1.0	O= middle -ketones &ring-ones
 17 2	1	0	0.000700	0	4	0	S in sulfate, incl SO2
 18 1	1	1	0.000700	0	2	2	HS- nPrSH
 19 1	1	1	0.000800	0	2.2	2.2	NH2- in 1' amine, e.g. nPrNH2
 19 2	1	1	0.000800	0	3.2	3.2	NH2- in aniline, e.g. PphenylDiAmine
 19 3	1	0	0.000800	0	4.5	0	NH2- in 1' amide, (acceptor on 1605,O=)
-19 4	1	1	0.000800	0	2.2	2.2	NH2- in 2' amine, e.g. 2ButylAmine, CyHexAmine
+19 4	1	1	0.000800	0	2.2	2.2	NH2 in 2' amine, e.g. 2ButylAmine, CyHexAmine
 19 5	1	1	0.000800	0	2.2	2.2	NH2- in hydrazine
-20 1	1	1	0.000100	0	1.9	1.9	NH< in 2' amine, e.g. DiEtAmine, DiProAmine, DiButAmine,...(Baskaya et al.)
+20 1	1	1	0.000200	0	1.0	2.8	NH< in 2' amine, e.g. DiEtAmine, DiProAmine, DiButAmine,...(Baskaya et al.)
 20 2	1	1	0.000800	0	1.9	1.9	NH< in 5-ring, e.g. pyrrolidine
-21 1	0	1	0.000100	0	0	4.7	>N- in 3' amine, amide, e.g. TriEtAmine, DMF
+21 1	0	1	0.000010	0	0	5.29	>N- in 3' amine, amide, e.g. TriEtAmine, DMF
 21 3	1	1	0.000033	422	2.2	2.2	>N- in Nitro, eg nitroethane.  We treat the N as associating even though it islike one O is +ve and the other is -ve.  But the O's have the same id and we can't put 1 donor and one acceptor on each O b/c that would be a 4Bsite model.
 22 1	0	1	0.000300	0	0	5	=AN- imine (pyridine) (=> 4.1 with water)
 24 0	1	1	0.012000	0	1	1	Cl- in HCl
+24 3	0	1	0.000000	0	0	1.1	tetraChloroEthylene
 24 6	2	0	0.000700	0	1.65	0	diCl- in dichloromethane
 25 0	1	1	0.015000	0	3.4	3.4	F- in HF
 25 10	1	0	0.000700	0	0.96	0	CFH- in heptafluoropropane

@@ -3,6 +3,8 @@ MODULE CritParmsDb
 	Integer ndb
 	Parameter (ndb=3000)
 	character*30, STATIC:: NAMED(ndb)	!LoadCrit() loads ParmsCrit database.
+	character*5, STATIC:: classDb(ndb) 
+	character*11, STATIC:: formDb(ndb) 
 	Integer, STATIC:: IDnum(ndb),CrIndex(9999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
 	DoublePrecision, STATIC:: TCD(ndb),PCD(ndb),ACEND(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) ! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
 END MODULE CritParmsDb
@@ -32,6 +34,43 @@ MODULE VpDb
 	DoublePrecision, STATIC:: rMINTD(nVpDb) ,VALMIND(nVpDb) ,rMAXTD(nVpDb),VALMAXD(nVpDb),AVGDEVD(nVpDb),vpCoeffsd(nVpDb,5)
 	DoublePrecision vpCoeffs(nmx,5)
 END MODULE VpDb
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode)
+	!Purpose: CALL EOS Get___ ROUTINES, also includes LoadCritParmsDb(if needed),GetCrit, Get(EOS), GetBips, BipIo, 
+	!	SETS UP THE CRITS, EOSPARMS, bips, DEBUG status, FUGI(iEosOpt)
+	!	Echoes user IO to Output.txt, and reports error checks. 
+	!	INITIALIZATION AND CALLING SEQUENCE FOR VLE, LLE, VLLE SUBROUTINES.
+	!reqd routines:
+	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
+	!	LmDifEzCov2.for, Mintools.for
+	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
+	USE GlobConst
+	USE CritParmsDb
+	USE BIPs
+	USE EsdParms
+	Implicit DoublePrecision(A-H,K,O-Z)
+	CHARACTER*77 errMsgPas !,readString,Property(22)
+	!CHARACTER*251 dumpFile
+    Integer  localCas(NMX),localID(NMX),iEosLocal,ierCode,NC 
+	if(idOpt==2)then
+		localCas(1:NC)=idCas(1:NC)	! idCas USEd from GlobConst
+	elseif(idOpt==1)then
+		localID(1:NC)=ID(1:NC)	! idCas USEd from GlobConst
+		call IdCasLookup(NC,localID,iErrLook,errMsgPas) ! idCas USEd in GlobConst to set.
+		if(iErrLook > 0)then
+			ierCode=11
+			if(LOUD)write(dumpUnit,*)'PGLStartup: from idDipprLookup-'//TRIM(errMsgPas)
+			return
+		endif
+		localCas(1:NC)=idCas(1:NC)	! idCas USEd from GlobConst
+	else
+		ierCode=12
+		return
+	endif
+	Call PGLWrapperStartup(NC,iEosLocal,localCas,ierCode)
+	return
+	end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine PGLWrapperStartup(NC,iEosLocal,localCas,ierCode)
@@ -65,7 +104,7 @@ END MODULE VpDb
 		ierCode=11
 		goto 86
 	endif
-	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
+	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas) ! ID USEd in GlobConst to set.
 	if(LOUD)write(dumpUnit,*)'PGLWRapperStartup:localCas,idDippr=',(localCas(i),id(i), i=1,NC)
 	if(iErrCas)then
         if(LOUD)write(dumpUnit,*)' Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
@@ -237,18 +276,21 @@ END MODULE VpDb
     !C      Includes CrIndex(idDippr)=line where idDippr was found (linked list)
 	!C      This should be a faster way of loading properties, e.g. when running VLE evaluations for a large db.
 	!C  INPUT
-	!C    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
+	!C    idOpt 1 if ID is set and need to lookup idCas, 2 if idCas is set and need to lookup ID.
+	!C    (ID	 VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS USEd from GlobConst if idOpt=1)
+	!C    (idCas VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS USEd from GlobConst if idOpt=2)
 	!C  OUTPUT
-	!C    TC - CRITICAL TEMPERATURE
-	!C    PC - CRITICAL PRESSURE
-	!C    ACEN - ACENTRIC FACTOR
-	!C    NAME - COMPONENT NAME
+	!C    TC		CRITICAL TEMPERATURE(K)
+	!C    PC		CRITICAL PRESSURE (MPa)
+	!C    ACEN		ACENTRIC FACTOR
+	!C    Class		COMPONENT class {norml,polar,gases,assoc,Asso+...}
+	!C    CrIndex	e.g., Tc(icomp)=TcD(CrIndex(ID(iComp)))
 	USE GlobConst, ONLY:LOUD,dumpUnit,zeroTol,PGLinputDir,nCritSet
 	USE CritParmsDb 
 	IMPLICIT DoublePrecision(A-H,O-Z)
 	!CHARACTER*4 tCode,pCode,vCode
 	!character*132 readText,dumText
-	!character*12  form 
+	!character*12  form
 	character*251 inFile,dumString
 	iErrCode=0
 	CrIndex=ndb ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
@@ -270,14 +312,17 @@ END MODULE VpDb
 !		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 !			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
 !		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
-		READ (dumString,*)IDnum(I),TCD(I),PcTemp,ACEND(I),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I),solParmD(i),rhoG_cc,rMwD(i)
+		READ (dumString,*)IDnum(I),TCD(I),PcTemp,ACEND(I),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I),solParmD(i),rhoG_cc,rMwD(i),classDb(i),formDb(i),NAMED(i)
 !1	190.56	4.599	0.0115	0.1473	0.9075	1.8243	-3.5604	0.2894	85	 74828	11.62	0.4224	16.04
 		PCD(I)=PcTemp !/10
 		if(rhoG_cc < zeroTol)rhoG_cc=1
 		vLiqD(i)=rMwD(i)/rhoG_cc
 		CrIndex(IDnum(i))=i
 		if(ioErr.and.LOUD)write(dumpUnit,*)'LoadCritParmsDb: error reading ParmsCrit.txt. line=',i
-		if(i==1.and.LOUD)write(dumpUnit,602)IDnum(I),idCasDb(I),TCD(I),PCD(I),ZCD(I),ACEND(I),solParmD(I),vLiqD(i),rMwD(i) !&
+		if(i==1.and.LOUD)then
+			write(dumpUnit,602)IDnum(I),idCasDb(I),TCD(I),PCD(I),ZCD(I),ACEND(I),solParmD(I),vLiqD(i),rMwD(i) !&
+			write(dumpUnit,*)'LoadCrit: classDb,formDb,nameD=',classDb(i),formDb(i),NAMED(i)
+		endif
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
 
@@ -353,6 +398,8 @@ END MODULE VpDb
 			rMw(iComp)=rMwD(j)
 			solParm(iComp)=solParmD(j)
 			vLiq(iComp)=vLiqD(j)
+			class(iComp)=classDb(j)
+			idCas(iComp)=idCasDb(j)
 			iGotIt=1
 		endif
 		if(iGotIt==0)then
@@ -587,12 +634,12 @@ END MODULE VpDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	subroutine IdCasLookup(NC,idCas,ier,errMsgPas)
-    USE GlobConst, only:ID,idTrc,nmx,class,DEBUG,LOUD,PGLinputDir,dumpUnit
+    USE GlobConst, only:ID,idTrc,nmx,class,DEBUG,LOUD,PGLinputDir,dumpUnit,name
 	parameter(maxDb=3000)
 	character*77 errMsg(0:11),errMsgPas,dumString
 	character*251 inFile
-	character*28 dumName
-	character*5 classdb(maxDb)
+	character*28 NameDb(maxDb)
+	!character*5 classdb(maxDb)
 	integer idCas(nmx)
 	integer idCasDb(maxDb),idDb(maxDb),idTrcDb(maxDb)
     !OPEN(50,FILE='c:\spead\idTrcDipCas.TXT')
@@ -607,15 +654,16 @@ END MODULE VpDb
 	!write(dumpUnit,*)'IdLookup: nDeck=',nDeck
 	do i=1,nDeck
 		read(50,'(a77)')dumString
-		read(dumString,'(2i6,i12,1x,a28,a5)',ioStat=ioErr)idTrcDb(i),idDb(i),idCasDb(i),dumName,classdb(i)  
+		read(dumString,'(2i6,i12,1x,a28,a5)',ioStat=ioErr)idTrcDb(i),idDb(i),idCasDb(i),NameDb(i) !,classdb(i)  
 		if(ioErr.and.LOUD)write(dumpUnit,*)'idCas ioErr. i,idDippr=',i,idDb(i)
 		if( id(1)==idDb(i) )then
 			iGotIt=1
 			idCas(1)=idCasDb(i)
 			idTrc(1)=idTrcDb(i)
-			class(1)=classdb(i)
+			!class(1)=classdb(i)
+			name(1)=TRIM(NameDb(i))
 			if(LOUD)write(dumpUnit,*)TRIM(dumString)
-			if(LOUD)write(dumpUnit,*)'IdCasLookup:id1,name,class1:',id(1),TRIM(dumName),class(1)
+			if(LOUD)write(dumpUnit,*)'IdCasLookup:id1,name,class1:',id(1),TRIM(name(1)) !,class(1)
 		endif
 	enddo
 	if(iGotIt==0)then
@@ -630,8 +678,9 @@ END MODULE VpDb
 			if(idDb(i).eq.id(iComp))then
 				idCas(iComp)=idCasDb(i)
 				idTrc(iComp)=idTrcDb(i)
-				class(iComp)=classdb(i)
-				if(LOUD)write(dumpUnit,*)'IdCasLookup:idi,classi:',id(i),class(i)
+				!class(iComp)=classdb(i)
+				name(iComp)=TRIM(NameDb(i))
+				if(LOUD)write(dumpUnit,*)'IdCasLookup:idi,idCasi:',id(iComp),idCas(iComp) !,class(i)
 				iGotit=1
 				exit
 			endif

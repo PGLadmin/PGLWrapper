@@ -50,7 +50,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	if(iEosOpt==13)inFile=TRIM(PGLinputDir)//'\ParmsEsdEmamiTb.txt' ! // is the concatenation operator
 	if(isMEM2)inFile=TRIM(PGLinputDir)//'\ParmsEsdMEM2.txt' ! // is the concatenation operator
 	OPEN(31,FILE=inFile)
-	if(LOUDER)write(dumpUnit,*)'GetEsd:inFile=',TRIM(inFile)
+	if(LOUDER)write(dumpUnit,*)'GetEsdCas:inFile=',TRIM(inFile)
 	if(LOUDER)write(dumpUnit,*) 'Check the ESD parms file location.'
 
 
@@ -60,7 +60,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 		READ(31,'(a222)')dumString
 		if(isMEM2)then
 			READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I),NDA(i),NDSA(I),NASA(I),idCasa(i)
-			if(LOUDER)write(dumpUnit,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)
+			!if(LOUDER)write(dumpUnit,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)
 		else ! iEosOpt=2,12,13 all use ESD96.
 			READ(dumString,*,ioStat=ioErr)IDA(I),CAi,QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I) ,idCasa(i)
 			!READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I),NDA(I),NASA(I),idCasa(i)
@@ -68,8 +68,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 			NDSA(I)=NASA(I)
 			eAccEpsK(i)=DHA(I)*1000/RgasCal
 			eDonEpsK(i)=eAccEpsK(i)
-			NDSA(I)=NASA(I)
-			if(LOUDER)write(dumpUnit,603)'GetEsdCas: inFile~',i,IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
+			!if(LOUDER)write(dumpUnit,603)'GetEsdCas: inFile~',i,IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
 		endif
 		!write(dumpUnit,*),*)IDA(I),CA(I),QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I)  ,idCasa(i)
 		if(ioErr .and. LOUDER)write(dumpUnit,'(a,a)')' GetESDCas: error reading ',TRIM(inFile),' line=',TRIM(dumString)
@@ -97,7 +96,9 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 		if(Tc(1) < 4)call GetCritCas(NC,idCas,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
 		call ExactEsd(NC,vx,c,q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc or Asso+. Wait to see if Parms are in ParmsEsd before failing.
 		!mShape(1:nmx)=Q(1:nmx)
-		if(LOUDER.and.iErrExact)write(dumpUnit,*)'GetESDWarning: iErrExact=',iErrExact,' Checking database for iComp='	,( ierCompExact(iComp),iComp=1,NC)
+		if(iErrExact>0)then
+			if(LOUDER)write(dumpUnit,*)'GetESDWarning: iErrExact=',iErrExact,' ierComp='	,ierCompExact(1:NC)
+		endif
 	endif
 
 	nTypes(1:NC)=1	 !all esd versions use nTypes=1. Multifunctional molecules require SPEADMD.
@@ -152,7 +153,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 		if(iGotIt(J)==0)then
 			if(ierCompExact( j).ne.0 )then
 				iErr=11 !Parms missing and iErrExact.ne.0 for at least one component 
-				if(LOUDER)write(dumpUnit,*)'GetESD:Parms missing and iErrExact.ne.0 for component = ', j
+				if(LOUDER)write(dumpUnit,*)'GetEsdCas:Parms missing and iErrExact.ne.0 for component = ', j
 				goto 861
 			else
 				if(LOUD)write(dumpUnit,*)'Corr. States used for EsdParms of component=',j
@@ -163,7 +164,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 602 format(1x,a,i11,8e12.4)
 603 format(1x,a,2i11,8e12.4)
 	if(iErr)then
-		if(LOUDER)write(dumpUnit,*) 'GetEsd2: error for at least one compound'
+		if(LOUDER)write(dumpUnit,*) 'GetEsdCas: error for at least one compound'
 		continue
 	endif
         
@@ -176,19 +177,21 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 606	format(i9,1x,a11,f9.3,f8.2,f8.2,2i3,1x,f8.6,2f8.0)
 
 	!note:  bips are passed back through USEd BIPs
-		bipFile=TRIM(PGLinputDir)//'\BipEsd96.txt' ! // is the concatenation operator
-		if(isMEM2)bipFile=TRIM(PGLinputDir)//'\BipEsdMEM2.txt' ! // is the concatenation operator
+	bipFile=TRIM(PGLinputDir)//'\BipEsd96.txt' ! // is the concatenation operator
+	if(isMEM2)bipFile=TRIM(PGLinputDir)//'\BipEsdMEM2.txt' ! // is the concatenation operator
+	if(LOUD)write(dumpUnit,*)'GetEsdCas: bipFile=',TRIM(bipFile)
 	if(NC > 1)iErrCode=GetBIPs(bipFile,ID,NC) !not necessary for pure fluids
 	if(iErrCode > 10)iErr=11 ! 
     if(LOUDER)then
-		write(dumpUnit,*)'GetEsd2Cas: bipFile=',TRIM(bipFile)
+		write(dumpUnit,*)'GetEsdCas: bipFile=',TRIM(bipFile)
 		write(dumpUnit,*)'     ',(id(j),j=1,NC)
 		do i=1,NC
 			write(dumpUnit,'(i5,11f8.4)')id(i),(Kij(i,j),j=1,NC)
 		enddo
-	    write(dumpUnit,*) 'GetESDCas: check BIPs.'
+	    write(dumpUnit,*) 'GetEsdCas: check BIPs.'
 		if(iErrCode > 0) write(dumpUnit,*)'GetEsdCas: BIPs missing for ',iErrCode-10,' binary combinations.'
     end if
+	if(LOUD)pause 'GetEsdCas: done. Returning'
 	RETURN
 	
 861	continue
@@ -222,10 +225,11 @@ subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 	do i=1,NC
 		isAssoc=0
 		if(TRIM(class(i))=='assoc' .or. TRIM(class(i))=="Asso+")isAssoc=1
-		if(isAssoc)then
+		if(isAssoc>0)then
 			ierComp(i)=1
 			iErr=100+i
-			if(LOUDER)write(dumpUnit,*)'ExactESD2: Parms not available for assoc ID=',ID(i)
+			if(LOUDER)write(dumpUnit,*)'ExactESD: no parms for ID,class=',ID(i),TRIM(class(i))
+			if(LOUDER)pause 'ExactESD:check ID.'
 			cycle
 		endif	
 		isHelium=0
