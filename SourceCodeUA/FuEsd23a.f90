@@ -479,7 +479,7 @@ end	!subroutine ExactEsd
 	Integer initCall
 	DoublePrecision k1(nmx) 
 	LOGICAL LOUDER
-	common/FugiParts/fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),Zrep,Zatt,Zassoc,aRep,aAtt,aAssoc
+	common/FugiParts/fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),Zrep,Zatt,Zassoc,aRep,aAtt,aAssoc,uAtt,uAssoc
 	DATA K10,K2,ZM,initCall/1.7745D0,1.0617D0,9.5D0,1/
 
 	LOUDER=LOUD

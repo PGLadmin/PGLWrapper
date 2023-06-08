@@ -261,7 +261,7 @@
 		!sumNumer(jComp)=0
 		do kComp=1,nComps
 			omega(kComp,jComp)=EXP( -xsTau(kComp,jComp)/tKelvin )
-			sumDenom(jComp)=sumDenom(jComp)+volFrac(kComp)*omega(kComp,jComp)
+			sumDenom(jComp)=sumDenom(jComp)+volFrac(kComp)*omega(kComp,jComp)  !denom1=phi1*Om11+phi2*Om2,1
 			!sumNumer(jComp)=sumNumer(jComp)+xFrac(kComp)*omega(kComp,jComp)*xsTau(kComp,jComp)/tKelvin
 		enddo
 		sumLog=sumLog+xFrac(jComp)*sumDenom(jComp)
@@ -276,14 +276,15 @@
 	do kComp=1,nComps
 		bigSumK=0.d0
 		do jComp=1,nComps
-			bigSumK=bigSumK+volFrac(jComp)*omega(kComp,jComp)/sumDenom(jComp)
+			bigSumK=bigSumK+volFrac(jComp)*omega(kComp,jComp)/sumDenom(jComp)  ! = phi1*Om11/denom1+phi2*Om2,1/denom2
 		enddo
 		GeFlory =GeFlory+LOG(volFrac(kComp)/xFrac(kComp))*xFrac(kComp)
 		GmixIdSoln =GmixIdSoln+LOG(xFrac(kComp))*xFrac(kComp)
-		fugAtt(kComp)=bVolCC_mol(kComp)/(0.01484*avoNum)*( 1-LOG(sumDenom(kComp))-bigSumK )	! assuming qi~bVol(i)/bVol(water)
-		fugRep(kComp)=LOG(volFrac(kComp)/xFrac(kComp))+(1-volFrac(kComp)/xFrac(kComp))
+		qFactor=2*eta*CoordNum/2*bVolCC_mol(kComp)/(0.01484*avoNum)
+		fugAtt(kComp)=qFactor*( 1-LOG(sumDenom(kComp))-bigSumK )	! assuming qi~bVol(i)/bVol(water)
+		fugRep(kComp)=LOG(volFrac(kComp)/xFrac(kComp))+(1-volFrac(kComp)/xFrac(kComp)) ! FHA contributoin
 		rLnGamAssoc(kComp)=fugAssoc(kComp)-zAssoc*bVolCc_mol(kComp)/bMix-GpureAssoc(kComp) 
-		fugc(kComp)=CoordNum/2*( fugRep(kComp)+fugAtt(kComp) )+rLnGamAssoc(kComp)
+		fugc(kComp)=( fugRep(kComp)+fugAtt(kComp) )+rLnGamAssoc(kComp)
 		if(fugc(kComp) < -25) fugc(kComp)= -25		! Avoid gamma < zeroTol. Only happens for bad guesses of xsTau(i,j)
 		xsGamma(kComp)=exp( fugc(kComp) )
 		xsFreeEn =xsFreeEn+fugc(kComp)*xFrac(kComp)	! = SUM(xi*lnGami)

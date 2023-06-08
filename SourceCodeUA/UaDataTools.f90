@@ -6,7 +6,7 @@ MODULE CritParmsDb
 	character*5, STATIC:: classDb(ndb) 
 	character*11, STATIC:: formDb(ndb) 
 	Integer, STATIC:: IDnum(ndb),CrIndex(9999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
-	DoublePrecision, STATIC:: TCD(ndb),PCD(ndb),ACEND(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) ! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
+	DoublePrecision, STATIC:: TCD(ndb),PCD(ndb),ACEND(ndb),TbD(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) ! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
 END MODULE CritParmsDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -239,6 +239,9 @@ END MODULE VpDb
 	Implicit NONE
     integer idCas(nmx),iErr,NC,iComp,iGotIt,I
 	character*77 errMsg(0:22),errMsgPas
+	LOGICAL LOUDER
+	LOUDER=LOUD
+	LOUDER=.TRUE.
 	errMsg(0)='No Problem'
 	errMsg(11)='IdDipprLookup Error: at least one id not found'
 	errMsg(12)='IdDipprLookup: You must call LoadCritParmsDb first. Goodbye!'
@@ -246,7 +249,7 @@ END MODULE VpDb
 	!write(dumpUnit,*)'IdLookup: nDeckDb=',nDeckDb
 	if(nDeckDb.ne.nCritSet)then
 		iErr=12
-		if(LOUD)write(dumpUnit,*)TRIM(errMsg(iErr))
+		if(LOUDER)write(dumpUnit,*)TRIM(errMsg(iErr))
 		goto 861
 	endif
 
@@ -312,7 +315,7 @@ END MODULE VpDb
 !		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 !			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
 !		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
-		READ (dumString,*)IDnum(I),TCD(I),PcTemp,ACEND(I),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I),solParmD(i),rhoG_cc,rMwD(i),classDb(i),formDb(i),NAMED(i)
+		READ (dumString,*)IDnum(I),TCD(I),PcTemp,ACEND(I),TbD(i),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I),solParmD(i),rhoG_cc,rMwD(i),classDb(i),formDb(i),NAMED(i)
 !1	190.56	4.599	0.0115	0.1473	0.9075	1.8243	-3.5604	0.2894	85	 74828	11.62	0.4224	16.04
 		PCD(I)=PcTemp !/10
 		if(rhoG_cc < zeroTol)rhoG_cc=1
@@ -377,10 +380,13 @@ END MODULE VpDb
 	USE GlobConst
 	USE CritParmsDb
 	Implicit DoublePrecision(A-H,O-Z)
+	LOGICAL LOUDER
+	LOUDER=LOUD
+	LOUDER=.TRUE.
 	!	eHbKcalMol(nmx),bondVolNm3(nmx),ND(nmx),NDS(nmx),NAS(nmx)
 	if(nDeckDb.ne.nCritSet)Call LoadCritParmsDb(iErrLoadCrit)
 	if(iErrLoadCrit > 0)then
-		if(LOUD)write(dumpUnit,*)'GetCrit: error from LoadCritParmsDb. Thats all folks!'
+		if(LOUDER)write(dumpUnit,*)'GetCrit: error from LoadCritParmsDb. Thats all folks!'
 		return
 	endif
 	iErrCode=0
@@ -391,6 +397,7 @@ END MODULE VpDb
 		else
 			NAME(iComp)=NAMED(J)
 			Tc(iComp)=TCD(J)
+			Tb(iComp)=TbD(J)
 			Pc(iComp)=PCD(J)
 			ID(iComp)=IDnum(J)
 			ACEN(iComp)=ACEND(J)
@@ -407,7 +414,7 @@ END MODULE VpDb
 			!write(dumpUnit,*)'Error in GetCrit: not found for iComp=',iComp
 			!write(dumpUnit,*)
 		endif
-		if(LOUD)write(dumpUnit,'(1x,i5,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp),Tc(iComp),Pc(iComp),acen(iComp),ZC(iComp)
+		if(LOUDER)write(dumpUnit,'(1x,i5,1x,a,1x,f7.0,3(1x,f8.2))')id(iComp),NAME(iComp),Tc(iComp),Pc(iComp),acen(iComp),ZC(iComp)
 	enddo
 	RETURN
 	END	!GetCrit()

@@ -7,14 +7,14 @@ MODULE GlobConst
 	Integer nmx,nCritSet,nModels 
 	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0)
 	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)!kB[=]MPa.nm3/K) avoNum[=]cm3/(nm3*mol). cf. PGL6ed, Table 6.1
-	PARAMETER (nCritSet=1731) ! This is the number of compounds that should be found in LoadCritParmsDb. Change this parameter if you add more compounds.
+	PARAMETER (nCritSet=1735) ! This is the number of compounds that should be found in LoadCritParmsDb. Change this parameter if you add more compounds.
 	Parameter (nModels=19)
 	!          https://www.nist.gov/si-redefinition 
     !nmx is the max allowed number of Compounds
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
 	!integer :: nComps, nsTypesTot,iTPT,iFlagFF,nNormGrid
 
-	DoublePrecision :: Tc(nmx), Pc(nmx), ACEN(nmx), Zc(nmx),TcEos(nmx), PcEos(nmx), ACENEos(nmx), ZcEos(nmx), rMw(nmx)
+	DoublePrecision :: Tc(nmx),Tb(nmx), Pc(nmx), ACEN(nmx), Zc(nmx),TcEos(nmx), PcEos(nmx), ACENEos(nmx), ZcEos(nmx), rMw(nmx)
 	DoublePrecision bVolCc_mol(nmx)	!vdW molar volume of molecule. 
 	DoublePrecision solParm(nmx)    !solubility parameter in (J/cm3)^0.5=MPa^0.5
 	DoublePrecision vLiq(nmx)		!liquid molar volume in cm3/mol
@@ -30,11 +30,13 @@ MODULE GlobConst
     DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS
 	DoublePrecision etaPure(nmx) !store eta for each compound at P=0.1MPa and tKmin(K). 
 	Character*9  form600 
+	Character*12 form601 
 	Character*13 form602 
 	Character*11 form610 
 	Character*14 form611 
+	Character*15 form612 
 	Character*15 EosName(nModels)
-	data form600,form602,form610,form611/'(12E12.4)','(2i7,12E12.4)','(a,12E12.4)','(a,i8,12E12.4)'/ 
+	data form600,form601,form602,form610,form611,form612/'(12E12.4)','(i7,12E12.4)','(2i7,12E12.4)','(a,12E12.4)','(a,i8,12E12.4)','(a,2i8,12E12.4)'/ 
 	!              1     2       3       4          5          6         7           8              9        10       11      12       13          14         15           16            17        18		19
 	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2'/
 	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS AND DATA !!!!!!!!!!!!!
@@ -211,7 +213,7 @@ END MODULE Assoc
 	endif
 610	format(1x,2i5,i12,i8,i11,i8,2E14.4)
 	if(LOUDER)write(dumpUnit,601)' MEM2: T,rho,eta,g^c',tKelvin,rhoMol_cc,eta,rdfContact
-	!XA=1  !				   ! initializing the entire array is slow.
+	!XA=1   				   ! initializing the entire array is slow.
 	!XD=1
 	ralphAmax=0
 	ralphDmax=0
@@ -277,7 +279,7 @@ END MODULE Assoc
 	if(LOUDER)write(dumpUnit,'(a,2E12.4,1x,8i6,1x)')' MEM2: x1,x1old,ID,IDold ',xFrac(1),xOld(1),(ID(i),i=1,nComps),(IDold(i),i=1,nComps)
 	if(LOUDER)write(dumpUnit,601)' MEM2: etaOld,rdfOld ',etaOld,rdfOld
 	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10.or.etaOld.le.0  )then	!Only use default estimate if compounds or composition have changed.
-	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. sumxmy2(nComps,xFrac,xOld) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
+	!Only use default estimate if compounds or composition have changed.
 		if(LOUDER)write(dumpUnit,'(a,i6,1x,6E12.4)')' MEM2:New IDs or X ',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
 		ralphAmean=ralphAmax
 		ralphDmean=ralphDmax
@@ -451,7 +453,7 @@ END MODULE Assoc
 	!  ELLIOTT'S SUBROUTINE 
 	!  20221202 Initial adaptation MEM2 paper: IECR,61(42):15725. Start as accelerator for initial guesses of SS method.
 	SUBROUTINE MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErr )!,aAssoc,uAssoc,rLnPhiAssoc,ier)
-	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,dumpUnit,RgasCal
+	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,dumpUnit,RgasCal,form612
 	USE Assoc
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (fAssoc) AND zAssoc given rho,VM
 	Implicit NONE !DoublePrecision(A-H,K,O-Z)
@@ -607,13 +609,15 @@ END MODULE Assoc
 	enddo
 	aAssoc=  aAssoc+(hAD+hDA)/2  ! Eqs. 1 & 40
 	if(LOUDER)write(dumpUnit,610)' MEM1:         fugAssocBefore=',(rLnPhiAssoc(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,*)' MEM1: nTypes()=',nTypes(1:nComps)
 	
 	betadFA_dBeta=0	!cf E'96(19)
-	do i=1,nComps !cf E'96(19)	 TODO: rewrite this in terms of ralph.
-		do j=1,nTypes(iComp)
+	do i=1,nComps !cf E'96(19)	 
+		do j=1,nTypes(i)
 			bepsA=(eAcceptorKcal_mol(i,j)/RgasCal*1000/tKelvin)
 			dLnAlpha_dLnBeta=DEXP(bepsA)	! Eqs. 44,45
 			if(bepsA > 1.D-4)dLnAlpha_dLnBeta=dLnAlpha_dLnBeta*(bepsA)/(dLnAlpha_dLnBeta-1)
+			if(LOUDER)write(*,form612)' MEM1:i,j,eA,bepsA,BdLnAlph_dLnB',i,j,eAcceptorKcal_mol(i,j),bepsA,dLnAlpha_dLnBeta
 			betadFA_dBeta=betadFA_dBeta+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*XA(i,j)*ralph(i,j)*dLnAlpha_dLnBeta
 		enddo
 	enddo
