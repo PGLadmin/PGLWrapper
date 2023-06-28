@@ -87,14 +87,48 @@
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
     DoublePrecision xFrac(NMX),IDACest(NMX),gamInf(NMX)
     DoublePrecision rLnPhiAssoc(NMX),rLnPhiAssoc1(NMX),rLnPhiAssoc2(NMX),gam(NMX) !,vLiq(NMX)
+	common/MEM2parts/FA,FD,betadFA_dBeta,betadFD_dBeta,aAssocPas,uAssocPas,zAssocPas
 	!LOUD=.TRUE.
 	dumpUnit=6														
-	isZiter=0
+	isZiter=0	! This means we compute uAssoc.
 
 	tKelvin=300
 	Call Example5Setup(tKelvin,IDACest,iErr) !Set parameters in USEd Assoc and GlobConst(bVol,vLiq). cf. MEM2.f90
 	nComps=2
-	xInf=1.d-5 ! When I made this smaller, Ex 6 had a problem with uAssoc at x1=xInf. JRE 20230206.
+	!Check the uAssoc formula against numerical derivative.
+	xFrac(2)=.5d0
+	xFrac(1)=1-xFrac(2)
+	vMix=SUM( xFrac(1:nComps)*vLiq(1:nComps) )	! vLiq USEd in GlobConst
+	call MEM2(isZiter,tKelvin,xFrac,nComps,1/vMix,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErr)
+	write(*,form610)' Main: XA1, XD1, XA2, XD2, FA,FD ',XA(1,1),XD(1,1),XA(2,1),XD(2,1),FA,FD
+	step=1.d-4
+	tPlus =tKelvin*(1+step)
+	tMinus=tKelvin*(1-step)
+	call MEM2(isZiter,tPlus ,xFrac,nComps,1/vMix,zAssoc,aPlus ,uAssoc,rLnPhiAssoc,iErr)
+	FAPlus=FA
+	FDPlus=FD
+	write(*,form610)' Main: XA1+,XD1+,XA2+,XD2+',XA(1,1),XD(1,1),XA(2,1),XD(2,1)
+	XA1Plus=XA(1,1)
+	XD1Plus=XD(1,1)
+	XD2Plus=XD(2,1)
+	call MEM2(isZiter,tMinus,xFrac,nComps,1/vMix,zAssoc,aMinus,uAssoc,rLnPhiAssoc,iErr)
+	FAMinus=FA
+	FDMinus=FD
+	write(*,form610)' Main: XA1-,XD1-,XA2-,XD2-',XA(1,1),XD(1,1),XA(2,1),XD(2,1)
+	XA1Minus=XA(1,1)
+	XD1Minus=XD(1,1)
+	XD2Minus=XD(2,1)
+	uCalc= -tKelvin*(aPlus-aMinus)/(tPlus-tMinus)
+	uCalc= -tKelvin*(aPlus-aMinus)/(tPlus-tMinus)
+	uCalc= -tKelvin*(aPlus-aMinus)/(tPlus-tMinus)
+	write(*,form610)' Main: uAssoc,uCalc',uAssoc,uCalc
+	dXA1= -tKelvin*(XA1Plus-XA1Minus)/(tPlus-tMinus)
+	dXD1= -tKelvin*(XD1Plus-XD1Minus)/(tPlus-tMinus)
+	dXD2= -tKelvin*(XD2Plus-XD2Minus)/(tPlus-tMinus)
+	write(*,form610)' Main: dXA1,dXD1,dXD2',dXA1,dXD1,dXD2
+	pause 'Main: Check calculation'
+	!Start by evaluating at ~ pure x1. Evaluation at ~ pure x2 occurs as part of first step in loop.
+	xInf=1.d-5	! When I made this smaller, Ex 6 had a problem with uAssoc at x1=xInf. JRE 20230206.
 	xFrac(2)=xInf
 	xFrac(1)=1-xFrac(2)
 	call MEM2(isZiter,tKelvin,xFrac,nComps,1/vLiq(1),zAssoc1,aAssoc1,uAssoc1,rLnPhiAssoc1,iErr)
@@ -425,7 +459,7 @@
 	Implicit DoublePrecision(A-H,K,O-Z)
 	DoublePrecision IDACest(NMX),sumLnXPure1(2),sumLnxPure2(2)
 	iErr=0
-	!Example 5. methanol(1)+THF(2)+ with speadmd model.  
+	!Example 5. methanol(1)+THF(2) with speadmd model.  
 	write(dumpUnit,*)'Example 5. methanol(1)+THF(2)'
 	isTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
 	nTypes(1)=1						!methanol

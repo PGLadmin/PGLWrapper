@@ -6,8 +6,10 @@ MODULE GlobConst
 	DoublePrecision pi,twoPi,fourPi,avoNum,Rgas,RgasCal,kB,half,zeroTol
 	Integer nmx,nCritSet,nModels 
 	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0)
-	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)!kB[=]MPa.nm3/K) avoNum[=]cm3/(nm3*mol). cf. PGL6ed, Table 6.1
-	PARAMETER (nCritSet=1735) ! This is the number of compounds that should be found in LoadCritParmsDb. Change this parameter if you add more compounds.
+	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)
+	          !avoNum[=]cm3/(nm3*mol, kB[=]MPa.nm3/K. cf. PGL6ed, Table 6.1
+	PARAMETER (nCritSet=1736) ! This is the number of compounds that should be found in LoadCritParmsDb. 
+	!          Change this parameter if you add more compounds.	It must be consistent or you will get a LOAD error.
 	Parameter (nModels=19)
 	!          https://www.nist.gov/si-redefinition 
     !nmx is the max allowed number of Compounds
@@ -18,16 +20,16 @@ MODULE GlobConst
 	DoublePrecision bVolCc_mol(nmx)	!vdW molar volume of molecule. 
 	DoublePrecision solParm(nmx)    !solubility parameter in (J/cm3)^0.5=MPa^0.5
 	DoublePrecision vLiq(nmx)		!liquid molar volume in cm3/mol
-	DoublePrecision tKmin(nmx)		!model's minimum recommended temperature, especially for P^vp. Warning because some applications might violate, e.g., SLE.
+	DoublePrecision tKmin(nmx)		!model's minimum recommended temperature, especially for P^vp. Only warning. e.g., SLE OK.
 	DoublePrecision CpRes_R, CvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)	= Z+rho*dZ/dRho
 	character*234 masterDir,PGLinputDir
 	character*30 NAME(nmx)
-	character*5 class(nmx) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. Ch06CompoundsList.xls, PGL6edClasses.xls)
+	character*5 class(nmx) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. PGL6edClasses.xls)
     Logical LOUD,CheckDLL   !LOUD=.TRUE. means writing debug info. CheckDLL=.TRUE. means direct debug info to DebugDLL.txt
 	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
 	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
-	DoublePrecision etaPass !TODO:Consider if rho needs to be a calling argument of any FUGI(). Otherwise, precision in rho is lost when Z->0 by passing zFactor then computing rho, esp for PREOS (incl Jaubert version).
-    DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. This must be set in the Get_ function for the EOS
+	DoublePrecision etaPass 
+    DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. Set in the Get_ function for the EOS
 	DoublePrecision etaPure(nmx) !store eta for each compound at P=0.1MPa and tKmin(K). 
 	Character*9  form600 
 	Character*12 form601 
@@ -35,10 +37,13 @@ MODULE GlobConst
 	Character*11 form610 
 	Character*14 form611 
 	Character*15 form612 
+	Character*15 form613 
 	Character*15 EosName(nModels)
-	data form600,form601,form602,form610,form611,form612/'(12E12.4)','(i7,12E12.4)','(2i7,12E12.4)','(a,12E12.4)','(a,i8,12E12.4)','(a,2i8,12E12.4)'/ 
-	!              1     2       3       4          5          6         7           8              9        10       11      12       13          14         15           16            17        18		19
-	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2'/
+	data form600,form601,form602/'(12E12.4)','(i7,12E12.4)','(2i7,12E12.4)'/
+	data form610,form611,form612,form613/'(a,12E12.4)','(a,i8,12E12.4)','(a,2i8,12E12.4)','(a,3i8,12E12.4)'/ 
+	!              1     2       3       4          5          6         7           8              9        10       
+	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
+			'tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2'/
 	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS AND DATA !!!!!!!!!!!!!
 	!LOUD = .FALSE.
 contains
@@ -56,25 +61,27 @@ contains
 	end function SetNewEos
 END MODULE GlobConst
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). Sums are over sites per molecule then over molecules.
+MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). 1st Sums sites per molecule then  molecules.
 	USE GlobConst, only:nmx,isTPT,isESD,iEosOpt,LOUD,dumpUnit ! nmx is the maximum number of compounds, typically 55. 
 	implicit NONE
 	integer maxTypes,nsx,maxTypesGlobal,localPool	
 	PARAMETER (maxTypes=44,nsx=maxTypes,maxTypesGlobal=999) 
     parameter(localPool=9999) !this must be long enough to cover all SpeadMd site types (e.g. 1401=methanol hydroxy)
-	!maxTypes is the max # of site types for all molecules. maxTypes > sum^NC(count(Types))	!nsx = maxTypes (dunno why redundant), nbx=Max Bonds, 
+	!maxTypes is the max # of site types for all molecules. maxTypes > sum^NC(count(Types))	
+	!nsx = maxTypes (dunno why redundant), nbx=Max Bonds, 
 	DoublePrecision eDonorKcal_mol(nmx,maxTypes),eAcceptorKcal_mol(nmx,maxTypes)
 	DoublePrecision eHbKcal_mol(nmx,maxTypes) ! eHbKcal_mol=(eDonorKcal_mol+eAcceptorKcal_mol)/2
 	DoublePrecision bondVolNm3(nmx,maxTypes)
-	Integer idType(nmx,maxTypes),nTypes(nmx),nTypesTot !nTypesTot is really the sum of nTypes(i) because the same type on a different molecule is treated distinctly (?)
+	Integer idType(nmx,maxTypes),nTypes(nmx),nTypesTot !nTypesTot = SUM( nTypes(i) ). Same type on diff molecule is distinct
 	Integer nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes),nDegree(nmx,maxTypes)
-	Integer localType(localPool),idLocalType(maxTypes)	!these are to accumulate site lists in Wertheim so the aBipAd,aBipDa arrays don't get too large. cf. AlphaSp
+	Integer localType(localPool),idLocalType(maxTypes)	!To accumulate site lists in Wertheim to minimize aBipAd,aBipDa size
 	DoublePrecision aBipAD(maxTypes,maxTypes),aBipDA(maxTypes,maxTypes) !association bips
 	DoublePrecision XA(nmx,maxTypes),XD(nmx,maxTypes),XC(nmx,maxTypes),cvAssoc
 	DoublePrecision rLnGamRep(nmx),rLnGamAtt(nmx),rLnGamAssoc(nmx),bondRate(nmx,maxTypes) ! These replace .../FugiParts/
 	LOGICAL LOUDERWert
 	 
-	!localType is an index of just the types occuring in the current mixture.  e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
+	!localType is an index of just the types occuring in the current mixture.  
+	!e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
 	!idLocalType points back to localType for double-linking. E.g. idLocalType(1)=101.
 contains
 	Subroutine RdfCalc(rdfContact,dAlpha,eta)
@@ -140,15 +147,15 @@ END MODULE Assoc
 
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	!  ELLIOTT'S SUBROUTINE 
-	!  20221202 Initial adaptation of MEM2 for speadmd. Started as accelerator for initial guesses of SS method. Found SS no longer necessary. 90 minutes->63 seconds for regression of Jaubert database.
+	!  20221202 Initial adaptation of MEM2 for speadmd. 
 	!  20230114 Unified basis for ESD96 and ESD-MEM2.
 	SUBROUTINE MEM2(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErr )
-	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,PGLinputDir,dumpUnit,RgasCal
+	USE GlobConst
 	USE Assoc ! XA,XD,XC,NAcceptors(nmx),NDonors(nmx),NDegree(nmx),...
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (FA,FD) AND properties (zAssoc, lnPhiAssoc,...) given T,rho,x
 	!  Reference: Elliott, IECR, 61(42):15724 (2022). doi: 10.1021/acs.iecr.2c02723
 	!  INPUT:
-	!  isZiter = 1 if only zAssoc,aAssoc are required (for zFactor iterations), 0 for lnPhiAssoc,aAssoc,uAssoc, -1 if derivatives are required, integer
+	!  isZiter = 1 if only zAssoc,aAssoc are required (for zFactor iterations), 0 for lnPhiAssoc,uAssoc, -1 if Cv etc are required.
 	!  tKelvin = T(K), real*8
 	!  xFrac   = component mole fractions, real*8
 	!  nComps  = # of components, integer
@@ -165,18 +172,20 @@ END MODULE Assoc
 	!  
 	Implicit NONE !DoublePrecision(A-H,K,O-Z)
 	DoublePrecision xFrac(nmx),ralphA(nmx,maxTypes),ralphD(nmx,maxTypes),rLnPhiAssoc(nmx) !,KVE(nmx)
-	DoublePrecision tKelvin,rhoMol_cc,zAssoc,aAssoc,uAssoc 
-	DoublePrecision eta,picard,Ftol,bVolMix,rdfContact,dAlpha,ralphAmax,ralphDmax,avgNAS,avgNDS,FA0,FD0,FC0_ralphC
-	DoublePrecision FA,betadFD_dBeta,FD,betadFA_dBeta,FC,betadFC_dBeta,epsCC,ralphC,sqArg,FAold,error,errOld,avgFo,delFo,delFA,delFD,sqArgA,sqArgD,sumA,sumD,errA,errD,FDold,FA1,XCtemp,hAD,hDA,hCC,bepsA,bepsD,bepsC,sumLnXi,dLnAlpha_dLnBeta
-	DoublePrecision, STATIC:: xOld(nmx),ralphAmean,ralphDmean,etaOld,rdfOld ! static is equivalent to the "SAVE" attribute
-	Integer, STATIC:: IDold(nmx)  								            ! static is equivalent to the "SAVE" attribute
-	Integer isZiter,nComps,iErr, iComp,isDonor,isAcceptor,moreDonors,iErrMEM1,iType,i,j,itMax,nIter
-	LOGICAL LOUDER,isAcid
+	DoublePrecision tKelvin,rhoMol_cc,zAssoc,aAssoc,uAssoc,Fwertheim,xDiff !,aAssocPas,uAssocPas,zAssocPas
+	DoublePrecision eta,picard,Ftol,bVolMix,rdfContact,dAlpha,ralphAmax,ralphDmax,avgNAS,avgNDS,FA0,FD0,FC0_ralphC,sqArg
+	DoublePrecision FA,betadFD_dBeta,FD,betadFA_dBeta,FC,betadFC_dBeta,epsCC,ralphC,FAold,avgFo,delFo,delFA,delFD,error,errOld
+	DoublePrecision sqArgA,sqArgD,sumA,sumD,errA,errD,FDold,FA1,XCtemp,hAD,hDA,hCC,bepsA,bepsD,bepsC,sumLnXi,dLnAlpha_dLnBeta
+	DoublePrecision, SAVE:: xOld(nmx),ralphAmean,ralphDmean,etaOld,rdfOld ! "SAVE" is equivalent to the static attribute
+	Integer, SAVE:: IDold(nmx)  								            ! static is equivalent to the "SAVE" attribute
+	Integer isZiter,nComps,iErr, iComp,isDonor,isAcceptor,iErrMEM1,iType,i,j,itMax,nIter
+	LOGICAL LOUDER,isAcid,moreDonors
 	Character*123 errMsg(22)
-	data etaOld,rdfOld,ralphAmean,ralphDmean/0.3583,3.0,1.0,1.0/ !This makes these values static for Intel Compiler without STATIC. We need to reuse them on next call.
+	data etaOld,rdfOld,ralphAmean,ralphDmean/0.3583,3.0,1.0,1.0/ !This makes these values static for Intel Compiler without STATIC.
+	!common/MEM2parts/FA,FD,betadFA_dBeta,betadFD_dBeta,aAssocPas,uAssocPas,zAssocPas
 	iErr=0
-	errMsg( 1)=' MEM2: ERROR - NO CNVRG. ' ! This is a warning because future calls (like iterating on Z) may converge and remove the issue.
-	errMsg( 2)=' MEM2: Failed bond site balance.' ! This is a warning because some (crude) approximations might not care about balance. Some users may choose to elevate this to a critical error.
+	errMsg( 1)=' MEM2: ERROR - NO CNVRG. ' ! Warning because future calls (e.g., iterating Z) may converge and remove the issue.
+	errMsg( 2)=' MEM2: Failed bond site balance.' ! Warning because some approximations might not require balance. 
 	errMsg(11)=' MEM2: rdfContact<1'
 	errMsg(12)=' MEM2: sqArg for ralphMean update.'
 	errMsg(13)=' MEM2: sqArg(A or D)'
@@ -191,7 +200,7 @@ END MODULE Assoc
 601	format(1x,a,8E12.4)
 	LOUDER=LOUD	! from GlobConst
 	!LOUDER=LOUDERWert
-	!LOUDER = .TRUE. ! for local debugging.
+	!LOUDER= .TRUE. ! for local debugging.
 	FC=0 !initialize
 	FA=0
 	FD=0
@@ -201,7 +210,7 @@ END MODULE Assoc
 	rLnPhiAssoc(1:nComps)=0
     iErr=0  
 	picard=0.83D0
-	Ftol=1.D-6
+	Ftol=1.D-7
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
 	eta=rhoMol_cc*bVolMix
 	Call RdfCalc(rdfContact,dAlpha,eta)	!dAlpha = dLnAlpha/dLnRho = 1+dLn(g)_dLn(eta)
@@ -228,22 +237,24 @@ END MODULE Assoc
 				isAcid=.TRUE.
 				epsCC=3*( eAcceptorKcal_mol(iComp,iType)+eDonorKcal_mol(iComp,iType) )/2
 				!ralphC is not subscripted because 1603 is the only acid type and always the same.
-				ralphC=SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(epsCC/tKelvin/RgasCal*1000)-1.d0 )  ) ! Note the "3*" in the exponent, which makes the C bond "special."
+				ralphC=SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(epsCC/tKelvin/RgasCal*1000)-1.d0 )  ) 
+				! Note the "3*" in the exponent, which makes the C bond "special."
 				if(LOUDER)write(dumpUnit,'(a,F10.6,3E12.4)')' MEM2: epsCC,bondVol,ralphC',epsCC,bondVolNm3(iComp,iType),ralphC
 			endif
 			isAcceptor=0
 			if(nAcceptors(iComp,iType) > 0)isAcceptor=1
-			!sqArg=rho*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eAcceptorKcal_Mol(iComp,iType)/tKelvin/RgasCal*1000)-1.d0 )
-			!if(sqArg < 0)write(dumpUnit,'(a,2i3,f8.2,f8.4)')' MEM2: iComp,iType,T',iComp,iType,tKelvin,eAcceptorKcal_Mol(iComp,iType)
-			ralphA(iComp,iType)=isAcceptor*SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eAcceptorKcal_mol(iComp,iType)/tKelvin/RgasCal*1000)-1.d0 )  )
+			Fwertheim=EXP(eAcceptorKcal_mol(iComp,iType)/tKelvin/RgasCal*1000)-1.d0
+			!sqArg=rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim
+			ralphA(iComp,iType)=isAcceptor*SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim  )
 			if(ralphA(iComp,iType) > ralphAmax)ralphAmax=ralphA(iComp,iType)
 			isDonor=0
 			if(nDonors(iComp,iType) > 0)isDonor=1
-			!sqArg=rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eDonorKcal_Mol(iComp,iType)   /tKelvin/RgasCal*1000)-1.d0 )
-			!if(sqArg < 0)write(dumpUnit,'(a,2i3,f8.2,f8.4)')' MEM2: iComp,iType,T,eDonor',iComp,iType,tKelvin,eDonorKcal_Mol(iComp,iType)
-			ralphD(iComp,iType)=isDonor*   SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(eDonorKcal_mol(iComp,iType)   /tKelvin/RgasCal*1000)-1.d0 )  )
+			Fwertheim=EXP(eDonorKcal_mol(iComp,iType)   /tKelvin/RgasCal*1000)-1.d0
+			!sqArg=rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim
+			!if(sqArg < 0)write(dumpUnit,form612)' MEM2: iComp,iType,T,eDonor',iComp,iType,tKelvin,eDonorKcal_Mol(iComp,iType)
+			ralphD(iComp,iType)=isDonor*   SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim  )
 			if(ralphD(iComp,iType) > ralphDmax)ralphDmax=ralphD(iComp,iType)
-			if(LOUDER)write(dumpUnit,'(a,2i3,2F10.4)')' MEM2:iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType) 
+			if(LOUDER)write(dumpUnit,form612)' MEM2:iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType)
 		enddo
 	enddo
 	FA0=0
@@ -255,13 +266,13 @@ END MODULE Assoc
 		do j=1,nTypes(i)
 			FA0=FA0+xFrac(i)*nDegree(i,j)*nDonors(i,j)   *ralphD(i,j)	
 			FD0=FD0+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*ralphA(i,j)
-			if(idType(i,j)==1603)FC0_ralphC=FC0_ralphC+xFrac(i)*nDegree(i,j) !only one C allowed on type 1603, so nCarboxy(i,j)=1 always.
+			if(idType(i,j)==1603)FC0_ralphC=FC0_ralphC+xFrac(i)*nDegree(i,j) !one C allowed on type 1603 => nCarboxy(i,j)=1 always.
 			avgNDS=avgNDS+xFrac(i)*nDegree(i,j)*nDonors(i,j)	
 			avgNAS=avgNAS+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)
 		enddo	
 	enddo
-	moreDonors=0
-	if(avgNAS < avgNDS)moreDonors=1
+	moreDonors=.FALSE.
+	if(avgNAS < avgNDS)moreDonors=.TRUE.
 	if(FA0==0 .or. FD0==0)then
 		if(LOUDER)write(dumpUnit,601)' MEM2: No assoc. FA0,FD0=',FA0,FD0
 		return ! no need to calculate if either no donors or no acceptors
@@ -276,11 +287,12 @@ END MODULE Assoc
 		if(.not.isAcid)return
 	endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	if(LOUDER)write(dumpUnit,'(a,2E12.4,1x,8i6,1x)')' MEM2: x1,x1old,ID,IDold ',xFrac(1),xOld(1),(ID(i),i=1,nComps),(IDold(i),i=1,nComps)
+	if(LOUDER)write(dumpUnit,'(a,2E12.4,1x,8i6,1x)')' MEM2: x1,x1old,ID,IDold ',xFrac(1),xOld(1),(ID(i),i=1,nComps),IDold(1:nComps)
 	if(LOUDER)write(dumpUnit,601)' MEM2: etaOld,rdfOld ',etaOld,rdfOld
-	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10.or.etaOld.le.0  )then	!Only use default estimate if compounds or composition have changed.
+	xDiff=SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
+	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. xDiff > Ftol/10.or.etaOld.le.0  )then	
 	!Only use default estimate if compounds or composition have changed.
-		if(LOUDER)write(dumpUnit,'(a,i6,1x,6E12.4)')' MEM2:New IDs or X ',SUM( ID(1:nComps)-IDold(1:nComps) ),SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
+		if(LOUDER)write(dumpUnit,form611)' MEM2:New IDs or X ',SUM( ID(1:nComps)-IDold(1:nComps) ),xDiff 
 		ralphAmean=ralphAmax
 		ralphDmean=ralphDmax
 		if(moreDonors)then
@@ -288,14 +300,14 @@ END MODULE Assoc
 		else
 			ralphAmean=ralphAmean*avgNDS/avgNAS
 		endif
-	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 ) > Ftol/10  )then	!Only use default estimate if compounds or composition have changed.
+	!if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. xDiff ) > Ftol/10  )then	!Use default estimate if compds or x's have changed
 		if(LOUDER)write(dumpUnit,601)' MEM2: fresh ralphAmean,ralphDmean= ',ralphAmean,ralphDmean
 	else !if( SUM(xFrac(1:nComps)) < 0)then
 		if(etaOld > 0)then ! adapt old values.to accelerate Z iterations
 			sqArg=eta/etaOld*rdfContact/rdfOld
 			if(sqArg < zeroTol)then
 				iErr=12
-				if(LOUDER)write(dumpUnit,'(a,4f10.4)')' MEM2: sqArg for ralphMean update. eta,etaOld,rdfContact,rdfOld',eta,etaOld,rdfContact,rdfOld
+				if(LOUDER)write(dumpUnit,form610)' MEM2: sqArg err ralphMean. eta,etaOld,rdf,rdfOld',eta,etaOld,rdfContact,rdfOld
 			endif
 			ralphAmean=ralphAmean*SQRT(sqArg)
 			ralphDmean=ralphDmean*SQRT(sqArg)
@@ -315,7 +327,7 @@ END MODULE Assoc
 	if(LOUDER)write(dumpUnit,'(a,f8.2,11f8.5)')' MEM2:T,eta',tKelvin,eta !,(etaPure(i),i=1,nComps)
 	error=1234
 	itMax=44
-	if(LOUDER)write(dumpUnit,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0  ',nIter,ralphAmean,ralphDmean,FA,FD,FA0,FD0
+	if(LOUDER)write(dumpUnit,form611)' iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0  ',nIter,ralphAmean,ralphDmean,FA,FD,FA0,FD0
 	do while(ABS(error)>Ftol.and.nIter<itMax)
 		nIter=nIter+1
 		!if(nIter > 33)picard=0.5D0
@@ -325,7 +337,7 @@ END MODULE Assoc
 		sqArgA=delFA*delFA+4*ralphAmean*FA0
 		sqArgD=delFD*delFD+4*ralphDmean*FD0
 		if(sqArgA < zeroTol .or. sqArgD < zeroTol)then
-			if(LOUDER)write(dumpUnit,'(a,i3,4E12.4)')' MEM2: sqArg(A or D). iter,ralphAmean,FA0,ralphDmean,FD0',nIter,ralphAmean,FA0,ralphDmean,FD0
+			if(LOUDER)write(dumpUnit,form611)' MEM2: sqArg(A or D). iter,ralphA,FA0,ralphD,FD0',nIter,ralphAmean,FA0,ralphDmean,FD0
 			iErr=13
 			return
 		endif 
@@ -345,7 +357,7 @@ END MODULE Assoc
 		FAold=FA
 		FDold=FD
 		!Compute new ralphMeans.
-		if(LOUDER)write(dumpUnit,'(a,i3,2f8.2,2f10.4,4E12.4)')' iter,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,ralphAmean,ralphDmean,FA,FD,errA,errD
+		if(LOUDER)write(dumpUnit,form611)' iter,ralph,ralphD,FA,FD,errA,errD',nIter,ralphAmean,ralphDmean,FA,FD,errA,errD
 		ralphDmean= picard*(-1+FA0/sumD)/(FD+1D-9)+(1-picard)*ralphDmean !Using new sumD to compute new ralphMeans.
 		if(ralphDmean < 0)ralphDmean=(-1+FA0/sumD)/(FD+1D-9)
 		if(ralphDmean < 0)ralphDmean=zeroTol
@@ -359,7 +371,8 @@ END MODULE Assoc
 		if(LOUDER)write(dumpUnit,*)'ERROR - NO CNVRG. nIter,FA1,FA=',nIter,FA1,FA
 		!GOTO 86
 	ENDIF
-	if(nIter > itMax-1 .and. LOUDER)write(dumpUnit,'(a,i3,2i5,2F7.4,3f8.2,2f10.4,4E12.4)')' iter,id(1),id(2),eta,xFrac(1),tKelvin,ralphAmean,ralphDmean,FA,FD,errA,errD',nIter,ID(1),ID(2),xFrac(1),tKelvin,ralphAmean,ralphDmean,FA,FD,errA,errD
+	if(nIter > itMax-1 .and. LOUDER)write(dumpUnit,form613)' iter,id1,id2,eta,x1,tKelvin,ralphA,ralphD,FA,FD,errA,errD',&
+	                                                       nIter,ID(1),ID(2),xFrac(1),tKelvin,ralphAmean,ralphDmean,FA,FD,errA,errD
 	!  fAssoc ITERATION HAS CONCLUDED
 	if(isAcid)then
 		FC=2*FC0_ralphC*ralphC/( 1+SQRT(1+4*FC0_ralphC*ralphC*ralphC) )
@@ -400,7 +413,6 @@ END MODULE Assoc
 	IDold(1:nComps)=ID(1:nComps)
 	etaOld=eta
 	rdfOld=rdfContact
-	if(isZiter==1)return 
 	!aAssoc= 0 !already initialized at the top.
 	betadFA_dBeta=0
 	betadFD_dBeta=0
@@ -417,11 +429,12 @@ END MODULE Assoc
 			bepsA=(eAcceptorKcal_mol(i,j)/RgasCal*1000/tKelvin)
 			dLnAlpha_dLnBeta=DEXP(bepsA)	! Eqs. 44,45
 			if(bepsA > 1.D-4)dLnAlpha_dLnBeta=dLnAlpha_dLnBeta*(bepsA)/(dLnAlpha_dLnBeta-1)
-			betadFD_dBeta=betadFD_dBeta+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*XA(i,j)*ralphA(i,j)*dLnAlpha_dLnBeta
+			betadFD_dBeta=betadFD_dBeta+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*XA(i,j)*ralphA(i,j)*0.5d0*dLnAlpha_dLnBeta
 			bepsD=(eDonorKcal_mol(i,j)/RgasCal*1000/tKelvin)
 			dLnAlpha_dLnBeta=DEXP(bepsD)
 			if(bepsD > 1.D-4)dLnAlpha_dLnBeta=dLnAlpha_dLnBeta*(bepsD)/(dLnAlpha_dLnBeta-1)
-			betadFA_dBeta=betadFA_dBeta+xFrac(i)*nDegree(i,j) * nDonors(i,j) *XD(i,j)*ralphD(i,j)*dLnAlpha_dLnBeta
+			betadFA_dBeta=betadFA_dBeta+xFrac(i)*nDegree(i,j) * nDonors(i,j) *XD(i,j)*ralphD(i,j)*0.5d0*dLnAlpha_dLnBeta  
+			! the 0.5 comes from dLnRalph = 0.5*dLnAlpha
 			if(idType(i,j)==1603)then
 				bepsC=3*(eDonorKcal_mol(i,j)+eDonorKcal_mol(i,j))/(2*RgasCal/1000*tKelvin)
 				dLnAlpha_dLnBeta=DEXP(bepsC)
@@ -431,11 +444,15 @@ END MODULE Assoc
 		enddo
 		if(LOUDER)write(dumpUnit,611)'i,sumLnXi=',i,sumLnXi
 		aAssoc=aAssoc+xFrac(i)*sumLnXi	! ln(XD)=ln(XA) so *2.
-		rLnPhiAssoc(i)=sumLnXi-(hAD+hDA+hCC)/2*(dAlpha-1)*bVolCc_mol(i)/bVolMix !*( 1+(dAlpha-1)*rhoMol_cc*bVolCc_mol(1:nComps) )	! Eq. 42
+		rLnPhiAssoc(i)=sumLnXi-(hAD+hDA+hCC)/2*(dAlpha-1)*bVolCc_mol(i)/bVolMix ! Eq. 42
 	enddo
 611 format(1x,a,i11,12E12.4)
-	aAssoc=  aAssoc+(hAD+hDA+hCC)/2  ! Eqs. 1 & 40
-	uAssoc= -( FA*betadFD_dBeta+FD*betadFA_dBeta+FC*betadFC_dBeta )/2 ! Eq. 43
+	aAssoc=  aAssoc+(hAD+hDA+hCC)/2  ! Eqs. 1 & 40. Validation that dSUM(xi*SumLnXi)/dBeta=0 is given at end of paper.
+	!aAssocPas=aAssoc
+	if(isZiter==1)return 
+	!(hAD+hDA)/2=hAD = FA*FD by Eq 40.
+	uAssoc= -( FA*betadFD_dBeta+FD*betadFA_dBeta+FC*betadFC_dBeta/2 ) ! Eqs. 43,44
+	!uAssocPas=uAssoc
 	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' MEM2: aAssoc,fugAssoc= ',aAssoc,(rLnPhiAssoc(i),i=1,nComps)
 	if(LOUDER)write(dumpUnit,'(a,6E12.4)')' MEM2: BdFA/dB,BdFD/dB=',betadFA_dBeta,betadFD_dBeta
 	if(ABS(hAD-hDA) > Ftol)then
@@ -452,14 +469,14 @@ END MODULE Assoc
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!  ELLIOTT'S SUBROUTINE 
 	!  20221202 Initial adaptation MEM2 paper: IECR,61(42):15725. Start as accelerator for initial guesses of SS method.
-	SUBROUTINE MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErr )!,aAssoc,uAssoc,rLnPhiAssoc,ier)
+	SUBROUTINE MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErr )
 	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,dumpUnit,RgasCal,form612
 	USE Assoc
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (fAssoc) AND zAssoc given rho,VM
 	Implicit NONE !DoublePrecision(A-H,K,O-Z)
 	!PARAMETER(nmx=55)
 	DoublePrecision xFrac(nmx),ralph(nmx,maxTypes),rLnPhiAssoc(nmx) !,KVE(nmx)
-	DoublePrecision tKelvin,rhoMol_cc,zAssoc,aAssoc,uAssoc 
+	DoublePrecision tKelvin,rhoMol_cc,zAssoc,aAssoc,uAssoc  ,FA,FD,betadFD_dBeta,prefix  !,aAssocPas,uAssocPas,zAssocPas 
 	DoublePrecision eta,bVolMix,rdfContact,dAlpha,FA0 !,picard,ralphAmax !,Ftol,ralphDmax,avgNAS,avgNDS !,ralphDmean,FD0,FC0_ralphC
 	DoublePrecision betadFA_dBeta,sqArg,errOld
 	DoublePrecision sumA,hAD,hDA,bepsA,sumLnXi,dLnAlpha_dLnBeta,fOld,fAssoc1,fAssoc,ERR,change,bigYhb
@@ -467,13 +484,14 @@ END MODULE Assoc
 	Integer, STATIC:: IDold(nmx)  								            ! static is equivalent to the "SAVE" attribute
 	Integer isZiter,nComps,iErr, iComp,iType,i,j,itMax,nIter,nSitesTot,iComplex,iErrCode !,iErrMEM,moreDonors,isDonor,isAcceptor
 	LOGICAL LOUDER,isAcid
+	!common/MEM2parts/FA,FD,betadFA_dBeta,betadFD_dBeta,aAssocPas,uAssocPas,zAssocPas
 	!  NDi     = THE DEGREE OF POLYMERIZATION OF COMPO i
 	!  fAssoc  = THE CHARACTERISTIC ASSOCIATION = 1/RALPHi(1/XAi-1)
 	!  RALPHi  = ROOT OF ALPHA WHERE ALPHAi=rho*bVoli*KADi*Ei/(1-1.9eta)
 	!  ier     = 4  eta > 0.53
 	LOUDER=LOUD	! from GlobConst
 	!LOUDER=LOUDERWert
-	!LOUDER = .TRUE. ! for local debugging.
+	!LOUDER= .TRUE. ! for local debugging.
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
 	eta=rhoMol_cc*bVolMix
 	Call RdfCalc(rdfContact,dAlpha,eta)
@@ -492,13 +510,15 @@ END MODULE Assoc
 	isAcid=0
 	DO iComp=1,nComps
 		do iType=1,nTypes(iComp)		
-			nSitesTot=nSitesTot+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) !ndHb(iType) should be zero if iType does not hBond.
+			nSitesTot=nSitesTot+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) 
+			!ndHb(iType) should be zero if iType does not hBond.
 			if(idType(iComp,iType)==1603)isAcid=1
 			iComplex=nDonors(iComp,iType)*nAcceptors(iComp,iType)
 			eHbKcal_mol(iComp,iType)=( eDonorKcal_mol(iComp,iType)+eAcceptorKcal_mol(iComp,iType) )/2.d0 
-			if(iComplex.ne.0)iComplex=1  !in general, nDs or nAs could be 2, 3,... (e.g. water).  But complexation is either true or false.
-			bigYhb=iComplex*(EXP(eHbKcal_mol(iComp,iType)/tKelvin/RgasCal*1000)-1) !the iComplex factor permits eHb to be non-zero, but still have zero complexation.  e.g. acetone+chloroform: nDs1=0, nAs1=1, nDs2=1, nAs2=0.  So complexation can occur between nAs1*nDs2, but not nDs1*nAs2.
-
+			if(iComplex.ne.0)iComplex=1  !nDs or nAs could be 2, 3,... (e.g. water).  But complexation is either true or false.
+			bigYhb=iComplex*(EXP(eHbKcal_mol(iComp,iType)/tKelvin/RgasCal*1000)-1) 
+			! iComplex permits eHb to be non-zero, but still have zero complexation. 
+			!eg. acetone+chloroform: nDs1=0, nAs1=1, nDs2=1, nAs2=0. So complexation can occur between nAs1*nDs2, but not nDs1*nAs2
 			sqArg=bondVolNm3(iComp,iType)*avoNum*rhoMol_cc*rdfContact*bigYhb
 			IF(sqArg < 0)THEN
 				if(LOUDER)write(dumpUnit,*) 'neg alpha in wertheim. eta=',eta
@@ -518,7 +538,7 @@ END MODULE Assoc
 		do iType=1,nTypes(iComp)      
 			iComplex=nAcceptors(iComp,iType)*nDonors(iComp,iType)
 			if(iComplex.ne.0)then !only apply symmetric rule when acceptors AND donors on a site.
-				FA0=FA0+xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)*ralph(iComp,iType) !/(1+fAssoc*ralph(iComp,iType))
+				FA0=FA0+xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)*ralph(iComp,iType) !
 				if(LOUDER)write(dumpUnit,612)' MEM1: iComp,iType,ralph',iComp,iType,ralph(iComp,iType)
 				if(ralph(iComp,iType) > ralphMean)ralphMean=ralph(iComp,iType) ! Infinity norm for initial estimate.
 			endif
@@ -534,14 +554,15 @@ END MODULE Assoc
 		nIter=0
 		ERR=1111
 		itMax=123
-		do while(ABS(ERR) > 1.D-9.AND.nIter < itMax) ! Don't use ERR/fAssoc because:(1)fAssoc~0 sometimes (2) max(fAssoc) ~ 1 which isn't "large."
+		do while(ABS(ERR) > 1.D-9.AND.nIter < itMax) ! Don't use ERR/fAssoc because:(1)fAssoc->0 (2) max(fAssoc) ~ 1.
 			nIter=nIter+1                  
 			sumA=0 ! = SUM( xi*NDi*NAi*ralphi/(1+ralphi*FA) ) = FA = FA0 if no association
 			DO iComp=1,nComps
 				do iType=1,nTypes(iComp)      
 					iComplex=nAcceptors(iComp,iType)*nDonors(iComp,iType)
 					if(iComplex > 0)then !only apply symmetric rule when acceptors AND donors on a site.
-						sumA=sumA+xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)*ralph(iComp,iType)/(1+fAssoc*ralph(iComp,iType))
+						prefix=xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)
+						sumA=sumA+prefix*ralph(iComp,iType)/(1+fAssoc*ralph(iComp,iType))
 					endif
 				enddo
 			enddo
@@ -604,10 +625,11 @@ END MODULE Assoc
 			sumLnXi=sumLnXi+nDegree(i,j)*(  nAcceptors(i,j)*DLOG( XA(i,j) )*2  )	! ln(XD)=ln(XA) so *2.
 		enddo
 		aAssoc=aAssoc+xFrac(i)*sumLnXi	! ln(XD)=ln(XA) so *2.
-		rLnPhiAssoc(i)=sumLnXi-(hAD+hDA)/2*(dAlpha-1)*bVolCc_mol(i)/bVolMix !*( 1+(dAlpha-1)*rhoMol_cc*bVolCc_mol(1:nComps) )	! Eq. 42
+		rLnPhiAssoc(i)=sumLnXi-(hAD+hDA)/2*(dAlpha-1)*bVolCc_mol(i)/bVolMix 	! Eq. 42
 		!write(dumpUnit,611)' MEM1: iComp,sumLnXi,lnPhi=',i,sumLnXi,rLnPhiAssoc(i)
 	enddo
 	aAssoc=  aAssoc+(hAD+hDA)/2  ! Eqs. 1 & 40
+	!aAssocPas=aAssoc
 	if(LOUDER)write(dumpUnit,610)' MEM1:         fugAssocBefore=',(rLnPhiAssoc(i),i=1,nComps)
 	if(LOUDER)write(dumpUnit,*)' MEM1: nTypes()=',nTypes(1:nComps)
 	
@@ -618,11 +640,16 @@ END MODULE Assoc
 			dLnAlpha_dLnBeta=DEXP(bepsA)	! Eqs. 44,45
 			if(bepsA > 1.D-4)dLnAlpha_dLnBeta=dLnAlpha_dLnBeta*(bepsA)/(dLnAlpha_dLnBeta-1)
 			if(LOUDER)write(*,form612)' MEM1:i,j,eA,bepsA,BdLnAlph_dLnB',i,j,eAcceptorKcal_mol(i,j),bepsA,dLnAlpha_dLnBeta
-			betadFA_dBeta=betadFA_dBeta+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*XA(i,j)*ralph(i,j)*dLnAlpha_dLnBeta
+			betadFA_dBeta=betadFA_dBeta+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*XA(i,j)*ralph(i,j)*0.5d0*dLnAlpha_dLnBeta	  
+			! 0.5 because dLnRalph=0.5*dLnAlpha
 		enddo
 	enddo
 	! Note: betadFA_dBeta here is actually betadFA_dBeta/(-half)
-	uAssoc= -fAssoc*betadFA_dBeta   !cf E'22(Eq43): FA=FD=> -(FA*betadFD_dBeta+FD*betadFA_dBeta)/2 = -FA*betadFA_dBeta
+	uAssoc= -betadFA_dBeta*fAssoc*2   !cf E'22(Eq43): FA=FD=> -(FA*betadFD_dBeta+FD*betadFA_dBeta) = -2*FA*betadFA_dBeta
+	!uAssocPas=uAssoc
+	FA = fAssoc ! for common/MEM2parts/...
+	FD = fAssoc ! for common/MEM2parts/...
+	betadFD_dBeta=betadFA_dBeta
 	xOld(1:nComps)=xFrac(1:nComps)
 	IDold(1:nComps)=ID(1:nComps)
 	etaOld=eta

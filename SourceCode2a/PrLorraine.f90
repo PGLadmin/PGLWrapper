@@ -4239,7 +4239,7 @@ end module
 			  IF(i.NE.j) THEN
 				  pargE(i,j) = agE0(i,j)/t0 + bgE0(i,j) + cgE0(i,j)*t0
 				  expArg= -alphgE(i,j) * pargE(i,j)
-				  if(expArg > 222)expArg=222 ! JRE 20210601: prevent exponential overflow. e.g. This may happen for bad guess of age0()
+				  if(expArg > 222)expArg=222 ! JRE 20210601: prevent exponential overflow. This may happen for bad guess of age0()
 				  expA(i,j) = DEXP(expArg)
 				  if(itempc.le.tempcmax) then
 					 pargEt(itempc,i,j) = pargE(i,j)
@@ -4259,7 +4259,7 @@ end module
 					  pargE(i,j) = agE0(i,j)/t0 + bgE0(i,j) &
 		&                             + cgE0(i,j)*t0
 				  expArg= -alphgE(i,j) * pargE(i,j)
-				  if(expArg > 222)expArg=222 ! JRE 20210601: prevent exponential overflow. e.g. This may happen for bad guess of age0()
+				  if(expArg > 222)expArg=222 ! JRE 20210601: prevent exponential overflow. This may happen for bad guess of age0()
 					  if(itempc.le.tempcmax) then
 						 pargEt(itempc,i,j) = pargE(i,j)
 						 expAt(itempc,i,j) = expA(i,j)

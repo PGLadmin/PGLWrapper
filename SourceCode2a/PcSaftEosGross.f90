@@ -9,7 +9,9 @@
 !> \brief Module with important global constants and parameters
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
-Module PARAMETERS	! JRE: This is an unfortunate choice of module name because many programs may have their own "parameters."  These "PARAMETERS" are fairly universal, so let's just make due and hope to avoid collisions.
+Module PARAMETERS	
+! JRE: This is an unfortunate choice of module name because many programs may have their own "parameters."  
+!      These "PARAMETERS" are highly USEd in PC-SAFT code, so let's just hope to avoid collisions with other codes.
 
   implicit none
   save
@@ -151,7 +153,7 @@ module pcsaft_pure_and_binary_parameters
   !-----------------------------------------------------------------------------
   real(dp), public, allocatable, dimension(:,:)        :: kij            ! regular binary param., for cross-energy param. epsilon
   real(dp), public, allocatable, dimension(:,:)        :: lij            ! asymmetric parameter, for cross-energy param. epsilon
-  real(dp), public, allocatable, dimension(:,:)        :: kij_assoc      ! binary parameter, for cross-association energy epsilon_AB
+  real(dp), public, allocatable, dimension(:,:)        :: kij_assoc      ! binary parameter,  cross-association energy epsilon_AB
   real(dp), public, allocatable, dimension(:,:)        :: kij_t          ! T-dependent correction to binary parameter kij
 
   !-----------------------------------------------------------------------------
@@ -319,7 +321,7 @@ subroutine pcsaft_pure_parameters
         ! epsAB/k[K], DM[Debye], Q[DA], NumberOfAssociationSites
         !-----------------------------------------------------------------------
         read ( 53, '(a)', IOSTAT = read_info) entire_line
-        if ( read_info == 0 ) read (entire_line, *, IOSTAT = read_info) r_CAS_name, r_compna,  &	   ! JRE20210524, added ", read_info)"
+        if ( read_info == 0 ) read (entire_line, *, IOSTAT = read_info) r_CAS_name, r_compna,  & ! JRE20210524,added ", read_info)"
              r_parameter_set, r_mm, r_mseg, r_sigma, r_epsilon_k,  &
              r_dipole_moment, r_quadru_moment, rest_of_line
 			 if(read_info /= 0)then
@@ -8693,10 +8695,10 @@ subroutine state_trho ( tF, rhoi_in, pcalc, molar_rho, s, h, s_res, cp )
   ! add ideal gas contributions to molar enthalpy and molar entropy
   !-----------------------------------------------------------------------------
 
-  !call enthalpy_ig ( tF, pcalc, xF, cpig, hig, sig )	  !JRE disabled because it would require adding another module.
-  !h = h + hig														  !JRE disabled because it would require adding another module.
-  !s = s + sig														  !JRE disabled because it would require adding another module.
-  !if ( present( cp ) ) cp = cp + cpig						   !JRE disabled because it would require adding another module.
+  !call enthalpy_ig ( tF, pcalc, xF, cpig, hig, sig )		!JRE disabled because it would require adding another module.
+  !h = h + hig												!JRE disabled because it would require adding another module.
+  !s = s + sig												!JRE disabled because it would require adding another module.
+  !if ( present( cp ) ) cp = cp + cpig						!JRE disabled because it would require adding another module.
 
   !-----------------------------------------------------------------------------
   ! molar density
@@ -11152,13 +11154,14 @@ end subroutine jacobi_eigenvalue
 
 
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-!JRE These routines provide the interface from Gross's PcSaft to UaWrapper and CalcEos. They are at the end because the modules must come first.
+!JRE These routines provide the interface from Gross's PcSaft to UaWrapper and CalcEos. 
+!    They are at the end because the modules must come first.
 !       
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 subroutine GetPcSaft(nComps,casrn,iErr)
 	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	!use input_output, only: read_problem_definition
-	use GlobConst !, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos, PGLinputDir,pi,avoNum,Tc,Pc,Zc,TcEos,PcEos,ZcEos,tKmin,ID !JRE LOUD=.FALSE. to silence I/O feedback.
+	use GlobConst ! e.g.: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos, PGLinputDir,pi,avoNum,Tc,Pc,Zc,TcEos,PcEos,ZcEos,tKmin,ID
 	use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
 	use PARAMETERS, only: dp, nsite
 	use eos_constants
@@ -11273,7 +11276,7 @@ subroutine GetPcSaft(nComps,casrn,iErr)
 					if(LOUD)print*,'Got it! iComp,compna=',i,'  ',TRIM(alias)
 					if(LOUD)write(*,*)r_mm,r_mseg,r_sigma,r_epsilon_k, r_dipole_moment,r_quadru_moment, TRIM(rest_of_line)
 					sigmaNm3=(r_sigma/10)**3
-					bVolCc_mol(i)=r_mseg*sigmaNm3*3.14159265d0/6*602.2147d0 !bVol just needs to be close for eta initialization etc.
+					bVolCc_mol(i)=r_mseg*sigmaNm3*3.14159265d0/6*602.2147d0 !bVol just needs to be close for eta initialization etc
             end if
         enddo !while .NOT.parameter_assigned
         close (53)
@@ -11336,9 +11339,9 @@ end subroutine GetPcSaft
 	real(dp), dimension(ncomp)                      :: fugacity ![=] MPa
 	real(dp), dimension(ncomp)                      :: mu,mu_res ![=] J/mol
 	real(dp), dimension(ncomp)                      :: rhoiJre ![=] molecules/Angst^3
-	!real(dp), dimension(ncomp,ncomp)                :: w_rkrl, wig_rkrl  !JRE These are optional in chemical_potential_trho and not needed for Fugi at this time.
+	!real(dp), dimension(ncomp,ncomp)               :: w_rkrl, wig_rkrl  !JRE These are optional. Not needed for Fugi at this time.
 	real(dp)                                        :: molar_rho,totMol,vTotCc,aRes,uRes
-	real(dp)                                        :: sRes_R,hRes_RT     !JRE Gross passes these values but PGLWrapper needs aRes,uRes
+	real(dp)                                        :: sRes_R,hRes_RT !JRE Gross passes these values but PGLWrapper needs aRes,uRes
 	real(dp)                                        :: pcalc
 	logical LOUDER
 	LOUDER=.FALSE.
@@ -11407,11 +11410,11 @@ subroutine FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,chemPoRes,rhoMol_cc,zFactor,
 	real(dp)                                        :: eta
 	real(dp)                                        :: eta_start
 	real(dp), dimension(ncomp)			:: mu_res, rhoiJre, fugacity
-	!real(dp), dimension(ncomp)                      :: mu				  !JRE These are optional in chemical_potential_tp and not needed for Fugi at this time.
-	!real(dp), dimension(ncomp,ncomp)                :: lnphi_nj		 !JRE they can be activated by tacking them on to the end of the call to chemical_potential_tp.
+	!real(dp), dimension(ncomp)                      :: mu	!JRE These are optional Not needed for Fugi at this time.
+	!real(dp), dimension(ncomp,ncomp)                :: lnphi_nj !JRE Tack them to end of the call to chemical_potential_tp.
 	real(dp)                                        :: molar_rho
 	real(dp)                                        :: pcalc
-	real(dp)                                        :: sRes_R,hRes_RT     !JRE Gross passes these values but PGLWrapper needs aRes,uRes
+	real(dp)                                        :: sRes_R,hRes_RT     !JRE PGLWrapper needs aRes,uRes
 	logical LOUDER  !JRE This can be set to LOUD in order to facilitate debugging if desired.
     LOUDER=.FALSE.
     LOUDER=LOUD
@@ -11432,7 +11435,7 @@ subroutine FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,chemPoRes,rhoMol_cc,zFactor,
 	eta_start=1.d-5
 	if( LIQ==1 .or. LIQ==3)eta_start=0.45D0
 	!print*,'calling chempo'
-	call chemical_potential_tp ( t_input, p_input, x_input, eta_start, rhoiJre, mu_res) !, mu, lnphi_nj ) !function overload, last two are optional.
+	call chemical_potential_tp ( t_input, p_input, x_input, eta_start, rhoiJre, mu_res) !function overload, last two are optional.
 	chemPoRes(1:ncomp)=mu_res(1:ncomp)
 	if(LOUDER)print*,'mu_res:',chemPoRes( 1:ncomp )
 	fugacity(1:ncomp)=x_input(1:ncomp)*pMPa*exp( chemPoRes(1:ncomp) )

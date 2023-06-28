@@ -28,7 +28,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	!iErr=1 !Parms missing and iErrExact.ne.0 for at least one component
 	LOGICAL LOUDER
 	LOUDER=LOUD
-	!LOUDER=.TRUE.
+	LOUDER=.TRUE.
 	idCas(1:NC)=idCasPas(1:NC) ! workaround after promoting idCas to GlobConst 
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or isPcSaft.
 	isESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI
@@ -59,7 +59,8 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	do i=1,nDeck
 		READ(31,'(a222)')dumString
 		if(isMEM2)then
-			READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I),NDA(i),NDSA(I),NASA(I),idCasa(i)
+			READ(dumString,*,ioStat=ioErr)IDA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)&
+			                                                                            ,NDA(i),NDSA(I),NASA(I),idCasa(i)
 			!if(LOUDER)write(dumpUnit,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)
 		else ! iEosOpt=2,12,13 all use ESD96.
 			READ(dumString,*,ioStat=ioErr)IDA(I),CAi,QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I) ,idCasa(i)
@@ -91,10 +92,10 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
     !  Begin by computing corr states values.  these will be replaced if in dbase
     ierCompExact=0
 	if(iEosOpt > 4)then
-		ierCompExact=11 ! Set error for all comps. Declare error because iEosOpt > 4 means using only GC parameters from one of ParmsEsdEmami__
+		ierCompExact=11 !Declare error because iEosOpt > 4 means using only GC parameters from one of ParmsEsdEmami__
 	else
 		if(Tc(1) < 4)call GetCritCas(NC,idCas,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
-		call ExactEsd(NC,vx,c,q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc or Asso+. Wait to see if Parms are in ParmsEsd before failing.
+		call ExactEsd(NC,vx,c,q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc. Check ParmsEsd before fail.
 		!mShape(1:nmx)=Q(1:nmx)
 		if(iErrExact>0)then
 			if(LOUDER)write(dumpUnit,*)'GetESDWarning: iErrExact=',iErrExact,' ierComp='	,ierCompExact(1:NC)
@@ -127,13 +128,13 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 				epsA_kB(J)=eAccEpsK(I)
 				epsD_kB(J)=eDonEpsK(I)
 				ND(J)=NDA(i)
-				DH(J)=DHA(I)*1000/RgasCal/ Tc( j)			! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
+				DH(J)=DHA(I)*1000/RgasCal/ Tc( j)	! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
         		tKmin(J)=0.4d0*Tc(J) ! this is the general rule for ESD.
 				NAS(J)=NASA(I)
 				NDS(J)=NDSA(I)
 				iComplex=0
 				if(NAS(j)*NDS(j) > 0)iComplex=1
-				if(iComplex==0 .and. iEosOpt==2)KCSTAR(j)=0 !ParmsEsd may contain parameters for compounds that solvate but do not associate (for iEosOpt==4). These need to be killed for iEosOpt==2.
+				if(iComplex==0 .and. iEosOpt==2)KCSTAR(j)=0 ! Disable solvation for iEosOpt==2 unless self-assoc.
 				KadNm3(j)=KcStar(j) !KcStar[=] nm^3 since 2021.
 				nDegree(j,1)=NDA(i)
 				nAcceptors(j,1)=NASA(i)
@@ -141,12 +142,8 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 				eAcceptorKcal_mol(j,1)=eAccEpsK(I)/1000*(RgasCal)	! cf. Table 6.1 of PGL6ed
 				eDonorKcal_mol(j,1)=eDonEpsK(I)/1000*(RgasCal)
 				bondVolNm3(j,1)=KcSta(i) !*bVolCc_mol(j)/avoNum
-				!iComplex=0
-				!if(NAS(j)*NDS(j) > 0)iComplex=1
-				!if(iComplex==0 .and. iEosOpt==2)KCSTAR(j)=0 !ParmsEsd may contain parameters for compounds that solvate but do not associate (for iEosOpt==4). These need to be killed for iEosOpt==2.
-				!if(iComplex==0 .and. iEosOpt==2 .and. LOUDER)write(dumpUnit,*) 'iComplex=0 for assoc???' !ParmsEsd may contain parameters for compounds that solvate but do not associate (for iEosOpt==4). These need to be killed for iEosOpt==2.
 				if(LOUDER)write(dumpUnit,602)'GetEsdCAS:iGotIt! id,bVol,eAcc=',ID(j),vx(J),eAccEpsK(I)
-				if(louder)write(dumpUnit,*)'GetEsdCas: nTypes,nDegree,nAcc,nDon=',nTypes(j),nDegree(j,1),nAcceptors(j,1),nDonors(j,1)
+				if(louder)write(dumpUnit,*)'GetEsdCas:nTypes,nDeg,nAcc,nDon=',nTypes(j),nDegree(j,1),nAcceptors(j,1),nDonors(j,1)
 				exit !exits this do loop, not the outer one.
 			ENDIF
 		enddo
@@ -171,7 +168,8 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	if(LOUDER)then
         write(dumpUnit,*)'  ID     NAME       mESD    eok      bVol    Nd   KADnm3   eDon   eAcc(kcal/mol)'
 	    do i=1,NC
-		    write(dumpUnit,606)IDCas(i),NAME(i),q(i),eokP(i),vx(i),NDS(i),NAS(i),KadNm3(i),eDonorKcal_mol(i,1),eAcceptorKcal_mol(i,1) !/1000
+		    write(dumpUnit,606)IDCas(i),NAME(i),q(i),eokP(i),vx(i),NDS(i),NAS(i),KadNm3(i),&
+			                                                 eDonorKcal_mol(i,1),eAcceptorKcal_mol(i,1) !/1000
         enddo
     end if
 606	format(i9,1x,a11,f9.3,f8.2,f8.2,2i3,1x,f8.6,2f8.0)
@@ -270,9 +268,7 @@ subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 	enddo
 	return
 end	!subroutine ExactEsd
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!	FugiESD
 	!   LATEST REVISION : 
 	!	9/94 jre
@@ -299,7 +295,7 @@ end	!subroutine ExactEsd
 	!	1102 0.058	 23.574	1.5655	270.14	4.985	0.0283	1	1	.2222 .2222	-4.407776333	7.447791846	-7.880790386
 	!	bMix  	cShapeMix	cbMix 	qYbMix	k1YbMix	etaLiq 	zRep	zAtt	zAssoc
 	!	20.545	1.1460274	23.5457	31.5621	44.1112	0.32134	3.78232	-2.7751	-1.9951	
-	!	Example 2b.  ~MeOH+~EtOH at 393.15K,0.1MPa, Hij=0, Kij=0.002,~Ref[2]corrected.(The typos in <qYb> were beyond help and the hBonding has completely changed along with b,c,e.)
+	!	Example 2b.  ~MeOH+~EtOH at 393.15K,0.1MPa, Hij=0, Kij=0.002,~Ref[2]corrected for typos.
 	!	id  xi  	   b	   c   	eokp	eHb(kcal)KcStar	NAS NDS	XA  	XD	lnPhiAssoc	lnPhiRep	lnPhiAtt
 	!	1101 0.942	 10.414	2.349	197.01	5.266	0.0226	1	1	.2934 .2934	-3.028929333 7.054903125	-8.020987388
 	!	1102 0.058	 15.778	2.500	206.75	4.985	0.0283	1	1	.2652 .2652	-3.528006835 9.328508527	-10.59426183
@@ -346,7 +342,7 @@ end	!subroutine ExactEsd
 	!        17 - eta > etaMax or eta < 0
 	!		111 - goldenZ instead of real Z.
 	!
-	DATA INITIAL/1/  !Zm=9.5 since 1996, at least.  It is 9.5 in the CHEMCAD documentation, the EL text, and 2002.  It is not mentioned in ref[2,3,4,5,6]
+	DATA INITIAL/1/  !Zm=9.5 since 1996. It is 9.5 in the EL text, and Ref6. Not mentioned in ref[2,3,4,5]
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
 	if(LOUDER)call QueryParMix(1,checkKij12,iErrBip)
@@ -398,7 +394,7 @@ end	!subroutine ExactEsd
 			errBesteta=ABS(CHNG)
 		endif
 		if(eta < 0 .or. eta > 1/1.9)eta=etaOld-DSIGN(0.1D0,CHNG)*etaOld
-		IF(DABS(CHNG) < 1.D-9 .and. eta > 0)EXIT  ! Don't use CHNG/eta here. Converge quickly to ideal gas if P->0, still ~9 sigfigs if liquid.
+		IF(DABS(CHNG) < 1.D-9 .and. eta > 0)EXIT  ! Don't use CHNG/eta. Converge quickly to ideal gas if P->0, ~9 sigfigs if liquid
 	enddo !nIter=1,itMax
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!   Iteration Concluded    !!!!!!!!!!!!!!!!!!!!!!!!!
 	if(eta < 0 .or. eta > 1.9)then
@@ -420,9 +416,11 @@ end	!subroutine ExactEsd
 	if(eta > 0.43.and.LOUDER)write(dumpUnit,'(a,i3,F8.2,2F8.5)')' FugiESD: converged. nIter,eta,T,x1=',nIter,tKelvin,xFrac(1),eta
 	if(ABS(eta-rho*bMix) > 1E-11 .and. LOUDER)write(dumpUnit,*) 'FugiESD: eta.ne.(rho*bMix)?'
 	if(pMPa==0 .and. LOUDER)write(dumpUnit,*)' FugiEsd: P=0? LIQ,P=',LIQ,pMPa
-	!zFactor=P/(rho*Rgas*T)  ! add this to improve precision when computing rho from Z after return.   
+	!zFactor=P/(rho*Rgas*T)  ! add this to improve precision when computing rho from Z after return.
+	zStore=zFactor   
 	isZiter=0
 	Call FuEsdVtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErrF)
+	if(ABS( (zFactor-zStore)/zStore ) > 1.D-4)pause 'FugiESD: zFactor changed on last call???'
 	if(zFactor < zeroTol)then
 		iErr=11
 		if(LOUDER)write(dumpUnit,*)'FugiEsd: converged Z <= 0. eta,Z=',eta,zFactor
@@ -480,11 +478,13 @@ end	!subroutine ExactEsd
 	DoublePrecision k1(nmx) 
 	LOGICAL LOUDER
 	common/FugiParts/fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),Zrep,Zatt,Zassoc,aRep,aAtt,aAssoc,uAtt,uAssoc
+	!common/MEM2parts/FA,FD,betadFA_dBeta,betadFD_dBeta,aAssocPas,uAssocPas,zAssocPas
 	DATA K10,K2,ZM,initCall/1.7745D0,1.0617D0,9.5D0,1/
 
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
 	  
+	stepSize=1.D-4
 	iErr=0 !1=warning from AlpSolEz2, 11=input nonsense, 12=xFrac<0, 13=critical error from AlpSol, 14=voidFrac<0..
 	totMoles=sum( gmol(1:NC) )
 	xFrac(1:NC)=gmol(1:NC)/totMoles
@@ -497,10 +497,10 @@ end	!subroutine ExactEsd
 	TminTot=.01
 	TrVolatile=0.1
 	DO I=1,NC
-		rLogPr=DLOG10( 0.0001/Pc(i) )	! ESD not recommended below 0.0001 MPa for pure fluids. For mixes, ensure most volatile comp has Psat > 0.0001 MPa. Think about polymers.
+		rLogPr=DLOG10( 0.0001/Pc(i) )	! ESD not for Psat<0.0001 MPa. In mixes, ensure most volatile comp has Psat > 0.0001 MPa
 		aScvp=7*(1+acen(i))/3	 !SCVP: log10(Pr)=7(1+w)/3*(1-1/Tr) = a*(1-x) 
 		xt1= 1-rLogPr/aScvp  ! x = 1/Tr at Psat=0.0001 MPa, first approximation of x = x1 + dx
-		xt = xt1 -0.178*acen(i)*acen(i)*(1-xt1)*(1-xt1)  ! This crude empirical correlation was developed for nonadecanol.  cf. PGL6Samples.xlsx(nC19oh).
+		xt = xt1 -0.178*acen(i)*acen(i)*(1-xt1)*(1-xt1)  !Crude empirical correlation. cf. PGL6Samples.xlsx(nC19oh).
 		if( xt > 2.222)xt = 2.2222	!1/2.2222 = 0.45. If 
 		if( xt < 1 .and. LOUDER)write(dumpUnit,*) 'FugiEsd: TrMin > Tc???'
 		TrMin = 1/xt ! = min( Tr@Psat=0.0001 or 0.45 )
@@ -544,7 +544,8 @@ end	!subroutine ExactEsd
 			Y(I,J)=DEXP(EOK(I,J)/tKelvin)-K2
 			QV(I,J) = (Q(I)*bVolCc_mol(J) + Q(J)*bVolCc_mol(I)) / 2.d0
 			YQVIJ(I,J)=QV(I,J)*Y(I,J)
-			CVIJ(I,J) = (C(I)*bVolCc_mol(J) + C(J)*bVolCc_mol(I)) / 2.d0 ! e.g. (x1*c1+x2*c2)*(x1*b1+x2*b2) = x1^2*c1*b1+x1*x2*(c1*b2+c2*b1)+x2^2*b2^2
+			CVIJ(I,J) = (C(I)*bVolCc_mol(J) + C(J)*bVolCc_mol(I)) / 2.d0 
+			! e.g. (x1*c1+x2*c2)*(x1*b1+x2*b2) = x1^2*c1*b1+x1*x2*(c1*b2+c2*b1)+x2^2*b2^2
 			YQVM=YQVM+YQVIJ(I,J)*xFrac(I)*xFrac(J)	   
 			CVM = CVM + CVIJ(I,J)*xFrac(I)*xFrac(J)	   !note: above means <c>=sum(xi*ci) and <b>=sum(xj*bj) 
 		enddo
@@ -560,11 +561,6 @@ end	!subroutine ExactEsd
 	else
 		CALL MEM1(isZiter,tKelvin,xFrac,NC,rho,zAssoc,aAssoc,uAssoc,fAssoc,fugAssoc,iErrMEM )!,aAssoc,uAssoc,rLnPhiAssoc,ier)
 	endif
-!	CALL AlpSolEz2(isZiter,tKelvin,xFrac,Nc,VM,rho,zAssoc,aAssoc,uAssoc,fugAssoc,iera)
-!	IF(iera(1) > 0)then
-!       if(iera(1)>10)iErr=13 ! This is a warning level for iErr when AlpSol did not converge.
-!		if(iera(1)==1)iErr=1
-!   endif
 	if(LOUDER)write(dumpUnit,601)' FuEsdVtot: rho,zAssoc=',rho,zAssoc
 	if(iErrMEM > 0 .and. LOUDER)write(dumpUnit,601)' FuEsdVtot: iErrMEM > 0. rho,zAssoc=',rho,zAssoc
 	if(iErrMEM==1)iErr=1
@@ -579,43 +575,41 @@ end	!subroutine ExactEsd
 	    IF(LOUD)write(dumpUnit,*) 'FuEsdVtot:Error! (1-1.9*eta) IS -VE. eta,rho=',eta,rho
 		iErr=14
     endif
+	if(LOUDER)write(dumpUnit,form610)' FuEsdVtot: done with isZiter=1. zAssoc,zFactor=',zAssoc,zFactor
 	if(iErr > 10)return
 
 
-
+	!aRep= -4.d0/1.9D0*DLOG(voidFrac)*CVM/VM
+	aRep= -4.d0/1.9D0*DLOG(voidFrac)*Cmix
+	aAtt= -ZM*YQVM/K1YVM*DLOG(1.d0+K1YVM*rho)
+	aRes=aRep+aAtt+aAssoc !-DLOG(Z) !don't subtract log(z) for aRes(T,V). Important for EAR.
 	if(isZiter==1)return ! don't need the rest if isZiter.
-
-
-
  	DO I=1,NC
 	   YQVI(I)=0.D0
 	   CVI(I)=0.D0
 	enddo     
-	UATT=0.d0
+	BdYb_dB=0
+	BdYbq_dB=0
 	DO I=1,NC
 		!ralph(I)=SQRT(alphAD(I,I))	 ! ralph is computed in alpsolEz.
-		UATT=UATT+xFrac(I)*vx(I)*EOK(I,I)/tKelvin*(Y(I,I)+K2)*K1(I)       
+		BdYb_dB=BdYb_dB+xFrac(I)*vx(I)*EOK(I,I)/tKelvin*(Y(I,I)+K2)*K1(I)  ! = Beta*d<k1Yb>/dBeta     
 		DO J=1,NC
+			BdYbq_dB=BdYbq_dB+xFrac(J)*xFrac(i)*QV(i,j)*EOK(i,j)/tKelvin*(Y(i,j)+K2) ! = Beta*d<Ybq>/dBeta
 			YQVI(I)=YQVI(I)+YQVIJ(I,J)*xFrac(J)
 			CVI(I)=CVI(I) + CVIJ(I,J)*xFrac(J)
  		enddo
 	enddo
-	aAtt= -ZM*YQVM/K1YVM*DLOG(1.d0+K1YVM*rho)
-	!aRep= -4.d0/1.9D0*DLOG(voidFrac)*CVM/VM
-	aRep= -4.d0/1.9D0*DLOG(voidFrac)*Cmix
-	UATT= -ZM*YQVM*rho/(1+K1YVM*rho)*UATT/K1YVM	!uAtt=...uAtt/k1YVM where uAtt defined in 3rd line of above do loop.
+	UATT= -ZM*YQVM*rho/(1+K1YVM*rho)*BdYb_dB/K1YVM + aAtt*(BdYbq_dB/YQVM-BdYb_dB/K1YVM) !FYI:I had omitted the 2nd term previously
 
 	!     CALLING ASSYMU IF NUMBER OF DONOR SITES AND ACCEPTOR SITES ARE NOT EQUAL 
 	!      IF(IFLAG.EQ.2)CALL ASSYMU(ALPHAD,ALPHDA,XA,XD,X,ND,NC,QIJ,uAssoc)
 
-	uRes=UATT+uAssoc
-	aRes=aRep+aAtt+aAssoc !-DLOG(Z) !don't subtract log(z) for aRes(T,V). Important for EAR.
-	if(LOUDER)write(dumpUnit,601)' FuEsdVtot: zAssoc,aAssoc,uAssoc=',zAssoc,aAssoc,uAssoc
+	!if(LOUDER)write(dumpUnit,601)' FuEsdVtot: zAssoc,aAssoc,uAssoc=',zAssoc,aAssoc,uAssoc
 
 	if (isZiter==0) then
 		!call WertheimFugc(xFrac,vMolecNm3,tKelvin,NC,eta,fugAssoc,h_nMichelsen,dfugAssoc_dT,dfugAssoc_drho,dh_dT,dh_drho)
         if( zFactor < zeroTol)then  ! Z < 0 is no problem given Vtot because ln(Z) is not relevant.  JRE 20210724
-		    if(LOUDER)write(dumpUnit,*) 'FuEsdVtot: zFactor.le.0 for last iteration.'
+		    if(LOUDER)write(dumpUnit,*) 'FuEsdVtot: zFactor.le.0 when isZiter=0. zAssoc,Z=',zAssoc,zFactor
 			iErr=3	  ! warning level because another call might produce Z > 0.
 			goto 86
         endif
@@ -623,7 +617,7 @@ end	!subroutine ExactEsd
 		DO I=1,NC
 			!FUGREP(I)=FREP*( 2.d0*C(I)/Cmix-vx(I)/VM ) + zRep*vx(I)/VM
 			fugRep(i)=aRep*( C(I)/Cmix ) + zRep*vx(I)/VM ! For pure i, FugRepi= -4ci/1.9*ln(1-1.9eta) + 4ci*eta/(1-1.9eta) 
-			fugAtt(i)=aAtt*( 2*YQVI(I)/YQVM-K1(I)*Y(I,I)*vx(I)/K1YVM )+zAtt*K1(I)*Y(I,I)*vx(I)/K1YVM !91-pres form, complete w/o dNk1YbNk, cf. EL99 p559 & S&E91apx
+			fugAtt(i)=aAtt*( 2*YQVI(I)/YQVM-K1(I)*Y(I,I)*vx(I)/K1YVM )+zAtt*K1(I)*Y(I,I)*vx(I)/K1YVM !91-pres form,
 			!fugAssoc(i)=ND(i)*2*DLOG(XA(i,1)) + zAssoc*1.9D0*vx(i)*rho !JRE'96 Eq.43.
 			FUGC(I)=FUGREP(I)+FUGATT(I)+fugAssoc(I)  ! -DLOG(Z)  Don't subtract ln(Z) when given Vtot as independent variable.
 			rLnGamRep(i)=FUGREP(i)-zRep*vx(i)/VM  ! cf. Bala and Lira (2016), Eqs A6-A14. to correct from constant volume to P.
@@ -632,6 +626,19 @@ end	!subroutine ExactEsd
 			IF(LOUDER)write(dumpUnit,'(i3,f7.4,9f10.4)')i,xFrac(i),rLnGamRep(i),rLnGamAtt(i),rLnGamAssoc(i) !,ralpha(i),ralphd(i)
 		ENDDO
 	endif
+	!I've lost faith in uAssoc for MEM2. Differentiate numerically.
+	if(isTPT)then  ! disables because isESD =/= isTPT. Change to isMEM2 if you want to enable. 
+		Tplus =tKelvin*(1+stepSize)
+		Tminus=tKelvin*(1-stepSize)
+		CALL MEM2(isZiter,Tplus ,xFrac,NC,rho,Zdum,aPlus ,uAssoc,CVI,iErrMEM )! reusing CVI here to avoid replacing fugAssoc
+		CALL MEM2(isZiter,Tminus,xFrac,NC,rho,Zdum,aMinus,uAssoc,CVI,iErrMEM )!,ier)
+		uAssoc= -tKelvin*(aPlus-aMinus)/(Tplus-Tminus)
+	endif
+	uRes=UATT+uAssoc
+
+	aAssocPas=aAssoc
+	uAssocPas=uAssoc
+
 	if(LOUDER)write(dumpUnit,*) 'FuEsdVtot: Check results before returning.'
 86	return
 	end !subroutine FuEsdVtot
@@ -669,7 +676,7 @@ subroutine QueryParPureEsd(iComp,iParm,value,iErr)
 	endif
 	return
 end	Subroutine QueryParPureEsd
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine SetParPureEsd(iComp,iParm,value,iErr)
 	USE EsdParms      !Just for ESD
 	IMPLICIT NONE
@@ -703,5 +710,5 @@ subroutine SetParPureEsd(iComp,iParm,value,iErr)
 	endif
 	return
 end	Subroutine SetParPureEsd
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
