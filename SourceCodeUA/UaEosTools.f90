@@ -88,14 +88,12 @@ END MODULE GibbsMin
 			write(dumpUnit,*) 'PsatEar: error after spinodals: rhoVap/rhoLiq < 0'
 			goto 86
 		endif
-		pEubank=Rgas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) )	!EAR method of Eubank and Hall (1995), assuming 1.2x shifts on V&L relative to spinodals.
+		pEubank=Rgas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) ) !EAR method of Eubank and Hall (1995)
 		!pOld=pEubank/10  !JRE: I find Eubank overestimates P sometimes. It even gets higher than pMax
 	else ! If Tr < 0.85, compute pSatItic estimate  FPE,501:112236(19), JCP,110:3043(99)
 		pOld=1D-1 !If p < 0, then the vapor density goes negative and log(rhoLiq/rhoVap) is indeterminate.
         !NOTE: Don't use pOld=0 when pOld > 0. You might get an error because vdw loop doesn't cross zero!
 		if(LOUDER)write(dumpUnit,*)'PsatEar:calling liquid fugi for ITIC initial guess. ID,Tc=',ID(1),Tc(1)
-		!if(LOUDER)write(dumpUnit,601)'PsatEar:eAcc,eDon',(eAcceptorKcal_mol(1,j),j=1,nTypes(1)),(eDonorKcal_mol(1,j),j=1,nTypes(1))
-		!call FUGI(tK,pOld,xFrac,NC,1,FUGC,zLiq,ier) !LIQ=1=>liquid root with fugc calculation so we get Ares.
 		CALL FugiTP( tK,Pold,xFrac,NC,1,rhoLiq,zLiq,aResLiq,FUGC,uSatL,iErrF )
 		if(iErrF > 10)then
 			if(LOUDER)write(dumpUnit,'(a,i12)')' PsatEar: Error from ITIC call to fugi. iErrF=',iErrF
@@ -111,15 +109,15 @@ END MODULE GibbsMin
 		endif
 		!AresLiq=Ares_RT						!AresVap  +  Zvap-1 -ln(Zvap) =AresLiq+ZLiq-1-ln(ZLiq)							 
 		!rhoLiq=pOld/(zLiq*Rgas*tK)		!=>	!B2*rhoVap+B2*rhoVap+ln(rhoVap/rhoLiq) =AresLiq+0-1  
-		!rhoLiq=etaPass/bVolCc_mol(1) ! crazy precision is required for acids (ZL < 1D-7) or when etaLiq > 0.98 (and Z->0). e.g. pentanoic acid (1258)
 		etaLiq=rhoLiq*bVolCc_mol(1)
 		if(etaLiq < 0.15D0 .and. LOUDER)write(dumpUnit,*)'PsatEar: etaLiq < 0.15? pOld,etaLiq,tK=',pOld,rhoLiq*bVolCc_mol(1),tK
         rhoVap=rhoLiq*EXP( AresLiq-1 ) !pSatItic, FPE, 501:112236(19), Eq 19. Ares_RT from GlobConst
 		pSatItic=rhoVap*Rgas*tK
 		etaVap=rhoVap*bVolCc_mol(1)
 		!call FuVtot(1,tK,pSatItic,xFrac,NC,0,FUGC,zVap,ier)
-		if(LOUDER)write(dumpUnit,601)' PsatEar: Calling init FuVtot. T,etaLiq,etaVap,aResLiq=',tK,rhoLiq*bVolCc_mol(1),rhoVap*bVolCc_mol(1),aResLiq    
-		call FuVtot(1,tK,1/rhoVap,xFrac,NC,FUGC,zVap,aRes,uRes,iErrF)		!isZiter=1=>vapor Z with no fugc calculation. zVap far from zero.
+		if(LOUDER)write(dumpUnit,601)' PsatEar: Calling init FuVtot. T,etaLiq,etaVap,aResLiq=', &
+		                                                                     tK,rhoLiq*bVolCc_mol(1),rhoVap*bVolCc_mol(1),aResLiq
+		call FuVtot(1,tK,1/rhoVap,xFrac,NC,FUGC,zVap,aRes,uRes,iErrF) !isZiter=1=>vapor Z with no fugc calculation. zVap >> zero.
 		if(iErrF > 10)then
 			if(LOUDER)write(dumpUnit,'(a,i12)')' PsatEar: Error from ITIC call to fugi. iErrF=',iErrF
 			ierCode=19
@@ -192,7 +190,7 @@ END MODULE GibbsMin
         if(pOld < 1E-8 .and. iter > 2)then
 			etaLiq=rhoLiq*bVolCc_mol(1)
 			if(etaLiq < 0.15D0 .and. LOUDER)write(dumpUnit,601)'Psat: etaLiq < 0.15? pOld,zLiq,tK,etaLiq=',pOld,zLiq,tK,etaLiq
-            rhoVap=rhoLiq*EXP( aResLiq+zLiq-1-aResVap+zVap-1 ) !pSatItic, FPE, 501:112236(19), Eq 19.  aDepVap might be significant for carbo acids.
+            rhoVap=rhoLiq*EXP( aResLiq+zLiq-1-aResVap+zVap-1 ) !pSatItic, FPE, 501:112236(19), Eq 19.aDepVap=/=0 for carbo acids
             pTest=rhoVap*Rgas*tK*zVap
 			ierCode=1 ! assign warning in this case. 
 			exit
@@ -220,7 +218,8 @@ END MODULE GibbsMin
 	pMPa=pOld
 	if(ABS(change/pMPa) > tol .or. iter.ge.itMax)then
 		ierCode=2
-		if(LOUDER)write(dumpUnit,'(a,i3,8E12.4)')' PsatEar:tolerance not met. iter,T,etaL,etaV,relDev',itMax,tK,rhoVap*bVolCc_mol(1),rhoLiq*bVolCc_mol(1),change/pMPa
+		if(LOUDER)write(dumpUnit,form611)' PsatEar:tolerance not met. iter,T,etaL,etaV,relDev', &
+		                                                            itMax,tK,rhoVap*bVolCc_mol(1),rhoLiq*bVolCc_mol(1),change/pMPa
 		pMPa=pBest
 		goto 86
 	endif
@@ -231,7 +230,7 @@ END MODULE GibbsMin
 	if(LOUDER.and.initCall)write(dumpUnit,*) 'Psat: P,rhoVap,rhoLiq',pMPa,rhoVap,rhoLiq
 	if(LOUDER)write(dumpUnit,'(a,3f9.5)') ' Psat: P,etaVap,etaLiq',pMPa,rhoVap*bVolCc_mol(1),rhoLiq*bVolCc_mol(1)
 	isZiter=0
-	!if(ierCode==0) call FuVtot(isZiter,tK,1/rhoLiq,xFrac,NC,FUGC,ZLiq,iErrFu) !one last call to fugi for chemPo and debugging. We know the density so use it.
+	!if(ierCode==0) call FuVtot(isZiter,tK,1/rhoLiq,xFrac,NC,FUGC,ZLiq,iErrFu) !one last call to fugi for chemPo and debugging.
 	FUGC(1)=86.86D0
 	if( zLiq > 0)then
 		FUGC(1) = aResLiq+zLiq-1 -DLOG(zLiq)
@@ -241,7 +240,7 @@ END MODULE GibbsMin
 		goto 86
 	endif
 	if(LOUDER.and.initCall)write(dumpUnit,*)'Psat: cmprsblty,CvRes_R=',cmprsblty,CvRes_R
-	!if(ierCode==0)call Fugi(tK,pMPa,xFrac,NC,1,FUGC,zLiq,ier) !one last call to fugi for chemPo and debugging.
+	!if(ierCode==0)call Fugi(tK,pMPa,xFrac,NC,1,FUGC,zLiq,ier) !one last call to fugi for debugging.
 	chemPot=FUGC(1) !since chemPotL=chemPotV at pSat       
 	if( (isTPT .or. isESD) .and. pMPa < 1.D-4 .and. LOUDER)write(dumpUnit,*)'Psat: 1.D-4 > pMpa = ',pMPa
 	if( (isTPT .or. isESD) .and. pMPa < 1.D-4)ierCode=7
@@ -253,8 +252,7 @@ END MODULE GibbsMin
 	RETURN
 	END	! subroutine PsatEar()
 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	SUBROUTINE Spinodal(NC,xFrac,tKelvin,LIQ,rho,zFactor,aRes,uRes,iErr) 
 	!Compute the points where dP/dRho=0 appear at given T.
 	!Method: Golden Section search
@@ -379,7 +377,7 @@ END MODULE GibbsMin
 	return
 	end
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	!C	PURPOSE: COMPUTE THE COMPRESSIBILITY,rhoD2PdRho2_RT, CvRes,& CpRes BY NUMERICAL DIFFERENTIATION
 	!C	Input:
@@ -406,7 +404,8 @@ END MODULE GibbsMin
 	bMix=SumProduct(NC,xFrac,bVolCc_mol)
 	eta=bMix*rhoMol_Cc
 	if(rhoMol_cc < zeroTol .or. tKelvin < zeroTol .or. eta < zeroTol .or. zFactor < zeroTol .or. eta > etaMax)then
-		if(LOUD)write(dumpUnit,*)'NUMDERVS: nonsense input. NC,T,rho,Z,eta,b,x1,bMix=',NC,tKelvin, rhoMol_cc,zFactor,eta, bVolCc_mol(1),xFrac(1),bMix
+		if(LOUD)write(dumpUnit,*)'NUMDERVS: nonsense input. NC,T,rho,Z,eta,b,x1,bMix=',NC,tKelvin, rhoMol_cc,zFactor,eta, &
+		                                                                                             bVolCc_mol(1),xFrac(1),bMix
 		iErr=11
 		return 
 	endif
@@ -459,7 +458,7 @@ END MODULE GibbsMin
 	initCall=0
 	return
 	end
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	!C	PURPOSE: COMPUTE THE COMPRESSIBILITY,rhoD2PdRho2_RT, CvRes,& CpRes BY NUMERICAL DIFFERENTIATION
 	!C	Input:
@@ -601,7 +600,7 @@ END MODULE GibbsMin
 	RETURN
 	END
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	DOUBLE PRECISION FUNCTION DCBRT(X)
 	IMPLICIT DOUBLEPRECISION ( A-H,O-Z)
 	PARAMETER (THRD = 1.0D0/3.0D0)
@@ -610,23 +609,25 @@ END MODULE GibbsMin
 	DCBRT=SIGN*ABS(X)**THRD
 	RETURN
 	END
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !int QueryNparPure();    //number of adjustable parameters for the current model and mixture
 	integer Function QueryNparPure()
 	USE GlobConst, only: iEosOpt !, class
 	parameter(nModels=16)
 !   cf. GlobConst for iEosOpt's as listed below
-!    1     2      3          4        5        6         7         8          9         10      11     12       13         14          15         16             17        18
-!	'PR','Esd96','PRWS','Esd-MEM2','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPR','GCESD','GcEsdTb','TffSPEAD','GcPcSaft','GcPcSaft(Tb)','PRLorraine','ESD2'/
+!    1     2      3          4        5        6         7         8          9         10   
+!	'PR','Esd96','PRWS','Esd-MEM2','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft',
+!   11     12       13         14          15         16             17        18
+!'tcPR','GCESD','GcEsdTb','TffSPEAD','GcPcSaft','GcPcSaft(Tb)','PRLorraine','ESD2'/
 	integer nParInert(nModels),nParAssoc(nModels),nParPolar(nModels) ! the # of pure compound parameters for the ith iEosOpt
 	!               1 2 3 4 5  6 7 8  9 10 11 12 13 14 15 16
 	data nParInert /0,3,0,3,11,0,0,11,0, 3, 4, 3,11, 0, 3, 3/	! e.g. m, sigma, eps/kB. for PcSaft & ESD
 	data nParAssoc /0,2,0,2, 0,0,0, 0,0, 2, 0, 2, 0, 0, 2, 2/	! GC&Tff EOS's have zero adj par's even if assoc. JRE 20210421
 	data nParPolar /0,0,0,0, 0,0,0, 0,0, 2, 0, 0, 0, 0, 0, 0/	! GC&Tff EOS's have zero adj par's even if assoc. JRE 20210421
 	! PR & ESD's use Tc,Pc,w. AC models have no pure pars. 
-	! SPEAD: 11=A0coeff(3),A1coeff(3),A2Coeff(4),vEffNm3. Does not allow adjustment of Assoc parameters because these must be transferable. 
+	! SPEAD: 11=A0coeff(3),A1coeff(3),A2Coeff(4),vEffNm3. No adjustment of Assoc parameters because these are transferable. 
 	! tcPR has alphaN&M, Gc&Tff models have zero adj parameters 
     if(iEosOpt < 1)then
         QueryNparPure=86
@@ -636,7 +637,7 @@ END MODULE GibbsMin
 	!if(class=='assoc')QueryNparPure=QueryNparPure+nParAssoc(iEosOpt)		! m, sigma, eps/kB, Kad, epsHB
 	return
     end
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !int QueryNparMix();    //number of adjustable parameters for the current model and mixture
 	Integer Function QueryNparMix()	!NOTE: calling routine must declare "integer QueryNparMix"
 	USE GlobConst, only: iEosOpt
@@ -679,7 +680,7 @@ subroutine QueryParPure(iComp,iParm,value,iErr)
 	endif
 	return
 end
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine SetParPure(iComp,iParm,value,iErr)
 	USE GlobConst      ! iEosOpt,
 	!USE ESDParms
@@ -698,7 +699,7 @@ subroutine SetParPure(iComp,iParm,value,iErr)
 	return
 end
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	subroutine QueryParMix(iParm,value,iErr)
 	USE GlobConst
 	USE BIPs      !ESD, SPEADMD,
@@ -710,11 +711,12 @@ end
 		if(iErr)return
 	endif
 	if(iEosOpt==10)then
-		call QueryParMixPcSaft(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, so it needs to be separate from Module BIPs. 
+		call QueryParMixPcSaft(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, 
+		!so it needs to be separate from Module BIPs. 
 		return
 	endif
 	if(iEosOpt==17)then
-		call QueryParMixPrLorraine(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, so it needs to be separate from Module BIPs. 
+		call QueryParMixPrLorraine(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, 
 		return
 	endif
 	if(iParm==1)then
@@ -746,11 +748,12 @@ end
 	return
 	end
     
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine SetParMix(iParm,value,iErr)
-!    1     2      3      4      5        6         7         8          9         10      11     12       13         14          15           16
-!	'PR','Esd96','PRWS','Esd','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft','tcPR','GCESD','GcEsdTb','TffSPEAD','GcPcSaft','GcPcSaft(Tb)'/
-!   Diky   12                   6                                                 25      22     23       24         18          26			   2
+!    1     2      3      4      5        6         7         8          9         10    
+!	'PR','Esd96','PRWS','Esd','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft',
+!   11     12       13         14          15           16
+!  'tcPR','GCESD','GcEsdTb','TffSPEAD','GcPcSaft','GcPcSaft(Tb)'/
 	USE BIPs      !ESD, SPEADMD, PR, PRtc,
 	USE GlobConst 
 	DoublePrecision value
@@ -772,11 +775,12 @@ subroutine SetParMix(iParm,value,iErr)
 		if(iErr)return
 	endif
 	if(iEosOpt==10)then
-		call SetParMixPcSaft(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, so it needs to be separate from Module BIPs. 
+		call SetParMixPcSaft(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, 
+		!so it needs to be separate from Module BIPs. 
 		return
 	endif
 	if(iEosOpt==17)then
-		call SetParMixPrLorraine(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, so it needs to be separate from Module BIPs. 
+		call SetParMixPrLorraine(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, 
 		return
 	endif
 	if(iParm==1)then
@@ -809,4 +813,4 @@ subroutine SetParMix(iParm,value,iErr)
 	return
 end	! SetParMix
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -1,4 +1,0 @@
-337.2 K    1.0 MPa
-carbon-dioxide_a  0.5
-ethanol_n  0.5
-

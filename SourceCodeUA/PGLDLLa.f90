@@ -5,8 +5,10 @@ MODULE DLLConst
 	Implicit NONE
 	Integer oldRN1,oldRN2,oldRN3,oldEOS
 	Character*15 EosName(18) 
-	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
-	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)','tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
+	!               1     2       3       4          5          6         7           8              9            10      
+	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)', &
+	  'tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
+	!    11      12        13         14          15           16            17        18
 END MODULE DLLConst
 
 double Precision function FORTRAN_DLL1(i1, d1)
@@ -76,18 +78,18 @@ subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 	    if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
 	    if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
 	    if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
+	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 6
 !	    if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
 	    if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
 	    if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
 	    if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms				    !Diky model 18
-	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 26
-	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 27
+	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 25
+	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters					!Diky model 22
+	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami			!Diky model 23
+	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb			!Diky model 24
+	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 18
+	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 26
+	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
 	    !NewEos: Add here for initializing parms.
 	    if(iErrGet.NE.0)then
 		    ierr=3
@@ -172,7 +174,8 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
     double Precision res
     integer ieos, casrn1, casrn2, prp_id, ierr
     double Precision var1, var2, var3
-    double Precision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
+    double Precision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx) 
+	!FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER localCas(nmx)
 	CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
@@ -220,18 +223,18 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 	    if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
 	    if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
 	    if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
+	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 6
 !	    if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
 	    if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
 	    if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
 	    if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms				    !Diky model 18
-	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 26
-	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 27
+	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 25
+	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters					!Diky model 22
+	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami			!Diky model 23
+	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb			!Diky model 24
+	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 18
+	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 26
+	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
 	    !NewEos: Add here for initializing parms.
 	    if(iErrGet.NE.0)then
 		    ierr=3
@@ -288,14 +291,13 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 			endif
 			!iPhase=1 !set as default
 			!if(expRho/1000 < rhoCritG_cc)iPhase=0
-				!if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
+			!if(LOUD)write(*,form611)' UaWrapper: calling fugi. iPhase,T,P,x1:',iPhase,tKelvin,pMPa,xFrac(1)
 			CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
 			hRes_RT=uRes_RT+zFactor-1
 				!if(LOUD)print*,'UaWrapperMain: Check output from fugi()mix call. ier(1) = ',ier(1)
 			if(iErrF > 0)iErr=iErr+100*iErrF
 			if(iErr > 0)then
-				!write(52,'(1x,2f8.3,F7.4,1x,a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,errDummy,errDummy,errDummy,errDummy,errDummy,errDummy,iErr
-				!if(LOUD)write(*,'(1x,2f8.3,F7.4,1x,a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,errDummy,errDummy,errDummy,errDummy,errDummy,errDummy,iErr
+				!if(LOUD)write(*,form611)aPhase,iErr,tKelvin,pKPa,xFrac(1)
 				!cycle
                 res = 0
                 return
@@ -309,7 +311,7 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 			vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
 			hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
 			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)
-			!write(52,'(1x,2f8.3,F7.4,1x,a3,1x,7E12.4)')tKelvin,pKPa,xFrac(1),aPhase,vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
+			!write(52,form610)aPhase,tKelvin,pKPa,xFrac(1),vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
             if (iProperty==4) res = exp(activity1)
             if (iProperty==5) res = exp(activity2)
             if (iProperty==81) res = 1000*rhoMol_cc
@@ -330,7 +332,8 @@ function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr
     DoublePrecision CalculateProperty2
     integer ieos, casrn1, casrn2, prp_id, ierr
     DoublePrecision var1, var2, var3, res
-    !DoublePrecision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
+    !DoublePrecision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx) 
+	!FUGI requires mole fraction specification because it is written generally for mixtures.
 !	COMMON/eta/etaL,etaV,ZL,ZV
   !DEC$ATTRIBUTES DLLEXPORT::CalculateProperty2
     call CalculateProperty2local(ieos, casrn1, casrn2, prp_id, t, p, x, res, ierr)
@@ -759,21 +762,21 @@ integer function INITIALIZE_MODEL(modelid, Rn1, Rn2, Rn3)
     if (Rn2.eq.0) then
         if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldEOS.ne.ieos) then
 	        if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	        if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
+	        if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms				!Diky model 12
 	        if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
 	        if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	        if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
+	        if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms	!Diky model 6
 !	        if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
 	        if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
 	        if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
 	        if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	        if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	        if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	        if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	        if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	        if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms				    !Diky model 18
-	        if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 26
-	        if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 27
+	        if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 25
+	        if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters					!Diky model 22
+	        if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami			!Diky model 23
+	        if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb			!Diky model 24
+	        if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 18
+	        if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 26
+	        if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
 	    endif
 	        if(iErrGet.NE.0)then
 		        INITIALIZE_MODEL=3
@@ -851,7 +854,8 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
     double Precision res
     integer ieos, casrn1, casrn2, casrn3, prp_id, ierr
     double Precision var1, var2, var3, var4
-    double Precision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx),xPure3(nmx) !FUGI requires mole fraction specification because it is written generally for mixtures.
+    double Precision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx),xPure3(nmx) 
+	!FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER localCas(nmx)
 	CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
@@ -901,18 +905,18 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 	    if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
 	    if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
 	    if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms					!Diky model 6
+	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 6
 !	    if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
 	    if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
 	    if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
 	    if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami					 !Diky model 23
-	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb					 !Diky model 24
-	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms				    !Diky model 18
-	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 26
-	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 27
+	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 25
+	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters					!Diky model 22
+	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami			!Diky model 23
+	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb			!Diky model 24
+	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 18
+	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 26
+	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
 	    !NewEos: Add here for initializing parms.
 	    if(iErrGet.NE.0)then
 		    ierr=3
@@ -959,14 +963,14 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 			iErr=0
 			pMPa=pKPa/1000
 			if( ABS(tKelvin-tPrevious) > 0.1 .or. ABS(pKPa-pPrevious) > 0.1 )then
-				!if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure1(1)
+				!if(LOUD)write(*,form611)' UaWrapper: calling fugi. T,P,iPhase,x1:',iPhase,tKelvin,pMPa,xPure1(1)
 				CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
 				if(iErrF > 0)iErr=iErrF
 				hRes_RT=uRes_RT+zFactor-1
 				vPure1=rGas*tKelvin*zFactor/pMPa
 				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
 				hRes1 = hRes_RT*rGas*tKelvin ! from module
-				!if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xPure2(1)
+				!if(LOUD)write(*,form611)' UaWrapper: calling fugi. T,P,iPhase,x1:',iPhase,tKelvin,pMPa,xPure1(1)
 				CALL FugiTP( tKelvin,pMPa,xPure2,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
 				if(iErrF > 0)iErr=iErr+10*iErrF
 				hRes_RT=uRes_RT+zFactor-1
@@ -978,13 +982,12 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 			endif
 			!iPhase=1 !set as default
 			!if(expRho/1000 < rhoCritG_cc)iPhase=0
-				!if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
+			!if(LOUD)write(*,form611)' UaWrapper: calling fugi. T,P,iPhase,x1:',iPhase,tKelvin,pMPa,xFrac(1)
 			CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
 			if(iErrF > 0)iErr=iErr+10*iErrF
 			hRes_RT=uRes_RT+zFactor-1
 			if(iErr > 0)then
-				!write(52,'(1x,2f8.3,F7.4,1x,a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,errDummy,errDummy,errDummy,errDummy,errDummy,errDummy,iErr
-				!if(LOUD)write(*,'(1x,2f8.3,F7.4,1x,a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,errDummy,errDummy,errDummy,errDummy,errDummy,errDummy,iErr
+				!if(LOUD)write(*,form611)aPhase,iErr,tKelvin,pKPa,xFrac(1)
 				!cycle
                 res = 0
                 return
@@ -998,7 +1001,7 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 			vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
 			hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
 			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)
-			!write(52,'(1x,2f8.3,F7.4,1x,a3,1x,7E12.4)')tKelvin,pKPa,xFrac(1),aPhase,vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
+			!write(52,form610)aPhase,tKelvin,pKPa,xFrac(1),vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
             if (iProperty==4) res = exp(activity1)
             if (iProperty==5) res = exp(activity2)
             if (iProperty==81) res = 1000*rhoMol_cc

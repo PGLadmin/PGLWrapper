@@ -74,7 +74,8 @@
 	do kComp=1,nComps
 		bigSumK=0.d0
 		do jComp=1,nComps
-			bigSumK=bigSumK+xFrac(jComp)*omega(kComp,jComp)/sumDenom(jComp)*( xsTau(kComp,jComp)/tKelvin-sumNumer(jComp)/sumDenom(jComp) )
+			bigSumK=bigSumK+xFrac(jComp)*omega(kComp,jComp)/sumDenom(jComp)*( xsTau(kComp,jComp)/tKelvin &
+			                                                                                    -sumNumer(jComp)/sumDenom(jComp) )
 		enddo
 		xsLnGamma=sumNumer(kComp)/sumDenom(kComp)+bigSumK
 		xsFreeEn =xsFreeEn+xsLnGamma*xFrac(kComp)
@@ -85,7 +86,8 @@
 	aRes=GmixIdSoln+xsFreeEn !assuming Vxs=0
 	do kComp=1,nComps
 		CALL GetVp(nComps,ID,iErrCode)
-		pSat=exp(vpCoeffs(kComp,1)+vpCoeffs(kComp,2)/tKelvin+vpCoeffs(kComp,3)*DLOG(tKelvin)+vpCoeffs(kComp,4)*tKelvin**vpCoeffs(kComp,5))/1000000
+		pSat=exp(vpCoeffs(kComp,1)+vpCoeffs(kComp,2)/tKelvin+vpCoeffs(kComp,3) &
+		                                                      *DLOG(tKelvin)+vpCoeffs(kComp,4)*tKelvin**vpCoeffs(kComp,5))/1000000
 		fugc(kComp)=fugC(kComp)+LOG(pSat/pMPa)
 	enddo
 	return

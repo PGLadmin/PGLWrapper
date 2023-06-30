@@ -11,7 +11,7 @@ subroutine GetPrTc(nComps,iErrCode)
 	!  
 	!  PURPOSE:  LOOKS UP THE PrTc PARAMETERS AND STORES THEM IN USEd PREosParms
 	!  Reference:   Jaubert et al., JCED,63, 3980-3988 (2018)
-	!  Background: TC stands for "translated consistent." it is a volume-translated PR EOS that uses the Twu alpha function with constraints to make the parameters "consistent."
+	!  Background: TC stands for "translated consistent." a volume-translated PR EOS usin Twu alpha function 
 	!
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
@@ -60,18 +60,20 @@ subroutine GetPrTc(nComps,iErrCode)
 			if(ioErr)write(dumpUnit,*)'GetPrTc: i,j,ioErr,String: ',iComp,jComp,ioErr,TRIM(dumString)
 
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!  NOTE!  Jaubert replaces Tc,Pc,acen with his values!!!      !!!!!!!!!!!!!!!!!
-			read(dumString,*,ioStat=ioErr)idBase,Tcj(iComp),PcBar,acenj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),zRa(iComp),tKmin(iComp)
+			read(dumString,*,ioStat=ioErr)idBase,Tcj(iComp),PcBar,acenj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp) &
+			                                                                           ,cVolCc_mol(iComp),zRa(iComp),tKmin(iComp)
 			!if( TminK(iComp) < 50.and.LOUD) write(dumpUnit,*)TRIM(dumString)
 			!if( TminK(iComp) < 50.and.LOUD)write(dumpUnit,*)'GetPrTc: Warning 50>Tmin=',TminK(iComp)
 			if(cVolCc_mol(iComp)==86)cVolCc_mol(iComp)=0
 			!cVolCc_mol(iComp)=0 !for debugging, but it shouldn't matter for VLE.
 			Pcj(iComp)=PcBar !/10 !JRE changed the database to MPa JRE 20200504
-			!read(40,*,ERR=861)idBase,idCc,(zRefDb(iCoeff),iCoeff=1,3),(a1Db(iCoeff),iCoeff=1,nTptCoeffs),(a2Db(iCoeff),iCoeff=1,nTptCoeffs),vMolecDb,tKmin(iComp),nTypes(iComp),(idType(iComp,iType),iType=1,nTypes(iComp)),(nFg(iComp,iType),iType=1,nTypes(iComp))
 			IF(idBase==id(iComp))THEN
 				iGotIt=1  !this will kick us to the next component
 				bVolCc_mol(iComp)=OMB*Rgas*TCj(iComp)/PCj(iComp)-cVolCc_mol(iComp)
-				if(LOUDER)write(dumpUnit,'(i7,5f13.4)')ID(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),tKmin(iComp)
-				if(LOUDER)write(dumpUnit,'(a,5f13.4)')' Jaubert Tc,Pc,acen,bVol= ', Tcj(iComp),Pcj(iComp),acenj(iComp),bVolCc_mol(iComp)
+				if(LOUDER)write(dumpUnit,'(i7,5f13.4)')ID(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp) &
+				                                                                                                     ,tKmin(iComp)
+				if(LOUDER)write(dumpUnit,'(a,5f13.4)')' Jaubert Tc,Pc,acen,bVol= ', Tcj(iComp),Pcj(iComp),acenj(iComp), &
+				                                                                                                 bVolCc_mol(iComp)
 				if(bVolCc_mol(iComp) < 1)then
 					iErrCode=8686
 					if(LOUDER)write(dumpUnit,*)'GetPrTc: bVol < 1??? Could happen if Pc[=]bar or cVol too big.'
@@ -266,7 +268,8 @@ end	!Subroutine SetParPurePrTc
 	do iComp = 1,NC
 		if(PCj(iComp)==0)then
 			iErrZ=11
-			if(LOUD)write(dumpUnit,'(a,F7.2,5F8.3)')' FuPrTcVtot: nonsense input. Tc,Pc,L,M,N,c: ',TCj(iComp),PCj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),tKmin(iComp)
+			if(LOUD)write(dumpUnit,'(a,F7.2,5F8.3)')' FuPrTcVtot: nonsense input. Tc,Pc,L,M,N,c: ',TCj(iComp),PCj(iComp), &
+			                                              alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),tKmin(iComp)
 			cycle
 		endif
 		if(Tcj(iComp) < TcVolatile)then
@@ -275,7 +278,8 @@ end	!Subroutine SetParPurePrTc
 		endif
 		aCrit = OMA*Rgas*Rgas*TCj(iComp)*TCj(iComp)/PCj(iComp)
 		!sTmp = 0.37464 + 1.54226*ACEN(iComp) - 0.26993*ACEN(iComp)*ACEN(iComp)
-		!DLALDT(iComp)= -sTmp*SQRT(Tr/ ALPHA) ! dAlp/dT = 2*sqrt(alp)*S*(-0.5/sqrt(Tr)) = -sqrt(alp)*S/sqrt(Tr); (T/alp)*dAlp/dT= -S*sqrt(Tr/Alp)	 EL2ed Eq.7.18,8.35
+		!DLALDT(iComp)= -sTmp*SQRT(Tr/ ALPHA) ! dAlp/dT = 2*sqrt(alp)*S*(-0.5/sqrt(Tr)) 
+		!                                        = -sqrt(alp)*S/sqrt(Tr); (T/alp)*dAlp/dT= -S*sqrt(Tr/Alp)    EL2ed Eq.7.18,8.35
 		Tr = tKelvin / Tcj(iComp)
 		Pow = alphaM(iComp)*alphaN(iComp)
 		TrPow = Tr**Pow 
@@ -283,14 +287,15 @@ end	!Subroutine SetParPurePrTc
 		rLnAlpha=(Pow-alphaN(iComp))*DLOG(Tr) + alphaL(iComp)*(1-TrPow)	 ! -> -L*TrPow as Tr -> inf
 		if( (rLnAlpha) < -33)rLnAlpha= -33.d0 !avoid exponential underflow
 		ALPHA = EXP(rLnAlpha)  ! -> 0
-		!ALPHA = (  1 + ( 0.37464D0 + acen(iComp)*(1.54226D0 - 0.26993D0*ACEN(iComp)) )*( 1 - DSQRT( Tr) )  )**2	 ! for debugging
+		!ALPHA = (  1 + ( 0.37464D0 + acen(iComp)*(1.54226D0 - 0.26993D0*ACEN(iComp)) )*( 1 - DSQRT( Tr) )  )**2 ! for debugging
 		!ln(ALPHA) = pow*ln(Tr) - N*ln(Tr) + L*(1-Tr^pow)
 		! dLn(ALPHA)/dTr = pow/Tr - N/Tr - L*pow*Tr^(pow-1) 
 		! d2Ln(alpha)/dTr^2 = -pow/Tr^2 + N/Tr^2 -L*pow*(pow-1)*Tr^(pow-2)
 		!(Tr/Alp)*dAlp/dTr = Tr*dLn(alpah)//dTr = Pow - N - L*pow*Tr^Pow   -> -L*pow*Tr^Pow at Tr->inf
 		! T^2*d2(ln(alpha)/dT^2 = -pow + N -L*pow*(pow-1)*Tr^pow
 
-		TdLAL_dT(iComp)= Pow - alphaN(iComp) - alphaL(iComp)*pow*TrPow	 ! Ures/RT= -Ares/RT+(a/bRT)*TdLAL_dT*ln(...) = -Ares/RT + Ares/RT*TdLAL_dT
+		TdLAL_dT(iComp)= Pow - alphaN(iComp) - alphaL(iComp)*pow*TrPow 
+		! Ures/RT= -Ares/RT+(a/bRT)*TdLAL_dT*ln(...) = -Ares/RT + Ares/RT*TdLAL_dT
 		!              = alphaN_i*[alphaM_i-1-alphaL_i*alphaM_i*Tr^(alphaM*alphaN)]
 		! Td/dT[ TdLALdT ] = T*d/dT[ Pow - alphaN(iComp) - pow*alphaL(iComp)*TrPow ]
 		T2d2LAL_dT2(iComp) = -pow+alphaN(iComp) -pow*(pow-1)*alphaL(iComp)*TrPow
@@ -325,7 +330,7 @@ end	!Subroutine SetParPurePrTc
 			aMix = aMix + ALA(iComp,jComp)*xFrac(iComp)*xFrac( jComp)
 			TdALA_dT= ALA(iComp,jComp)*( TdLAL_dT(iComp)+TdLAL_dT( jComp) )/2	 ! ~ [aMix]
 			TdTdALA_dT_dT =     TdALA_dT      * ( TdLAL_dT(iComp) + TdLAL_dT( jComp) )/2 &	   ! ~ [aMix* dAmix/aMix] ~ [aMix]
-			                  +  ALA(iComp,jComp)*( T2d2LAL_dT2(iComp)+T2d2LAL_dT2( jComp) )/2 ! where d2LALdT2= d/dT[ DLALDT ]		 ! ~ [aMix]
+			                  +  ALA(iComp,jComp)*( T2d2LAL_dT2(iComp)+T2d2LAL_dT2( jComp) )/2 ! where d2LALdT2= d/dT[ DLALDT ]
 			TdaMixDt = TdaMixDt + TdALA_dT*xFrac(iComp)*xFrac( jComp)
 			T2d2aMixDt2 = T2d2aMixDt2 + TdTdALA_dT_dT*xFrac(iComp)*xFrac( jComp)
 		enddo
@@ -349,9 +354,11 @@ end	!Subroutine SetParPurePrTc
 !                                                                          = 1+2*brho-brho^2 +crho*(4-brho+2crho)
 !                                                                         = 1 + eta*bq + eta^2*cq; 
 !                                                                         bq = 2+4c/b; cq = -[1-2(c/b)^2]; -qq=bq^2-4cq
-!                                                                        Aatt =(1/sqrt(-qq))*{ ln[ (2cq*eta+bq-sqrt(-qq))/(2cq*eta+bq+sqrt(-qq) ] - ln[ (bq-sqrt(-qq))/(bq+sqrt(-qq) ] } EL2ed Eq. B.34
-!  Alt: RKPR(Cismondi)=>Aatt=(a/bRT)*(1/(d1-d2))*y/[ (1+d1y)(1+d2y) ] ; 1+di*y = 0 => di = -1/yi; yi = [ -bq +/- sqrt(bq^2 - 4cq) ]/2; 
-!        denom = [ (1+d1y)(1+d2y) ] = 1 + (d1+d2) y + d1d2 y^2 => bq = (d1+d2) = C+1; -cq = -d1*d2 = 1-2(c/b)^2 = C    ; d2 = cq/d1 => d1 + cq/d1 = bq => d1^2 + cq -bqd1 = 0 => d1 = ( bq +/- sqrt(bq^2-4*cq) )/2	= (bq +/- sqrtNqq)/2
+!   Aatt =(1/sqrt(-qq))*{ ln[ (2cq*eta+bq-sqrt(-qq))/(2cq*eta+bq+sqrt(-qq) ] - ln[ (bq-sqrt(-qq))/(bq+sqrt(-qq) ] } EL2ed Eq. B.34
+!  Alt: RKPR(Cismondi)=>Aatt=(a/bRT)*(1/(d1-d2))*y/[ (1+d1y)(1+d2y) ] ; 
+!       1+di*y = 0 => di = -1/yi; yi = [ -bq +/- sqrt(bq^2 - 4cq) ]/2; 
+!        denom = [ (1+d1y)(1+d2y) ] = 1 + (d1+d2) y + d1d2 y^2 => bq = (d1+d2) = C+1; -cq = -d1*d2 = 1-2(c/b)^2 = C    ; 
+!           d2 = cq/d1 => d1 + cq/d1 = bq => d1^2 + cq -bqd1 = 0 => d1 = ( bq +/- sqrt(bq^2-4*cq) )/2	= (bq +/- sqrtNqq)/2
 	c_b = cMix/bMix
 	bq=2+4*c_b
 	cq= 2*(c_b)*(c_b)-1
@@ -403,15 +410,17 @@ end	!Subroutine SetParPurePrTc
 	!BIGMESOld=BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
 	!write(dumpUnit,*)'BigMes,BigMesOld:',BigMes,BigMesOld
 	aRes= -LOG(1-eta) + aResAtt
-	!uDep/RT = beta*d(A/RT)/dBeta = -T*d(A/RT)/dT = -T* [ -A/RT^2 + (1/RT)*dA/dT ] = A/RT - (dA/dT)/R = A/RT*[ 1-(T/alpha)*dAlpha/dT ]  
+	!uDep/RT = beta*d(A/RT)/dBeta = -T*d(A/RT)/dT = -T* [-A/RT^2 + (1/RT)*dA/dT ] = A/RT - (dA/dT)/R = A/RT*[1-(T/alpha)*dAlpha/dT]
 	uRes= aResAtt*(1-TdaMixDt/aMix)	! Cv = (dU/dT) = U/T + T*d(U/T)/dT; U/RT = A/RT*(1-TdaMixDt/aMix) => Td(U/RT)/dT = T(dA/RT)/dT -(A/RT)*Td/dT[TdaMixDt/aMix] = -U/RT -A/RT*[ Td(TdaMixDt)/dT -(TdaMixDt/aMix)^2] 
 	!uDep_R = aAtt*T*(1-TdLnAlpha/dT) ~ (a/bR)
 	!d(uDep_R)/dT = 
 	! Td(Ures/RT)/dT = bigmes*[ TdTdaMix_dT_dT/aMix - TdaMixDt^2/aMix^2 ] 
 	CvRes_R=  aResAtt*( -T2d2aMixDt2 - TdaMixDt*TdaMixDt/aMix )/aMix
-	CvRes_R=  aResAtt*( -TdLAL_dT(1)**2 - T2d2LAL_dT2(1) )	 !todo: work on checking the generaliztion to mixtures. Above is slightly off. 
+	CvRes_R=  aResAtt*( -TdLAL_dT(1)**2 - T2d2LAL_dT2(1) ) !todo: check generaliztion to mixtures. Above is slightly off(?) 
 	!T*dZ/dT = T*dZatt/dT = eta*T*d/dT[dAatt/dEta]	; dAatt/dEta= -(aMix/bRT)/denom
-	! T*d/dT[dAatt/dEta]= -T*dLnaMix/dT*(a/bRT)/denom -dAatt_dEta = (TdaMixDt/aMix)*dAatt_dEta - dAatt_dEta	= dAatt_dEta*(TdaMixDt/aMix - 1); NOTE: the -dAatt_dEta comes from the 1/T in a/bRT.
+	! T*d/dT[dAatt/dEta]= -T*dLnaMix/dT*(a/bRT)/denom -dAatt_dEta 
+	!                                               = (TdaMixDt/aMix)*dAatt_dEta - dAatt_dEta	= dAatt_dEta*(TdaMixDt/aMix - 1)
+	!                                                                 NOTE: the -dAatt_dEta comes from the 1/T in a/bRT.
 
 	!zRep=eta/(1-eta) = eta*dArep/dEta
 	!d2ARep/dEta2 = 1/(1-eta)^2
@@ -461,7 +470,7 @@ end	!Subroutine SetParPurePrTc
 			NdC_b_dni= ( cVolCc_mol(iComp) - cMix*bVolCc_mol(iComp)/bMix )/bMix	!NOTE: declared DoublePrecision.
 			!BIGB=b*P/RT  ; c_b = cMix/bMix
 			ChemPoRes = bVolCc_mol(iComp)/bMix*(zFactor-1) - DLOG(1-eta) & 
-			!+ aResAtt*( 2*SUMXA/aMix - bVolCc_mol(ICOMP)/bMix ) + zFactor*(cMix-cVolCc_mol(iComp))*rhoMol_cc	! Privat(2016a) Eq 14.
+			!+ aResAtt*( 2*SUMXA/aMix - bVolCc_mol(ICOMP)/bMix ) + zFactor*(cMix-cVolCc_mol(iComp))*rhoMol_cc ! Privat(2016a) Eq 14
 			+ aResAtt*( 2*SUMXA/aMix - bVolCc_mol(ICOMP)/bMix - NdC_b_dni/(1+c_b) ) &
 			+ zAtt*(1-eta)*NdC_b_dni/(1+c_b)  
 		END IF
@@ -622,7 +631,8 @@ end	!Subroutine SetParPurePrTc
 	pMax= -1234 !for crude goldenz
 	pMin=  1234
 	isZiter=1
-	do while(ABS(change) > 1.D-10 .and. iErr < 10)   ! This gives ~10 sig figs on rho for liq and above initialization gives exact ideal gas value when P->1E-11.
+	do while(ABS(change) > 1.D-10 .and. iErr < 10) ! This gives ~10 sig figs on rho for liq and above 
+	!                                                                    initialization gives exact ideal gas value when P->1E-11.
 		NITER=NITER+1
 		if(niter > itMax)iErr=16
 		if(niter > itMax .and. LOUD)write(dumpUnit,*)'FugiPrTc: iterations exceeded. eta=',eta
@@ -698,7 +708,8 @@ end	!Subroutine SetParPurePrTc
 	vTotCc=totMoles/rhoMol_cc
     if(LIQ > 1)goto 861
 	!
-	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS and derivative props (cmprsblty,CvRes_R,CpRes_R passed by GlobConst) 
+	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS and derivative props 
+	!                       (cmprsblty,CvRes_R,CpRes_R passed by GlobConst) 
 	!
 	isZiter=0
 	call FuPrTcVtot(isZiter,tKelvin,1/rhoMol_Cc,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrZ)

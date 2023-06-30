@@ -6,7 +6,8 @@ MODULE CritParmsDb
 	character*5, STATIC:: classDb(ndb) 
 	character*11, STATIC:: formDb(ndb) 
 	Integer, STATIC:: IDnum(ndb),CrIndex(9999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
-	DoublePrecision, STATIC:: TCD(ndb),PCD(ndb),ACEND(ndb),TbD(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) ! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
+	DoublePrecision, STATIC:: TCD(ndb),PCD(ndb),ACEND(ndb),TbD(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) 
+	! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
 END MODULE CritParmsDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -19,12 +20,13 @@ MODULE BIPs	 ! For molecular level binary interaction parameters.
 	DoublePrecision HIJ(nmx,nmx),HTIJ(nmx,nmx) !molecular hBonding BIPs for ESD. (Spead aBipAd,aBipDa are site based.)
 	DoublePrecision Lij(nmx,nmx) !covolume adjustment.  bVolMix=sum(sum(xi*xj*bij)); bij=(1-Lij)*(bi+bj)/2
 	DoublePrecision xsTau(nmx,nmx),xsTauT(nmx,nmx),xsAlpha(nmx,nmx)	!this is for the PRWS/xsNRTL mixing rule.
-	DoublePrecision tDat(maxPts),PDAT(maxPts),XDAT(maxPts),YDAT(maxPts) !,deviate(maxPts) !can't include Deviate() cuz it's an argument for LmDif.
+	DoublePrecision tDat(maxPts),PDAT(maxPts),XDAT(maxPts),YDAT(maxPts) !,deviate(maxPts) 
+	!can't include Deviate() cuz it's an argument for LmDif.
 	DoublePrecision pDatMin,pDatMax
 	Integer iDat(maxPts)  ! sometimes need to indicate whether the data are for comp1 or comp2. e.g. SLE.
 END MODULE BIPs
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE VpDb
 	USE GlobConst, only:nmx !,dumpUnit
 	IMPLICIT NONE !DoublePrecision(A-H,O-Z)
@@ -35,7 +37,7 @@ MODULE VpDb
 	DoublePrecision vpCoeffs(nmx,5)
 END MODULE VpDb
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode)
 	!Purpose: CALL EOS Get___ ROUTINES, also includes LoadCritParmsDb(if needed),GetCrit, Get(EOS), GetBips, BipIo, 
 	!	SETS UP THE CRITS, EOSPARMS, bips, DEBUG status, FUGI(iEosOpt)
@@ -44,7 +46,7 @@ END MODULE VpDb
 	!reqd routines:
 	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
 	!	LmDifEzCov2.for, Mintools.for
-	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
+	!               1     2       3       4          5          6         7           8              9            10          11
 	USE GlobConst
 	USE CritParmsDb
 	USE BIPs
@@ -72,7 +74,7 @@ END MODULE VpDb
 	return
 	end
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine PGLWrapperStartup(NC,iEosLocal,localCas,ierCode)
 	!Purpose: CALL EOS Get___ ROUTINES, also includes LoadCritParmsDb(if needed),GetCrit, Get(EOS), GetBips, BipIo, 
 	!	SETS UP THE CRITS, EOSPARMS, bips, DEBUG status, FUGI(iEosOpt)
@@ -81,7 +83,7 @@ END MODULE VpDb
 	!reqd routines:
 	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
 	!	LmDifEzCov2.for, Mintools.for
-	!               1     2       3       4          5          6         7           8              9            10          11      12        13         14          15           16            17        18
+	!               1     2       3       4          5          6         7           8              9            10          11
 	USE GlobConst
 	USE CritParmsDb
 	USE BIPs
@@ -126,18 +128,18 @@ END MODULE VpDb
 	if(iEosOpt==2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USEd EsdParms					!Diky model 12
 	if(iEosOpt==3)CALL GetPRWS(NC,iErrGet) 
 	if(iEosOpt==4)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USEd EsdParms					!Diky model 12
-	if(iEosOpt==5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)   !Results placed in USEd: SpeadParms, Assoc					!Diky model 6
+	if(iEosOpt==5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)   !Results placed in USEd: SpeadParms, Assoc			!Diky model 6
 	if(iEosOpt==7)CALL GetNRTL (NC,ID,iErrGet)
 	if(iEosOpt==8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc
 	if(iEosOpt==9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc
-	if(iEosOpt==10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters			!Diky model 25
-	if(iEosOpt==11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						  !Diky model 22
-	if(iEosOpt==12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms, Assoc					 !Diky model 23
-	if(iEosOpt==13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms, Assoc					 !Diky model 24
-	if(iEosOpt==14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc				    !Diky model 18
-	if(iEosOpt==15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's PcSaft parameters			!Diky model 26
-	if(iEosOpt==16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's(Tb) PcSaft parameters			!Diky model 27
-	!if(iEosOpt.eq.17)This is the model number for COSMOtherm, if one is required JRE 20200119.		!Diky model ??
+	if(iEosOpt==10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters		!Diky model 25
+	if(iEosOpt==11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						!Diky model 22
+	if(iEosOpt==12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms, Assoc				!Diky model 23
+	if(iEosOpt==13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms, Assoc				!Diky model 24
+	if(iEosOpt==14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc			!Diky model 18
+	if(iEosOpt==15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's PcSaft parameters		!Diky model 26
+	if(iEosOpt==16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's(Tb) PcSaft parameters	!Diky model 27
+	!if(iEosOpt.eq.17)This is the model number for COSMOtherm, if one is required JRE 20200119.				!Diky model ??
 	!NewEos: Add here for initializing parms.
 	if(iErrGet .ne. 0)then
 		if(LOUD)write(dumpUnit,*)ierCode,' Error in Main: failed to get required dbase props.'
@@ -315,7 +317,8 @@ END MODULE VpDb
 !		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 !			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
 !		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
-		READ (dumString,*)IDnum(I),TCD(I),PcTemp,ACEND(I),TbD(i),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I),solParmD(i),rhoG_cc,rMwD(i),classDb(i),formDb(i),NAMED(i)
+		READ (dumString,*)IDnum(I),TCD(I),PcTemp,ACEND(I),TbD(i),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I), &
+		                                                              solParmD(i),rhoG_cc,rMwD(i),classDb(i),formDb(i),NAMED(i)
 !1	190.56	4.599	0.0115	0.1473	0.9075	1.8243	-3.5604	0.2894	85	 74828	11.62	0.4224	16.04
 		PCD(I)=PcTemp !/10
 		if(rhoG_cc < zeroTol)rhoG_cc=1
@@ -334,7 +337,8 @@ END MODULE VpDb
 102	format(i5,11f10.3,i10,3a4,1x,a12,a33)
 602	format(i5,i11,11f10.3,i10,3a4,1x,a12,a33)
 599	FORMAT(3(1X,i5,1X,A20))
-	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor       Cas#  tC  pC  vC  FORM        Name 
+	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor      &
+	                                                                                          ! Cas#  tC  pC  vC  FORM        Name 
 	CLOSE(40)
 	!if((nDeck1).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
 	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Skipping ParmsCrAdd.'
@@ -419,7 +423,7 @@ END MODULE VpDb
 	RETURN
 	END	!GetCrit()
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	SUBROUTINE GetVpDb(iErrCode)
 	!	PROGRAMMED BY: AV 06/22/06
 	!THIS SUBROUTINE GIVES VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
@@ -447,7 +451,8 @@ END MODULE VpDb
 	DO I=1,NDECK1
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
 		!if(i.eq.691)write(dumpUnit,*)
-		READ(662,*,ioStat=ioErr)IDnum(I),rMINTD(I) ,VALMIND(I) ,rMAXTD(I),VALMAXD(I),AVGDEVD(I),NUMCOEFFD(I) ,(vpCoeffsd(i,iCoeff),iCoeff=1,5)  
+		READ(662,*,ioStat=ioErr)IDnum(I),rMINTD(I) ,VALMIND(I) ,rMAXTD(I),VALMAXD(I),AVGDEVD(I),NUMCOEFFD(I), &
+		                                                                                      (vpCoeffsd(i,iCoeff),iCoeff=1,5)  
 	    if(ioErr.and.LOUD)write(dumpUnit,*) 'inFile=',TRIM(inFile)
 	    if(ioErr.and.LOUD)write(dumpUnit,*) 'ioErr,line,id,vpCoeffs=',ioErr,I,IDnum(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
 	    if(ioErr.and.LOUD)write(dumpUnit,*) 'GetVp: error reading CoeffsVp2a.txt'
@@ -583,7 +588,8 @@ END MODULE VpDb
 	if(LOUD)write(dumpUnit,'(a33,a22)')'GetBip error - error reading ',bipFile
 	if(LOUD)write(dumpUnit,*)'numBips,item',numBips,item
 	if(LOUD)write(dumpUnit,*)'Data read as:'
-	if(LOUD)write(dumpUnit,'(i4,7F8.4)')idBinarY(item),KIJDB(item),KTIJDB(item),wsTAUij(item),wsTAUji(item),wsTauTij(item),wsTauTji(item),alphaDB(item)
+	if(LOUD)write(dumpUnit,'(i4,7F8.4)')idBinarY(item),KIJDB(item),KTIJDB(item),wsTAUij(item),wsTAUji(item), &
+	                                                                                  wsTauTij(item),wsTauTji(item),alphaDB(item)
 	GetBIPs= -1
 	return                      
 	end
@@ -1049,15 +1055,15 @@ END ! subroutine GetCritCas()
 !C
       END
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Integer Function ItsEven(iArg) ! returns 0 for odd and 1 for even.
     integer iArg
 	ItsEven=1-MOD(iArg,2)
 	return
 	end
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	LOGICAL Function bEven(iArg) ! returns 0 for odd and 1 for even.
     integer iArg,iTest
 	bEven=.FALSE.

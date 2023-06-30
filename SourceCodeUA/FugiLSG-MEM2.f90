@@ -25,8 +25,8 @@
 
 	!we do not store the entire database then operate on it because that would take a lot of space.
 	!instead, we rewind and re-read it from the hard drive multiple times.  this happens only at startup.
-	!The basic idea is to search the hard drive until the descriptors of each component are found, then quit and rewind for the next.
-	!For BIPs, a linked list is created so the relevant BIPs can be accessed through a short vector that includes just the nonzero BIPs(?).
+	!The basic idea is to search the hard drive until the descriptors of each component are found, then quit and rewind for next.
+	!For BIPs, a linked list is used so the relevant BIPs can be accessed through a short vector that includes only nonzero BIPs
 	nTypesTot=0
 	do iComp=1,nComps
 		iGotIt=0
@@ -42,7 +42,8 @@
 				iErrCode=12
 				return
 			endif
-			read(dumString,*,ioStat=ioErr)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3),(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),&
+			read(dumString,*,ioStat=ioErr)idBase,idCc,idCasTmp,(zRefCoeff(iComp,iCoeff),iCoeff=1,3), &
+			                             (a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs),&
 				vMolecNm3(iComp),tKmin(iComp),rMwDum,nTypes(iComp),(nDegree(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
 				bVolCc_mol(iComp)=vMolecNm3(iComp)*AvoNum
 			if(ioErr.ne.0)then
@@ -50,7 +51,6 @@
 				iErrCode=13
 				return
 			endif
-			!read(40,*,ERR=861)idBase,idCc,(zRefDb(iCoeff),iCoeff=1,3),(a1Db(iCoeff),iCoeff=1,nTptCoeffs),(a2Db(iCoeff),iCoeff=1,nTptCoeffs),vMolecDb,tKmin(iComp),nTypes(iComp),(idType(iComp,iType),iType=1,nTypes(iComp)),(nFg(iComp,iType),iType=1,nTypes(iComp))
 			IF(idBase==idComp(iComp))THEN
 				iGotIt=1  !this will kick us to the next component
 
@@ -58,11 +58,12 @@
 				if(LOUDER)write(dumpUnit,'(a,5e13.5)')' zRefCof',(zRefCoeff(iComp,iCoeff),iCoeff=1,3)
 				if(LOUDER)write(dumpUnit,'(a,5e13.5)')' a1Coeff',(a1Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
 				if(LOUDER)write(dumpUnit,'(a,5e13.5)')' a2Coeff',(a2Coeff(iComp,iCoeff),iCoeff=1,nTptCoeffs)
-				if(LOUDER)write(dumpUnit,'(a,i3,9(i3,i5))')' nTypes,Nd,Id',nTypes(iComp),(nDegree(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
-				if(LOUDER)write(dumpUnit,'(a,i3,<nTypes(iComp)>i5)')' nTypes,#Fgi',nTypes(iComp),(nDegree(iComp,iType),iType=1,nTypes(iComp))
+				if(LOUDER)write(dumpUnit,'(a,i3,9(i3,i5))')' nTypes,Nd,Id',nTypes(iComp), & 
+				                                                  (nDegree(iComp,iType),idType(iComp,iType),iType=1,nTypes(iComp))
+				if(LOUDER)write(dumpUnit,'(a,i3,11i5)')' nTypes,#Fgi',nTypes(iComp),(nDegree(iComp,iType),iType=1,nTypes(iComp))
 				if(nTypesTot==0)then
 					nTypesTot=1
-					localType( idType(1,1) )= 1 !this must happen 1st, the next step will work fine even if redundant 1st time thru.
+					localType( idType(1,1) )= 1 !this must happen 1st, next step will work fine even if redundant 1st time thru.
 					idLocalType(1)=idType(1,1)	!these pairs point back and forth at each other
 				endif
 				do iType=1,nTypes(iComp) !
@@ -111,7 +112,8 @@
 	!instead, we rewind and re-read it from the hard drive multiple times.  this happens only at startup.
 	DO iComp=1,nComps	!Note: assume all types hbond. It just means summing over some zeroes.
 		!nHbTypes(iComp)=nTypes(iComp) 
-		bondSitesTot=0	!this total is for just this molecule. = sum( iType, nFg(iComp,iType)*(nAs+nDs) ) !so no increment for nAs=nDs=0.
+		bondSitesTot=0	!this total is for just this molecule. = sum( iType, nFg(iComp,iType)*(nAs+nDs) ) 
+		                !so no increment for nAs=nDs=0.
 		numSitesTot=0	!this total is for just this molecule. = sum( iType, nFg(iComp,iType) )
 		do iType=1,nTypes(iComp)
 			numSitesTot=numSitesTot+nDegree(iComp,iType)
@@ -119,7 +121,8 @@
 			eDonorKcal_mol(iComp,iType)=0        
 			eAcceptorKcal_mol(iComp,iType)=0
 			!eHbKcal_mol(iComp,iType)=0  
-			bondVolNm3(iComp,iType)=0 !note: bondVol is same for same type on diff components, but keeping separate for each component allows the potential of adding a comp specific accessibility factor at a later date.
+			bondVolNm3(iComp,iType)=0 !note: bondVol is same for same type on diff components, but keeping separate for each 
+			!                  component allows the potential of adding a comp specific accessibility factor at a later date.
 			nDonors(iComp,iType)=0
 			nAcceptors(iComp,iType)=0
 			!dHkcalMol(iComp)=0
@@ -138,7 +141,8 @@
 			DO jType=1,nDeck
 				read(inHbFile,'(a222)')dumString
 				if(LOUDER)write(dumpUnit,*)TRIM(dumString)
-				read(dumString,*,ioStat=ioErr)mainType,iSubType,ndsBase,nasBase,bondVolDb,bondRateDb,dHDonorKcalDb,dHAcceptorKcalDb
+				read(dumString,*,ioStat=ioErr)mainType,iSubType,ndsBase,nasBase,bondVolDb,bondRateDb,dHDonorKcalDb, &
+				                                                                                                  dHAcceptorKcalDb
 				if(ioErr.ne.0)then
 					iErrCode=18
 					return
@@ -169,7 +173,8 @@
 		!bondVolNm3Esd(iComp)=bondVolNm3Esd(iComp)*( 1+bondRate(iComp,1)*(bondSitesTot/numSitesTot)**iBondExp )
 		!above is for a single bSite/molec.  Below is more general, but not implemented yet.
 		do iHbType=1,nTypes(iComp)
-			bondVolNm3(iComp,iHbType)=bondVolNm3(iComp,iHbType)*( 1+bondRate(iComp,iHbType)*( nDegree(iComp,iHbType)/DFLOAT(numSitesTot) )**iBondExp )
+			screenFactor=( 1+bondRate(iComp,iHbType)*( nDegree(iComp,iHbType)/DFLOAT(numSitesTot) )**iBondExp )
+			bondVolNm3(iComp,iHbType)=bondVolNm3(iComp,iHbType)*screenFactor
             if(bondVolNm3(iComp,iHbType) < 0)bondVolNm3(iComp,iHbType)=2D-8 !this only happens for formic acid. JRE 20200303.
 		enddo
 		if(LOUDER)write(dumpUnit,*)' SiteType:',( idType(iComp,i),i=1,nTypes(iComp))
@@ -232,7 +237,7 @@
 	if(LOUDER)write(dumpUnit,form610)' FuLsgMem2: T,P,x1,Tc1,Tc2=',tKelvin,pMPa,xFrac(1),Tc(1:NC)
 	do iComp = 1,nComps
 		phi=0
-		if( tKelvin < Tc(iComp) )phi=(1-tKelvin/Tc(iComp))**expo		!Zc = PcVc/RTc => Zc*RTc/Pc = Vc => Assume vSat=Vc if T>Tc.
+		if( tKelvin < Tc(iComp) )phi=(1-tKelvin/Tc(iComp))**expo	!Zc = PcVc/RTc => Zc*RTc/Pc = Vc => Assume vSat=Vc if T>Tc.
 		vSat(iComp)=Rgas*Tc(iComp)/Pc(iComp)*( 0.29056+0.08775*acen(iComp) )**(1+phi) !PGL6ed Eq. 5.2-2.
 		if(Tc(iComp) > 300)then
 			phi=phi - (1-298/Tc(iComp))**expo  !PGL6ed Eq. 5.2-6, aka Yamada-Gunn adaptation of Rackett eq.
@@ -289,7 +294,8 @@
 		xsGamma(kComp)=exp( fugc(kComp) )
 		xsFreeEn =xsFreeEn+fugc(kComp)*xFrac(kComp)	! = SUM(xi*lnGami)
 		if(tKelvin < Tc(kComp))then
-			pSat(kComp)=exp(vpCoeffs(kComp,1)+vpCoeffs(kComp,2)/tKelvin+vpCoeffs(kComp,3)*DLOG(tKelvin)+vpCoeffs(kComp,4)*tKelvin**vpCoeffs(kComp,5))/1000000
+			pSat(kComp)=exp(vpCoeffs(kComp,1)+vpCoeffs(kComp,2)/tKelvin+vpCoeffs(kComp,3) &
+			                                                  *DLOG(tKelvin)+vpCoeffs(kComp,4)*tKelvin**vpCoeffs(kComp,5))/1000000
 		else
 			pSat(kComp)=Pc(kComp)*10**( 7*(1+acen(kComp))/3*(1-tKelvin/Tc(kComp)) - 3*exp(-3*Tc(kComp)/tKelvin) )
 		endif

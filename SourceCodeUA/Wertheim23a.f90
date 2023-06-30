@@ -1,4 +1,4 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	! THE WERTHEIM ROUTINES OF SPEAD AND ESD TOGETHER COMBINED BY AGF, Oct. 2009
 	subroutine Wertheim( isZiter,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErrCode)
 	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID ,etaMax,dumpUnit,RgasCal
@@ -13,7 +13,9 @@
 	DoublePrecision xaOld(nmx,maxTypes),xdOld(nmx,maxTypes) !,alphAD(nmx,maxTypes),alphDA(nmx,maxTypes)
     DoublePrecision rdfContact,dAlpha,eta
     DoublePrecision tKelvin,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij
-    DoublePrecision rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc	!dimension FAsolv(nmx,maxTypes),FDsolv(nmx,maxTypes),deltaAlphaA(nmx,maxTypes),deltaAlphaD(nmx,maxTypes) ! solvation factors: e.g. FAsolv = sum(xj*Ndj*XDj*alphADij) = (-1+1/XAi) ~ sqrt(alphaii)*Fassoc
+    DoublePrecision rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc	
+	!dimension FAsolv(nmx,maxTypes),FDsolv(nmx,maxTypes),deltaAlphaA(nmx,maxTypes),deltaAlphaD(nmx,maxTypes) 
+	! solvation factors: e.g. FAsolv = sum(xj*Ndj*XDj*alphADij) = (-1+1/XAi) ~ sqrt(alphaii)*Fassoc
 	data initCall/1/
 	LouderWert=LOUD
 	!LouderWert=.TRUE.
@@ -68,13 +70,15 @@
         nDonComp=0
         nAccComp=0
 		do iType=1,nTypes(iComp)		
-			nSitesTot=nSitesTot+nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) !ndHb(iType) should be zero if iType does not hBond.
+			nSitesTot=nSitesTot+nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) 
+			!ndHb(iType) should be zero if iType does not hBond.
 			nAccComp=nAccComp+nDegree(iComp,iType)*nAcceptors(iComp,iType)
 			nDonComp=nDonComp+nDegree(iComp,iType)*nDonors(iComp,iType)
 			XA(iComp,iType)=1
 			XD(iComp,iType)=1
 			XC(iComp,iType)=1
-			if(LOUD.and.initCall)write(dumpUnit,*)'Wertheim: iComp,iType,#Acc,#Don', iComp,iType,nAcceptors(iComp,iType),nDonors(iComp,iType)
+			if(LOUD.and.initCall)write(dumpUnit,*)'Wertheim: iComp,iType,#Acc,#Don',  &
+			                                                             iComp,iType,nAcceptors(iComp,iType),nDonors(iComp,iType)
 		enddo
         bAssoc(iComp)=.false. ! then check if each component associates.
 		if(	nAccComp*nDonComp > 0 )bAssoc(iComp)=.true.
@@ -116,12 +120,13 @@
 	if(LOUDER)write(dumpUnit,610)' Wertheim-MEM1:fAssoc,zAssoc=',fAssoc,zAssoc 
 	call MEM2(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErr )!,rLnPhiAssoc,ier)
 	if(LOUDER)write(dumpUnit,610)' Wertheim-MEM2:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
-	!if(LOUDER)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
+	!if(LOUDER)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):', &
+	!                                                  XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
 	!if(LouderWert)write(dumpUnit,*) 'Wertheim: MEM2 estimate. Calling XsolJre'
     iDoSolvation=0
     if(isESD)iDoSolvation=0
     !if(isAcid > 0)iDoSolvation=1	 ! FYI: rmsErr on XsolJre2a is 1E-6
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1111111111
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	if(iDoSolvation > 0)then  !checkup: 1E-111  ! Refine from ESD96 if necessary
 		nSitesTot=0
 		one=1
@@ -137,13 +142,14 @@
 		DO iComp=1,nComps
 			do iType=1,nTypes(iComp)		
 				if(idType(iComp,iType)==1603)isAcid=1
-				nSitesTot=nSitesTot+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) !ndHb(iType) should be zero if iType does not hBond.
+				nSitesTot=nSitesTot+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) 
+				!ndHb(iType) should be zero if iType does not hBond.
 				iComplex=nDonors(iComp,iType)*nAcceptors(iComp,iType)
 				IF( isTpt ) THEN
 					eHbKcal_mol(iComp,iType)=( eDonorKcal_mol(iComp,iType)+eAcceptorKcal_mol(iComp,iType) )/2.d0 
 				ENDIF		
-				if(iComplex.ne.0)iComplex=1  !in general, nDs or nAs could be 2, 3,... (e.g. water).  But complexation is either true or false.
-				bigYhb=iComplex*(EXP(eHbKcal_mol(iComp,iType)/tKelvin/RgasCal*1000)-1) !the iComplex factor permits eHb to be non-zero, but still have zero complexation.  e.g. acetone+chloroform: nDs1=0, nAs1=1, nDs2=1, nAs2=0.  So complexation can occur between nAs1*nDs2, but not nDs1*nAs2.
+				if(iComplex.ne.0)iComplex=1  !in general, nDs or nAs could be 2, 3,... (e.g. water). Complexation is T/F.
+				bigYhb=iComplex*(EXP(eHbKcal_mol(iComp,iType)/tKelvin/RgasCal*1000)-1) !iComplex permits eHb > 0, but XA=XD=1.
 
 				SQARG=bondVolNm3(iComp,iType)*avoNum*rhoMol_cc*rdfContact*bigYhb
 				IF(SQARG < 0)THEN
@@ -186,17 +192,18 @@
 	!		enddo                                                  
 	!	enddo
 
-		!Check if Old guesses are better. During Z iteration, Old result may be close. 20201224: How can that be when we initialize to 1 in line 61?  Wiping out "old" stuff for Wertheim2d
+		!Check if Old guesses are better. During Z iteration, Old result may be close. 20201224:
 		!Also, compute FAsolv, FDsolv, and rmsErrSolv, without SRCR.
 		if(isAcid)call XsolJre2a(xFrac,rhoMol_cc,tKelvin,nComps,ierXsol)	 ! XA,XD,XC passed through module Assoc.
-		!if(LouderWert)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):',XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
+		!if(LouderWert)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):', &
+		!                                             XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
         if(ierXsol.ne.0)then
             iErrCode=1
 			if(LouderWert)write(dumpUnit,'(a,15i3)')' Wertheim: ier from Xsol=',ierXsol
             return !sorry.
         endif
-		!TooDone: DIOXANE+CHLOROFORM SYSTEM WORKS LIKE EL2ed P799 but it overestimates the solvation.  Maybe because difunctionality of dioxane(?). 
-
+		!TooDone: DIOXANE+CHLOROFORM SYSTEM WORKS LIKE EL2ed P799 but it overestimates the solvation. Difunctionality too strong? 
+		!         Compare to tetrahydropyran(aka oxacyclohexane)
 		!C     SOLVING FOR AN INITIAL DXD GUESS USING ELLIOTT 96 EQUATION 19
 		!C     NOTE THAT ALPHAij=SQRT(ALPHAi*ALPHAj) IS STILL APPLIED HERE.
 		if(ierXsol)iErrCode=5 !Set error, but finish calculations anyway.
@@ -209,7 +216,8 @@
 			do iType=1,nTypes(iComp)
 				if(XA(iComp,iType) < zeroTol .and. LouderWert)write(dumpUnit,*) 'Error in Wertheim: XA<1E-11'
 				if(XD(iComp,iType) < zeroTol .and. LouderWert)write(dumpUnit,*) 'Error in Wertheim: XD<1E-11'
-				h_nMichelsen=h_nMichelsen+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)*(1-XA(iComp,iType))+nDonors(iComp,iType)*(1-XD(iComp,iType)) )          !M&H Eq 11.
+				h_nMichelsen=h_nMichelsen+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)*(1-XA(iComp,iType))+ &
+				                                                   nDonors(iComp,iType)*(1-XD(iComp,iType)) )          !M&H Eq 11.
 				hCC=hCC+xFrac(iComp)*nDegree(iComp,iType)*( (1-XC(iComp,iType)) )          !M&H Eq 11.
 				sumDon=nDegree(iComp,iType)*nDonors(iComp,iType)*( DLOG(XD(iComp,iType))+(1-XD(iComp,iType))/2 )
 				sumAcc=nDegree(iComp,iType)*nAcceptors(iComp,iType)*( DLOG(XA(iComp,iType))+(1-XA(iComp,iType))/2 )
@@ -221,7 +229,7 @@
 		enddo
 		zAcid = -half*(hCC)*dAlpha	!M&H Eq 10&13.
 		zAssoc= -half*(h_nMichelsen)*dAlpha+zAcid	!M&H Eq 10&13.
-		if(LOUDERwert)write(dumpUnit,'(a,8E12.4)')' Wertheim:hAD+hDA,hCC,fAssoc,zAssoc,zAcid',h_nMichelsen,hCC,fAssoc,zAssoc,zAcid
+		if(LOUDERwert)write(dumpUnit,form610)' Wertheim:hAD+hDA,hCC,fAssoc,zAssoc,zAcid', h_nMichelsen,hCC,fAssoc,zAssoc,zAcid
 
 		!if(LouderWert)write(dumpUnit,'(a,8f9.4)')' From Xsol:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
 		uAssocAD=0	 !cf ML Michelsen and EM Hendriks (M&H), Physical Properties from Association Models, FPE 180:165-174(2001)
@@ -232,10 +240,11 @@
 				sumAcci=nDegree(iComp,iType)*nAcceptors(iComp,iType)*XA(iComp,iType)
 				DO jComp=1,nComps
 					do jType=1,nTypes(jComp)
-						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rhoMol_cc,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
+						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rhoMol_cc,bVolMix,alphADij,alphDAij,alphCCij, &
+						                                                                           dAlphADij,dAlphDAij,dAlphCCij)
 						SUMDONj=nDegree(jComp,jType)*nDonors(jComp,jType)*XD(jComp,jType)
 						sumAccj=nDegree(jComp,jType)*nAcceptors(jComp,jType)*XA(jComp,jType)
-						uAssocAD=uAssocAD+xFrac(iComp)*xFrac(jComp)*sumAcci*sumDonj*dAlphADij	 ! dAlpha = beps*d(alpha/dbeps), M&H(01)
+						uAssocAD=uAssocAD+xFrac(iComp)*xFrac(jComp)*sumAcci*sumDonj*dAlphADij !dAlpha=beps*d(alpha/dbeps),M&H(01)
 						uAssocDA=uAssocDA+xFrac(iComp)*xFrac(jComp)*sumDoni*sumAccj*dAlphDAij
 					enddo
 				enddo
@@ -283,8 +292,9 @@
 	LOGICAL LOUDER
 	DoublePrecision xFrac(nmx),fugAssoc(nmx) !,vMolecNm3(nmx),NAS(nmx),NDS(nmx),ND(nmx),ralph(nmx),XAmol(nmx),XDmol(nmx)
     DoublePrecision rdfContact,dAlpha,eta
-	!DIMENSION dfugAssoc_dRHO(nmx),dfugAssoc_dT(nmx) !,fugAssoc_num(nmx)
-	!DIMENSION dXAdRHO(nmx,maxTypes),dXDdRHO(nmx,maxTypes),dXCdRHO(nmx,maxTypes),dXAdT(nmx,maxTypes),dXDdT(nmx,maxTypes),dXCdT(nmx,maxTypes)
+	!DoublePrecision dfugAssoc_dRHO(nmx),dfugAssoc_dT(nmx) !,fugAssoc_num(nmx)
+	!DoublePrecision dXAdRHO(nmx,maxTypes),dXDdRHO(nmx,maxTypes),dXCdRHO(nmx,maxTypes),dXAdT(nmx,maxTypes),dXDdT(nmx,maxTypes)
+	!DoublePrecision dXCdT(nmx,maxTypes)
 
 	!ETAp=ETA !this is necessary for old method
 
@@ -311,7 +321,8 @@
 	h_nMichelsen=0.d0           !M&H Eq 11.
 	do iComp=1,nComps		 
 		do iType=1,nTypes(iComp)
-			h_nMichelsen=h_nMichelsen+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)*(1.d0-XA(iComp,iType))+nDonors(iComp,iType)*(1.d0-XD(iComp,iType))+(1.d0-XC(iComp,iType)) )          !M&H Eq 11.
+			h_nMichelsen=h_nMichelsen+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType) &
+			             *(1.d0-XA(iComp,iType))+nDonors(iComp,iType)*(1.d0-XD(iComp,iType))+(1.d0-XC(iComp,iType)) ) !M&H Eq 11.
 		enddo
 	enddo
 	if(LOUDER)write(dumpUnit,610)' WertheimFugc: fugAssocBefore=',(fugAssoc(i),i=1,nComps)
@@ -328,7 +339,8 @@
 				XCtemp=XC(iComp,iType)
 				isAcid=1
 			endif
-			sumLnXi=sumLnXi+nDegree(iComp,iType)*( nAcceptors(iComp,iType)*LOG(XA(iComp,iType))+nDonors(iComp,iType)*LOG(XD(iComp,iType))+LOG(XC(iComp,iType)) )          !M&H Eq 13
+			sumLnXi=sumLnXi+nDegree(iComp,iType)*( nAcceptors(iComp,iType)*LOG(XA(iComp,iType))+nDonors(iComp,iType) &
+			                                                              *LOG(XD(iComp,iType))+LOG(XC(iComp,iType)) ) !M&H Eq 13
 		enddo
 		aAssoc=aAssoc+xFrac(iComp)*sumLnXi
 		!if(LOUDER)write(dumpUnit,'(a,i3,4F10.7)')' Fugc: i,XA(i,j)=',iComp,(XA(iComp,j),j=1,nTypes(iComp))
@@ -404,9 +416,12 @@
 				sumAcci(iType)=0
 				do jType=1,nTypes(iComp)
 					if(jType.ne.iType)then
-						call AlphaSp(isZiter,iComp,iType,iComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
-						sumDoni(iType)=sumDoni(iType)+xFrac(iComp)*nDegree(iComp,jType)*nDonors(iComp,jType)*XD(iComp,jType)*ALPHADij
-						sumAcci(iType)=sumAcci(iType)+xFrac(iComp)*nDegree(iComp,jType)*nAcceptors(iComp,jType)*XA(iComp,jType)*ALPHDAij
+						call AlphaSp(isZiter,iComp,iType,iComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij, &
+						                                                                                      dAlphDAij,dAlphCCij)
+						sumDoni(iType)=sumDoni(iType)+xFrac(iComp)*nDegree(iComp,jType)*nDonors(iComp,jType)*XD(iComp,jType) &
+						                                                                                                 *ALPHADij
+						sumAcci(iType)=sumAcci(iType)+xFrac(iComp)*nDegree(iComp,jType)*nAcceptors(iComp,jType)*XA(iComp,jType) &
+						                                                                                                 *ALPHDAij
 					endif
 				enddo
 				sumDonj(iType)=0 ! SUMDONj =/= SUMDONi.
@@ -417,36 +432,41 @@
 				!C	sumDonj=Sum{xFracj*Sum(tj=1,nTypesj)[XD(j,tj)*Nd(j,tj)*nDs(j,tj)*alphaAD(i,ti;j,tj)]
 				DO jComp=1,nComps
 					do jType=1,nTypes(jComp)
-						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
+						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij, &
+						                                                                                     dAlphDAij,dAlphCCij)
 						if(idType(iComp,iType)==1603 .and. idType(jComp,jType)==1603)then
 							alphCCavg(iType)=alphCCavg(iType)+xFrac(jComp)*nDegree(jComp,jType)*alphCCij
 						endif
                     enddo
                     sqArg=MaxVal( alphCCavg(1:nTypes(jComp)) )
 					if(jComp==2)ralphC=SQRT(  sqArg  )
-					if(jComp.eq.iComp)cycle	!here we treat types on different comps as different (if no intra effect, they actually should have the same XA,XD)
+					if(jComp.eq.iComp)cycle	!treat types on different comps as different if no intra effect, should have same XA,XD
 					do jType=1,nTypes(jComp)
-						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
-						sumDonj(iType)=sumDonj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*XD(jComp,jType)*ALPHADij
+						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij &
+						                                                                                     ,dAlphDAij,dAlphCCij)
+						sumDonj(iType)=sumDonj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*XD(jComp,jType) &
+						                                                                                                 *ALPHADij
 						if(sumDonj(iType)<0)then
 							if(LouderWert)write(dumpUnit,*)'iType,sumDonj(iType)',iType,sumDonj(iType)
 							if(LouderWert)write(dumpUnit,*) 'XsolJre:sumdon<0?'
 						endif
-						sumAccj(iType)=sumAccj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nAcceptors(jComp,jType)*XA(jComp,jType)*ALPHDAij
+						sumAccj(iType)=sumAccj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nAcceptors(jComp,jType)*XA(jComp,jType) & 
+						                                                                                                *ALPHDAij
 						if(sumAccj(iType)<0)then
 							if(LouderWert)write(dumpUnit,*)'iType,sumAccj(iType)',iType,sumAccj(iType)
 							if(LouderWert)write(dumpUnit,*) 'XsolJre:sumacc<0?'
 						endif
 					enddo      
 				enddo
-			enddo !terminate the loop over all types such that sumDon's and sumAcc's are all done at once before starting next stage
+			enddo !terminate the loop over all types such that sumDon's and sumAcc's are all done before starting next stage
 			do iType=1,nTypes(iComp)
 				sumDon=sumDoni(iType)+sumDonj(iType)
 				sumAcc=sumAcci(iType)+sumAccj(iType)
-				call AlphaSp(isZiter,iComp,iType,iComp,iType,tKelvin,rho,bVolMix,alphADii,alphDAii,alphCCii,dAlphADii,dAlphDAii,dAlphCCii)
+				call AlphaSp(isZiter,iComp,iType,iComp,iType,tKelvin,rho,bVolMix,alphADii,alphDAii,alphCCii,dAlphADii,dAlphDAii, &
+				                                                                                                        dAlphCCii)
 				fracAD=xFrac(iComp)*nDegree(iComp,iType)*nAcceptors(iComp,iType)*alphADii
 				fracDA=xFrac(iComp)*nDegree(iComp,iType)*nDonors(iComp,iType)*alphDAii
-				fa(iComp,iType)=( XA(iComp,iType)-1/( 1+sumdon+fracAD*XD(iComp,iType) ) )/XA(iComp,iType) ! divide by XA so relative error is tracked
+				fa(iComp,iType)=( XA(iComp,iType)-1/( 1+sumdon+fracAD*XD(iComp,iType) ) )/XA(iComp,iType) !track relative error 
 				fd(iComp,iType)=( XD(iComp,iType)-1/( 1+sumacc+fracDA*XA(iComp,iType) ) )/XD(iComp,iType)
                 rmsFerr=rmsFerr+fa(iComp,iType)*fa(iComp,iType)+fd(iComp,iType)*fd(iComp,iType)
 				wegParmAcc= 0.5D0
@@ -499,7 +519,7 @@
 				rmsErr=rmsErr+( xd(iComp,iType)-xdOld(iComp,iType) )**2
 				!Note: XCi=XCj b/c we assume alphCC is universal.  So we can factor out alphCCavg.
 				!xCC=( -1+SQRT(1+4*alphCCavg(iType)) )/( 2*alphCCavg(iType) ) !divide by zero when type is not CC
-				!xCC=( (1+4*alphCCavg(iType)-1) )/( 2*alphCCavg(iType)*(1+SQRT(1+4*alphCCavg(iType)) ) !divide by zero when type is not CC
+				!xCC=( (1+4*alphCCavg(iType)-1) )/( 2*alphCCavg(iType)*(1+SQRT(1+4*alphCCavg(iType)) ) 
 				if( (1+4*alphCCavg(iType)) < 0) write(dumpUnit,*) 'XsolJre: 1+4*alphCCavg(iType) < 0'
 				xCC=2/( 1+SQRT(1+4*alphCCavg(iType)) )
 				XC(iComp,iType)=xCC
@@ -509,7 +529,8 @@
 		rmsFerr=sqrt( rmsFerr/(2*nComps) )
 		rmsOld=rmsErr
 		if(LOUDER)write(dumpUnit,'(a,i3,2E12.4)')' XsolJre2a: iter,rmsErr,rmsFerr=',iter,rmsErr,rmsFerr
-		!if(LOUD.and.initCall)write(dumpUnit,'(a,7F10.6,3f7.3)')' XAs&XDs,...',XA(1,2),XA(1,3),XA(2,2),XD(1,2),XD(2,2),rmsErr,wegParm,float(iter) !,deltaAlphaA(1,3) 
+		!if(LOUD.and.initCall)write(dumpUnit,'(a,7F10.6,3f7.3)')' XAs&XDs,...', &
+		!                                  XA(1,2),XA(1,3),XA(2,2),XD(1,2),XD(2,2),rmsErr,wegParm,float(iter) !,deltaAlphaA(1,3) 
 	enddo ! while(rmsErr > tol)
 	if(LOUDER)then
 		write(dumpUnit,'(a,8F9.6,3f7.3)')' XAs&XDs1,...',(XA(1,i),i=1,4),(XD(1,i),i=1,4)
@@ -561,20 +582,24 @@
 				!C	sumDonj=Sum{xFracj*Sum(tj=1,nTypesj)[XD(j,tj)*Nd(j,tj)*nDs(j,tj)*alphaAD(i,ti;j,tj)]
 				DO jComp=1,nComps
 					do jType=1,nTypes(jComp)
-						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
+						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij, &
+						                                                                                     dAlphDAij,dAlphCCij)
 						if(idType(iComp,iType)==1603 .and. idType(jComp,jType)==1603)then
 							alphCCavg(iType)=alphCCavg(iType)+xFrac(jComp)*nDegree(jComp,jType)*alphCCij
 						endif
 					enddo
 					!if(jComp.eq.iComp)cycle	! sum i and j no different for simple iteration
 					do jType=1,nTypes(jComp)
-						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
-						sumDonj(iType)=sumDonj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*XD(jComp,jType)*alphADij
+						call AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij, &
+						                                                                                       dAlphDAij,dAlphCCij)
+						sumDonj(iType)=sumDonj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nDonors(jComp,jType)*XD(jComp,jType) &
+						                                                                                                  *alphADij
 						if(sumDonj(iType)<0)then
 							if(LouderWert)write(dumpUnit,*)'iType,sumDonj(iType)',iType,sumDonj(iType)
 							if(LouderWert)write(dumpUnit,*) 'sumdon<0?'
 						endif
-						sumAccj(iType)=sumAccj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nAcceptors(jComp,jType)*XA(jComp,jType)*alphDAij
+						sumAccj(iType)=sumAccj(iType)+xFrac(jComp)*nDegree(jComp,jType)*nAcceptors(jComp,jType)*XA(jComp,jType) &
+						                                                                                                 *alphDAij
 						if(sumAccj(iType)<0)then
 							if(LouderWert)write(dumpUnit,*)'iType,sumAccj(iType)',iType,sumAccj(iType)
 							if(LouderWert)write(dumpUnit,*) 'sumacc<0?'
@@ -582,11 +607,12 @@
 					enddo ! jType
 				enddo ! jComp
 				!XD(iComp,iType)=1/( 1+sumAccj(iType) ) ! Acceptors are more likely to be in excess, so fix the donors first.     
-			enddo !terminate the loop over all types such that sumDon's and sumAcc's are all done at once before starting next stage
+			enddo !terminate the loop over all types such that sumDon's and sumAcc's are all done before starting next stage
 			do iType=1,nTypes(iComp)
 				sumDon=sumDoni(iType)+sumDonj(iType)
 				sumAcc=sumAcci(iType)+sumAccj(iType)
-				call AlphaSp(isZiter,iComp,iType,iComp,iType,tKelvin,rho,bVolMix,alphADii,alphDAii,alphCCii,dAlphADii,dAlphDAii,dAlphCCii)
+				call AlphaSp(isZiter,iComp,iType,iComp,iType,tKelvin,rho,bVolMix,alphADii,alphDAii,alphCCii,dAlphADii,dAlphDAii, &
+				                                                                                                        dAlphCCii)
 				fa(iComp,iType)=( 1/XA(iComp,iType) - (1+sumdon) )
 				fd(iComp,iType)=( 1/XD(iComp,iType) - (1+sumacc) )
 				wegParm= 0.0
@@ -626,7 +652,7 @@
 				rmsErr=rmsErr+(xd(iComp,iType)-xdOld(iComp,iType))**2
 				!Note: XCi=XCj b/c we assume alphCC is universal.  So we can factor out alphCCavg.
 				!xCC=( -1+SQRT(1+4*alphCCavg(iType)) )/( 2*alphCCavg(iType) ) !divide by zero when type is not CC
-				!xCC=( (1+4*alphCCavg(iType)-1) )/( 2*alphCCavg(iType)*(1+SQRT(1+4*alphCCavg(iType)) ) !divide by zero when type is not CC
+				!xCC=( (1+4*alphCCavg(iType)-1) )/( 2*alphCCavg(iType)*(1+SQRT(1+4*alphCCavg(iType)) ) 
 				if( (1+4*alphCCavg(iType)) < 0) write(dumpUnit,*) 'Wertheim: 1+4*alphCCavg(iType)2nd < 0'
 				xCC=2/( 1+SQRT(1+4*alphCCavg(iType)) )
 				XC(iComp,iType)=xCC
@@ -634,7 +660,7 @@
 		enddo
 		rmsErr=sqrt( rmsErr/(2*nComps) )
 		rmsOld=rmsErr
-		write(dumpUnit,'(a,6F10.6,3F10.1)')' XAs&XDs:',XA(1,2),XA(1,3),XA(2,2),XD(1,2),XD(2,2),rmsErr,float(iter), wegParm !,deltaAlphaA(1,3) 
+		write(dumpUnit,'(a,6F10.6,3F10.1)')' XAs&XDs:',XA(1,2),XA(1,3),XA(2,2),XD(1,2),XD(2,2),rmsErr,float(iter), wegParm 
 	enddo ! while(rmsErr > tol)
 	if(iter > itMax)then
 		ierCode=2
@@ -651,7 +677,8 @@
 !C
 !C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	Subroutine AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij)
+	Subroutine AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij, &
+	                                                                                                                    dAlphCCij)
 	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,dumpUnit,RgasCal
 	USE Assoc !aBipAD,aBipDA
 	USE BIPs  !H((I,J) for ESD
@@ -687,8 +714,9 @@
 	if(iComplexAD > 0)iComplexAD=1
 	iComplexDA=nDonors(iComp,iType)*nAcceptors(jComp,jType)
 	if(iComplexDA > 0)iComplexDA=1
-    !if(iComp==jComp .and. iType/=jType)iComplexAD=0  !ignore intramolecular association for now. !! This would exclude e.g. ethoxyGlycol ether from solvating with the hydroxy in pure fluid. 
+    !if(iComp==jComp .and. iType/=jType)iComplexAD=0  !ignore intramolecular association for now. 
     !if(iComp==jComp .and. iType/=jType)iComplexDA=0  !ignore intramolecular association for now.
+	!! Keeping intra association. It would prevent e.g. ethoxyGlycol ether from solvating with the hydroxy in pure fluid. 
 	!alphADij=iComplexAD*KVEadij*rho*rdfContact
 	!alphDAij=iComplexDA*KVEdaij*rho*rdfContact
 	alphADij=iComplexAD*( ralphAi*ralphDj+aBipAD(indexi,indexj)*KVEadij*rho*rdfContact )
@@ -714,7 +742,8 @@
 	alphCCij=0
 	if(idType(iComp,iType).eq.1603 .and. idType(jComp,jType).eq.1603)then 
 		dHCCij=3*( eDonorKcal_Mol(iComp,iType)+eAcceptorKcal_Mol(iComp,iType) )/2 
-		!dHccij=3.00*eHbKcal_Mol(iComp,iType) !we can still vary AD and CC association ~independently by changing bondVolNm3 in ParmsHbVv.txt b/c bondVolCC=0.01=universal constant
+		!dHccij=3.00*eHbKcal_Mol(iComp,iType) 
+		!we can still vary AD and CC association !independently by changing bondVolNm3 in ParmsHbVv.txt b/c bondVolCC=0.01=constant
 		yHBccij=EXP(dHccij/tKelvin/RgasCal*1000)-1
 		KVEccij=bondVolNm3(iComp,iType)*avoNum*yHBccij ! value for CC bonding volume taken from AD bonding volume.
 		dKVEccij=bondVolNm3(iComp,iType)*avoNum*(dHccij/tKelvin/RgasCal*1000)*(yHBccij+1) !universal value for CC bonding volume
@@ -753,7 +782,7 @@
 	! First derivatives in respect to RHO while N & T are constant
 	if (kVj > zeroTol)	then
 		dg_dEta=(dAlpha-1)*rdfContact/eta ! = (dLng/dLnEta)*g/eta
-		if(rho < zeroTol .or. rdfContact < zeroTol .and. LouderWert)write(dumpUnit,'(a,2E12.4)')' AlphaSp: rho,rdfContact=',rho,rdfContact
+		if(rho < zeroTol .or. rdfContact < zeroTol.and.LouderWert)write(dumpUnit,form610)' AlphaSp:rho,rdfContact=',rho,rdfContact
 		dalphad_dRHO=(rdfContact+rho*dg_deta*bVolMix)/(rho*rdfContact)   !Actually this is equal to RHO/alpha*dalpha_dRHO
 		dalphda_dRHO=dalphad_dRHO
 		dalphcc_dRHO=dalphad_dRHO
@@ -798,14 +827,16 @@
 	do iType=1,nTypesTot
 		do jType=1,nTypesTot
 			aBip(iType,jType)=0 
-			switched=.FALSE. !disable switching b/c ADij is asymmetric. ie. the acceptor on i(eg.O=< ) and donor on j(eg.OH) may be different from the acceptor on j(OH) and donor on i(O=,has no donor).
+			switched=.FALSE. !disable switching b/c ADij is asymmetric. ie. the acceptor on i(eg.O=< ) 
+			                 !and donor on j(eg.OH) may be different from the acceptor on j(OH) and donor on i(O=,has no donor).
 			!if(idLocalType(iType).lt.idLocalType(jType))switched=.TRUE.
 			idBin=10000*idLocalType(iType)+idLocalType(jType)
 			if(switched)idBin=10000*idLocalType(jType)+idLocalType(iType)
 			do item=1,nHbBips
 				if(idBinarY(item)==idBin)then
 					aBip(iType,jType)=KIJDB(item) 
-					IF(LOUDER)write(dumpUnit,'(a,2i5,f8.3)')' GetAssocBIPs: FOUND - idi,idj,BipIJ ',idLocalType(iType),idLocalType(jType),KijDB(item)
+					IF(LOUDER)write(dumpUnit,'(a,2i5,f8.3)')' GetAssocBIPs: FOUND - idi,idj,BipIJ ',idLocalType(iType), &
+					                                                                                idLocalType(jType),KijDB(item)
 					exit !found it so terminate the item loop
 				endif
 			enddo
