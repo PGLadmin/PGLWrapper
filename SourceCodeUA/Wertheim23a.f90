@@ -1,7 +1,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	! THE WERTHEIM ROUTINES OF SPEAD AND ESD TOGETHER COMBINED BY AGF, Oct. 2009
 	subroutine Wertheim( isZiter,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErrCode)
-	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID ,etaMax,dumpUnit,RgasCal
+	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID ,etaMax,dumpUnit,RgasCal,form610
 	USE Assoc !XA,XD,XC
 	!USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
@@ -679,7 +679,7 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	Subroutine AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij, &
 	                                                                                                                    dAlphCCij)
-	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,dumpUnit,RgasCal
+	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,dumpUnit,RgasCal,form610
 	USE Assoc !aBipAD,aBipDA
 	USE BIPs  !H((I,J) for ESD
 	implicit doublePrecision(a-h,k,o-z)
