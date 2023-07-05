@@ -28,7 +28,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	!iErr=1 !Parms missing and iErrExact.ne.0 for at least one component
 	LOGICAL LOUDER
 	LOUDER=LOUD
-	LOUDER=.TRUE.
+	!LOUDER=.TRUE.
 	idCas(1:NC)=idCasPas(1:NC) ! workaround after promoting idCas to GlobConst 
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or isPcSaft.
 	isESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI

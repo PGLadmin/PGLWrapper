@@ -69,32 +69,32 @@ subroutine consoleIO  !JRE simplification
   compna_input(1)='carbon-dioxide_a'
   compna_input(2)='ethanol_n'
   write(*,*)' Current components are: ',(  TRIM( compna_input(i) ),i=1,ncomp  )
-  print*,'Do you want to change the components? (y/n)'
+  write(*,*)'Do you want to change the components? (y/n)'
   read*,answer
   if(answer=='y'.or. answer=='Y')then
-      print*,'Enter nComp'
+      write(*,*)'Enter nComp'
       read*,nComp
       do i=1,nComp
-          print*,'Enter comp name for component',i
+          write(*,*)'Enter comp name for component',i
           read*,compna_input(i)
       enddo
   endif
-  print*,'Enter T(K),P(MPa)'
+  write(*,*)'Enter T(K),P(MPa)'
   read*,t_input,p_input
   p_input=p_input*1.D6 !Internal units for Gross are Pa.
   if(ncomp==1)then
     x_input(1)=1
     return
   elseif(ncomp==2)then
-      print*,'Enter x1'
+      write(*,*)'Enter x1'
       read*,x_input(1)
       x_input(2)=1-x_input(1)
   else
-      print*,'Enter x1-xn'
+      write(*,*)'Enter x1-xn'
       read*,( x_input(i), i=1,ncomp )
   endif
   
-  print*,'consoleIO Done!'
+  write(*,*)'consoleIO Done!'
 
 end subroutine consoleIO
 
@@ -213,7 +213,7 @@ contains
 subroutine load_pure_and_binary_parameters
 
   use BASIC_VARIABLES, only: compna_input
-  use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt !JRE LOUD=.FALSE. to silence I/O feedback.
+  use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, dumpUnit !JRE LOUD=.FALSE. to silence I/O feedback.
 
   !-----------------------------------------------------------------------------
   integer                                    :: i, j
@@ -224,11 +224,11 @@ subroutine load_pure_and_binary_parameters
   compna( 1:ncomp ) = compna_input( 1:ncomp )
 
   call pcsaft_pure_parameters
-  if(LOUDER)print*,'load_pure...: Pure OK. Trying binary.'
+  if(LOUDER)write(dumpUnit,*)'load_pure...: Pure OK. Trying binary.'
 
   call pcsaft_binary_parameters
-  if(LOUDER)print*,'load_pure...: Binary OK. Setting HB and polar flags.'
-  if(LOUDER)print*,'comp     1      2 from load_pure_and_binary_parameters'
+  if(LOUDER)write(dumpUnit,*)'load_pure...: Binary OK. Setting HB and polar flags.'
+  if(LOUDER)write(dumpUnit,*)'comp     1      2 from load_pure_and_binary_parameters'
   do i=1,ncomp
 	IF(LOUDER)write(*,'(i3,11f8.4)')i,(kij(i,j),j=1,ncomp)
   enddo
@@ -261,7 +261,7 @@ end subroutine load_pure_and_binary_parameters
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
 subroutine pcsaft_pure_parameters
-  USE GlobConst, only:PGLinputDir,iEosOpt  !JRE
+  USE GlobConst, only:PGLinputDir,iEosOpt,dumpUnit,LOUD  !JRE
   use PARAMETERS, only: str30, nsite
   implicit none
 
@@ -289,6 +289,9 @@ subroutine pcsaft_pure_parameters
   integer                                    :: nhb_no_var1, nhb_no_var2
   integer                                    :: read_info
   logical                                    :: parameter_assigned
+  logical                                    :: LOUDER
+  LOUDER=LOUD
+  LOUDER=.TRUE.
   !-----------------------------------------------------------------------------
 
   !-----------------------------------------------------------------------------
@@ -301,11 +304,12 @@ subroutine pcsaft_pure_parameters
   do  i = 1, ncomp
 
      !--------------------------------------------------------------------------
-     ! Open parameter-input file and irgnore first line
+     ! Open parameter-input file 
      !--------------------------------------------------------------------------
-	 inFile=TRIM(PGLinputDir)//'\PcSaft_database/pcsaft_pure_parameters.txt'
-	if(iEosOpt==15)inFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGc.txt' 
-	if(iEosOpt==16)inFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGcTb.txt'
+	inFile=TRIM(PGLinputDir)//'\PcSaft_database/pcsaft_pure_parametersGross.txt'   !JRE
+	if(iEosOpt==15)inFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGc.txt' !JRE
+	if(iEosOpt==16)inFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGcTb.txt' !JRE
+	if(iEosOpt==20)inFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersSpt.txt' !JRE
      call file_open ( 53, inFile )   !JRE
 
      parameter_assigned = .false.
@@ -324,13 +328,13 @@ subroutine pcsaft_pure_parameters
         if ( read_info == 0 ) read (entire_line, *, IOSTAT = read_info) r_CAS_name, r_compna,  & ! JRE20210524,added ", read_info)"
              r_parameter_set, r_mm, r_mseg, r_sigma, r_epsilon_k,  &
              r_dipole_moment, r_quadru_moment, rest_of_line
-			 if(read_info /= 0)then
-			   write (*,*) 'inFile=',TRIM(PGLinputDir)//'\PcSaft_database/pcsaft_pure_parameters.txt'
-			   write (*,*) ' pcsaft_pure_parameters: bad line in inFile. Offender is:'
-			   write (*,*) TRIM(entire_line)
-			   pause 'Possible offense: comma(s) in compound name.' 
-               stop
-			 endif
+		 if(read_info /= 0 .and. LOUDER)then
+		   write (dumpUnit,*) 'inFile=',TRIM(inFile) !//'\PcSaft_database/pcsaft_pure_parameters.txt'
+		   write (dumpUnit,*) ' pcsaft_pure_parameters: bad line in inFile. Offender is:'
+		   write (dumpUnit,*) TRIM(entire_line)
+		   pause 'Possible offense: comma(s) in compound name.' 
+           stop
+		 endif
 
 
         !-----------------------------------------------------------------------
@@ -405,9 +409,9 @@ subroutine pcsaft_pure_parameters
                  eps_hb(i,i,2,2) = 0.0_dp
                  assoc_scheme(i) = r_assoc_scheme
 
-                 !write (*,'(a,x,a,x,6G14.7,i3,a,a,a,4G14.7)') compna(i), parameter_set(i),  &
-                 !mm(i), mseg(i), sigma(i), epsilon_k(i), dipole_moment(i), quadru_moment(i),  &
-                 !nhb_typ(i),' ',assoc_scheme(i),' ', nhb_no(i,1:2), kap_hb(i,i), eps_hb(i,i,1,2)
+                 if(LOUDER)write (*,'(x,a,x,a,x,6G14.7,i3,a,a,a,4G14.7)') compna(i), parameter_set(i),  &
+					mm(i), mseg(i), sigma(i), epsilon_k(i), dipole_moment(i), quadru_moment(i),  &
+					nhb_typ(i),' ',assoc_scheme(i),' ', nhb_no(i,1:2), kap_hb(i,i), eps_hb(i,i,1,2)
 
               else if ( r_assoc_scheme == '1A' ) then
 
@@ -461,7 +465,7 @@ end subroutine pcsaft_pure_parameters
 
 subroutine pcsaft_binary_parameters
 
-  use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, ID, PGLinputDir !JRE LOUD=.FALSE. to silence I/O feedback.
+  use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, ID, PGLinputDir,dumpUnit !JRE LOUD=.FALSE. to silence I/O feedback.
   implicit none
 
   !-----------------------------------------------------------------------------
@@ -494,7 +498,7 @@ subroutine pcsaft_binary_parameters
         !-----------------------------------------------------------------------
         ! Open parameter-input file and irgnore first line
         !-----------------------------------------------------------------------
-		if(LOUDER)print*,'pcsaft_binary... opening ./Input/PcSaft_database/pcsaft_binary_parametersJre.txt'  !JRE
+		if(LOUDER)write(dumpUnit,*)'pcsaft_binary... opening ./Input/PcSaft_database/pcsaft_binary_parametersJre.txt'  !JRE
 		parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_binary_parametersJre.txt' 
         !call file_open ( 54, './Input/PcSaft_database/pcsaft_binary_parametersJre.txt' )				   !JRE
         call file_open ( 54, parmFile )				   !JRE
@@ -505,12 +509,12 @@ subroutine pcsaft_binary_parameters
         do while ( read_info == 0 .AND. .NOT.parameter_assigned )
 		   line=line+1
            read( 54, '(A)', IOSTAT = read_info ) entireline
-			!if(LOUDER)print*,'pcsaft_binary... entireline=',TRIM(entireline)
+			!if(LOUDER)write(dumpUnit,*)'pcsaft_binary... entireline=',TRIM(entireline)
            read( entireline, *,IOSTAT=readLineErr ) id1,id2,idCas1, idCas2, kij_var,lij_var,kij_assoc_var,par_set_1,par_set_2
            !JRE read( entireline, *,IOSTAT=readLineErr ) CAS_No1, CAS_No2, species_1, species_2,  &
            !     par_set_1, par_set_2, kij_var, lij_var, kij_assoc_var
 			if(readLineErr /= 0)then
-				if(LOUDER)print*,'pcsaft_binary... readLineErr for line=',line,' a ', TRIM(entireline)
+				if(LOUDER)write(dumpUnit,*)'pcsaft_binary... readLineErr for line=',line,' a ', TRIM(entireline)
 				if(LOUDER)pause 'Check which line is causing the problem. Maybe you can fix it.'
 				cycle
 			else
@@ -5820,7 +5824,8 @@ subroutine f_temp_rho ( f_res, f_t, f_tr )
            exit
         end if
 
-     end do	! while( errsum > tol ...  ; err_sum = err_sum + ABS(mx_r_itr(i,ii) - mx_r(i,ii)) + ABS(mx_t_itr(i,ii) - mx_t(i,ii)) + ABS(mx_tr_itr(i,ii) - mx_tr(i,ii))
+     end do	! while( errsum > tol ...  ; 
+	 !err_sum = err_sum + ABS(mx_r_itr(i,ii) - mx_r(i,ii)) + ABS(mx_t_itr(i,ii) - mx_t(i,ii)) + ABS(mx_tr_itr(i,ii) - mx_tr(i,ii))
 
 
      do i = 1, ncomp
@@ -8477,7 +8482,7 @@ subroutine state_tp ( tF, pF, xF, eta_start, rhoi_out, molar_rho, s, h, s_res, c
   use PARAMETERS, only: NAV
   use module_eos_derivatives, only: rhoi, kT, rho, z3t, rho_independent_quantities,  &
        density_terms, f_temp, f_temp_rho, f_temp_temp
-  !JRE use ideal_gas_enthalpy, only: enthalpy_ig 							 !JRE disabled because it would require adding another module.
+  !JRE use ideal_gas_enthalpy, only: enthalpy_ig !JRE disabled because it would require adding another module.
   implicit none
 
   !-----------------------------------------------------------------------------
@@ -8501,7 +8506,7 @@ subroutine state_tp ( tF, pF, xF, eta_start, rhoi_out, molar_rho, s, h, s_res, c
   real(dp)                                          :: p_rho, p_t
   real(dp)                                          :: cv_residual
   real(dp)                                          :: cmprsblty
-  !real(dp)                                          :: hig, sig, cpig						!JRE disabled because it would require adding another module.
+  !real(dp)                                          :: hig, sig, cpig !JRE disabled because it would require adding another module
   !-----------------------------------------------------------------------------
 
   !-----------------------------------------------------------------------------
@@ -8621,7 +8626,7 @@ subroutine state_trho ( tF, rhoi_in, pcalc, molar_rho, s, h, s_res, cp )
   real(dp)                                          :: p_rho, p_t
   real(dp)                                          :: cv_residual
   real(dp), dimension(ncomp)                        :: xF
-  !real(dp)                                          :: hig, sig, cpig	 !JRE disabled because it would require adding another module.
+  !real(dp)                                          :: hig, sig, cpig !JRE disabled because it would require adding another module
   !-----------------------------------------------------------------------------
 
   !-----------------------------------------------------------------------------
@@ -11159,7 +11164,7 @@ end subroutine jacobi_eigenvalue
 !       
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 subroutine GetPcSaft(nComps,casrn,iErr)
-	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
+	!USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	!use input_output, only: read_problem_definition
 	use GlobConst ! e.g.: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos, PGLinputDir,pi,avoNum,Tc,Pc,Zc,TcEos,PcEos,ZcEos,tKmin,ID
 	use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
@@ -11191,28 +11196,33 @@ subroutine GetPcSaft(nComps,casrn,iErr)
     !real(dp), dimension(nsite)                 :: r_nhb_no
     !real(dp)                                   :: r_kap_hb
     !real(dp), dimension(nsite,nsite)           :: r_eps_hb
-	CHARACTER($MAXPATH)  parmFile,readFile !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
+	CHARACTER(LEN=300) :: parmFile,readFile !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
 	Integer line,nDeckParmsCrit,iComp,j,idCompDb,ioErr
 	DoublePrecision TcEosDb,PcEosDb,ZcEosDb,AcenEosDb
+	LOGICAL LOUDER 
+	LOUDER=LOUD
+	!LOUDER=.TRUE.
 	!-----------------------------------------------------------------------------
 	! read definition of problem
 	!-----------------------------------------------------------------------------
 	!call read_problem_definition - already done
 	!  Get current directory
-    if(LOUD)print*,'GetPcSaft: nComps,casrn=',nComps,casrn
+    if(LOUDER)write(dumpUnit,*)'GetPcSaft: nComps,casrn=',nComps,casrn
 	isPcSaft=.FALSE.
-    iErr=0
-	if(iEosOpt.ne.10 .and. iEosOpt.ne.15 .and. iEosOpt.ne.16)iErr=1
-	if(LOUD.and.iErr==1)print*,'GetPcSaft: wrong iEosOpt=',iEosOpt
+    iErr=1
+	if(iEosOpt==10 .or. iEosOpt==15 .or. iEosOpt==16 .or. iEosOpt==20)iErr=0
+	if(LOUDER.and.iErr==1)write(dumpUnit,*)'GetPcSaft: wrong iEosOpt=',iEosOpt
 	if(iErr==1)return
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or other similar.
 	etaMax=0.5D0 ! based on slight extrapolation from "eta_start =" in CalculateSinglePhase. See also Jaubert's paper on anomalies.
 	isPcSaft=.TRUE.
-	parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGross.txt' 
-	if(LOUD)print*,'parmFile=',TRIM(parmFile)
-	if(iEosOpt/=10)then
+	if(iEosOpt==10)then
+		parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGross.txt' 
+		if(LOUDER)write(dumpUnit,*)'parmFile=',TRIM(parmFile)
+	else
 		if(iEosOpt==15)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGc.txt' 
 		if(iEosOpt==16)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGcTb.txt'
+		if(iEosOpt==20)readFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersSpt.txt'
 		parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parameters.txt' 
 		open(551,file=readFile)
 		open(661,file=parmFile)
@@ -11223,6 +11233,7 @@ subroutine GetPcSaft(nComps,casrn,iErr)
 		enddo
 		close(661)
 		close(551)
+		if(LOUDER)write(dumpUnit,*)'parmFile=',TRIM(readFile)
 	endif ! iEosOpt /= 10
 	ncomp=nComps
 	if ( .not. allocated(compna_input) ) allocate( compna_input( ncomp ) )  !names
@@ -11251,32 +11262,35 @@ subroutine GetPcSaft(nComps,casrn,iErr)
         !create casrn string and find compound alias
         write(aString, *) casrn(i)
         aString=ADJUSTL((aString))
-		!print*,'aString=',aString
+		!write(dumpUnit,*)'aString=',aString
         l=LEN_TRIM(aString)
         aString = aString(1:l-3) // '-' // aString(l-2:l-1) // '-' // aString(l:l)
         open (53, FILE = parmFile )
         parameter_assigned = .false.
         read_info = 0
-		if(LOUD)print*,'iComp,CasNo=',i,'  ',TRIM(aString)
+		if(LOUDER)write(dumpUnit,*)'iComp,CasNo=',i,'  ',TRIM(aString)
 		line=1
         do while ( read_info == 0 .AND. .NOT.parameter_assigned )
-            read ( 53, '(a)', IOSTAT = read_info) entire_line
-			!if(LOUD)print*,TRIM(entire_line)
-			if ( read_info /= 0 .and. LOUD) print*,'Error reading entire line=',line
+            read ( 53, '(a300)', IOSTAT = read_info) entire_line
+			!if(LOUDER)write(dumpUnit,*)TRIM(entire_line)
+			if ( read_info /= 0 .and. LOUDER) write(dumpUnit,*)'Error reading entire line=',line
             if ( read_info == 0 ) read (entire_line, *, ioStat=read_info ) r_CAS_name, r_compna ,  &
                     r_parameter_set , r_mm , r_mseg, r_sigma, r_epsilon_k ,  &
-                    r_dipole_moment, r_quadru_moment, rest_of_line  !These are read but not stored here.
-			!print*,r_mm,trim(r_parameter_set),' ',trim(entire_line)
-			if ( read_info /= 0 .and. LOUD) print*,'Error reading internal line=',line
+                    r_dipole_moment, r_quadru_moment, rest_of_line  !These are read but not stored here. cf. pcsaft_pure...
+			!write(dumpUnit,*)r_mm,trim(r_parameter_set),' ',trim(entire_line)
+			if ( read_info /= 0 .and. LOUDER) write(dumpUnit,*)'Error reading internal line=',line
 			line=line+1
 			if(read_info > 0)read_info=0   ! ioStat < 0 if end of file or end of record is found.
             if ( trim(adjustl(aString)) == trim(adjustl(r_CAS_name)) ) then
                     alias = r_compna
                     parameter_assigned = .true.
-					if(LOUD)print*,'Got it! iComp,compna=',i,'  ',TRIM(alias)
-					if(LOUD)write(*,*)r_mm,r_mseg,r_sigma,r_epsilon_k, r_dipole_moment,r_quadru_moment, TRIM(rest_of_line)
+					if(LOUDER)write(dumpUnit,*)'Got it! iComp,compna=',i,'  ',TRIM(alias)
+					if(LOUDER)write(dumpUnit,form610)' mw,m,sig,eps/kB,mu,qu',r_mm,r_mseg,r_sigma,r_epsilon_k, r_dipole_moment, &
+					                                                                                           r_quadru_moment
+					!if(LOUDER)write(dumpUnit,'(a,a)') ' nSites,scheme,NAs,NDs,KAD,eAD/kB', TRIM(ADJUSTL(rest_of_line)) 
+					!Line above doesn't work because default format stops reading at nHbSites. 
 					sigmaNm3=(r_sigma/10)**3
-					bVolCc_mol(i)=r_mseg*sigmaNm3*3.14159265d0/6*602.2147d0 !bVol just needs to be close for eta initialization etc
+					bVolCc_mol(i)=r_mseg*sigmaNm3*pi/6*avoNum !bVol just needs to be close for eta initialization etc
             end if
         enddo !while .NOT.parameter_assigned
         close (53)
@@ -11293,21 +11307,21 @@ subroutine GetPcSaft(nComps,casrn,iErr)
 	!-----------------------------------------------------------------------------
 	call allocate_eos_quantities
 	call initialize_eos_quantities
-	if(LOUD)print*,'GetPcSaft: allocated and initialized.'
+	if(LOUDER)write(dumpUnit,*)'GetPcSaft: allocated and initialized.'
 	!-----------------------------------------------------------------------------
 	! read pure component and mixture parameters of PC-SAFT EOS
 	!-----------------------------------------------------------------------------
 	call load_pure_and_binary_parameters  !compna_input is used to load values
-	if(LOUD)print*,'GetPcSaft: loaded.'
+	if(LOUDER)write(dumpUnit,*)'GetPcSaft: loaded.'
 	call cross_association_parameters
-	if(LOUD)print*,'GetPcSaft: cross_assoc ok.'
+	if(LOUDER)write(dumpUnit,*)'GetPcSaft: cross_assoc ok.'
 	call aggregate_polar_parameters
-	if(LOUD)print*,'GetPcSaft: aggregated polar.'
+	if(LOUDER)write(dumpUnit,*)'GetPcSaft: aggregated polar.'
 	!-----------------------------------------------------------------------------
 	! EOS constants
 	!-----------------------------------------------------------------------------
 	call load_eos_constants
-	if(LOUD)print*,'GetPcSaft: Loaded EOS. Done.'
+	if(LOUDER)write(dumpUnit,*)'GetPcSaft: Loaded EOS. Done.'
 end subroutine GetPcSaft
 !WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 !JRE The Fugi routines provide the primary interface..
@@ -11315,7 +11329,7 @@ end subroutine GetPcSaft
  subroutine FugiPcSaftVtot(nComps,tKelvin,vTotCc,gmol,pMPa,zFactor,aRes,uRes,chemPoRes,iErr)
     use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
     use PARAMETERS, only: dp, nsite, NAV , RGAS
-    use GlobConst, only: LOUD,  cpRes_R, cvRes_R, cmprsblty	 !uRes_RT, sRes_R, aRes_RT, hRes_RT,
+    use GlobConst, only: LOUD,  cpRes_R, cvRes_R, cmprsblty,dumpUnit	 !uRes_RT, sRes_R, aRes_RT, hRes_RT,
 	use properties !JRE add. Gives access to the chemical_potential___ and state___  subroutines.  
 	!use stability, only: get_eta  !JRE add
 	use eos_constants
@@ -11358,29 +11372,29 @@ end subroutine GetPcSaft
     enddo
     !call initialize_unit xxx must call GetPcSaft before Fugi.
     iErr=0
-	if(LOUDER)print*,'FugiPcSaftVtot: t,p,x1=',t_input,( x_input(1:ncomp) )
-	if(LOUDER)print*,'rho:',rhoiJre( 1:ncomp )   !number densities of each component
-	if(LOUDER)print*,'calling chempo'
+	if(LOUDER)write(dumpUnit,*)'FugiPcSaftVtot: t,p,x1=',t_input,( x_input(1:ncomp) )
+	if(LOUDER)write(dumpUnit,*)'rho:',rhoiJre( 1:ncomp )   !number densities of each component
+	if(LOUDER)write(dumpUnit,*)'calling chempo'
 	call chemical_potential_trho ( t_input, rhoiJre, mu_res, mu) !, w_rkrl, wig_rkrl) !function overload: last two are optional.
 	!eta = get_eta( rhoiJre )
 	!rGasJre=RGAS FYI: RGAS=8.31445986144D0 by Gross. close enough.
-	if(LOUDER)print*,'calling state_trho'
+	if(LOUDER)write(dumpUnit,*)'calling state_trho'
 	!call state_trho ( t_input, rhoiJre, pcalc, molar_rho, sRes_R, hRes_RT, cmprsblty, cvRes_R )
 	!subroutine state_trho ( tF, rhoi_in, pcalc, molar_rho, s, h, s_res, cp )
 	call state_trhoJre ( t_input, rhoiJre, pcalc, molar_rho, eta, zFactor, sRes_R, hRes_RT, cmprsblty, cvRes_R, cpRes_R )
 	!subroutine state_trhoJre ( tF, rhoi_in, pcalc, molar_rho, eta, ztot, sRes_R, hRes_RT, cmprsblty, cvRes_R, cpRes_R )
 	!if(ABS(pcalc-p_input)/p_input > 1.D-3) iErr=3
 	if(zFactor > 0)chemPoRes(1:nComp)=mu_res(1:ncomp)-LOG(zFactor)
-	if(LOUDER)print*,'mu_res:',chemPoRes( 1:ncomp )
+	if(LOUDER)write(dumpUnit,*)'mu_res:',chemPoRes( 1:ncomp )
 	pMPa=pcalc/1.d6
 	fugacity(1:ncomp)=x_input(1:ncomp)*pMPa*exp( chemPoRes(1:ncomp) )
-	if(LOUDER)print*,'fugacity(MPa):',fugacity( 1:ncomp )
-	if(LOUDER)print*,'pcalc,eta,Z',pcalc,eta,zFactor
-	if(LOUDER)print*,'rho_mol,S,H:',molar_rho, sRes_R,hRes_RT
-	if(LOUDER)print*,'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
+	if(LOUDER)write(dumpUnit,*)'fugacity(MPa):',fugacity( 1:ncomp )
+	if(LOUDER)write(dumpUnit,*)'pcalc,eta,Z',pcalc,eta,zFactor
+	if(LOUDER)write(dumpUnit,*)'rho_mol,S,H:',molar_rho, sRes_R,hRes_RT
+	if(LOUDER)write(dumpUnit,*)'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
 	uRes = hRes_RT-(zFactor-1)
 	aRes = uRes - sRes_R
-	if(LOUDER)print*,'FugiPcSaftVtot Done!'
+	if(LOUDER)write(dumpUnit,*)'FugiPcSaftVtot Done!'
 	!pause 'check output'
 	!JRE end
 	return
@@ -11389,7 +11403,7 @@ end subroutine FugiPcSaftVtot
 subroutine FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,chemPoRes,rhoMol_cc,zFactor,aRes,uRes,iErr)
     use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
     use PARAMETERS, only: dp, nsite, NAV, RGAS
-    use GlobConst, only: LOUD,  cpRes_R, cvRes_R, cmprsblty !,etaPass	uRes_RT, sRes_R, aRes_RT, hRes_RT,
+    use GlobConst, only: LOUD,  cpRes_R, cvRes_R, cmprsblty,dumpUnit !,etaPass	uRes_RT, sRes_R, aRes_RT, hRes_RT,
 	use properties !JRE add
 	use stability, only: get_eta  !JRE add
 	use eos_constants
@@ -11427,29 +11441,29 @@ subroutine FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,chemPoRes,rhoMol_cc,zFactor,
     x_input(1:ncomp) = xFrac(1:ncomp)/sum( xFrac(1:ncomp) )
     !call initialize_unit xxx must call GetPcSaft before Fugi.
     iErr=0
-	!print*,'Calling consoleIO'
+	!write(dumpUnit,*)'Calling consoleIO'
 	!call consoleIO !JRE get T,P, ncomp,compnames.
 	!JRE end
-	if(LOUDER)print*,'FugiPcSaft: t,p=',t_input, p_input
-	if(LOUDER)print*,'FugiPcSaft: x=',x_input(1:ncomp)
+	if(LOUDER)write(dumpUnit,*)'FugiPcSaft: t,p=',t_input, p_input
+	if(LOUDER)write(dumpUnit,*)'FugiPcSaft: x=',x_input(1:ncomp)
 	eta_start=1.d-5
 	if( LIQ==1 .or. LIQ==3)eta_start=0.45D0
-	!print*,'calling chempo'
+	!write(dumpUnit,*)'calling chempo'
 	call chemical_potential_tp ( t_input, p_input, x_input, eta_start, rhoiJre, mu_res) !function overload, last two are optional.
 	chemPoRes(1:ncomp)=mu_res(1:ncomp)
-	if(LOUDER)print*,'mu_res:',chemPoRes( 1:ncomp )
+	if(LOUDER)write(dumpUnit,*)'mu_res:',chemPoRes( 1:ncomp )
 	fugacity(1:ncomp)=x_input(1:ncomp)*pMPa*exp( chemPoRes(1:ncomp) )
-	if(LOUDER)print*,'fugacity(MPa):',fugacity( 1:ncomp )
-	!print*,'calling state_trho'
+	if(LOUDER)write(dumpUnit,*)'fugacity(MPa):',fugacity( 1:ncomp )
+	!write(dumpUnit,*)'calling state_trho'
 	call state_trhoJre ( t_input, rhoiJre, pcalc, molar_rho, eta, zFactor, sRes_R, hRes_RT, cmprsblty, cvRes_R, cpRes_R )
 	if(ABS(pcalc-p_input)/p_input > 1.D-3) iErr=13
-	if(LOUDER)print*,'pcalc,eta,Z',pcalc,eta,zFactor
-	if(LOUDER)print*,'rho_mol,S,H:',molar_rho, sRes_R,hRes_RT
-	if(LOUDER)print*,'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
+	if(LOUDER)write(dumpUnit,*)'pcalc,eta,Z',pcalc,eta,zFactor
+	if(LOUDER)write(dumpUnit,*)'rho_mol,S,H:',molar_rho, sRes_R,hRes_RT
+	if(LOUDER)write(dumpUnit,*)'cmprsblty,CvRes/R,CpRes/R:',cmprsblty, cvRes_R, cpRes_R
     uRes = hRes_RT-(zFactor-1)
     aRes = uRes - sRes_R
 	rhoMol_cc=molar_rho/1.D6 ! convert from mol/m^3 to mol/cm^3
-    if(LOUDER)print*,'FugiPcSaft Done!'
+    if(LOUDER)write(dumpUnit,*)'FugiPcSaft Done!'
 	!pause 'check output'
 	!JRE end
 	return

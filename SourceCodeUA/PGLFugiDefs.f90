@@ -37,9 +37,9 @@
 	elseif(isTPT)then ! 
  	    call FuTpt( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr )	  !AUG 10
 	elseif(iEosOpt.eq.7)then
-		call FuNRTL( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,zFactor,ier )
+		call FuNRTL( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr )
 	elseif(iEosOpt==19)then
-		call FuLsgMem2( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErrF )
+		call FuLsgMem2( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr )
 	elseif(isPcSaft)then !iEosOpt=11,13
 		call FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr)
  	    !if(LOUD)print*,'Sorry: PcSaft not available at this time'!call FugiPcSaft(T,P,X,NC,LIQ,FUGC,zFactor,ier)	 ! Need to define this

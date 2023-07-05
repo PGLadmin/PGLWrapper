@@ -4,11 +4,11 @@ MODULE DLLConst
 	!PUBLIC
 	Implicit NONE
 	Integer oldRN1,oldRN2,oldRN3,oldEOS
-	Character*15 EosName(18) 
-	!               1     2       3       4          5          6         7           8              9            10     
-	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft(Gross)', &
-	    'tcPRq','GCESD','GCESD(Tb)','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2'/
-	!      11      12        13         14          15           16            17        18
+	Character*15 EosName(20) 
+	!              1     2       3       4          5          6         7           8              9        10       
+	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
+			'tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
+	!             11    12      13         14          15          16             17        18       19        20       
 END MODULE DLLConst
 
 Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
@@ -140,14 +140,14 @@ Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 end subroutine CalculateProperty1local
 
 function CalculateProperty(ieos, casrn, prp_id, var1, var2, ierr)
-	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
+	!USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	USE GlobConst
 	IMPLICIT double Precision(A-H,K,O-Z)
     double Precision CalculateProperty
     integer ieos, casrn, prp_id, ierr
     double Precision var1, var2
-	!DEC$ ATTRIBUTES DLLEXPORT::CalculateProperty
-    !!MS$ ATTRIBUTES DLLEXPORT::CalculateProperty
+	!!DEC$ ATTRIBUTES DLLEXPORT::CalculateProperty
+    !MS$ ATTRIBUTES DLLEXPORT::CalculateProperty
     call CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     CalculateProperty=res
     return
@@ -155,7 +155,7 @@ end function CalculateProperty
 
 subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var3, res, ierr)
 !	CalculateProperty2 & local is for binary mixtures.
-	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
+	!USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	USE GlobConst
     use DllConst
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
@@ -167,16 +167,6 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
     INTEGER localCas(nmx)
 	!CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
-	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-    IF (LOUD.and.dumpUnit==6) return
-	DEBUG=.FALSE.
-	!  Get current directory
-	CURDIR = FILE$CURDRIVE
-	iStat = GETDRIVEDIRQQ(CURDIR)
-	!iChange=VERIFY('C:\MYPROJEX\CalcEos',CURDIR)
-	!iChange2=VERIFY('C:\MYPROJEX\CALCEOS',CURDIR)
-	!if(iChange2.eq.0)iChange=0
-	!if(iChange.eq.0 .or. iChange.gt.26)DEBUG=.TRUE.
 	NC=2 !no of components
     iEosOpt=ieos
     iProperty=ABS(prp_id)
@@ -288,7 +278,6 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 end subroutine CalculateProperty2local
 
 function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
-	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	USE GlobConst
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
     DoublePrecision CalculateProperty2
@@ -297,31 +286,77 @@ function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr
     !DoublePrecision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx) 
 	!FUGI requires mole fraction specification because it is written generally for mixtures.
 !	COMMON/eta/etaL,etaV,ZL,ZV
-  !DEC$ATTRIBUTES DLLEXPORT::CalculateProperty2
-  !!MS$ATTRIBUTES DLLEXPORT::CalculateProperty2
+  !!DEC$ATTRIBUTES DLLEXPORT::CalculateProperty2
+  !MS$ATTRIBUTES DLLEXPORT::CalculateProperty2
     call CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var3, res, ierr)
     CalculateProperty2=res
     return
 end function CalculateProperty2
 
-integer function Activate(hello)
+integer function Activate(errMsg)
     use DllConst
     use GlobConst
-    character(255) hello,local
-    !DEC$ATTRIBUTES DLLEXPORT::Activate
+    character(255) errMsg,local,dumpFile
+	CHARACTER(LEN=255)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
+	!Integer nLines
+    !!DEC$ATTRIBUTES DLLEXPORT::Activate
+    !MS$ ATTRIBUTES DLLEXPORT::Activate
+	DEBUG=.FALSE.
     LOUD=.FALSE.
+	Activate=0
+	errMsg=' Activate: No problem in Activate function. PGLDLLOptions.txt has been loaded.'
     !LOUD=.TRUE.
+	OPEN(51,file='PGLDLLOptions.txt',ioStat=ioErr)
+	if(ioErr /= 0)then
+		errMsg=' Activate: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
+		Activate=1 
+		return
+	endif
+!	read(51,*,ioStat=ioErr)nLines !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp or exe is.
+!	if(ioErr /= 0)then
+!		errMsg=' Activate: Error reading PGLDLLOptions.txt. 1st line should list nLines' 
+!		Activate=11 
+!		return
+!	endif 
+	read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp or exe is.
+	if(ioErr /= 0)then
+		errMsg=' Activate: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
+		Activate=2 
+		return
+	endif 
+	read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
+	if(ioErr /= 0)then
+		errMsg=' Activate: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
+		Activate=3 
+		return
+	endif 
+	read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
+	if(ioErr /= 0)then
+		errMsg=' Activate: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
+		Activate=4 
+		return
+	endif 
+	read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
+	if(ioErr /= 0)then
+		errMsg=' Activate: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
+		Activate=5 
+		return
+	endif 
+	dumpFile=TRIM(curdir)//'\DebugDLL.txt'
+	masterDir=curdir
+	!read(51,*,ioStat=ioErr)dumpFile
+	!if(ioErr /= 0)write(*,*)'Activate: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
+	close(51)
     if (LOUD)then
         dumpUnit=686
-        open(dumpUnit,file='c:\myprojex\pgldll\pgldll\DebugDLL.txt')
+        open(dumpUnit,file=dumpFile)
         write(dumpUnit,*)'Activate: DLL has started.'
     endif
     oldRN1=0
     oldRN2=0
     oldRN3=0
     oldEOS=0
-    Activate=1
-	local=TRIM(hello)
+	local=TRIM(errMsg)
     
     return
 end function Activate
@@ -330,7 +365,8 @@ integer function QUERYMODEL(no, model_type, level, modelname)
     use GlobConst
     integer no, model_type, level
     character(255) modelname
-    !DEC$ATTRIBUTES DLLEXPORT::QUERYMODEL
+    !!DEC$ATTRIBUTES DLLEXPORT::QUERYMODEL
+    !MS$ ATTRIBUTES DLLEXPORT::QUERYMODEL
     QUERYMODEL=0
     if (no.eq.1) then
         model_type=1
@@ -496,8 +532,8 @@ integer function Calculate2(casrn1, casrn2, modelid, propertyid, t, p, x, res, u
 !double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
     integer modelid, casrn1, casrn2, propertyid, ierr
     double Precision t, p, x, res, uncert
-    !DEC$ ATTRIBUTES DLLEXPORT::Calculate2
-    !!MS$ ATTRIBUTES DLLEXPORT::Calculate2
+    !!DEC$ ATTRIBUTES DLLEXPORT::Calculate2
+    !MS$ ATTRIBUTES DLLEXPORT::Calculate2
     if (x.le.0) x=0.000001
     if (x.ge.1) x=0.999999
     call CalculateProperty2local(modelid, casrn1, casrn2, propertyid, t, p, x, res, ierr)
@@ -511,7 +547,8 @@ integer function Calculate3(casrn1, casrn2, casrn3, modelid, propertyid, t, p, x
 !double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
     integer modelid, casrn1, casrn2, casrn3, propertyid, ierr
     double Precision t, p, x1, x2, res, uncert
-    !DEC$ ATTRIBUTES DLLEXPORT::Calculate3
+    !!DEC$ ATTRIBUTES DLLEXPORT::Calculate3
+    !MS$ ATTRIBUTES DLLEXPORT::Calculate3
     call CalculateProperty3local(modelid, casrn1, casrn2, casrn3, propertyid, t, p, x1, x2, res, ierr)
     uncert=0
     Calculate2=ierr
@@ -525,8 +562,8 @@ integer function Calculate(casrn, modelid, propertyid, t, p, x, res, uncert)
 !double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
     integer modelid, casrn(255), propertyid,localCas !, ierr
     double Precision t, p, x(255), res, uncert
-    !DEC$ ATTRIBUTES DLLEXPORT::Calculate
-    !!MS$ ATTRIBUTES DLLEXPORT::Calculate
+    !!DEC$ ATTRIBUTES DLLEXPORT::Calculate
+    !MS$ ATTRIBUTES DLLEXPORT::Calculate
     res=0
     uncert=0
     Calculate=1
@@ -546,8 +583,8 @@ integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
     Implicit NONE
     integer modelid, casrn1, propertyid, localprpid, ierr
     double Precision t, p, res, uncert
-    !DEC$ ATTRIBUTES DLLEXPORT::Calculate1
-    !!MS$ ATTRIBUTES DLLEXPORT::Calculate1
+    !!DEC$ ATTRIBUTES DLLEXPORT::Calculate1
+    !MS$ ATTRIBUTES DLLEXPORT::Calculate1
     localprpid = 0
     if (propertyid.eq.1) localprpid=4   !L
     if (propertyid.eq.2) localprpid=3   !G
@@ -590,28 +627,32 @@ end function Calculate1
 
 integer function FIND_COMP(name)
     character(255) name
-    !DEC$ ATTRIBUTES DLLEXPORT::FIND_COMP
+    !!DEC$ ATTRIBUTES DLLEXPORT::FIND_COMP
+    !MS$ ATTRIBUTES DLLEXPORT::FIND_COMP
     FIND_COMP=0
     return
 end function FIND_COMP
 
 integer function SUPPORTS_COMP(modelid, id1)
     integer modelid, id1
-    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_COMP
+    !!DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_COMP
+    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_COMP
     SUPPORTS_COMP=0
     return
 end function SUPPORTS_COMP
 
 integer function SUPPORTS_BIN(modelid, id1, id2)
     integer modelid, id1, id2
-    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_BIN
+    !!DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_BIN
+    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_BIN
     SUPPORTS_BIN=0
     return
 end function SUPPORTS_BIN
 
 integer function SUPPORTS_PRP1(modelid, propertyid)
     integer modelid, propertyid
-    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP1
+    !!DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP1
+    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP1
     SUPPORTS_PRP1=0
     if (propertyid==1) SUPPORTS_PRP1=1
     if (propertyid==2) SUPPORTS_PRP1=1
@@ -632,7 +673,8 @@ end function SUPPORTS_PRP1
 
 integer function SUPPORTS_PRP2(modelid, propertyid)
     integer modelid, propertyid
-    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP2
+    !!DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP2
+    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP2
     SUPPORTS_PRP2=0
     if (propertyid==4) SUPPORTS_PRP2=1
     if (propertyid==5) SUPPORTS_PRP2=1
@@ -648,14 +690,16 @@ end function SUPPORTS_PRP2
 
 integer function SUPPORTS_PRP3(modelid, propertyid)
     integer modelid, propertyid
-    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP3
+    !!DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP3
+    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP3
     SUPPORTS_PRP3=0
     return
 end function SUPPORTS_PRP3
 
 integer function SUPPORTS_PRP4(modelid, propertyid)
     integer modelid, propertyid
-    !DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP4
+    !!DEC$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP4
+    !MS$ ATTRIBUTES DLLEXPORT::SUPPORTS_PRP4
     SUPPORTS_PRP4=0
     return
 end function SUPPORTS_PRP4
@@ -666,7 +710,8 @@ integer function GETNPAR(modelid)
     integer nPar
     integer QueryNparPure
     integer QueryNparMix
-    !DEC$ ATTRIBUTES DLLEXPORT::GETNPAR
+    !!DEC$ ATTRIBUTES DLLEXPORT::GETNPAR
+    !MS$ ATTRIBUTES DLLEXPORT::GETNPAR
     iEosOpt=modelid
     if (oldRn1.gt.0.and.oldRn2.eq.0) then
         nPar=QueryNparPure()
@@ -685,7 +730,8 @@ integer function GETPAR(n, retvalue)
     integer n
     double precision retvalue
     integer res
-    !DEC$ ATTRIBUTES DLLEXPORT::GETPAR
+    !!DEC$ ATTRIBUTES DLLEXPORT::GETPAR
+    !MS$ ATTRIBUTES DLLEXPORT::GETPAR
     if (oldRn1.gt.0.and.oldRn2.eq.0) then
         call QueryParPure(1,n,retvalue,res)
     elseif (oldRn1.gt.0) then
@@ -703,7 +749,8 @@ integer function SETPAR(n, newvalue)
     integer n
     double precision newvalue
     integer res
-    !DEC$ ATTRIBUTES DLLEXPORT::SETPAR
+    !!DEC$ ATTRIBUTES DLLEXPORT::SETPAR
+    !MS$ ATTRIBUTES DLLEXPORT::SETPAR
     if (oldRn1.gt.0.and.oldRn2.eq.0) then
         call SetParPure(1, n, newvalue, res)
     elseif (oldRn1.gt.0) then
@@ -720,11 +767,12 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
     use DllConst
 	IMPLICIT double Precision(A-H,K,O-Z)
     integer iEosLocal, Rn1, Rn2, Rn3
-    !DEC$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
+    !!DEC$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
+    !MS$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
     integer ieos, casrn1, casrn2, casrn3, ierr
     INTEGER localCas(nmx)
     IF (LOUD.and.dumpUnit==6) then
-	    INITIALIZE_MODEL=5
+	    INITIALIZE_MODEL=5	! declare an error if dump is to console i/o when LOUD.
 	    return
     endif
     if (LOUD)write(dumpUnit,*)'INITIALIZE_MODEL: starting'
@@ -795,7 +843,6 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
     end function INITIALIZE_MODEL
 
 subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, var2, var3, var4, res, ierr)
-	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	USE GlobConst
     use DllConst
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
@@ -807,16 +854,8 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
     INTEGER localCas(nmx)
 	CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
-	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
     IF (LOUD.and.dumpUnit==6) return
 	DEBUG=.FALSE.
-	!  Get current directory
-	CURDIR = FILE$CURDRIVE
-	iStat = GETDRIVEDIRQQ(CURDIR)
-	!iChange=VERIFY('C:\MYPROJEX\CalcEos',CURDIR)
-	!iChange2=VERIFY('C:\MYPROJEX\CALCEOS',CURDIR)
-	!if(iChange2.eq.0)iChange=0
-	!if(iChange.eq.0 .or. iChange.gt.26)DEBUG=.TRUE.
 	NC=3 !no of components
     iEosOpt=ieos
     iProperty=ABS(prp_id)
@@ -968,7 +1007,8 @@ end subroutine CalculateProperty3local
 integer function SETSTRING(tag, value)
 	USE GlobConst
     character*255 tag, value !, local
-    !DEC$ ATTRIBUTES DLLEXPORT::SETSTRING
+    !!DEC$ ATTRIBUTES DLLEXPORT::SETSTRING
+    !MS$ ATTRIBUTES DLLEXPORT::SETSTRING
     if(LOUD)write(dumpUnit,*)'SETSTRING: value,tag',value,' ',tag 
     if (tag(1:8).eq.'LOCATION') then
         do i1=1,255

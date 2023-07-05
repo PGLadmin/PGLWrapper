@@ -110,7 +110,7 @@ END MODULE VpDb
 	if(LOUD)write(dumpUnit,*)'PGLWRapperStartup:localCas,idDippr=',(localCas(i),id(i), i=1,NC)
 	if(iErrCas)then
         if(LOUD)write(dumpUnit,*)' Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
-        write(52,*)ierCode,' PGLWRapperStartup:Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
+        write(dumpUnit,*)ierCode,' PGLWRapperStartup:Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
 		ierCode=12
         goto 86
     endif
@@ -118,7 +118,7 @@ END MODULE VpDb
 	CALL GETCRIT(NC,iErrCrit)
 	if(iErrCrit)then
 		if(LOUD)write(dumpUnit,*)'Error in Main: ErrorCode from GetCrit = ',iErrCrit
-		write(52,*)ierCode,' Error in Main: ErrorCode from GetCrit = ',iErrCrit
+		write(dumpUnit,*)ierCode,' Error in Main: ErrorCode from GetCrit = ',iErrCrit
 		ierCode=13
 		goto 86
 	endif
@@ -143,7 +143,7 @@ END MODULE VpDb
 	!NewEos: Add here for initializing parms.
 	if(iErrGet .ne. 0)then
 		if(LOUD)write(dumpUnit,*)ierCode,' Error in Main: failed to get required dbase props.'
-		write(52,*)iErrGet,' PGLWrapperStartup:Get(EOS) failed. iErrGet=',iErrGet
+		if(LOUD)write(dumpUnit,*)iErrGet,' PGLWrapperStartup:Get(EOS) failed. iErrGet=',iErrGet
 		ierCode=iErrGet*10
 		goto 86
 	endif
@@ -243,7 +243,7 @@ END MODULE VpDb
 	character*77 errMsg(0:22),errMsgPas
 	LOGICAL LOUDER
 	LOUDER=LOUD
-	LOUDER=.TRUE.
+	!LOUDER=.TRUE.
 	errMsg(0)='No Problem'
 	errMsg(11)='IdDipprLookup Error: at least one id not found'
 	errMsg(12)='IdDipprLookup: You must call LoadCritParmsDb first. Goodbye!'
@@ -386,7 +386,7 @@ END MODULE VpDb
 	Implicit DoublePrecision(A-H,O-Z)
 	LOGICAL LOUDER
 	LOUDER=LOUD
-	LOUDER=.TRUE.
+	!LOUDER=.TRUE.
 	!	eHbKcalMol(nmx),bondVolNm3(nmx),ND(nmx),NDS(nmx),NAS(nmx)
 	if(nDeckDb.ne.nCritSet)Call LoadCritParmsDb(iErrLoadCrit)
 	if(iErrLoadCrit > 0)then

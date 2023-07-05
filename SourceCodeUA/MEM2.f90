@@ -7,10 +7,10 @@ MODULE GlobConst
 	Integer nmx,nCritSet,nModels 
 	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0)
 	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)
-	          !avoNum[=]cm3/(nm3*mol, kB[=]MPa.nm3/K. cf. PGL6ed, Table 6.1
+	          !avoNum[=]cm3/(nm3*mol), kB[=]MPa.nm3/K. cf. PGL6ed, Table 6.1
 	PARAMETER (nCritSet=1737) ! This is the number of compounds that should be found in LoadCritParmsDb. 
 	!          Change this parameter if you add more compounds.	It must be consistent or you will get a LOAD error.
-	Parameter (nModels=19)
+	Parameter (nModels=20)
 	!          https://www.nist.gov/si-redefinition 
     !nmx is the max allowed number of Compounds
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
@@ -25,7 +25,7 @@ MODULE GlobConst
 	character*234 masterDir,PGLinputDir
 	character*30 NAME(nmx)
 	character*5 class(nmx) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. PGL6edClasses.xls)
-    Logical LOUD,CheckDLL   !LOUD=.TRUE. means writing debug info. CheckDLL=.TRUE. means direct debug info to DebugDLL.txt
+    Logical, SAVE :: LOUD,CheckDLL   !LOUD=.TRUE. means writing debug info. CheckDLL=.TRUE. means direct debug info to DebugDLL.txt
 	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
 	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
 	DoublePrecision etaPass 
@@ -43,7 +43,8 @@ MODULE GlobConst
 	data form610,form611,form612,form613/'(a,12E12.4)','(a,i8,12E12.4)','(a,2i8,12E12.4)','(a,3i8,12E12.4)'/ 
 	!              1     2       3       4          5          6         7           8              9        10       
 	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
-			'tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2'/
+			'tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
+	!             11    12      13         14          15          16             17        18       19        20       
 	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS AND DATA !!!!!!!!!!!!!
 	!LOUD = .FALSE.
 contains
@@ -639,7 +640,7 @@ END MODULE Assoc
 			bepsA=(eAcceptorKcal_mol(i,j)/RgasCal*1000/tKelvin)
 			dLnAlpha_dLnBeta=DEXP(bepsA)	! Eqs. 44,45
 			if(bepsA > 1.D-4)dLnAlpha_dLnBeta=dLnAlpha_dLnBeta*(bepsA)/(dLnAlpha_dLnBeta-1)
-			if(LOUDER)write(*,form612)' MEM1:i,j,eA,bepsA,BdLnAlph_dLnB',i,j,eAcceptorKcal_mol(i,j),bepsA,dLnAlpha_dLnBeta
+			if(LOUDER)write(dumpUnit,form612)' MEM1:i,j,eA,bepsA,BdLnAlph_dLnB',i,j,eAcceptorKcal_mol(i,j),bepsA,dLnAlpha_dLnBeta
 			betadFA_dBeta=betadFA_dBeta+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*XA(i,j)*ralph(i,j)*0.5d0*dLnAlpha_dLnBeta	  
 			! 0.5 because dLnRalph=0.5*dLnAlpha
 		enddo
