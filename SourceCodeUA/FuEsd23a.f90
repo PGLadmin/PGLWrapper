@@ -189,7 +189,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	    write(dumpUnit,*) 'GetEsdCas: check BIPs.'
 		if(iErrCode > 0) write(dumpUnit,*)'GetEsdCas: BIPs missing for ',iErrCode-10,' binary combinations.'
     end if
-	if(LOUD)pause 'GetEsdCas: done. Returning'
+	if(LOUD)write(dumpUnit,*) 'GetEsdCas: done. Returning'
 	RETURN
 	
 861	continue
@@ -227,7 +227,7 @@ subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 			ierComp(i)=1
 			iErr=100+i
 			if(LOUDER)write(dumpUnit,*)'ExactESD: no parms for ID,class=',ID(i),TRIM(class(i))
-			if(LOUDER)pause 'ExactESD:check ID.'
+			if(LOUDER)write(dumpUnit,*) 'ExactESD:check ID.'
 			cycle
 		endif	
 		isHelium=0
@@ -420,7 +420,7 @@ end	!subroutine ExactEsd
 	zStore=zFactor   
 	isZiter=0
 	Call FuEsdVtot(isZiter,tKelvin,1/rho,xFrac,NC,FUGC,zFactor,Ares,Ures,iErrF)
-	if(ABS( (zFactor-zStore)/zStore ) > 1.D-4)pause 'FugiESD: zFactor changed on last call???'
+	if(ABS( (zFactor-zStore)/zStore ) > 1.D-4.and.LOUDER)write(dumpUnit,*) 'FugiESD: zFactor changed on last call???'
 	if(zFactor < zeroTol)then
 		iErr=11
 		if(LOUDER)write(dumpUnit,*)'FugiEsd: converged Z <= 0. eta,Z=',eta,zFactor

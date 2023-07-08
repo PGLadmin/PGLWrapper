@@ -1,4 +1,4 @@
-	USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
+	!USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	USE PORTLIB
 	USE GlobConst
 	USE CritParmsDb
@@ -6,16 +6,14 @@
 	USE EsdParms
 	Implicit DoublePrecision(A-H,K,O-Z)
 
-	CHARACTER($MAXPATH) CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
+	CHARACTER(300) CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
 	CHARACTER*77 readString,Property(22) !,errMsgPas
 	CHARACTER*251 outFile ,dumpFile
 	!CHARACTER*3 aPhase
     DoublePrecision xFrac(NMX) !,FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
     Integer  localCas(NMX),prp_id
 
-	CURDIR = FILE$CURDRIVE
-	iStat = GETDRIVEDIRQQ(CURDIR)
-	masterDir=TRIM(curDir)
+	masterDir='c:\Projects\MSDEV\CalcEosVs'
 	PGLinputDir='c:\PGLWrapper\input'
 	DEBUG=.TRUE.
 	DEBUG=.FALSE. ! read input files from c:\Projects\...\input dir.
