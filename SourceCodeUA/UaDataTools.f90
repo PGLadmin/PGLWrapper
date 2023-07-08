@@ -255,11 +255,13 @@
 	USE GlobConst, ONLY:LOUD,dumpUnit,zeroTol,PGLinputDir,nCritSet
 	USE CritParmsDb 
 	IMPLICIT DoublePrecision(A-H,O-Z)
+    Integer ndbLocal
 	!CHARACTER*4 tCode,pCode,vCode
 	!character*132 readText,dumText
 	!character*12  form
 	character*251 inFile,dumString
 	iErrCode=0
+    ndbLocal=3000
 	CrIndex=ndb ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
 	inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
 	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: CritFile=',TRIM(inFile)
@@ -286,7 +288,7 @@
 		if(rhoG_cc < zeroTol)rhoG_cc=1
 		vLiqD(i)=rMwD(i)/rhoG_cc
 		CrIndex(IDnum(i))=i
-		if(ioErr.and.LOUD)write(dumpUnit,*)'LoadCritParmsDb: error reading ParmsCrit.txt. line=',i
+		if(ioErr.ne.0.and.LOUD)write(dumpUnit,*)'LoadCritParmsDb: error reading ParmsCrit.txt. line=',i
 		if(i==1.and.LOUD)then
 			write(dumpUnit,602)IDnum(I),idCasDb(I),TCD(I),PCD(I),ZCD(I),ACEND(I),solParmD(I),vLiqD(i),rMwD(i) !&
 			write(dumpUnit,*)'LoadCrit: classDb,formDb,nameD=',classDb(i),formDb(i),NAMED(i)

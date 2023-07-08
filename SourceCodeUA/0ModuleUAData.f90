@@ -152,7 +152,7 @@ MODULE CritParmsDb
 	character*30, STATIC:: NAMED(ndb)	!LoadCrit() loads ParmsCrit database.
 	character*5, STATIC:: classDb(ndb) 
 	character*11, STATIC:: formDb(ndb) 
-	Integer, STATIC:: IDnum(ndb),CrIndex(9999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
+	Integer, STATIC:: IDnum(ndb),CrIndex(99999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
 	DoublePrecision, STATIC:: TCD(ndb),PCD(ndb),ACEND(ndb),TbD(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb) 
 	! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
 END MODULE CritParmsDb

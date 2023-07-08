@@ -32,12 +32,13 @@
     !doublePrecision var1, var2
     !character(255) tag, value
 	character(255) errMsg 
+    character*255 tag, value !, local
 
 INTERFACE
-	integer function Activate(hello)
-		!DEC$ATTRIBUTES DLLIMPORT :: Activate 
+	integer function InitPGLDLL(hello)
+		!DEC$ATTRIBUTES DLLIMPORT :: InitPGLDLL 
 		character(255) hello
-	end function Activate
+	end function InitPGLDLL
 	integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 		!DEC$ATTRIBUTES DLLIMPORT :: INITIALIZE_MODEL 
 		integer iEosLocal, Rn1, Rn2, Rn3
@@ -52,14 +53,19 @@ INTERFACE
 		integer ieos, casrn, prp_id, ierr
 		double Precision var1, var2
 	end function CalculateProperty
-end interface
-	iErr=Activate(errMsg)
-	if(iErr > 0)then
-		write(*,'(a)')' DLLTestMain: Activate! ErrMsg=',errMsg
+    end interface
+    !tag='LOCATION'
+    !value='c:\PGLWrapper|'
+    !iErr=SetString(tag,value)
+	iErr=InitPGLDLL(errMsg)
+	if(iErr > 10)then
+		write(*,'(a)')' DLLTestMain: InitPGLDLL! ErrMsg=',errMsg
 		write(*,*)' DLLTestMain: iErr=',iErr
 	else
-		write(*,*)'DLLTestMain: Activate returned iErr=0. Woohoo!'
-	endif
+		write(*,*)'DLLTestMain: InitPGLDLL returned iErr=0. Woohoo!'
+        !write(*,*)'DLLTestMain: PGLInputDir=',TRIM(PGLInputDir)
+    endif
+    
 	call Test1
 	call Test2
 	call Test3
@@ -71,7 +77,7 @@ subroutine Test1
 	integer ieos, Rn1, Rn2, Rn3, prp_id, ierr
 	doublePrecision var1, var2, prp, uncert
 	DoublePrecision CalcResult
-    ieos=2
+    ieos=4
     Rn1=67641   !acetone
     Rn2=0
     Rn3=0
@@ -100,7 +106,7 @@ subroutine Test2
 !            if (prp_id==204) res = exp(FUGC(2))	! liq
 	integer ieos, casrn1, casrn2, prp_id, ierr
 	doublePrecision var1, var2, var3, prp
-    ieos = 2
+    ieos = 4
     casrn1 = 75150      !CarbonDisulfide
     casrn2 = 2551624    !SulfurHexafluoride
     var1 = 298.136
@@ -140,12 +146,13 @@ subroutine Test2
 end subroutine
 
 subroutine Test3	!testing dll calls
-integer i, ieos, casrn1, casrn2, casrn3, prp_id, ierr
+integer i, ieos, casrn1, casrn2, casrn3, prp_id, ierr,nPar
 doublePrecision var1, var2, var3, prp, p
 integer GETNPAR,GETPAR
-	i=INITIALIZE_MODEL(2,71363,7732185,0)
-	i=GETNPAR(2)
+	i=INITIALIZE_MODEL(2,71363,7732185,0)       ! (iEos,casrn1,casrn2,casrn3)
+	nPar=GETNPAR(2)
 	i=GETPAR(1,p)
+    write(*,*) 'Test3: nPar,par=',nPar,p
 	return
     ieos = 2
     casrn1 = 123911     !14dioxane

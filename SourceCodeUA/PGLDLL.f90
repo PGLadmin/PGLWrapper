@@ -15,72 +15,22 @@ END MODULE DLLConst
 integer function Activate(errMsg)
     use DllConst
     use GlobConst
-    character(255) errMsg,local,dumpFile
-	CHARACTER(LEN=255)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
-	LOGICAL ReadOptions
+    character(255) errMsg,local !,dumpFile
+	!CHARACTER(LEN=255)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
+	!LOGICAL ReadOptions
 	!Integer nLines
     !DEC$ATTRIBUTES DLLEXPORT::Activate
     !!MS$ ATTRIBUTES DLLEXPORT::Activate
-	DEBUG=.FALSE.
-    LOUD=.FALSE.
-	ReadOptions=.FALSE.
-    !LOUD=.TRUE.
 	Activate=0
-	errMsg=' Activate: No problem in Activate function. PGLDLLOptions.txt has been loaded.'
     oldRN1=0
     oldRN2=0
     oldRN3=0
     oldEOS=0
 	local=TRIM(errMsg)
+	Activate=InitPGLDLL(errMsg)
+	write(dumpUnit,*)' Activate: From InitPGLDLL. iErr,errMsg',Activate,errMsg
     Activate=1  ! Vladimir's choice to indicate no error.
-	!return
-	CURDIR='c:\PGLWrapper'
-	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
-	DEBUG=.FALSE.
-	LOUD=.TRUE.
-	ioErr=0
-	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
-	if(ioErr /= 0)then
-		errMsg=' Activate: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
-		Activate=11 
-		return
-	endif
-
-	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp or exe is.
-	if(ioErr /= 0)then
-		errMsg=' Activate: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
-		Activate=12 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
-	if(ioErr /= 0)then
-		errMsg=' Activate: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
-		Activate=13 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
-	if(ioErr /= 0)then
-		errMsg=' Activate: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
-		Activate=14 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
-	if(ioErr /= 0)then
-		errMsg=' Activate: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
-		Activate=15 
-		return
-	endif 
-	dumpFile=TRIM(curdir)//'\DebugDLL.txt'
-	masterDir=curdir
-	!read(51,*,ioStat=ioErr)dumpFile
-	!if(ioErr /= 0)write(*,*)'Activate: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
-	close(51)
-    if (LOUD)then
-        dumpUnit=686
-        open(dumpUnit,file=dumpFile)
-        write(dumpUnit,*)'Activate: DLL has started.'
-    endif
-    return      
+	return
 end function Activate
 
 Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
@@ -1006,27 +956,142 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
             if (iProperty==206) res = exp(FUGC(3))
 		!enddo !	while(notDone)
         return
-end subroutine CalculateProperty3local
+	end subroutine CalculateProperty3local
+	
+integer function InitPGLDLL(errMsg)
+    use DllConst
+    use GlobConst
+    Implicit DoublePrecision(a-h,o-z)
+	Character(255) errMsg,CURDIR,local,dumpFile
+	LOGICAL ReadOptions
+    !DEC$ ATTRIBUTES DLLEXPORT::InitPGLDLL
+    !!MS$ ATTRIBUTES DLLEXPORT::InitPGLDLL
+	
+	DEBUG=.FALSE.
+    LOUD=.FALSE.
+    LOUD=.TRUE.
+	ReadOptions=.FALSE.
+	InitPGLDLL=0
+	errMsg=' From InitPGLDLL: No problem in InitPGLDLL function. PGLDLLOptions.txt has been loaded.'
+	CURDIR='c:\PGLWrapper'
+	masterDir=curdir
+	!CURDIR=TRIM(masterDir)
+	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
+	PGLInputDir=TRIM(masterDir)//'\Input'
+	DEBUG=.FALSE.
+	LOUD=.TRUE.
+	ioErr=0
+	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
+	if(ioErr /= 0)then
+		errMsg=' From InitPGLDLL: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
+		InitPGLDLL=11 
+		return
+	endif
+
+	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp or exe is.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
+		InitPGLDLL=12 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
+		InitPGLDLL=13 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
+		InitPGLDLL=14 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
+		InitPGLDLL=15 
+		return
+	endif 
+	dumpFile=TRIM(curdir)//'\DebugDLL.txt'
+	!read(51,*,ioStat=ioErr)dumpFile
+	!if(ioErr /= 0)write(*,*)'Activate: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
+	close(51)
+    if (LOUD)then
+        dumpUnit=686
+        open(dumpUnit,file=dumpFile)
+        write(dumpUnit,*)'InitPGLDLL: DLL has started.'
+    endif
+	InitPGLDLL=0
+	errMsg=' InitPGLDLL: No problem in InitPGLDLL function. PGLDLLOptions are loaded.'
+	!CURDIR='c:\PGLWrapper'
+	CURDIR=TRIM(masterDir)
+	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
+	PGLInputDir=TRIM(masterDir)//'\Input'
+	DEBUG=.FALSE.
+	LOUD=.TRUE.
+	ioErr=0
+	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
+		InitPGLDLL=11 
+		return
+	endif
+
+	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp,sln, or exe is.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
+		InitPGLDLL=12 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
+		InitPGLDLL=13 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
+		InitPGLDLL=14 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
+		InitPGLDLL=15 
+		return
+	endif 
+	dumpFile=TRIM(curdir)//'\DebugDLL.txt'
+	masterDir=curdir
+	!read(51,*,ioStat=ioErr)dumpFile
+	!if(ioErr /= 0)write(*,*)'InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
+	close(51)
+    if (LOUD)then
+        dumpUnit=686
+        open(dumpUnit,file=dumpFile)
+        write(dumpUnit,*)'InitPGLDLL: DLL has started.'
+    endif
+    return      
+end function InitPGLDLL
 
 integer function SETSTRING(tag, value)
 	USE GlobConst
-    character*255 tag, value !, local
+    character*255 tag, value , errMsg
     !DEC$ ATTRIBUTES DLLEXPORT::SETSTRING
     !!MS$ ATTRIBUTES DLLEXPORT::SETSTRING
-    if(LOUD)write(dumpUnit,*)'SETSTRING: value,tag',value,' ',tag 
     if (tag(1:8).eq.'LOCATION') then
         do i1=1,255
             if (value(i1:i1).eq.'|'.and. .NOT. LOUD) then !if(LOUD), assume debugging and use hard coded PGLInputDir
                 masterDir=value(1:i1-1)
                 PGLInputDir=trim(masterDir)//'\input'
-                goto 666
+                exit
             end if
-        enddo
-666     continue        
+		enddo
+		SETSTRING=InitPGLDLL(errMsg)
         SETSTRING=1
     else
         SETSTRING=0
     endif
-    if(LOUD)write(dumpUnit,*)'SetString: returning. SETSTRING=',SETSTRING 
+    !if(LOUD)write(dumpUnit,*)'SetString: returning. SETSTRING=',SETSTRING 
     return
     end function SETSTRING
