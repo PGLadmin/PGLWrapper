@@ -615,7 +615,6 @@ end	!Subroutine SetParPurePrTc
 		iErr=13
 		if(LOUD)then
             write(dumpUnit,*)'FuPrTc: Initial FuVtot returned with error code:',iErrZ
-		    pause
         end if
 		goto 861
 	elseif(iErrZ.ne.0)then
@@ -640,7 +639,7 @@ end	!Subroutine SetParPurePrTc
 		!ETA=rhoMol_Cc*bVolMix
 		if( (1-eta) < 1.d-11)then
 			if(LOUD)write(dumpUnit,*) 'FuPrTc: eta > 1. nIter=',nIter
-			if(LOUD)pause
+			!if(LOUD)pause
 		endif
 		rhoMol_cc=eta/bMix
 		vTotCc=totMoles/rhoMol_cc
@@ -680,7 +679,7 @@ end	!Subroutine SetParPurePrTc
 			eta=0
 			if(liq==1)eta=etaMax
 			if(LOUD)write(dumpUnit,*) 'Restarting iteration with eta=',eta
-			if(LOUD)pause
+			!if(LOUD)pause
 		endif
 	enddo  !iteration on eta to find P=P(input)
 	!write(dumpUnit,*)'Hello! iteration concluded. iErr,eta=',iErr,eta
