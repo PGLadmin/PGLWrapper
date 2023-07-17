@@ -168,7 +168,7 @@ END	!subroutine GetPR(NC,iErrGet)
 	!	rCoeff = BIGA*BIGB
 	zFactor=( 1/(1-eta)-aMix/(bMix*Rgas*tKelvin)*eta/(1+2*eta-eta*eta) )!EL2ed 7.15
 	PMPa=zFactor*rhoMol_Cc*Rgas*tKelvin
-	if(isZiter)return
+	if(isZiter==1)return
 	!
 	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS
 	!

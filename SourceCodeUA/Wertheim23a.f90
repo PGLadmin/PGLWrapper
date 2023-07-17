@@ -1,14 +1,14 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	! THE WERTHEIM ROUTINES OF SPEAD AND ESD TOGETHER COMBINED BY AGF, Oct. 2009
 	subroutine Wertheim( isZiter,eta,tKelvin,xFrac,nComps,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErrCode)
-	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID ,etaMax,dumpUnit,RgasCal,form610
+	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID ,etaMax,dumpUnit,RgasCal,form610,LOUD
 	USE Assoc !XA,XD,XC
 	!USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	!PARAMETER(nmx=55,maxTypes=44,maxTypesGlobal=999)
 	!USE GlobConst
 	character*77 errMsg(11)
-    logical HyBond,bAssoc(nmx)
+    LOGICAL HyBond,bAssoc(nmx),LOUDER
 	DoublePrecision ralph(nmx,maxTypes),xFrac(nmx),rLnPhiAssoc(nmx),vMolecNm3(nmx) !bondVolNm3(nmx),
 	DoublePrecision xaOld(nmx,maxTypes),xdOld(nmx,maxTypes) !,alphAD(nmx,maxTypes),alphDA(nmx,maxTypes)
     DoublePrecision rdfContact,dAlpha,eta
@@ -51,7 +51,7 @@
 !		endif
 !	enddo
 	!e.g. ethanol: rho=.68, tK=453 zAssoc=, aAssoc=
-	if(LOUD.and.initCall)write(dumpUnit,*)'Wertheim: starting.'
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'Wertheim: starting.'
 	sumx=SUM( xFrac(1:nComps) )
 	if( ABS(sumx-1) > zeroTol .and. sumx > zeroTol)xFrac(1:nComps)=xFrac(1:nComps)/sumx 
 	bVolMix=SUM( xFrac(1:nComps)*bVolCc_mol(1:nComps) )
@@ -77,7 +77,7 @@
 			XA(iComp,iType)=1
 			XD(iComp,iType)=1
 			XC(iComp,iType)=1
-			if(LOUD.and.initCall)write(dumpUnit,*)'Wertheim: iComp,iType,#Acc,#Don',  &
+			if(LOUD.and.initCall==1)write(dumpUnit,*)'Wertheim: iComp,iType,#Acc,#Don',  &
 			                                                             iComp,iType,nAcceptors(iComp,iType),nDonors(iComp,iType)
 		enddo
         bAssoc(iComp)=.false. ! then check if each component associates.
@@ -88,14 +88,14 @@
 	HyBond=.false. ! then check if any prospect for HyBonding, association or solvation 
 	if(nDonTot*nAccTot > 0)HyBond=.true.
 	if(.not.HyBond)then
-		if(LouderWert.and.initCall)write(dumpUnit,*)'Wertheim: No HyBond. nDonTot,nAccTot=',nDonTot,nAccTot
-		if(LouderWert.and.initCall)write(dumpUnit,*) 'Wertheim: no HyBond. Dont come back!'
+		if(LouderWert.and.initCall==1)write(dumpUnit,*)'Wertheim: No HyBond. nDonTot,nAccTot=',nDonTot,nAccTot
+		if(LouderWert.and.initCall==1)write(dumpUnit,*) 'Wertheim: no HyBond. Dont come back!'
 		initCall=0
 		return !no need for wertheim in this case.
 	endif
 	if(LouderWert)write(dumpUnit,*)'nAcceptors(iComp1)=',( nAcceptors(1,iType),iType=1,nTypes(1) )
 	if(LouderWert)write(dumpUnit,*)'nDonors(iComp1)=',( nDonors(1,iType),iType=1,nTypes(1) )
-	if(initCall.and.LouderWert.and.HyBond)write(dumpUnit,*) 'FuTptVtot: HyBonding identified in this fluid. Correct?'
+	if(initCall==1.and.LouderWert.and.HyBond)write(dumpUnit,*) 'FuTptVtot: HyBonding identified in this fluid. Correct?'
 	!write(dumpUnit,*) 'Wertheim: .not.HyBond, but still in Wertheim???'
 	if(tKelvin < 2)iErrCode=1 ! < 2 is too low even for He.
 	if(eta > etaMax .or. eta < 0)iErrCode=1
@@ -103,7 +103,7 @@
 	if(sumx.le.0)iErrCode=1
 	if(iErrCode==1)then
 		if(LOUDER)write(dumpUnit,'(a,f10.2)')' Wertheim: bVolMixCc_mol= ',bVolMix
-		if(LOUDER)write(dumpUnit,'(a,1PE11.4,a,0Pf7.2,a,f7.4)')' eta=',eta,' tKelvin=',tKelvin,' sumx=',sumx
+		if(LOUDER)write(dumpUnit,'(a,E11.4,a,f7.2,a,f7.4)')' eta=',eta,' tKelvin=',tKelvin,' sumx=',sumx
 		if(LOUDER)write(dumpUnit,610)' vMolecNm3=',(vMolecNm3(iComp),iComp=1,nComps)
 		!call BeepMsg(errMsg(iErrCode))
 		if(LOUDER)write(dumpUnit,*)errMsg(iErrCode)
@@ -164,7 +164,7 @@
 		!XA=1 !set to unity means no association	          
 		!XD=1 !set to unity means no association	          
 		!XC=1 !set to unity means no association	          
-		if(LOUDER.and.initCall) write(dumpUnit,'(a,5F10.6,3F10.1)')'Wertheim:solvation. X(1),X(2)=',xFrac(1),xFrac(2)
+		if(LOUDER.and.initCall==1) write(dumpUnit,'(a,5F10.6,3F10.1)')'Wertheim:solvation. X(1),X(2)=',xFrac(1),xFrac(2)
 		!write(dumpUnit,*) 'Results from MEM1'
 		!write(dumpUnit,'Wert:uAssoc,CvAssoc',uAssoc,CvAssoc
 		!write(dumpUnit,'uAssoc,b_xaDxa_db',uAssoc,b_xaDxa_db
@@ -194,7 +194,7 @@
 
 		!Check if Old guesses are better. During Z iteration, Old result may be close. 20201224:
 		!Also, compute FAsolv, FDsolv, and rmsErrSolv, without SRCR.
-		if(isAcid)call XsolJre2a(xFrac,rhoMol_cc,tKelvin,nComps,ierXsol)	 ! XA,XD,XC passed through module Assoc.
+		if(isAcid==1)call XsolJre2a(xFrac,rhoMol_cc,tKelvin,nComps,ierXsol)	 ! XA,XD,XC passed through module Assoc.
 		!if(LouderWert)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):', &
 		!                                             XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
         if(ierXsol.ne.0)then
@@ -206,7 +206,7 @@
 		!         Compare to tetrahydropyran(aka oxacyclohexane)
 		!C     SOLVING FOR AN INITIAL DXD GUESS USING ELLIOTT 96 EQUATION 19
 		!C     NOTE THAT ALPHAij=SQRT(ALPHAi*ALPHAj) IS STILL APPLIED HERE.
-		if(ierXsol)iErrCode=5 !Set error, but finish calculations anyway.
+		if(ierXsol/=0)iErrCode=5 !Set error, but finish calculations anyway.
 
 		h_nMichelsen=0
 		hCC=0           !M&H Eq 11.
@@ -725,7 +725,7 @@
 		if(LouderWert)write(dumpUnit,*)'alphADij,alphDAij',alphADij,alphDAij
 		if(LouderWert)write(dumpUnit,*) 'AlphaSp: -ve alpha? Thats weird.'
 	endif
-	if(isZiter)return
+	if(isZiter==1)return
 	!ralph=(rootRhogK*Y)^0.5
 	!dLnRalph=(beta/ralph)*0.5/ralph*dAlpha/dBeta=	0.5*dLnAlpha/dLnBeta 
 	dLnAlphAi=eAcceptorKcal_mol(iComp,iType)/(RgasCal/1000*tKelvin)	! = dLnAlph__/dLnBeta

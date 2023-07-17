@@ -32,7 +32,7 @@ END MODULE GibbsMin
 	LOUDER=LOUD
 	LOUDER=.TRUE.
 	LOUDER=.FALSE.
-	if(LOUDER.and.initCall)write(dumpUnit,*)'EAR method'
+	if(LOUDER.and.initCall==1)write(dumpUnit,*)'EAR method'
 	tMin=Tc(1)*0.25
 	xFrac(1)=1
 	NC=1
@@ -156,8 +156,8 @@ END MODULE GibbsMin
 	!if(LOUD .and. ABS(etaL-etaLiq)/etaLiq > 0.0001 .and. LOUD)write(dumpUnit,*) 'Psat: warning lost precision in rhoLiq'
 	pBest=1234
 	fBest=1234
-	if(LOUDER.and.initCall)write(dumpUnit,*)'PsatEar:Initial pSat,etaL=',pOld,etaLiq
-	if(LOUDER.and.initCall)write(dumpUnit,*) 'Check initial guess for Psat.'
+	if(LOUDER.and.initCall==1)write(dumpUnit,*)'PsatEar:Initial pSat,etaL=',pOld,etaLiq
+	if(LOUDER.and.initCall==1)write(dumpUnit,*) 'Check initial guess for Psat.'
 	itMax=33
 	do iter=1,itMax !iterate on pOld according to Eubank criterion
 		!write(dumpUnit,*)'calling fugi for liquid iteration.'
@@ -227,7 +227,7 @@ END MODULE GibbsMin
 	!check that Fugi did not give warning on last call
 86	continue
 	if(ierCode > 10)return
-	if(LOUDER.and.initCall)write(dumpUnit,*) 'Psat: P,rhoVap,rhoLiq',pMPa,rhoVap,rhoLiq
+	if(LOUDER.and.initCall==1)write(dumpUnit,*) 'Psat: P,rhoVap,rhoLiq',pMPa,rhoVap,rhoLiq
 	if(LOUDER)write(dumpUnit,'(a,3f9.5)') ' Psat: P,etaVap,etaLiq',pMPa,rhoVap*bVolCc_mol(1),rhoLiq*bVolCc_mol(1)
 	isZiter=0
 	!if(ierCode==0) call FuVtot(isZiter,tK,1/rhoLiq,xFrac,NC,FUGC,ZLiq,iErrFu) !one last call to fugi for chemPo and debugging.
@@ -239,7 +239,7 @@ END MODULE GibbsMin
 		ierCode=20
 		goto 86
 	endif
-	if(LOUDER.and.initCall)write(dumpUnit,*)'Psat: cmprsblty,CvRes_R=',cmprsblty,CvRes_R
+	if(LOUDER.and.initCall==1)write(dumpUnit,*)'Psat: cmprsblty,CvRes_R=',cmprsblty,CvRes_R
 	!if(ierCode==0)call Fugi(tK,pMPa,xFrac,NC,1,FUGC,zLiq,ier) !one last call to fugi for debugging.
 	chemPot=FUGC(1) !since chemPotL=chemPotV at pSat       
 	if( (isTPT .or. isESD) .and. pMPa < 1.D-4 .and. LOUDER)write(dumpUnit,*)'Psat: 1.D-4 > pMpa = ',pMPa
@@ -308,7 +308,7 @@ END MODULE GibbsMin
 	endif
 	minimax= -1	!routine was written to minimize, therefore take -ve to maximize.
 	if(LIQ>0)minimax=1
-	if(LOUD.and.initCall)write(dumpUnit,*)'Spinodal: LIQ,etaLo,etaHi',LIQ,etaLo,etaHi
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'Spinodal: LIQ,etaLo,etaHi',LIQ,etaLo,etaHi
 	rhoLo = etaLo/bMix;
 	rhoHi = etaHi/bMix;
 	rho1=rhoLo+cgold*(rhoHi-rhoLo);
@@ -316,13 +316,13 @@ END MODULE GibbsMin
 
     if(LOUD .and. rhoLo < 1E-11)write(dumpUnit,*)'Spinodal: nonsense rhoLo =',rhoLo    
 	call FuVtot(isZiter,tKelvin,1/rhoLo,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
-	if(iErrFu)then
+	if(iErrFu/=0)then
         if(LOUD)write(dumpUnit,*) 'Spinodal: error in initial calls to FuVtot'
         iErr=3
         goto 86
     endif
 	pLo = minimax*rhoLo*zFactor*Rgas*tKelvin
-	if(LOUD.and.initCall)write(dumpUnit,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,uRes,aRes,rhoLo*bMix
+	if(LOUD.and.initCall==1)write(dumpUnit,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,uRes,aRes,rhoLo*bMix
 	if(LOUD)write(67,601)tKelvin,1/rhoLo,minimax*pLo,zFactor,uRes,aRes,rhoLo*bMix
 	call FuVtot(isZiter,tKelvin,1/rho1,xFrac,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 	p1 = minimax*rho1*zFactor*Rgas*tKelvin
@@ -363,7 +363,7 @@ END MODULE GibbsMin
 		eta = bMix*(rho1+rho2)/2
 		if(ABS(eta-etaOld) < 1D-6)exit !close enough
 		etaOld=eta
-		if(LOUD.and.initCall)write(dumpUnit,'(a,i3,1x,2E12.4,i3)')' Spinodal: iter,eta,P,iErr',iter,eta,minimax*(p1+p2)/2,iErr
+		if(LOUD.and.initCall==1)write(dumpUnit,'(a,i3,1x,2E12.4,i3)')' Spinodal: iter,eta,P,iErr',iter,eta,minimax*(p1+p2)/2,iErr
 		!write(dumpUnit,*) 
 	enddo
 	!c//that's the best we can do for now folks. get props at best guess and return.
@@ -423,7 +423,7 @@ END MODULE GibbsMin
 	CALL FuVtot(isZiter,tKelvin,1/rhoMinus,xFrac,NC,FUGC,zMinus,aRes,uRes,iErrFu)
 	rhoDZ_dRho=rhoMol_cc*(zPlus-zMinus)/(rhoPlus-rhoMinus)
 	cmprsblty=zFactor+rhoDZ_dRho ! = (dP/dRho)/RT
-	if(initCall.and.Loud)then
+	if(initCall==1.and.Loud)then
 		!write(dumpUnit,*)'NUMDERVS: Z,rhoDZ_dRho',zFactor,rhoDZ_dRho
 		!write(dumpUnit,*)'NUMDERVS: zPlus,zMinus',zPlus,zMinus
 		!write(dumpUnit,*)'NUMDERVS: rho+,rho-,cmprsblty',rhoPlus,rhoMinus,cmprsblty
@@ -436,7 +436,7 @@ END MODULE GibbsMin
 	isZiter=0 ! we need uRes for these
 	CALL FuVtot(isZiter,TPlus,1/rhoMol_cc,xFrac,NC,FUGC,zPlus,aRes,uRes,iErrFu)
 	uResPlus=uRes*TPlus	!uRes_RT passed through GlobConst
-	if(initCall.and.Loud)write(dumpUnit,*)'NUMDERVS: 1-step,Tminus',1-step,Tminus
+	if(initCall==1.and.Loud)write(dumpUnit,*)'NUMDERVS: 1-step,Tminus',1-step,Tminus
 	CALL FuVtot(isZiter,TMinus,1/rhoMol_cc,xFrac,NC,FUGC,zMinus,aRes,uRes,iErrFu)
 	uResMinus=uRes*TMinus
 	TdZ_dT=tKelvin*(zPlus-zMinus)/( TPlus-TMinus )
@@ -449,7 +449,7 @@ END MODULE GibbsMin
 	else
 		CpRes_R=CvRes_R - 1 + (zFactor+TdZ_dT)**2/cmprsblty
 	endif
-	if(initCall.and.Loud)then
+	if(initCall==1.and.Loud)then
 		!write(dumpUnit,*)'NUMDERVS: Z,rhoDZ_dRho',zFactor,rhoDZ_dRho
 		!write(dumpUnit,*)'NUMDERVS: zPlus,zMinus',zPlus,zMinus
 		!write(dumpUnit,*)'NUMDERVS: rho+,rho-,cmprsblty',rhoPlus,rhoMinus,cmprsblty
@@ -708,7 +708,7 @@ end
 	if(iParm > 1)then
 		if(isTpt)iErr=11
 		if(isEsd)iErr=11
-		if(iErr)return
+		if(iErr/=0)return
 	endif
 	if(iEosOpt==10)then
 		call QueryParMixPcSaft(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, 
@@ -758,7 +758,7 @@ subroutine SetParMix(iParm,value,iErr)
 	USE GlobConst 
 	DoublePrecision value
 	data initCall/1/
-	if(initCall)then
+	if(initCall==1)then
 		initCall=0
 		KIJ=0
 		KTIJ=0
@@ -772,7 +772,7 @@ subroutine SetParMix(iParm,value,iErr)
 	if(iParm > 1)then
 		if(isTpt)iErr=1
 		if(isEsd)iErr=1
-		if(iErr)return
+		if(iErr/=0)return
 	endif
 	if(iEosOpt==10)then
 		call SetParMixPcSaft(iParm,value,iErr) ! PcSaft uses the name Kij() in Module pcsaft_pure_and_binary_parameters, 

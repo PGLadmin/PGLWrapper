@@ -1521,7 +1521,7 @@ end module
         do j = i+1,nco
            do
              read(5001,*,ioStat=ioErr) id1,id2,BIP(1),BIP(2)
-			 if(ioErr)exit	! JRE 20210604 If end of file is reached and nothing found, so be it: age0=0
+			 if(ioErr/=0)exit	! JRE 20210604 If end of file is reached and nothing found, so be it: age0=0
              if((fluids(i).eq.id1 .or. fluids(i).eq.id2) .and. &
      &          (fluids(j).eq.id1 .or. fluids(j).eq.id2)) then
                 if(fluids(i).eq.id1)then
@@ -2687,7 +2687,7 @@ end module
      &                       fg,ft,fp,fx,uRes_RT,aRes_RT,CvRes_R,CpRes_R,dpdRho_RT)	!JRE: fg ~ fugc
 	  !call FuPrLorraine_TP(icon,ntyp,mtyp,iErrPRL,T,P,X,rho,Z, &	 ! JRE 20210510
 	  !	&                FUGC,ft,fp,fx,uRes_RT,aRes_RT,CvRes_R,CpRes_R,dpdRho_RT)
-
+	  use GlobConst, only:dumpUnit
       use comflash
       implicit none
       integer :: icon,ntyp,mtyp,ierr
@@ -2710,8 +2710,8 @@ end module
       !Outputs
 	  denom=(zFactor * rgas * tKelvin)
 	  if(denom < 1.d-11)then  ! JRE20210615
-		if(FORT)print*,'FuPrLorraine_TP: denom <= 0. Z,T,R',zFactor,tKelvin,rgas
-		if(FORT)pause 'Check denom'
+		if(FORT)write (dumpUnit,*)'FuPrLorraine_TP: denom <= 0. Z,T,R',zFactor,tKelvin,rgas
+		if(FORT)write (dumpUnit,*) 'Check denom'
 	  endif
       rho = pMPa/(zFactor * rgas * tKelvin) !mol/cm3
 	  etaPass=eta ! eta is USEd from comflash, needed for PsatEar
@@ -2944,6 +2944,7 @@ end module
 !c-----------------------------------------------------------------------------
 !c
       subroutine volgen(t,vv,x,p,fg,ft,fv,fx,aux,ierr)
+	  use GlobConst, only: dumpUnit
       use comflash
       implicit none
       integer :: ierr,i,j,k,n
@@ -2992,7 +2993,7 @@ end module
       eta = bm/vv2
       if(eta < 0 .or. eta > 1)then
         ierr = 21
-        pause 'volgen: violation of 0 < eta < 1.'
+        write (dumpUnit,*) 'volgen: violation of 0 < eta < 1.'
         continue
         return
       endif
@@ -4398,6 +4399,7 @@ end module
 !c            trouvant deja en memoire (dans com2 du fichier COMFLASH.CMN).
 !c
        use comflash
+	   use GlobConst, only: dumpUnit
 	   use portlib
        implicit none
 !c
@@ -4455,7 +4457,7 @@ end module
 
    3   continue
        if( eta < 0 .or. eta > 1)then !JRE 20210513
-            pause 'rop1: eta violates 0 < eta < 1 before eqet'
+            write (dumpUnit,*) 'rop1: eta violates 0 < eta < 1 before eqet'
             continue
        endif
        call eqet

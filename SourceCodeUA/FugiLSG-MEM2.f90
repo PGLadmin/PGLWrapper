@@ -71,7 +71,7 @@
 					do iCheck=1,nTypesTot !check if this site in this molecule is new.
 						if(idType(iComp,iType).eq.idLocalType(iCheck))isNewType=0
 					enddo
-					if(isNewType)then
+					if(isNewType==1)then
 						nTypesTot=nTypesTot+1
 						localType( idType(iComp,iType) )=nTypesTot !Note: nTypesTot is incrementing during this part of the code.
 						idLocalType(nTypesTot)=idType(iComp,iType) !these pairs point back and forth at each other

@@ -72,7 +72,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 			!if(LOUDER)write(dumpUnit,603)'GetEsdCas: inFile~',i,IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
 		endif
 		!write(dumpUnit,*),*)IDA(I),CA(I),QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I)  ,idCasa(i)
-		if(ioErr .and. LOUDER)write(dumpUnit,'(a,a)')' GetESDCas: error reading ',TRIM(inFile),' line=',TRIM(dumString)
+		if(ioErr/=0 .and. LOUDER)write(dumpUnit,'(a,a)')' GetESDCas: error reading ',TRIM(inFile),' line=',TRIM(dumString)
 		if(  ( idCasa(i)==id(1) .or. idCasa(i)==id(2) ) .and. LOUDER  )write(dumpUnit,*)'Found in ParmsEsd idCas=',idCasa(i) 
 	enddo !i=1,NC
 	NDI=0
@@ -160,7 +160,7 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 601 format(1x,a,8e12.4)
 602 format(1x,a,i11,8e12.4)
 603 format(1x,a,2i11,8e12.4)
-	if(iErr)then
+	if(iErr/=0)then
 		if(LOUDER)write(dumpUnit,*) 'GetEsdCas: error for at least one compound'
 		continue
 	endif
@@ -232,7 +232,7 @@ subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 		endif	
 		isHelium=0
 		if( id(i)==913 .or. ID(i)==7440597)isHelium=1
-		if(isHelium)then
+		if(isHelium==1)then
 			iErr=3
 			if(LOUDER)write(dumpUnit,*)'ExactESD: Parms not available for helium ID=',ID(i)
 			ierComp(i)=3
@@ -240,7 +240,7 @@ subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 		endif	
 		isH2=0
 		if( id(i)==902 .or. ID(i)==133740 .or. id(i)==925 .or. id(i)==7782390)isH2=1
-		if(isH2)then
+		if(isH2==1)then
 			iErr=2
 			if(LOUDER)write(dumpUnit,*)'ExactESD: Parms not available for H2 or D2 ID=',ID(i)
 			ierComp(i)=2
@@ -370,7 +370,7 @@ end	!subroutine ExactEsd
 	eta=etaOld/1.15D0
 	IF (eta < 0 .and. LOUD) write(dumpUnit,31)LIQ
 	rho=eta/bMix
-	if(initial.and.LOUD)write(dumpUnit,*)'FugiEsd: initial eta,err',etaOld,errOld
+	if(initial==1.and.LOUD)write(dumpUnit,*)'FugiEsd: initial eta,err',etaOld,errOld
 	itMax=77
 	errBesteta=1234
 	do nIter=1,itMax
@@ -378,8 +378,8 @@ end	!subroutine ExactEsd
 		IF(iErr > 10)EXIT
 		ERR=Pb_RT-eta*zFactor
 		CHNG=ERR/(ERR-ERROLD)*(eta-etaOld)
-		if(initial.and.LOUDER)write(dumpUnit,'(a,2e11.4,3f10.5)')'FugiEsd eta,Z', eta,zFactor
-		if(initial.and.LOUDER)write(dumpUnit,'(a,f8.5,e11.4,i3,9f8.3)')'FugiEsd eta,CHNG,niter',eta,CHNG,niter 
+		if(initial==1.and.LOUDER)write(dumpUnit,'(a,2e11.4,3f10.5)')'FugiEsd eta,Z', eta,zFactor
+		if(initial==1.and.LOUDER)write(dumpUnit,'(a,f8.5,e11.4,i3,9f8.3)')'FugiEsd eta,CHNG,niter',eta,CHNG,niter 
 		etaOld=eta
 		ERROLD=ERR
 		!  LIMIT THE CHANGE IN Density for liquid..
@@ -403,7 +403,7 @@ end	!subroutine ExactEsd
 		goto 86
 	endif
 	!One last call to get FUGC.
-	if(initial.and.LOUD)write(dumpUnit,'(a,f8.5,e11.4,i3,9f8.3)')' FuEsd2 cnvrgd: eta,CHNG,niter',eta,CHNG,niter
+	if(initial==1.and.LOUD)write(dumpUnit,'(a,f8.5,e11.4,i3,9f8.3)')' FuEsd2 cnvrgd: eta,CHNG,niter',eta,CHNG,niter
 	etaPass=eta
 	rho=eta/bMix
 	rhoMol_cc=rho 
@@ -529,7 +529,7 @@ end	!subroutine ExactEsd
 	if(iErr > 10)return
 	rho=totMoles/ vTotCc
 	eta=rho*bMix 
-	if(LOUDER.and.initCall)write(dumpUnit,601)' FuEsdVtot: T,x1,bMix,eta=',tKelvin,xFrac(1),bMix,eta
+	if(LOUDER.and.initCall==1)write(dumpUnit,601)' FuEsdVtot: T,x1,bMix,eta=',tKelvin,xFrac(1),bMix,eta
 601 format(1x,a,8E12.4)
 	YQVM=0.d0
 	VM=0.d0

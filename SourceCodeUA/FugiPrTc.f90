@@ -38,7 +38,7 @@ subroutine GetPrTc(nComps,iErrCode)
 		bipFile=TRIM(PGLinputDir)//'\BipPRtc.txt' ! // is the concatenation operator
 	if(LOUD)write(dumpUnit,*)'GetPrTc: inFile= ',TRIM(inFile)
 	open(40,file=inFile,ioStat=ioErr)
-	if(ioErr.and.LOUDER)then
+	if(ioErr/=0.and.LOUDER)then
 		write(dumpUnit,*)'GetPrTc: PGLinputDir= ',TRIM(PGLinputDir) 
 		write(dumpUnit,*)'GetPrTc: Error opening: ', TRIM(inFile)
 		if(LOUDER)write(dumpUnit,*)'Check that the parms file is in the right dir.'
@@ -57,7 +57,7 @@ subroutine GetPrTc(nComps,iErrCode)
 			jComp=jComp+1
 			read(40,'(A99)',ioStat=ioErr)dumString
 			!write(dumpUnit,*)TRIM(dumString)
-			if(ioErr)write(dumpUnit,*)'GetPrTc: i,j,ioErr,String: ',iComp,jComp,ioErr,TRIM(dumString)
+			if(ioErr/=0)write(dumpUnit,*)'GetPrTc: i,j,ioErr,String: ',iComp,jComp,ioErr,TRIM(dumString)
 
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!  NOTE!  Jaubert replaces Tc,Pc,acen with his values!!!      !!!!!!!!!!!!!!!!!
 			read(dumString,*,ioStat=ioErr)idBase,Tcj(iComp),PcBar,acenj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp) &
@@ -258,7 +258,7 @@ end	!Subroutine SetParPurePrTc
 	!iErrZ=17  if dChemPo > 33
 	
 	!  COMPUTE THE MOLECULAR PARAMETERS A AND B AND THEIR CROSS COEFFS
-	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTcVtot:OMA,OMB',OMA,OMB
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot:OMA,OMB',OMA,OMB
 	totMol=sum(gMol(1:NC))
 	if( vTotCc < 1E-11 .and. LOUD)write(dumpUnit,*)'FuPrTcVtot: 0 ~ vTotCc=',vTotCc
 	rhoMol_cc=totMol/vTotCc
@@ -307,13 +307,13 @@ end	!Subroutine SetParPurePrTc
 	enddo
 	if( tKelvin < tKmin(iVolatile) )iErrTmin=1
 	if(iErrTmin.ne.0)then
-		if(LOUD.and.initCall)write(dumpUnit,'(a,5f8.2)' )' FuVtot: T,Tmin(i)',tKelvin,( tKmin(i),i=1,NC)
+		if(LOUD.and.initCall==1)write(dumpUnit,'(a,5f8.2)' )' FuVtot: T,Tmin(i)',tKelvin,( tKmin(i),i=1,NC)
 		iErrZ=5
 	endif
 	if(iErrZ>10)return
 	eta=bMix*rhoMol_cc
-	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTcVtot: eta,bMix',eta,bMix
-	if(LOUD.and.initCall)write(dumpUnit,'(a,3(1PE11.4))')' FuPrTcVtot:TdLAL_dT,T2d2LAL_dT2',TdLAL_dT(1),T2d2LAL_dT2(1)
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot: eta,bMix',eta,bMix
+	if(LOUD.and.initCall==1)write(dumpUnit,'(a,3(1PE11.4))')' FuPrTcVtot:TdLAL_dT,T2d2LAL_dT2',TdLAL_dT(1),T2d2LAL_dT2(1)
 	if(ABS(totMol-1) > 1e-5)then
 		if(LOUD)write(dumpUnit,*) 'FuPrTcVtot warning: totMol= ',totMol
 		!iErrZ=2
@@ -385,7 +385,7 @@ end	!Subroutine SetParPurePrTc
 	!write(dumpUnit,*)'d1-,d2-',d1Minus,d2Minus
 	BIGA = aMix*pMPa/(Rgas*Rgas*tKelvin*tKelvin)
 	BIGB = bMix*pMPa/(Rgas*tKelvin)
-	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTcVtot: zFactor,pMPa=',zFactor,pMPa
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot: zFactor,pMPa=',zFactor,pMPa
 	!
 	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS
 	!
@@ -396,7 +396,7 @@ end	!Subroutine SetParPurePrTc
 	argLog2 = 1+d2*eta
 
 	argLog = argLog1/argLog2
-	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTcVtot: argLog1,2=',argLog1,argLog2
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot: argLog1,2=',argLog1,argLog2
 	if(loud .and. argLog < zeroTol)write(dumpUnit,*) 'FuPrTcVtot: argLog 1or2 < 0',argLog1,argLog2
 	aResAtt= -BIGA/BIGB/sqrtNqq*DLOG( argLog )
 	!write(dumpUnit,*)'a/bRT,alpha', BIGA/BIGB,alpha
@@ -455,7 +455,7 @@ end	!Subroutine SetParPurePrTc
 		iErrZ=13
 		goto 861
 	endif
-	if(LOUD.and.initCall)write(dumpUnit,*)'aRes,uRes',aRes,uRes
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'aRes,uRes',aRes,uRes
 	DO iComp = 1,NC
 		SUMXA = 0
 		DO jComp=1,NC
@@ -481,7 +481,7 @@ end	!Subroutine SetParPurePrTc
 		endif
 		FUGC(ICOMP) = (ChemPoRes)
 	enddo
-	if(LOUD.and.initCall)write(dumpUnit,*)'FUGC(1-NC)',(fugc(i),i=1,nc)
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'FUGC(1-NC)',(fugc(i),i=1,nc)
 !	if(LIQ.eq.0)then
 !	  etaV=BIGB/zFactor
 !	  zFactorV=zFactor
@@ -595,7 +595,7 @@ end	!Subroutine SetParPurePrTc
 	xFrac(1:NC)=gMol(1:NC)/totMoles
 	if( ABS(totMoles-1) > zeroTol .and. LOUD)write(dumpUnit,*)'FuPrTc: ??? totMoles,x(1)=',totMoles,xFrac(1) 
 	bMix=SUM( xFrac(1:NC)*bVolCc_mol(1:NC) )
-	if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTc: bMix=',bMix
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTc: bMix=',bMix
 	aRes=86.8686	  ! initialize to avoid NAN on error return
 	uRes=86.8686
 	cvRes_R=86.8686
@@ -608,7 +608,7 @@ end	!Subroutine SetParPurePrTc
 	eta=pb_RT/1.001d0  	!super high pressures can generate eta>1 because Z>>1. Check eta in if() below.
 	if(LIQ==1 .or. LIQ==3 .or. eta>etaMax)eta=etaMax/1.001d0 !organize to improve precision when P~1E-11.
 	rhoMol_Cc=eta/bMix
-	if(LOUD.and.initCall)write(dumpUnit,'( a,3(1PE11.4) )')' FuPrTc: 1st FuVtot. rhoMol_cc,eta=', rhoMol_cc,eta 
+	if(LOUD.and.initCall==1)write(dumpUnit,'( a,3(1PE11.4) )')' FuPrTc: 1st FuVtot. rhoMol_cc,eta=', rhoMol_cc,eta 
 	call FuPrTcVtot(isZiter,tKelvin,1/rhoMol_Cc,xFrac,NC,FUGC,zFactor,aDep,uDep,iErrZ)
 	!write(dumpUnit,*)'check initial values'
 	if(iErrZ > 10)then
@@ -643,7 +643,7 @@ end	!Subroutine SetParPurePrTc
 		endif
 		rhoMol_cc=eta/bMix
 		vTotCc=totMoles/rhoMol_cc
-		if(LOUD.and.initCall)write(dumpUnit,*)'FuPrTc:',NITER,'th FuVtot. eta=', eta 
+		if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTc:',NITER,'th FuVtot. eta=', eta 
 		call FuPrTcVtot(isZiter,tKelvin,vTotCc,xFrac,NC,FUGC,zFactor,aDep,uDep,iErrZ)
 		if(iErrZ>10)then
 			iErr=13
@@ -663,14 +663,14 @@ end	!Subroutine SetParPurePrTc
 			etaAtPmin=eta	 !for crude goldenz. ~randomly searches for hi eta min in p
 		endif
 		change=error/(error-errOld)*(eta-etaOld)
-		if(LOUD.and.initCall)write(dumpUnit,'(a,2F8.4,2E11.4)')' eta,Z,error,change',eta,zFactor,error,change
+		if(LOUD.and.initCall==1)write(dumpUnit,'(a,2F8.4,2E11.4)')' eta,Z,error,change',eta,zFactor,error,change
 		!write(dumpUnit,*)'check error'
 		etaOld=eta
 		errOld=error
         if(zFactor < 0)change=1 !force another iteration if Z < 0. This happens when P ~ 1E-12.
 		if(ABS(change/eta) > 0.1)change=eta*DSIGN(0.1d0,change)	!step limiting. 0.3>0.2 to give max looseness
 		!if(ABS(change/zFactor) > 1)change=zFactor*DSIGN(0.5d0,change)	!step limiting. Stop zFactor from going negative.
-		if(LOUD.and.initCall)write(dumpUnit,*)'Fugi:eta,change',eta,change
+		if(LOUD.and.initCall==1)write(dumpUnit,*)'Fugi:eta,change',eta,change
 		eta=eta-change
 		rhoMol_cc=eta/bMix
 		if(eta < 0 .or. eta > etaMax)then !NOTE: this should not happen given step limiting

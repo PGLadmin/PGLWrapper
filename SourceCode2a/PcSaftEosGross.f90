@@ -332,7 +332,7 @@ subroutine pcsaft_pure_parameters
 		   write (dumpUnit,*) 'inFile=',TRIM(inFile) !//'\PcSaft_database/pcsaft_pure_parameters.txt'
 		   write (dumpUnit,*) ' pcsaft_pure_parameters: bad line in inFile. Offender is:'
 		   write (dumpUnit,*) TRIM(entire_line)
-		   pause 'Possible offense: comma(s) in compound name.' 
+		   write (dumpUnit,*) 'Possible offense: comma(s) in compound name.' 
            stop
 		 endif
 
@@ -515,7 +515,7 @@ subroutine pcsaft_binary_parameters
            !     par_set_1, par_set_2, kij_var, lij_var, kij_assoc_var
 			if(readLineErr /= 0)then
 				if(LOUDER)write(dumpUnit,*)'pcsaft_binary... readLineErr for line=',line,' a ', TRIM(entireline)
-				if(LOUDER)pause 'Check which line is causing the problem. Maybe you can fix it.'
+				if(LOUDER)write (dumpUnit,*) 'Check which line is causing the problem. Maybe you can fix it.'
 				cycle
 			else
 				if(LOUDER)write(*,'(a,2i5,f8.4)')'id1,id2,kij_var',id1,id2,kij_var

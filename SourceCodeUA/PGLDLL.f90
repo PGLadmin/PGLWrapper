@@ -831,12 +831,12 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 	INITIAL=0
 
 	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
-	if(iErrCas)then
+	if(iErrCas/=0)then
         ierr=1
         return
     endif
 	CALL GETCRIT(NC,iErrCrit)
-	if(iErrCrit)then
+	if(iErrCrit/=0)then
 		ierr=2
 		return
 	endif

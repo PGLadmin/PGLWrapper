@@ -70,7 +70,7 @@
 	endif
 	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas) ! ID USEd in GlobConst to set.
 	if(LOUD)write(dumpUnit,*)'PGLWRapperStartup:localCas,idDippr=',(localCas(i),id(i), i=1,NC)
-	if(iErrCas)then
+	if(iErrCas/=0)then
         if(LOUD)write(dumpUnit,*)' Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
         write(dumpUnit,*)ierCode,' PGLWRapperStartup:Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
 		ierCode=12
@@ -78,7 +78,7 @@
     endif
 	if(LOUD)write(dumpUnit,*)'idDippr,class=',ID(1),TRIM(class(1))
 	CALL GETCRIT(NC,iErrCrit)
-	if(iErrCrit)then
+	if(iErrCrit/=0)then
 		if(LOUD)write(dumpUnit,*)'Error in Main: ErrorCode from GetCrit = ',iErrCrit
 		write(dumpUnit,*)ierCode,' Error in Main: ErrorCode from GetCrit = ',iErrCrit
 		ierCode=13
@@ -169,7 +169,7 @@
 	Hfus=0
 	do i=1,nHfus
 		read(inUnitHfus,*,ioStat=ioErr)idCas,idDippr,TmDb,HfusTde,HfusDip
-		if(ioErr)cycle
+		if(ioErr/=0)cycle
 		if(id==idDippr)then
 			notFound=0
 			Tm=TmDb
@@ -403,13 +403,13 @@
 	iErrCode=0
     inFile=TRIM(PGLinputDir)//'\CoeffsVp2a.TXT'
     OPEN(662,FILE=inFile,ioStat=ioErr)
-    if(ioErr.and.LOUD)write(dumpUnit,*) 'GetVpDb: error opening CoeffsVp2a.txt'
+    if(ioErr/=0.and.LOUD)write(dumpUnit,*) 'GetVpDb: error opening CoeffsVp2a.txt'
     !open(662,file='junk.txt')
 	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
 	!ndeck1=1974
 	READ(662,*,ioStat=ioErr)NDECK1 ! ioStat= -1,endofFile; -2,endOfLine
-    if(ioErr)write(dumpUnit,*)'ioErr,nDeck1,inFile',ioErr,nDeck1,TRIM(inFile)
-    if(ioErr)write(dumpUnit,*) 'GetVpDb: Error reading NDECK1'
+    if(ioErr/=0)write(dumpUnit,*)'ioErr,nDeck1,inFile',ioErr,nDeck1,TRIM(inFile)
+    if(ioErr/=0)write(dumpUnit,*) 'GetVpDb: Error reading NDECK1'
     
 	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetVp: more data in file than allocated'
 	DO I=1,NDECK1
@@ -417,9 +417,9 @@
 		!if(i.eq.691)write(dumpUnit,*)
 		READ(662,*,ioStat=ioErr)IDnum(I),rMINTD(I) ,VALMIND(I) ,rMAXTD(I),VALMAXD(I),AVGDEVD(I),NUMCOEFFD(I), &
 		                                                                                      (vpCoeffsd(i,iCoeff),iCoeff=1,5)  
-	    if(ioErr.and.LOUD)write(dumpUnit,*) 'inFile=',TRIM(inFile)
-	    if(ioErr.and.LOUD)write(dumpUnit,*) 'ioErr,line,id,vpCoeffs=',ioErr,I,IDnum(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
-	    if(ioErr.and.LOUD)write(dumpUnit,*) 'GetVp: error reading CoeffsVp2a.txt'
+	    if(ioErr/=0.and.LOUD)write(dumpUnit,*) 'inFile=',TRIM(inFile)
+	    if(ioErr/=0.and.LOUD)write(dumpUnit,*) 'ioErr,line,id,vpCoeffs=',ioErr,I,IDnum(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
+	    if(ioErr/=0.and.LOUD)write(dumpUnit,*) 'GetVp: error reading CoeffsVp2a.txt'
 		indexVpDb(IDnum(I))=I ! vpCoeffs(iComp,iCoeff)=vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)
     enddo
     if(LOUD)write(dumpUnit,*)'GetVpDb: Success! USE VpDb for vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)'
@@ -632,7 +632,7 @@
 	do i=1,nDeck
 		read(50,'(a77)')dumString
 		read(dumString,'(2i6,i12,1x,a28,a5)',ioStat=ioErr)idTrcDb(i),idDb(i),idCasDb(i),NameDb(i) !,classdb(i)  
-		if(ioErr.and.LOUD)write(dumpUnit,*)'idCas ioErr. i,idDippr=',i,idDb(i)
+		if(ioErr/=0.and.LOUD)write(dumpUnit,*)'idCas ioErr. i,idDippr=',i,idDb(i)
 		if( id(1)==idDb(i) )then
 			iGotIt=1
 			idCas(1)=idCasDb(i)

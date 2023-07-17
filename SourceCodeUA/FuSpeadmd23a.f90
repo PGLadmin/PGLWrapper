@@ -160,7 +160,7 @@ END MODULE SpeadParms
 					do iCheck=1,nTypesTot !check if this site in this molecule is new.
 						if(idType(iComp,iType).eq.idLocalType(iCheck))isNewType=0
 					enddo
-					if(isNewType)then
+					if(isNewType==1)then
 						nTypesTot=nTypesTot+1
 						localType( idType(iComp,iType) )=nTypesTot !Note: nTypesTot is incrementing during this part of the code.
 						idLocalType(nTypesTot)=idType(iComp,iType) !these pairs point back and forth at each other
@@ -183,7 +183,7 @@ END MODULE SpeadParms
                     if(a2i > 0)iErrCode=6
 					if(iErrCode > 0 .and. eta < etaMax)etaMax=eta-increment/1.D2 !Might still get useful results.
                 enddo
-                if(iErrCode .and. LOUDER)write(dumpUnit,*) 'GetTpt: check Ais. A1 or A2 > 0 ? iErrCode=',iErrCode
+                if(iErrCode/=0 .and. LOUDER)write(dumpUnit,*) 'GetTpt: check Ais. A1 or A2 > 0 ? iErrCode=',iErrCode
 				if(iErrCode==5 .or. iErrCode==6)then
 					iErrCode=0 !convert to warning, while reducing etaMax to accommodate.
 					if(LOUDER)write(dumpUnit,*)'etaMax reduced to:',etaMax
@@ -499,22 +499,22 @@ END MODULE SpeadParms
 	write(dumpUnit,*)'Enter 1 to swap coeffs from ...input\PrismTptAcoeffs.txt or 0 to use AFG Spead11'
 	read(*,*)isFileSwap
 	write(dumpUnit,*)'Enter 1 if this is a SW potential or 0 otherwise'
-	if(isFileSwap)read(*,*)isSW
+	if(isFileSwap==1)read(*,*)isSW
 
-	if(initialCall==1 .and. isSW)then
+	if(initialCall==1 .and. isSW==1)then
 		!initialCall=0
 		write(dumpUnit,*)'Enter eps_kB'
 		read(*,*)eps_kB
 	endif
-	if(isSW .or. isFileSwap)then
+	if(isSW==1 .or. isFileSwap==1)then
 		open(51,file='c:/spead/calceos/input/PrismTptAcoeffs.txt')
 		read(51,*)nDeck
 		if(nDeck < 1)return
 		do i=1,nDeck
 			read(51,*)idComp,(zRefCoeff(i,j),j=1,3),(a1Coeff(i,j),j=1,3),(a2Coeff(i,j),j=1,4)
 			do j=1,4
-				if(isSw)a1Coeff(i,j)=a1Coeff(i,j)*eps_kB
-				if(isSw)a2Coeff(i,j)=a2Coeff(i,j)*eps_kB*eps_kB
+				if(isSw==1)a1Coeff(i,j)=a1Coeff(i,j)*eps_kB
+				if(isSw==1)a2Coeff(i,j)=a2Coeff(i,j)*eps_kB*eps_kB
 			enddo
 		enddo
 		close(51)
@@ -694,7 +694,7 @@ end	!Subroutine QueryParPureSpead
 	bVolMix=0
 	bRefMix=0
 	Vmix=0
-	if(initCall.and.LOUDER)write(dumpUnit,*)'FuTpt: T(K) = ',tKelvin
+	if(initCall==1.and.LOUDER)write(dumpUnit,*)'FuTpt: T(K) = ',tKelvin
     DO i=1,nComps
 		xFrac(i)=gmol(i)/totMoles
 		Vmix=Vmix+xFrac(i)*bVolCc_mol(i)/etaPure(i) !etaPure is evaluated at Tmin for each compd.
@@ -710,7 +710,7 @@ end	!Subroutine QueryParPureSpead
     if(tKelvin < tKmin(iVolatile))then	   ! Don't round Tmin down here or NUMDERVS may fail later.
         isTtooLow=1
         iErr=5
-        if(LOUDER.and.initCall)write(dumpUnit,'(a,i3,2f7.1,a)')' FuTpt: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,&
+        if(LOUDER.and.initCall==1)write(dumpUnit,'(a,i3,2f7.1,a)')' FuTpt: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,&
 																				tKmin(iVolatile),TRIM( errMsg(iErr) )
     endif
     if(isTtooLow==1)then
@@ -753,7 +753,7 @@ end	!Subroutine QueryParPureSpead
 	rhoMol_cc=eta/bVolMix
 	vTotCc=totMoles/rhoMol_cc
 	isZiter=1
-	if(initCall.and.LOUDER)write(dumpUnit,'(a,6E12.4)')' FuTpt: first call to FuVtot. T(K),eta=',tKelvin,eta
+	if(initCall==1.and.LOUDER)write(dumpUnit,'(a,6E12.4)')' FuTpt: first call to FuVtot. T(K),eta=',tKelvin,eta
 	call FuTptVtot(isZiter,zFactor,aRes,uRes,chemPo,vTotCc,tKelvin,gmol,nComps,iErrZ)
 	if(iErrZ > 10)then
 		iErr=13
@@ -773,7 +773,7 @@ end	!Subroutine QueryParPureSpead
 	pMin=1.d11
 	isZiter=1
     iterGold=0
-	if(LOUDER.and.initCall)write(dumpUnit,'(a,i4,6E12.4)')' FuTpt init: liq,eta', liq,eta
+	if(LOUDER.and.initCall==1)write(dumpUnit,'(a,i4,6E12.4)')' FuTpt init: liq,eta', liq,eta
 100 continue
 	do while(ABS(change) > 1.e-9 .and. iErr < 11) ! using change instead of change/eta, means ~9 sig figs on liquid density.
 		NITER=NITER+1
@@ -1201,7 +1201,7 @@ end	!Subroutine QueryParPureSpead
    enddo
    if(tKelvin < tKmin(iVolatile)*0.998D0)then	   !round TKmin down a little for possible lost precision
         iErr=5
-        if(LOUD.and.initCall)&
+        if(LOUD.and.initCall==1)&
 		 write(dumpUnit,'(a,i3,2f7.1,a)')' FuVtot: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
     endif
 	if(bVolMix==0 .and. LOUD)write(dumpUnit,*) 'MixRule error: bVolMix=0'
@@ -1592,7 +1592,7 @@ end	!Subroutine QueryParPureSpead
     enddo
    if(tKelvin < tKmin(iVolatile)*0.998D0)then	   !round TKmin down a little for possible lost precision
         iErr=5
-        if(LOUDER.and.initCall)&
+        if(LOUDER.and.initCall==1)&
 		 write(dumpUnit,'(a,i3,2f7.1,a)')' FuVtot: iVolatile,T(K),TKmin= ',iVolatile,tKelvin,tKmin(iVolatile),TRIM( errMsg(iErr) )
     endif
     hRes_RT=86.8686D0 !initialize to error indicator in case of bad return
@@ -1697,13 +1697,13 @@ end	!Subroutine QueryParPureSpead
 	if(LOUDER)write(dumpUnit,601) ' FuTptVtot: total z,a,u,lnPhi=',zFactor,aRes,uRes,chemPo(1:nComps)
 
 	if(isZiter < 0)then
-		if(LOUDER.and.initCall)write(dumpUnit,*)'FuTptVtot: T,rho,z=',tKelvin,rhoMol_cc,zFactor
+		if(LOUDER.and.initCall==1)write(dumpUnit,*)'FuTptVtot: T,rho,z=',tKelvin,rhoMol_cc,zFactor
         if(LOUDER.and.zFactor < zeroTol) then
             write(dumpUnit,*) 'FuTptVtot: zFactor < 0?'
             continue
         endif
 		call NUMDERVS(nComps,xFrac,tKelvin,rhoMol_cc,zFactor,iErrNum)
-		if(LOUDER.and.initCall)write(dumpUnit,*)'FuTptVtot: cmprsblty,CvRes_R=',cmprsblty,CvRes_R  ! USEd in GlobConst.
+		if(LOUDER.and.initCall==1)write(dumpUnit,*)'FuTptVtot: cmprsblty,CvRes_R=',cmprsblty,CvRes_R  ! USEd in GlobConst.
 		if(iErrNum > 1.and.LOUDER)then
 			write(dumpUnit,*)'FuTptVtot: NUMDERVS failed. No derivatives for you!'
 			iErr=16
