@@ -181,6 +181,7 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 	USE GlobConst
     use DllConst
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
+	character*3 aPhase
     double Precision res
     integer ieos, casrn1, casrn2, prp_id, ierr
     double Precision var1, var2, var3
@@ -800,6 +801,7 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 	USE GlobConst
     use DllConst
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
+	character*3 aPhase
     double Precision res
     integer ieos, casrn1, casrn2, casrn3, prp_id, ierr
     double Precision var1, var2, var3, var4

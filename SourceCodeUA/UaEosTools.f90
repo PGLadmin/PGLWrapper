@@ -541,15 +541,15 @@ END MODULE GibbsMin
 !C
 !C * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 !C
-      DIMENSION A(3), Z(3)
+      DOUBLEPRECISION A(3), Z(3)
       LOGICAL initCall
       DATA initCall, PI /.TRUE., 3.14159265358D0 /
 !C
 !C                        ON FIRST ENTRY INITIALIZE CONSTANTS
 !C
 	IF (initCall)then
+		initCall=.FALSE.
 		zeroTol=1D-33
-		ENTER = .FALSE.
 		HPI = 0.5D0 * PI
 		ADD1 = 2.0D0 * PI / 3.0D0
 		ADD2 = 2.0D0 * ADD1
