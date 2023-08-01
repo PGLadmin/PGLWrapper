@@ -39,6 +39,10 @@ INTERFACE
 		!DEC$ATTRIBUTES DLLIMPORT :: InitPGLDLL 
 		character(255) hello
 	end function InitPGLDLL
+	integer function SetLoudTrue(hello)
+		!DEC$ATTRIBUTES DLLIMPORT :: InitPGLDLL 
+		character(255) hello
+	end function SetLoudTrue
 	integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 		!DEC$ATTRIBUTES DLLIMPORT :: INITIALIZE_MODEL 
 		integer iEosLocal, Rn1, Rn2, Rn3
@@ -53,7 +57,7 @@ INTERFACE
 		integer ieos, casrn, prp_id, ierr
 		double Precision var1, var2
 	end function CalculateProperty
-    end interface
+END INTERFACE
     !tag='LOCATION'
     !value='c:\PGLWrapper|'
     !iErr=SetString(tag,value)
@@ -65,6 +69,8 @@ INTERFACE
 		write(*,*)'DLLTestMain: InitPGLDLL returned iErr=0. Woohoo!'
         !write(*,*)'DLLTestMain: PGLInputDir=',TRIM(PGLInputDir)
     endif
+    
+    iErr=SetLoudTrue(errMsg)
     
 	call Test1
 	call Test2

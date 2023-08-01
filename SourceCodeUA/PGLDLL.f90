@@ -716,6 +716,16 @@ integer function SETPAR(n, newvalue)
     SETPAR=res
     return
 end function SETPAR
+    
+integer function SetLoudTrue(hello)
+    use GlobConst
+    character(255) hello
+    !DEC$ ATTRIBUTES DLLEXPORT::SETPAR
+    !!MS$ ATTRIBUTES DLLEXPORT::SETPAR
+    LOUD=.TRUE.
+    SetLoudTrue=1
+    return
+end function SetLoudTrue
 
 integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 	USE GlobConst
