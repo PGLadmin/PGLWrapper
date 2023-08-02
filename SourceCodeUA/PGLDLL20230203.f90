@@ -178,6 +178,7 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 	!FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER localCas(nmx)
 	CHARACTER*77 errMsgPas
+    CHARACTER*3 aPhase
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
     IF (LOUD) return
@@ -858,6 +859,7 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 	!FUGI requires mole fraction specification because it is written generally for mixtures.
     INTEGER localCas(nmx)
 	CHARACTER*77 errMsgPas
+	CHARACTER*3 aPhase
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	CHARACTER($MAXPATH)  CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
     IF (LOUD) return

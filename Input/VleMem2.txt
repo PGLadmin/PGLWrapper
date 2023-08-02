@@ -1,4 +1,4 @@
-14	1061	1521	VLE	4-methyl-2-pentanone + chloroform
+14	1054	1521	VLE	MIBK + chloroform
 386.576	0.101	0.9547	-86	1951 kar sch 0
 385.436	0.101	0.933	-86	1951 kar sch 0
 382.426	0.101	0.8909	-86	1951 kar sch 0
