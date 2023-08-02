@@ -722,7 +722,7 @@ integer function SetLoudTrue(hello)
     character(255) hello
     !DEC$ ATTRIBUTES DLLEXPORT::SETPAR
     !!MS$ ATTRIBUTES DLLEXPORT::SETPAR
-    LOUD=.TRUE.
+    LOUD=.FALSE.
     SetLoudTrue=1
     return
 end function SetLoudTrue
@@ -981,17 +981,14 @@ integer function InitPGLDLL(errMsg)
 	
 	DEBUG=.FALSE.
     LOUD=.FALSE.
-    LOUD=.TRUE.
 	ReadOptions=.FALSE.
 	InitPGLDLL=0
 	errMsg=' From InitPGLDLL: No problem in InitPGLDLL function. PGLDLLOptions.txt has been loaded.'
 	CURDIR='c:\PGLWrapper'
-	masterDir=curdir
+	!masterDir=curdir
 	!CURDIR=TRIM(masterDir)
 	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
 	PGLInputDir=TRIM(masterDir)//'\Input'
-	DEBUG=.FALSE.
-	LOUD=.TRUE.
 	ioErr=0
 	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
 	if(ioErr /= 0)then
@@ -1040,7 +1037,7 @@ integer function InitPGLDLL(errMsg)
 	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
 	PGLInputDir=TRIM(masterDir)//'\Input'
 	DEBUG=.FALSE.
-	LOUD=.TRUE.
+    LOUD=.FALSE.
 	ioErr=0
 	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
 	if(ioErr /= 0)then
@@ -1074,7 +1071,7 @@ integer function InitPGLDLL(errMsg)
 		return
 	endif 
 	dumpFile=TRIM(curdir)//'\DebugDLL.txt'
-	masterDir=curdir
+	!masterDir=curdir
 	!read(51,*,ioStat=ioErr)dumpFile
 	!if(ioErr /= 0)write(*,*)'InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
 	close(51)
