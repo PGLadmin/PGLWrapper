@@ -64,7 +64,7 @@
 	rLnPhiAssoc(1:nComps)=0
     iErr=0  
 	picard=0.83D0
-	Ftol=1.D-7
+	Ftol=1.D-8
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
 	eta=rhoMol_cc*bVolMix
 	Call RdfCalc(rdfContact,dAlpha,eta)	!dAlpha = dLnAlpha/dLnRho = 1+dLn(g)_dLn(eta)
