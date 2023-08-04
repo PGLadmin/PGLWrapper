@@ -25,7 +25,7 @@ MODULE GlobConst
 	character*234 masterDir,PGLinputDir
 	character*30 NAME(nmx)
 	character*5 class(nmx) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. PGL6edClasses.xls)
-    Logical, SAVE :: LOUD,CheckDLL   !LOUD=.TRUE. means writing debug info. CheckDLL=.TRUE. means direct debug info to DebugDLL.txt
+    Logical, SAVE :: LOUD,CheckDLL,isTDE   !LOUD=.TRUE. means writing debug info. CheckDLL=.TRUE. means direct debug info to DebugDLL.txt; isTDE means the call is coming from TDE
 	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
 	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
 	DoublePrecision etaPass 

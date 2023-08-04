@@ -1,38 +1,7 @@
 !MAIN PROGRAM FOR CALLING PGLDLL.DLL. This is untested code using iso_c_binding
-!	use iso_c_binding
-!    DoublePrecision xFrac(NMX),FUGC(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
-!    INTEGER ier(12),localCas(NMX)
-!    DoublePrecision CalcResult
-!    integer ieos, casrn, prp_id, ierr
-!    doublePrecision var1, var2
-!    character*255 tag, value
-!
-!	interface
-!		function Calculate1() bind(c)	!
-!		  integer(c_int) :: Calculate1
-!		end function Calculate1
-!	end interface
-!
-!	! Declare the DLL function
-!	procedure(Calculate1), bind(c) :: PGLDLL.DLL
-!
-!	! Load the DLL
-!	call c_f_pointer(c_loc(PGLDLL.DLL), Calculate1)
-!
-!	! Call the DLL function
-!	print *, Calculate1()
-!	stop
-!end !DLLTestMain
-	
-!MAIN PROGRAM FOR CALLING PGLDLL.DLL. This is untested code using iso_c_binding
-    !DoublePrecision xFrac(NMX),FUGC(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
-    !INTEGER ier(12),localCas(NMX)
-    !DoublePrecision CalcResult
-    !integer ieos, casrn, prp_id, ierr
-    !doublePrecision var1, var2
-    !character(255) tag, value
 	character(255) errMsg 
-    character*255 tag, value !, local
+    character*255 tag, value,hello !, local
+    LOGICAL LOUD
 
 INTERFACE
 	integer function InitPGLDLL(hello)
@@ -40,9 +9,13 @@ INTERFACE
 		character(255) hello
 	end function InitPGLDLL
 	integer function SetLoudTrue(hello)
-		!DEC$ATTRIBUTES DLLIMPORT :: InitPGLDLL 
+		!DEC$ATTRIBUTES DLLIMPORT :: SetLoudTrue 
 		character(255) hello
 	end function SetLoudTrue
+    integer function iSetDumpUnit(aPlace)
+        character(4) aPlace
+        !DEC$ ATTRIBUTES DLLIMPORT::iSetDumpUnit
+	end function iSetDumpUnit
 	integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 		!DEC$ATTRIBUTES DLLIMPORT :: INITIALIZE_MODEL 
 		integer iEosLocal, Rn1, Rn2, Rn3
@@ -61,6 +34,9 @@ END INTERFACE
     !tag='LOCATION'
     !value='c:\PGLWrapper|'
     !iErr=SetString(tag,value)
+    iErr=iSetLoudTrue(errMsg)
+    iDumpUnit=iSetDumpUnit('CONS')
+    !if (LOUD)iDumpUnit=iSetDumpUnit('FILE')
 	iErr=InitPGLDLL(errMsg)
 	if(iErr > 10)then
 		write(*,'(a)')' DLLTestMain: InitPGLDLL! ErrMsg=',errMsg
@@ -70,7 +46,6 @@ END INTERFACE
         !write(*,*)'DLLTestMain: PGLInputDir=',TRIM(PGLInputDir)
     endif
     
-    iErr=SetLoudTrue(errMsg)
     
 	call Test1
 	call Test2
@@ -83,7 +58,7 @@ subroutine Test1
 	integer ieos, Rn1, Rn2, Rn3, prp_id, ierr
 	doublePrecision var1, var2, prp, uncert
 	DoublePrecision CalcResult
-    ieos=4
+    ieos=20
     Rn1=67641   !acetone
     Rn2=0
     Rn3=0
@@ -112,7 +87,7 @@ subroutine Test2
 !            if (prp_id==204) res = exp(FUGC(2))	! liq
 	integer ieos, casrn1, casrn2, prp_id, ierr
 	doublePrecision var1, var2, var3, prp
-    ieos = 4
+    ieos=20
     casrn1 = 75150      !CarbonDisulfide
     casrn2 = 2551624    !SulfurHexafluoride
     var1 = 298.136
@@ -160,7 +135,7 @@ integer GETNPAR,GETPAR
 	i=GETPAR(1,p)
     write(*,*) 'Test3: nPar,par=',nPar,p
 	return
-    ieos = 2
+    ieos=20
     casrn1 = 123911     !14dioxane
     casrn2 = 127184     !tetrachloroethene
     var1 = 298.15

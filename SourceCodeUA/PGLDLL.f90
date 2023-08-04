@@ -22,16 +22,261 @@ integer function Activate(errMsg)
     !DEC$ATTRIBUTES DLLEXPORT::Activate
     !!MS$ ATTRIBUTES DLLEXPORT::Activate
 	Activate=0
+    isTDE=.TRUE.    ! Do not call Activate() from console applications because this will be set and error detection 
+                    ! will terminate the program.
     oldRN1=0
     oldRN2=0
     oldRN3=0
     oldEOS=0
 	local=TRIM(errMsg)
-	Activate=InitPGLDLL(errMsg)
-	write(dumpUnit,*)' Activate: From InitPGLDLL. iErr,errMsg',Activate,errMsg
     Activate=1  ! Vladimir's choice to indicate no error.
 	return
 end function Activate
+
+integer function iSetLoudTrue(hello)
+    use GlobConst
+    character(255) hello
+    !DEC$ ATTRIBUTES DLLEXPORT::iSetLoudTrue
+    !!MS$ ATTRIBUTES DLLEXPORT::iSetLoudTrue
+    LOUD=.TRUE.
+    iSetLoudTrue=1
+    return
+end function iSetLoudTrue
+
+integer function iSetDumpUnit(input)
+    use GlobConst
+    character(4) input
+    character(255)dumpFile
+    !DEC$ ATTRIBUTES DLLEXPORT::iSetDumpUnit
+    !!MS$ ATTRIBUTES DLLEXPORT::iSetDumpUnit
+    dumpUnit=6
+    if(TRIM(input)=='FILE')then
+        dumpUnit=686
+	    dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
+        open(dumpUnit,file=dumpFile)
+        write(dumpUnit,*)'iSetDumpUnit: dumpUnit=',dumpUnit
+    endif
+    iSetDumpUnit=dumpUnit
+    return
+end function iSetDumpUnit
+
+integer function SETSTRING(tag, value)
+	USE GlobConst
+    character*255 tag, value , errMsg
+    !DEC$ ATTRIBUTES DLLEXPORT::SETSTRING
+    !!MS$ ATTRIBUTES DLLEXPORT::SETSTRING
+    if (tag(1:8).eq.'LOCATION') then
+        do i1=1,255
+            if (value(i1:i1).eq.'|'.and. .NOT. LOUD) then !if(LOUD), assume debugging and use hard coded PGLInputDir
+                masterDir=value(1:i1-1)
+                PGLInputDir=trim(masterDir)//'\input'
+                exit
+            end if
+		enddo
+		!SETSTRING=InitPGLDLL(errMsg)
+        SETSTRING=1
+    else
+        SETSTRING=0
+    endif
+    !if(LOUD)write(dumpUnit,*)'SetString: returning. SETSTRING=',SETSTRING 
+    return
+end function SETSTRING
+
+integer function InitPGLDLL(errMsg)
+    use DllConst
+    use GlobConst
+    Implicit DoublePrecision(a-h,o-z)
+	Character(255) errMsg,CURDIR,local,dumpFile
+	LOGICAL ReadOptions
+    !DEC$ ATTRIBUTES DLLEXPORT::InitPGLDLL
+    !!MS$ ATTRIBUTES DLLEXPORT::InitPGLDLL
+	
+	if(isTDE)then
+		errMsg=' From InitPGLDLL: isTDE==.TRUE. so you cant call InitPGLDLL at this time.'
+		InitPGLDLL=11 
+		return
+	endif
+        
+    DEBUG=.FALSE.
+    LOUD=.TRUE.
+	ReadOptions=.FALSE.
+	InitPGLDLL=0
+	errMsg=' From InitPGLDLL: No problem in InitPGLDLL function. PGLDLLOptions.txt has been loaded.'
+	MasterDir='c:\PGLWrapper'
+    CURDIR=MasterDir
+	!masterDir=curdir
+	!CURDIR=TRIM(masterDir)
+	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
+	PGLInputDir=TRIM(masterDir)//'\Input'
+	ioErr=0
+	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
+	if(ioErr /= 0)then
+		errMsg=' From InitPGLDLL: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
+		InitPGLDLL=11 
+		return
+	endif
+
+	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp or exe is.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
+		InitPGLDLL=12 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
+		InitPGLDLL=13 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
+		InitPGLDLL=14 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
+		InitPGLDLL=15 
+		return
+	endif 
+	!read(51,*,ioStat=ioErr)dumpFile
+	!if(ioErr /= 0)write(*,*)'Activate: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
+	close(51)
+    dumpUnit=6
+    if (LOUD)dumpUnit=iSetDumpUnit('FILE')
+	InitPGLDLL=0
+	errMsg=' InitPGLDLL: No problem in InitPGLDLL function. PGLDLLOptions are loaded.'
+	!CURDIR='c:\PGLWrapper'
+	CURDIR=TRIM(masterDir)
+	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
+	PGLInputDir=TRIM(masterDir)//'\Input'
+	DEBUG=.FALSE.
+    LOUD=.FALSE.
+	ioErr=0
+	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
+		InitPGLDLL=11 
+		return
+	endif
+
+	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp,sln, or exe is.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
+		InitPGLDLL=12 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
+		InitPGLDLL=13 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
+		InitPGLDLL=14 
+		return
+	endif 
+	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
+	if(ioErr /= 0)then
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
+		InitPGLDLL=15 
+		return
+	endif 
+	dumpFile=TRIM(curdir)//'\DebugDLL.txt'
+	!masterDir=curdir
+	!read(51,*,ioStat=ioErr)dumpFile
+	!if(ioErr /= 0)write(*,*)'InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
+	close(51)
+    if (LOUD)then
+        dumpUnit=686
+        open(dumpUnit,file=dumpFile)
+        write(dumpUnit,*)'InitPGLDLL: DLL has started.'
+    endif
+    return      
+end function InitPGLDLL
+
+integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
+	USE GlobConst
+    use DllConst
+	IMPLICIT double Precision(A-H,K,O-Z)
+    integer iEosLocal, Rn1, Rn2, Rn3
+    !DEC$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
+    !!MS$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
+    integer ieos, casrn1, casrn2, casrn3, ierr
+    INTEGER localCas(nmx)
+    IF (isTDE.and.dumpUnit==6) then
+	    INITIALIZE_MODEL=5	! declare an error if dump is to console i/o when LOUD.
+	    return
+    endif
+    if (LOUD)write(dumpUnit,*)'INITIALIZE_MODEL: starting'
+    INITIALIZE_MODEL=0		! indicate no error to start
+	ieos=iEosLocal
+    casrn1=Rn1
+    casrn2=Rn2
+    casrn3=Rn3
+    iEosOpt=ieos
+    if (oldEOS.ne.0 .and. iEosOpt.ne.oldEOS) then
+	    !INITIALIZE_MODEL=4
+	    !return
+    endif
+    ierr=0
+	INITIAL=0
+    localCas(1)=casrn1
+    localCas(2)=casrn2
+    localCas(3)=casrn3
+    NC=3
+    if (Rn2==0) then
+        NC=1 !no of components
+    elseif (Rn3==0) then
+        NC=2 !no of components
+    endif
+	ierLoad=0 
+    if (NC==1) then
+        if (oldRN1.ne.casrn1 .or. oldEOS.ne.ieos) then
+	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
+	        if(ierLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, ierLoad=',ierLoad
+	        if(ierLoad.NE.0)then
+		        INITIALIZE_MODEL=3
+		        return
+            endif
+            oldRN1=casrn1
+            oldRN2=0
+            oldRN3=0
+            oldEOS=ieos
+        endif
+    elseif (NC==2) then
+        if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldEOS.ne.ieos) then
+	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
+	        if(ierLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, ierLoad=',ierLoad
+	        if(ierLoad.NE.0)then
+		        INITIALIZE_MODEL=3
+		        return
+            endif
+            oldRN1=casrn1
+            oldRN2=casrn2
+            oldRN3=0
+            oldEOS=ieos
+	    endif
+    else
+        if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldRN3.ne.casrn3 .or. oldEOS.ne.ieos) then
+	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
+	        if(ierLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, ierLoad=',ierLoad
+	        if(ierLoad.NE.0)then
+		        INITIALIZE_MODEL=3
+		        return
+            endif
+            oldRN1=casrn1
+            oldRN2=casrn2
+            oldRN3=casrn3
+            oldEOS=ieos
+	    endif
+    endif
+	if (LOUD)write(dumpUnit,*)'InitializeModel: returning. iErr=',INITIALIZE_MODEL
+    return
+end function INITIALIZE_MODEL
 
 Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 !	CalculateProperty1 & local is for pure compounds.
@@ -316,6 +561,268 @@ function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr
     return
 end function CalculateProperty2
 
+integer function Calculate2(casrn1, casrn2, modelid, propertyid, t, p, x, res, uncert)
+!int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
+!double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
+    integer modelid, casrn1, casrn2, propertyid, ierr
+    double Precision t, p, x, res, uncert
+    !DEC$ ATTRIBUTES DLLEXPORT::Calculate2
+    !!MS$ ATTRIBUTES DLLEXPORT::Calculate2
+    if (x.le.0) x=0.000001
+    if (x.ge.1) x=0.999999
+    call CalculateProperty2local(modelid, casrn1, casrn2, propertyid, t, p, x, res, ierr)
+    uncert=0
+    Calculate2=ierr
+    return
+    end function Calculate2
+
+integer function Calculate3(casrn1, casrn2, casrn3, modelid, propertyid, t, p, x1, x2, res, uncert)
+!int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
+!double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
+    integer modelid, casrn1, casrn2, casrn3, propertyid, ierr
+    double Precision t, p, x1, x2, res, uncert
+    !DEC$ ATTRIBUTES DLLEXPORT::Calculate3
+    !!MS$ ATTRIBUTES DLLEXPORT::Calculate3
+    call CalculateProperty3local(modelid, casrn1, casrn2, casrn3, propertyid, t, p, x1, x2, res, ierr)
+    uncert=0
+    Calculate2=ierr
+    uncert=0
+    Calculate3=ierr
+    return
+end function Calculate3
+
+integer function Calculate(casrn, modelid, propertyid, t, p, x, res, uncert)
+!int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
+!double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
+    integer modelid, casrn(255), propertyid,localCas !, ierr
+    double Precision t, p, x(255), res, uncert
+    !DEC$ ATTRIBUTES DLLEXPORT::Calculate
+    !!MS$ ATTRIBUTES DLLEXPORT::Calculate
+    res=0
+    uncert=0
+    Calculate=1
+	ieos=modelid
+	localCas=casrn(1)
+	var1=t
+	var2=p
+	var3=x(1)
+	prp_id=propertyid
+    return
+end function Calculate
+
+integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
+!int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
+!double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
+	USE GlobConst
+    Implicit NONE
+    integer modelid, casrn1, propertyid, localprpid, ierr
+    double Precision t, p, res, uncert
+    !DEC$ ATTRIBUTES DLLEXPORT::Calculate1
+    !!MS$ ATTRIBUTES DLLEXPORT::Calculate1
+    localprpid = 0
+    if (propertyid.eq.1) localprpid=4   !L
+    if (propertyid.eq.2) localprpid=3   !G
+    if (propertyid.eq.3) localprpid=2   !L+G
+    if (propertyid.eq.4) localprpid=13   !G+L
+    if (propertyid.eq.8) localprpid=1   !VP
+    if (propertyid.eq.12) localprpid=42   !CP
+    if (propertyid.eq.14) localprpid=45   !CP
+    if (propertyid.eq.18) localprpid=18   !Hvap
+    if (propertyid.eq.34) localprpid=34   !fluid pressure
+    if (propertyid.eq.49) localprpid=41   !H(liq)
+    if (propertyid.eq.51) localprpid=40   !H(gas)
+    if (propertyid.eq.5) then
+        res=Tc(1)
+        Calculate1=0
+    else if (propertyid.eq.6) then
+        res=1000*Pc(1)
+        Calculate1=0
+    else if (propertyid.eq.7) then
+        res=1000*Pc(1)*rMw(1)/(Zc(1)*Rgas*Tc(1))
+        Calculate1=0
+    else if (localprpid.eq.0) then
+        res=0
+        Calculate1=1
+    else
+        call CalculateProperty1local(modelid, casrn1, localprpid, t, p, res, ierr)
+        if (propertyid.eq.12) then
+            res=res*rGas
+        else if (propertyid.eq.49.or.propertyid.eq.51) then
+            res=0.001*res*Rgas*t
+            Calculate1=0
+        endif
+        uncert=0
+        if(ierr==7)ierr=-7
+        if(ierr==5)ierr=-5
+        Calculate1=ierr
+    end if
+    return
+end function Calculate1
+
+subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, var2, var3, var4, res, ierr)
+	USE GlobConst
+    use DllConst
+	IMPLICIT DoublePrecision(A-H,K,O-Z)
+	character*3 aPhase
+    double Precision res
+    integer ieos, casrn1, casrn2, casrn3, prp_id, ierr
+    double Precision var1, var2, var3, var4
+    double Precision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx),xPure3(nmx) 
+	!FUGI requires mole fraction specification because it is written generally for mixtures.
+    INTEGER localCas(nmx)
+	CHARACTER*77 errMsgPas
+!	COMMON/eta/etaL,etaV,ZL,ZV
+    IF (isTDE.and.dumpUnit==6) return
+	DEBUG=.FALSE.
+	NC=3 !no of components
+    iEosOpt=ieos
+    iProperty=ABS(prp_id)
+    localCas(1)=casrn1
+    localCas(2)=casrn2
+    localCas(3)=casrn3
+    !write(*,*)casrn
+    !iProperty = 1: vapor pressure (kPa) given tKelvin
+    !iProperty = 2: saturated liquid density (g/cc) given tKelvin
+    !iProperty = 3: fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
+    !iProperty = 4: Hres/RT,CpRes/R,CvResR,cmprsblty given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
+    iPhase=1
+    if (prp_id==201) iPhase=0   !gas
+    if (prp_id==202) iPhase=0   !gas
+    if (prp_id==205) iPhase=0   !gas
+    res=0
+    ierr=0
+	
+	INITIAL=0
+
+	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
+	if(iErrCas/=0)then
+        ierr=1
+        return
+    endif
+	CALL GETCRIT(NC,iErrCrit)
+	if(iErrCrit/=0)then
+		ierr=2
+		return
+	endif
+	iErrGet=0 
+    if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldRN3.ne.casrn3 .or. oldEOS.ne.ieos) then
+	    if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
+	    if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
+	    if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
+	    if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
+	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 6
+!	    if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
+	    if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
+	    if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
+	    if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
+	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 25
+	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters					!Diky model 22
+	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami			!Diky model 23
+	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb			!Diky model 24
+	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 18
+	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 26
+	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
+	    if(iEosOpt.eq.20)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
+	    !NewEos: Add here for initializing parms.
+	    if(iErrGet.NE.0)then
+		    ierr=3
+		    return
+        endif
+        oldRN1=casrn1
+        oldRN2=casrn2
+        oldRN3=casrn3
+        oldEOS=ieos
+	endif
+    
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   READY TO CALCULATE   !!!!!!!!!!!!!!!!!!!!!!!!!!
+        tPrevious = 0
+        pPrevious = 0
+	    xPure1(2)=0
+	    xPure1(3)=0
+	    xPure2(1)=0
+	    xPure2(3)=0
+	    xPure3(1)=0
+	    xPure3(2)=0
+	    xPure1(1)=1
+	    xPure2(2)=1
+	    xPure2(3)=1
+		!write(52,'(a)')'   T(K)   p(kPa)     x1  phas Vex(cc/mol) rho(mol/cc)  Hex(J/mol)  Gex(J/mol)   ln(gam1)   ln(gam2) '
+		!do while(notDone)
+			!read(51,*,ioStat=ioErr)tKelvin,pKPa,iPhase,xFrac(1)
+        tKelvin = var1
+        pKPa = var2
+        xFrac(1) = var3
+        xFrac(2) = var4
+			aPhase='VAP'
+			if(iPhase==0)aPhase='GAS'
+			if(iPhase==1)aPhase='LIQ'
+			xFrac(3) = 1-xFrac(1)-xFrac(2)
+			!if(xFrac(2) < 0)pause 'UaWrapper: Error xFrac(1) > 1  ??? '
+			!if(ioErr < 0)then   !this means we reached the end of the file
+			!	exit            !break the loop and return to remaining execution 
+			!elseif(ioErr > 0)then  
+			!	write(52,*)'Unexpected error (e.g. type mismatch?) reading line=',line
+			!	cycle
+			!endif
+			!line=line+1
+			iErr=0
+			pMPa=pKPa/1000
+			if( ABS(tKelvin-tPrevious) > 0.1 .or. ABS(pKPa-pPrevious) > 0.1 )then
+				!if(LOUD)write(*,form611)' UaWrapper: calling fugi. iPhase,T,P,x1:',iPhase,tKelvin,pMPa,xPure1(1)
+				CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+				if(iErrF > 0)iErr=iErrF
+				hRes_RT=uRes_RT+zFactor-1
+				vPure1=rGas*tKelvin*zFactor/pMPa
+				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
+				hRes1 = hRes_RT*rGas*tKelvin ! from module
+				!if(LOUD)write(*,form611)' UaWrapper: calling fugi. iPhase,T,P,x1:',iPhase,tKelvin,pMPa,xPure1(1)
+				CALL FugiTP( tKelvin,pMPa,xPure2,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+				if(iErrF > 0)iErr=iErr+10*iErrF
+				hRes_RT=uRes_RT+zFactor-1
+				vPure2=rGas*tKelvin*zFactor/pMPa
+				chemPoPure2=FUGC(2) ! = ln(fPure2/P)
+				hRes2 = hRes_RT*rGas*tKelvin ! from module
+				tPrevious=tKelvin
+				pPrevious=pKPa
+			endif
+			!iPhase=1 !set as default
+			!if(expRho/1000 < rhoCritG_cc)iPhase=0
+				!if(LOUD)write(*,form611)' UaWrapper: calling fugi. iPhase,T,P,x1:',iPhase,tKelvin,pMPa,xPure1(1)
+			CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+			if(iErrF > 0)iErr=iErr+10*iErrF
+			hRes_RT=uRes_RT+zFactor-1
+			if(iErr > 0)then
+				!if(LOUD)write(*,form601)iErr,tKelvin,pKPa,xFrac(1),aPhase
+				!cycle
+                res = 0
+                return
+			endif
+																														 
+			vMix=rGas*tKelvin*zFactor/pMPa
+			rhoMol_cc=1/vMix
+			activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
+			activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
+			hResMix = hRes_RT*rGas*tKelvin ! from module
+			vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
+			hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
+			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)
+			!write(52,form610)aPhase,tKelvin,pKPa,xFrac(1),vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
+            if (iProperty==4) res = exp(activity1)
+            if (iProperty==5) res = exp(activity2)
+            if (iProperty==81) res = 1000*rhoMol_cc
+            if (iProperty==89) res = 0.000001*vXsCc_mol
+            if (iProperty==36) res = 0.001*hXsJ_mol
+            if (iProperty==201) res = exp(FUGC(1))
+            if (iProperty==202) res = exp(FUGC(2))
+            if (iProperty==203) res = exp(FUGC(1))
+            if (iProperty==204) res = exp(FUGC(2))
+            if (iProperty==205) res = exp(FUGC(3))
+            if (iProperty==206) res = exp(FUGC(3))
+		!enddo !	while(notDone)
+        return
+end subroutine CalculateProperty3local
+	
 integer function QUERYMODEL(no, model_type, level, modelname)
     use GlobConst
     integer no, model_type, level
@@ -418,10 +925,14 @@ integer function QUERYMODEL(no, model_type, level, modelname)
         level=2
         QUERYMODEL=3
     endif
+	!              1     2       3       4          5          6         7           8              9        10       
+	!data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
+	!		'tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
+	!             11    12      13         14          15          16             17        18       19        20       
     if (no.eq.20) then
-        model_type=3
+        model_type=1
         level=2
-        QUERYMODEL=4
+        QUERYMODEL=20
     endif
     if (no.eq.21) then
         model_type=3
@@ -481,104 +992,6 @@ integer function QUERYMODEL(no, model_type, level, modelname)
     if (QUERYMODEL>0) modelname=EosName(QUERYMODEL)
     return
     end function QUERYMODEL
-
-integer function Calculate2(casrn1, casrn2, modelid, propertyid, t, p, x, res, uncert)
-!int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
-!double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
-    integer modelid, casrn1, casrn2, propertyid, ierr
-    double Precision t, p, x, res, uncert
-    !DEC$ ATTRIBUTES DLLEXPORT::Calculate2
-    !!MS$ ATTRIBUTES DLLEXPORT::Calculate2
-    if (x.le.0) x=0.000001
-    if (x.ge.1) x=0.999999
-    call CalculateProperty2local(modelid, casrn1, casrn2, propertyid, t, p, x, res, ierr)
-    uncert=0
-    Calculate2=ierr
-    return
-    end function Calculate2
-
-integer function Calculate3(casrn1, casrn2, casrn3, modelid, propertyid, t, p, x1, x2, res, uncert)
-!int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
-!double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
-    integer modelid, casrn1, casrn2, casrn3, propertyid, ierr
-    double Precision t, p, x1, x2, res, uncert
-    !DEC$ ATTRIBUTES DLLEXPORT::Calculate3
-    !!MS$ ATTRIBUTES DLLEXPORT::Calculate3
-    call CalculateProperty3local(modelid, casrn1, casrn2, casrn3, propertyid, t, p, x1, x2, res, ierr)
-    uncert=0
-    Calculate2=ierr
-    uncert=0
-    Calculate3=ierr
-    return
-end function Calculate3
-
-integer function Calculate(casrn, modelid, propertyid, t, p, x, res, uncert)
-!int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
-!double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
-    integer modelid, casrn(255), propertyid,localCas !, ierr
-    double Precision t, p, x(255), res, uncert
-    !DEC$ ATTRIBUTES DLLEXPORT::Calculate
-    !!MS$ ATTRIBUTES DLLEXPORT::Calculate
-    res=0
-    uncert=0
-    Calculate=1
-	ieos=modelid
-	localCas=casrn(1)
-	var1=t
-	var2=p
-	var3=x(1)
-	prp_id=propertyid
-    return
-end function Calculate
-
-integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
-!int *cmpid1, int* cmpid2, int* modelid, int* propertyid, double* t, double* p, double* x, double* res, double* uncert
-!double Precision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
-	USE GlobConst
-    Implicit NONE
-    integer modelid, casrn1, propertyid, localprpid, ierr
-    double Precision t, p, res, uncert
-    !DEC$ ATTRIBUTES DLLEXPORT::Calculate1
-    !!MS$ ATTRIBUTES DLLEXPORT::Calculate1
-    localprpid = 0
-    if (propertyid.eq.1) localprpid=4   !L
-    if (propertyid.eq.2) localprpid=3   !G
-    if (propertyid.eq.3) localprpid=2   !L+G
-    if (propertyid.eq.4) localprpid=13   !G+L
-    if (propertyid.eq.8) localprpid=1   !VP
-    if (propertyid.eq.12) localprpid=42   !CP
-    if (propertyid.eq.14) localprpid=45   !CP
-    if (propertyid.eq.18) localprpid=18   !Hvap
-    if (propertyid.eq.34) localprpid=34   !fluid pressure
-    if (propertyid.eq.49) localprpid=41   !H(liq)
-    if (propertyid.eq.51) localprpid=40   !H(gas)
-    if (propertyid.eq.5) then
-        res=Tc(1)
-        Calculate1=0
-    else if (propertyid.eq.6) then
-        res=1000*Pc(1)
-        Calculate1=0
-    else if (propertyid.eq.7) then
-        res=1000*Pc(1)*rMw(1)/(Zc(1)*Rgas*Tc(1))
-        Calculate1=0
-    else if (localprpid.eq.0) then
-        res=0
-        Calculate1=1
-    else
-        call CalculateProperty1local(modelid, casrn1, localprpid, t, p, res, ierr)
-        if (propertyid.eq.12) then
-            res=res*rGas
-        else if (propertyid.eq.49.or.propertyid.eq.51) then
-            res=0.001*res*Rgas*t
-            Calculate1=0
-        endif
-        uncert=0
-        if(ierr==7)ierr=-7
-        if(ierr==5)ierr=-5
-        Calculate1=ierr
-    end if
-    return
-end function Calculate1
 
 integer function FIND_COMP(name)
     character(255) name
@@ -717,390 +1130,3 @@ integer function SETPAR(n, newvalue)
     return
 end function SETPAR
     
-integer function SetLoudTrue(hello)
-    use GlobConst
-    character(255) hello
-    !DEC$ ATTRIBUTES DLLEXPORT::SETPAR
-    !!MS$ ATTRIBUTES DLLEXPORT::SETPAR
-    LOUD=.FALSE.
-    SetLoudTrue=1
-    return
-end function SetLoudTrue
-
-integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
-	USE GlobConst
-    use DllConst
-	IMPLICIT double Precision(A-H,K,O-Z)
-    integer iEosLocal, Rn1, Rn2, Rn3
-    !DEC$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
-    !!MS$ ATTRIBUTES DLLEXPORT::INITIALIZE_MODEL
-    integer ieos, casrn1, casrn2, casrn3, ierr
-    INTEGER localCas(nmx)
-    IF (LOUD.and.dumpUnit==6) then
-	    INITIALIZE_MODEL=5	! declare an error if dump is to console i/o when LOUD.
-	    return
-    endif
-    if (LOUD)write(dumpUnit,*)'INITIALIZE_MODEL: starting'
-    INITIALIZE_MODEL=0		! indicate no error to start
-	ieos=iEosLocal
-    casrn1=Rn1
-    casrn2=Rn2
-    casrn3=Rn3
-    iEosOpt=ieos
-    if (oldEOS.ne.0 .and. iEosOpt.ne.oldEOS) then
-	    !INITIALIZE_MODEL=4
-	    !return
-    endif
-    ierr=0
-	INITIAL=0
-    localCas(1)=casrn1
-    localCas(2)=casrn2
-    localCas(3)=casrn3
-    NC=3
-    if (Rn2==0) then
-        NC=1 !no of components
-    elseif (Rn3==0) then
-        NC=2 !no of components
-    endif
-	ierLoad=0 
-    if (NC==1) then
-        if (oldRN1.ne.casrn1 .or. oldEOS.ne.ieos) then
-	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
-	        if(ierLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, ierLoad=',ierLoad
-	        if(ierLoad.NE.0)then
-		        INITIALIZE_MODEL=3
-		        return
-            endif
-            oldRN1=casrn1
-            oldRN2=0
-            oldRN3=0
-            oldEOS=ieos
-        endif
-    elseif (NC==2) then
-        if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldEOS.ne.ieos) then
-	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
-	        if(ierLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, ierLoad=',ierLoad
-	        if(ierLoad.NE.0)then
-		        INITIALIZE_MODEL=3
-		        return
-            endif
-            oldRN1=casrn1
-            oldRN2=casrn2
-            oldRN3=0
-            oldEOS=ieos
-	    endif
-    else
-        if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldRN3.ne.casrn3 .or. oldEOS.ne.ieos) then
-	        call PGLWrapperStartup(NC,iEosLocal,localCas,ierLoad)
-	        if(ierLoad > 0 .and. LOUD)write(dumpUnit,*)'InitializeModel: From LoadCritParmsDb, ierLoad=',ierLoad
-	        if(ierLoad.NE.0)then
-		        INITIALIZE_MODEL=3
-		        return
-            endif
-            oldRN1=casrn1
-            oldRN2=casrn2
-            oldRN3=casrn3
-            oldEOS=ieos
-	    endif
-    endif
-	if (LOUD)write(dumpUnit,*)'InitializeModel: returning. iErr=',INITIALIZE_MODEL
-    return
-    end function INITIALIZE_MODEL
-
-subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, var2, var3, var4, res, ierr)
-	USE GlobConst
-    use DllConst
-	IMPLICIT DoublePrecision(A-H,K,O-Z)
-	character*3 aPhase
-    double Precision res
-    integer ieos, casrn1, casrn2, casrn3, prp_id, ierr
-    double Precision var1, var2, var3, var4
-    double Precision xFrac(nmx),FUGC(nmx),xPure1(nmx),xPure2(nmx),xPure3(nmx) 
-	!FUGI requires mole fraction specification because it is written generally for mixtures.
-    INTEGER localCas(nmx)
-	CHARACTER*77 errMsgPas
-!	COMMON/eta/etaL,etaV,ZL,ZV
-    IF (LOUD.and.dumpUnit==6) return
-	DEBUG=.FALSE.
-	NC=3 !no of components
-    iEosOpt=ieos
-    iProperty=ABS(prp_id)
-    localCas(1)=casrn1
-    localCas(2)=casrn2
-    localCas(3)=casrn3
-    !write(*,*)casrn
-    !iProperty = 1: vapor pressure (kPa) given tKelvin
-    !iProperty = 2: saturated liquid density (g/cc) given tKelvin
-    !iProperty = 3: fluid density (g/cc) given tKelvin, pKPa, iPhase (=1 for liquid, 0 for vapor)
-    !iProperty = 4: Hres/RT,CpRes/R,CvResR,cmprsblty given tKelvin, pKPa  !cmprsblty=(dP/dRho)T*(1/RT)
-    iPhase=1
-    if (prp_id==201) iPhase=0   !gas
-    if (prp_id==202) iPhase=0   !gas
-    if (prp_id==205) iPhase=0   !gas
-    res=0
-    ierr=0
-	
-	INITIAL=0
-
-	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
-	if(iErrCas/=0)then
-        ierr=1
-        return
-    endif
-	CALL GETCRIT(NC,iErrCrit)
-	if(iErrCrit/=0)then
-		ierr=2
-		return
-	endif
-	iErrGet=0 
-    if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldRN3.ne.casrn3 .or. oldEOS.ne.ieos) then
-	    if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	    if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
-	    if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
-	    if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 6
-!	    if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
-	    if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 25
-	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters					!Diky model 22
-	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami			!Diky model 23
-	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb			!Diky model 24
-	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 18
-	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 26
-	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
-	    !NewEos: Add here for initializing parms.
-	    if(iErrGet.NE.0)then
-		    ierr=3
-		    return
-        endif
-        oldRN1=casrn1
-        oldRN2=casrn2
-        oldRN3=casrn3
-        oldEOS=ieos
-	endif
-    
-    
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   READY TO CALCULATE   !!!!!!!!!!!!!!!!!!!!!!!!!!
-        tPrevious = 0
-        pPrevious = 0
-	    xPure1(2)=0
-	    xPure1(3)=0
-	    xPure2(1)=0
-	    xPure2(3)=0
-	    xPure3(1)=0
-	    xPure3(2)=0
-	    xPure1(1)=1
-	    xPure2(2)=1
-	    xPure2(3)=1
-		!write(52,'(a)')'   T(K)   p(kPa)     x1  phas Vex(cc/mol) rho(mol/cc)  Hex(J/mol)  Gex(J/mol)   ln(gam1)   ln(gam2) '
-		!do while(notDone)
-			!read(51,*,ioStat=ioErr)tKelvin,pKPa,iPhase,xFrac(1)
-        tKelvin = var1
-        pKPa = var2
-        xFrac(1) = var3
-        xFrac(2) = var4
-			aPhase='VAP'
-			if(iPhase==0)aPhase='GAS'
-			if(iPhase==1)aPhase='LIQ'
-			xFrac(3) = 1-xFrac(1)-xFrac(2)
-			!if(xFrac(2) < 0)pause 'UaWrapper: Error xFrac(1) > 1  ??? '
-			!if(ioErr < 0)then   !this means we reached the end of the file
-			!	exit            !break the loop and return to remaining execution 
-			!elseif(ioErr > 0)then  
-			!	write(52,*)'Unexpected error (e.g. type mismatch?) reading line=',line
-			!	cycle
-			!endif
-			!line=line+1
-			iErr=0
-			pMPa=pKPa/1000
-			if( ABS(tKelvin-tPrevious) > 0.1 .or. ABS(pKPa-pPrevious) > 0.1 )then
-				!if(LOUD)write(*,form611)' UaWrapper: calling fugi. iPhase,T,P,x1:',iPhase,tKelvin,pMPa,xPure1(1)
-				CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
-				if(iErrF > 0)iErr=iErrF
-				hRes_RT=uRes_RT+zFactor-1
-				vPure1=rGas*tKelvin*zFactor/pMPa
-				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
-				hRes1 = hRes_RT*rGas*tKelvin ! from module
-				!if(LOUD)write(*,form611)' UaWrapper: calling fugi. iPhase,T,P,x1:',iPhase,tKelvin,pMPa,xPure1(1)
-				CALL FugiTP( tKelvin,pMPa,xPure2,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
-				if(iErrF > 0)iErr=iErr+10*iErrF
-				hRes_RT=uRes_RT+zFactor-1
-				vPure2=rGas*tKelvin*zFactor/pMPa
-				chemPoPure2=FUGC(2) ! = ln(fPure2/P)
-				hRes2 = hRes_RT*rGas*tKelvin ! from module
-				tPrevious=tKelvin
-				pPrevious=pKPa
-			endif
-			!iPhase=1 !set as default
-			!if(expRho/1000 < rhoCritG_cc)iPhase=0
-				!if(LOUD)write(*,form611)' UaWrapper: calling fugi. iPhase,T,P,x1:',iPhase,tKelvin,pMPa,xPure1(1)
-			CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
-			if(iErrF > 0)iErr=iErr+10*iErrF
-			hRes_RT=uRes_RT+zFactor-1
-			if(iErr > 0)then
-				!if(LOUD)write(*,form601)iErr,tKelvin,pKPa,xFrac(1),aPhase
-				!cycle
-                res = 0
-                return
-			endif
-																														 
-			vMix=rGas*tKelvin*zFactor/pMPa
-			rhoMol_cc=1/vMix
-			activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
-			activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
-			hResMix = hRes_RT*rGas*tKelvin ! from module
-			vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
-			hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
-			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)
-			!write(52,form610)aPhase,tKelvin,pKPa,xFrac(1),vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
-            if (iProperty==4) res = exp(activity1)
-            if (iProperty==5) res = exp(activity2)
-            if (iProperty==81) res = 1000*rhoMol_cc
-            if (iProperty==89) res = 0.000001*vXsCc_mol
-            if (iProperty==36) res = 0.001*hXsJ_mol
-            if (iProperty==201) res = exp(FUGC(1))
-            if (iProperty==202) res = exp(FUGC(2))
-            if (iProperty==203) res = exp(FUGC(1))
-            if (iProperty==204) res = exp(FUGC(2))
-            if (iProperty==205) res = exp(FUGC(3))
-            if (iProperty==206) res = exp(FUGC(3))
-		!enddo !	while(notDone)
-        return
-	end subroutine CalculateProperty3local
-	
-integer function InitPGLDLL(errMsg)
-    use DllConst
-    use GlobConst
-    Implicit DoublePrecision(a-h,o-z)
-	Character(255) errMsg,CURDIR,local,dumpFile
-	LOGICAL ReadOptions
-    !DEC$ ATTRIBUTES DLLEXPORT::InitPGLDLL
-    !!MS$ ATTRIBUTES DLLEXPORT::InitPGLDLL
-	
-	DEBUG=.FALSE.
-    LOUD=.FALSE.
-	ReadOptions=.FALSE.
-	InitPGLDLL=0
-	errMsg=' From InitPGLDLL: No problem in InitPGLDLL function. PGLDLLOptions.txt has been loaded.'
-	CURDIR='c:\PGLWrapper'
-	!masterDir=curdir
-	!CURDIR=TRIM(masterDir)
-	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
-	PGLInputDir=TRIM(masterDir)//'\Input'
-	ioErr=0
-	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
-	if(ioErr /= 0)then
-		errMsg=' From InitPGLDLL: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
-		InitPGLDLL=11 
-		return
-	endif
-
-	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp or exe is.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
-		InitPGLDLL=12 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
-		InitPGLDLL=13 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
-		InitPGLDLL=14 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
-		InitPGLDLL=15 
-		return
-	endif 
-	dumpFile=TRIM(curdir)//'\DebugDLL.txt'
-	!read(51,*,ioStat=ioErr)dumpFile
-	!if(ioErr /= 0)write(*,*)'Activate: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
-	close(51)
-    if (LOUD)then
-        dumpUnit=686
-        open(dumpUnit,file=dumpFile)
-        write(dumpUnit,*)'InitPGLDLL: DLL has started.'
-    endif
-	InitPGLDLL=0
-	errMsg=' InitPGLDLL: No problem in InitPGLDLL function. PGLDLLOptions are loaded.'
-	!CURDIR='c:\PGLWrapper'
-	CURDIR=TRIM(masterDir)
-	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
-	PGLInputDir=TRIM(masterDir)//'\Input'
-	DEBUG=.FALSE.
-    LOUD=.FALSE.
-	ioErr=0
-	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
-		InitPGLDLL=11 
-		return
-	endif
-
-	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp,sln, or exe is.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
-		InitPGLDLL=12 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
-		InitPGLDLL=13 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
-		InitPGLDLL=14 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
-		InitPGLDLL=15 
-		return
-	endif 
-	dumpFile=TRIM(curdir)//'\DebugDLL.txt'
-	!masterDir=curdir
-	!read(51,*,ioStat=ioErr)dumpFile
-	!if(ioErr /= 0)write(*,*)'InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
-	close(51)
-    if (LOUD)then
-        dumpUnit=686
-        open(dumpUnit,file=dumpFile)
-        write(dumpUnit,*)'InitPGLDLL: DLL has started.'
-    endif
-    return      
-end function InitPGLDLL
-
-integer function SETSTRING(tag, value)
-	USE GlobConst
-    character*255 tag, value , errMsg
-    !DEC$ ATTRIBUTES DLLEXPORT::SETSTRING
-    !!MS$ ATTRIBUTES DLLEXPORT::SETSTRING
-    if (tag(1:8).eq.'LOCATION') then
-        do i1=1,255
-            if (value(i1:i1).eq.'|'.and. .NOT. LOUD) then !if(LOUD), assume debugging and use hard coded PGLInputDir
-                masterDir=value(1:i1-1)
-                PGLInputDir=trim(masterDir)//'\input'
-                exit
-            end if
-		enddo
-		SETSTRING=InitPGLDLL(errMsg)
-        SETSTRING=1
-    else
-        SETSTRING=0
-    endif
-    !if(LOUD)write(dumpUnit,*)'SetString: returning. SETSTRING=',SETSTRING 
-    return
-    end function SETSTRING
