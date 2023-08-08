@@ -22,7 +22,7 @@ MODULE GlobConst
 	DoublePrecision vLiq(nmx)		!liquid molar volume in cm3/mol
 	DoublePrecision tKmin(nmx)		!model's minimum recommended temperature, especially for P^vp. Only warning. e.g., SLE OK.
 	DoublePrecision CpRes_R, CvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)	= Z+rho*dZ/dRho
-	character*234 masterDir,PGLinputDir
+	character*255 masterDir,PGLinputDir,dumpFile
 	character*30 NAME(nmx)
 	character*5 class(nmx) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. PGL6edClasses.xls)
     Logical, SAVE :: LOUD,CheckDLL,isTDE   !LOUD=.TRUE. means writing debug info. CheckDLL=.TRUE. means direct debug info to DebugDLL.txt; isTDE means the call is coming from TDE
@@ -63,7 +63,7 @@ contains
 END MODULE GlobConst
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). 1st Sums sites per molecule then  molecules.
-	USE GlobConst, only:nmx,isTPT,isESD,iEosOpt,LOUD,dumpUnit ! nmx is the maximum number of compounds, typically 55. 
+	USE GlobConst, only:nmx,isTPT,isESD,iEosOpt,LOUD,dumpUnit,dumpFile ! nmx is the maximum number of compounds, typically 55. 
 	implicit NONE
 	integer maxTypes,nsx,maxTypesGlobal,localPool	
 	PARAMETER (maxTypes=44,nsx=maxTypes,maxTypesGlobal=999) 

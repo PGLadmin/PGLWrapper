@@ -29,33 +29,30 @@ integer function Activate(errMsg)
     oldRN3=0
     oldEOS=0
 	local=TRIM(errMsg)
+    !Activate=InitPGLDLL(errMsg)
     Activate=1  ! Vladimir's choice to indicate no error.
 	return
 end function Activate
 
-integer function iSetLoudTrue(hello)
+integer function iSetLoudTrue(errMsg)
     use GlobConst
-    character(255) hello
+    character(255) errMsg
+    errMsg='iSetLoudTrue: No problem!'
     !DEC$ ATTRIBUTES DLLEXPORT::iSetLoudTrue
     !!MS$ ATTRIBUTES DLLEXPORT::iSetLoudTrue
+    iSetLoudTrue= -11
     LOUD=.TRUE.
-    iSetLoudTrue=1
+    iSetLoudTrue=0
     return
 end function iSetLoudTrue
 
 integer function iSetDumpUnit(input)
     use GlobConst
     character(4) input
-    character(255)dumpFile
     !DEC$ ATTRIBUTES DLLEXPORT::iSetDumpUnit
     !!MS$ ATTRIBUTES DLLEXPORT::iSetDumpUnit
     dumpUnit=6
-    if(TRIM(input)=='FILE')then
-        dumpUnit=686
-	    dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
-        open(dumpUnit,file=dumpFile)
-        write(dumpUnit,*)'iSetDumpUnit: dumpUnit=',dumpUnit
-    endif
+    if(TRIM(input)=='FILE')dumpUnit=686
     iSetDumpUnit=dumpUnit
     return
 end function iSetDumpUnit
@@ -76,6 +73,7 @@ integer function SETSTRING(tag, value)
 		!SETSTRING=InitPGLDLL(errMsg)
         SETSTRING=1
     else
+		!SETSTRING=InitPGLDLL(errMsg)
         SETSTRING=0
     endif
     !if(LOUD)write(dumpUnit,*)'SetString: returning. SETSTRING=',SETSTRING 
@@ -86,115 +84,72 @@ integer function InitPGLDLL(errMsg)
     use DllConst
     use GlobConst
     Implicit DoublePrecision(a-h,o-z)
-	Character(255) errMsg,CURDIR,local,dumpFile
+	Character(255) errMsg,CURDIR,local
 	LOGICAL ReadOptions
     !DEC$ ATTRIBUTES DLLEXPORT::InitPGLDLL
     !!MS$ ATTRIBUTES DLLEXPORT::InitPGLDLL
 	
+	InitPGLDLL=0
+    DEBUG=.FALSE.
 	if(isTDE)then
-		errMsg=' From InitPGLDLL: isTDE==.TRUE. so you cant call InitPGLDLL at this time.'
-		InitPGLDLL=11 
-		return
+		errMsg=' From InitPGLDLL: isTDE==.TRUE. Checking PGLDLL.ini for instructions.'
+        dumpUnit=686
+    else
+	    LOUD=.TRUE.
+        MasterDir='c:\PGLWrapper'
+	    PGLInputDir=TRIM(masterDir)//'\Input'
+        dumpUnit=686
+	    dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
+        open(dumpUnit,file=dumpFile)
+        write(dumpUnit,*)'InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=',dumpUnit,LOUD,dumpFile
+        return
 	endif
         
-    DEBUG=.FALSE.
-    LOUD=.TRUE.
-	ReadOptions=.FALSE.
-	InitPGLDLL=0
-	errMsg=' From InitPGLDLL: No problem in InitPGLDLL function. PGLDLLOptions.txt has been loaded.'
-	MasterDir='c:\PGLWrapper'
-    CURDIR=MasterDir
-	!masterDir=curdir
-	!CURDIR=TRIM(masterDir)
-	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
-	PGLInputDir=TRIM(masterDir)//'\Input'
+	errMsg=' From InitPGLDLL: No problem in InitPGLDLL function. PGLDLL.ini has been loaded.'
+	local=TRIM(MasterDir)//'\PGLDLL.ini'
 	ioErr=0
+	ReadOptions=.TRUE.
 	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
 	if(ioErr /= 0)then
-		errMsg=' From InitPGLDLL: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
+		errMsg=' From InitPGLDLL: Error opening PGLDLL.ini Check that this file is where project is defined.'
 		InitPGLDLL=11 
 		return
 	endif
 
-	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp or exe is.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
-		InitPGLDLL=12 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
-		InitPGLDLL=13 
-		return
-	endif 
+!	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.dll is defined. e.g., where mdp or dll is.
+!	if(ioErr /= 0)then
+!		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
+!		InitPGLDLL=12 
+!		return
+!   endif
+    DEBUG=.FALSE. 
+!	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
+!	if(ioErr /= 0)then
+!		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
+!		InitPGLDLL=13 
+!		return
+!	endif 
 	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
 	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list .TRUE. or .FALSE. for DebugDLL.txt'
 		InitPGLDLL=14 
 		return
 	endif 
 	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
 	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
+		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list path\PGLInputDir.' 
 		InitPGLDLL=15 
 		return
 	endif 
+    if (dumpUnit==686)then  ! You can also set DumpUnit and LOUD using iSetDumpUnit(), and iSetLoudTrue().
+	    dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
+	    !dumpFile='c:PGLWrapper\JreDebugDLL.txt'
+        open(dumpUnit,file=dumpFile)
+        write(dumpUnit,*)'InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=',dumpUnit,LOUD,dumpFile
+    endif
 	!read(51,*,ioStat=ioErr)dumpFile
 	!if(ioErr /= 0)write(*,*)'Activate: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
 	close(51)
-    dumpUnit=6
-    if (LOUD)dumpUnit=iSetDumpUnit('FILE')
-	InitPGLDLL=0
-	errMsg=' InitPGLDLL: No problem in InitPGLDLL function. PGLDLLOptions are loaded.'
-	!CURDIR='c:\PGLWrapper'
-	CURDIR=TRIM(masterDir)
-	local=TRIM(CURDIR)//'\PGLDLLOptions.txt'
-	PGLInputDir=TRIM(masterDir)//'\Input'
-	DEBUG=.FALSE.
-    LOUD=.FALSE.
-	ioErr=0
-	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error opening PGLDLLOptions.txt. Check that this file is where project is defined.'
-		InitPGLDLL=11 
-		return
-	endif
-
-	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.exe is defined. e.g., where mdp,sln, or exe is.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
-		InitPGLDLL=12 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
-		InitPGLDLL=13 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 3rd line should list .TRUE. or .FALSE. for DebugDLL.txt'
-		InitPGLDLL=14 
-		return
-	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
-	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 4th line should list path\PGLInputDir.' 
-		InitPGLDLL=15 
-		return
-	endif 
-	dumpFile=TRIM(curdir)//'\DebugDLL.txt'
-	!masterDir=curdir
-	!read(51,*,ioStat=ioErr)dumpFile
-	!if(ioErr /= 0)write(*,*)'InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
-	close(51)
-    if (LOUD)then
-        dumpUnit=686
-        open(dumpUnit,file=dumpFile)
-        write(dumpUnit,*)'InitPGLDLL: DLL has started.'
-    endif
     return      
 end function InitPGLDLL
 
@@ -211,7 +166,7 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 	    INITIALIZE_MODEL=5	! declare an error if dump is to console i/o when LOUD.
 	    return
     endif
-    if (LOUD)write(dumpUnit,*)'INITIALIZE_MODEL: starting'
+    if (LOUD)write(dumpUnit,*)'INITIALIZE_MODEL: starting.'
     INITIALIZE_MODEL=0		! indicate no error to start
 	ieos=iEosLocal
     casrn1=Rn1

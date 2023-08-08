@@ -5,11 +5,11 @@
 
 INTERFACE
 	integer function InitPGLDLL(hello)
-		!DEC$ATTRIBUTES DLLIMPORT :: InitPGLDLL 
+		!DEC$ATTRIBUTES DLLIMPORT :: InitPGLDLL  
 		character(255) hello
 	end function InitPGLDLL
 	integer function SetLoudTrue(hello)
-		!DEC$ATTRIBUTES DLLIMPORT :: SetLoudTrue 
+		!DEC$ATTRIBUTES DLLIMPORT :: SetLoudTrue  
 		character(255) hello
 	end function SetLoudTrue
     integer function iSetDumpUnit(aPlace)
@@ -17,7 +17,7 @@ INTERFACE
         !DEC$ ATTRIBUTES DLLIMPORT::iSetDumpUnit
 	end function iSetDumpUnit
 	integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
-		!DEC$ATTRIBUTES DLLIMPORT :: INITIALIZE_MODEL 
+		!DEC$ATTRIBUTES DLLIMPORT :: INITIALIZE_MODEL
 		integer iEosLocal, Rn1, Rn2, Rn3
 	end function INITIALIZE_MODEL
 	integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
@@ -35,7 +35,7 @@ END INTERFACE
     !value='c:\PGLWrapper|'
     !iErr=SetString(tag,value)
     iErr=iSetLoudTrue(errMsg)
-    iDumpUnit=iSetDumpUnit('CONS')
+    iDumpUnit=iSetDumpUnit('FILE')
     !if (LOUD)iDumpUnit=iSetDumpUnit('FILE')
 	iErr=InitPGLDLL(errMsg)
 	if(iErr > 10)then
@@ -46,11 +46,11 @@ END INTERFACE
         !write(*,*)'DLLTestMain: PGLInputDir=',TRIM(PGLInputDir)
     endif
     
-    
 	call Test1
 	call Test2
 	call Test3
-	stop
+
+    stop
 END !main Program
 
 subroutine Test1
@@ -58,7 +58,7 @@ subroutine Test1
 	integer ieos, Rn1, Rn2, Rn3, prp_id, ierr
 	doublePrecision var1, var2, prp, uncert
 	DoublePrecision CalcResult
-    ieos=20
+    ieos=2
     Rn1=67641   !acetone
     Rn2=0
     Rn3=0
@@ -85,9 +85,10 @@ subroutine Test2
 !            if (prp_id==202) res = exp(FUGC(2))	! vapor
 !            if (prp_id==203) res = exp(FUGC(1))	! liq
 !            if (prp_id==204) res = exp(FUGC(2))	! liq
+	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	integer ieos, casrn1, casrn2, prp_id, ierr
 	doublePrecision var1, var2, var3, prp
-    ieos=20
+    ieos=2
     casrn1 = 75150      !CarbonDisulfide
     casrn2 = 2551624    !SulfurHexafluoride
     var1 = 298.136
@@ -95,7 +96,7 @@ subroutine Test2
     var3 = 0.0013779105351375952
     prp_id = 201        !vapor chemical potential of component 1. 
     prp=CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3,  ierr)
-    write(*,*) 'Test2: P,x1,prp,iErr=',var2,var3,prp,iErr
+    write(*,*) 'Test2: iErr,P,x1,prp,=',iErr,var2,var3,prp
     var2 = 91911.609110881604
     prp=CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3,  ierr)
     write(*,*) 'Test2: P,x1,prp,iErr=',var2,var3,prp,iErr
@@ -127,15 +128,16 @@ subroutine Test2
 end subroutine
 
 subroutine Test3	!testing dll calls
-integer i, ieos, casrn1, casrn2, casrn3, prp_id, ierr,nPar
-doublePrecision var1, var2, var3, prp, p
-integer GETNPAR,GETPAR
+	IMPLICIT DoublePrecision(A-H,K,O-Z)
+    integer i, ieos, casrn1, casrn2, casrn3, prp_id, ierr,nPar
+    doublePrecision var1, var2, var3, prp, p
+    integer GETNPAR,GETPAR
 	i=INITIALIZE_MODEL(2,71363,7732185,0)       ! (iEos,casrn1,casrn2,casrn3)
 	nPar=GETNPAR(2)
 	i=GETPAR(1,p)
     write(*,*) 'Test3: nPar,par=',nPar,p
 	return
-    ieos=20
+    ieos=2
     casrn1 = 123911     !14dioxane
     casrn2 = 127184     !tetrachloroethene
     var1 = 298.15
