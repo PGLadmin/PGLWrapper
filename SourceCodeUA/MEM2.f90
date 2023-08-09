@@ -361,12 +361,12 @@
     iErr=0  
 	!Note: 1st approximation assumes equal donors and acceptors on each site.
 	nSitesTot=0
-	isAcid=0
+	isAcid=.FALSE.
 	DO iComp=1,nComps
 		do iType=1,nTypes(iComp)		
 			nSitesTot=nSitesTot+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) 
 			!ndHb(iType) should be zero if iType does not hBond.
-			if(idType(iComp,iType)==1603)isAcid=1
+			if(idType(iComp,iType)==1603)isAcid=.TRUE.
 			iComplex=nDonors(iComp,iType)*nAcceptors(iComp,iType)
 			eHbKcal_mol(iComp,iType)=( eDonorKcal_mol(iComp,iType)+eAcceptorKcal_mol(iComp,iType) )/2.d0 
 			if(iComplex.ne.0)iComplex=1  !nDs or nAs could be 2, 3,... (e.g. water).  But complexation is either true or false.
