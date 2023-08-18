@@ -64,7 +64,7 @@
 	rLnPhiAssoc(1:nComps)=0
     iErr=0  
 	picard=0.83D0
-	Ftol=1.D-8
+	Ftol=1.D-7
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
 	eta=rhoMol_cc*bVolMix
 	Call RdfCalc(rdfContact,dAlpha,eta)	!dAlpha = dLnAlpha/dLnRho = 1+dLn(g)_dLn(eta)
@@ -180,7 +180,7 @@
 	avgFo=(ralphDmean*FD0+ralphAmean*FA0)/2
 	if(LOUDER)write(dumpUnit,'(a,f8.2,11f8.5)')' MEM2:T,eta',tKelvin,eta !,(etaPure(i),i=1,nComps)
 	error=1234
-	itMax=44
+	itMax=88
 	if(LOUDER)write(dumpUnit,form611)' iter,ralphAmean,ralphDmean,FA,FD,FA0,FD0  ',nIter,ralphAmean,ralphDmean,FA,FD,FA0,FD0
 	do while(ABS(error)>Ftol.and.nIter<itMax)
 		nIter=nIter+1
