@@ -677,7 +677,7 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 18
 	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 26
 	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
-	    if(iEosOpt.eq.20)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
+	    if(iEosOpt.eq.20)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2023 : Reads SptPcSaft parameters of Rehner et al.
 	    !NewEos: Add here for initializing parms.
 	    if(iErrGet.NE.0)then
 		    ierr=3
@@ -943,6 +943,11 @@ integer function QUERYMODEL(no, model_type, level, modelname)
         model_type=3
         level=2
         QUERYMODEL=16
+    endif
+    if (no.eq.32) then
+        model_type=2
+        level=2
+        QUERYMODEL=20
     endif
     if (QUERYMODEL>0) modelname=EosName(QUERYMODEL)
     return

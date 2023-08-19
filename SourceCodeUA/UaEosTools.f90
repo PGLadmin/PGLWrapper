@@ -616,6 +616,7 @@ END MODULE GibbsMin
 	integer Function QueryNparPure()
 	USE GlobConst, only: iEosOpt !, class
 	parameter(nModels=16)
+    
 !   cf. GlobConst for iEosOpt's as listed below
 !    1     2      3          4        5        6         7         8          9         10   
 !	'PR','Esd96','PRWS','Esd-MEM2','SPEAD','FloryWert','NRTL','SpeadGamma','SPEAD11','PcSaft',
