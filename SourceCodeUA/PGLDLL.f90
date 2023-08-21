@@ -784,177 +784,46 @@ integer function QUERYMODEL(no, model_type, level, modelname)
     character(255) modelname
     !DEC$ATTRIBUTES DLLEXPORT::QUERYMODEL
     !!MS$ ATTRIBUTES DLLEXPORT::QUERYMODEL
+    !Each line below defines one exposed method
+    !The meaning of its 4 items:
+    !Method ID; Pure compound support; Binary mixtures; Ternary mixtures
+    integer,DIMENSION(4,20) :: Methods = RESHAPE([1,1,1,1, &
+        2,1,1,1, &
+        3,1,1,1, &
+        4,1,1,1, &
+        5,1,1,1, &
+        6,1,1,1, &
+        7,1,1,1, &
+        8,1,1,1, &
+        9,1,1,1, &
+        10,1,1,1, &
+        11,1,1,1, &
+        12,1,1,1, &
+        13,1,1,1, &
+        14,1,1,1, &
+        15,1,1,1, &
+        16,1,1,1, &
+        17,1,1,1, &
+        18,1,1,1, &
+        19,1,1,1, &
+        20,1,1,1 &
+        ], [4,20])
     QUERYMODEL=0
-    if (no.eq.1) then
-        model_type=1
-        level=2
-        QUERYMODEL=1
-    endif
-    if (no.eq.2) then
-        model_type=1
-        level=2
-        QUERYMODEL=2
-    endif
-    if (no.eq.3) then
-        model_type=1
-        level=2
-        QUERYMODEL=3
-    endif
-    if (no.eq.4) then
-        model_type=1
-        level=2
-        QUERYMODEL=4
-    endif
-    if (no.eq.5) then
-        model_type=1
-        level=2
-        QUERYMODEL=5
-    endif
-    if (no.eq.6) then
-        model_type=1
-        level=2
-        QUERYMODEL=6
-    endif
-    if (no.eq.7) then
-        model_type=2
-        level=2
-        QUERYMODEL=7
-    endif
-    if (no.eq.8) then
-        model_type=1
-        level=2
-        QUERYMODEL=8
-    endif
-    if (no.eq.9) then
-        model_type=1
-        level=2
-        QUERYMODEL=9
-    endif
-    if (no.eq.10) then
-        model_type=1
-        level=2
-        QUERYMODEL=10
-    endif
-    if (no.eq.11) then
-        model_type=1
-        level=2
-        QUERYMODEL=11
-    endif
-    if (no.eq.12) then
-        model_type=1
-        level=2
-        QUERYMODEL=12
-    endif
-    if (no.eq.13) then
-        model_type=1
-        level=2
-        QUERYMODEL=13
-    endif
-    if (no.eq.14) then
-        model_type=1
-        level=2
-        QUERYMODEL=14
-    endif
-    if (no.eq.15) then
-        model_type=1
-        level=2
-        QUERYMODEL=15
-    endif
-    if (no.eq.16) then
-        model_type=1
-        level=2
-        QUERYMODEL=16
-    endif
-    if (no.eq.17) then
-        model_type=1
-        level=2
-        QUERYMODEL=3
-    endif
-    if (no.eq.18) then
-        model_type=3
-        level=2
-        QUERYMODEL=2
-    endif
-    if (no.eq.19) then
-        model_type=3
-        level=2
-        QUERYMODEL=3
-    endif
-	!              1     2       3       4          5          6         7           8              9        10       
-	!data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
-	!		'tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
-	!             11    12      13         14          15          16             17        18       19        20       
-    if (no.eq.20) then
-        model_type=1
-        level=2
-        QUERYMODEL=20
-    endif
-    if (no.eq.21) then
-        model_type=3
-        level=2
-        QUERYMODEL=5
-    endif
-    if (no.eq.22) then
-        model_type=3
-        level=2
-        QUERYMODEL=6
-    endif
-    if (no.eq.23) then
-        model_type=3
-        level=2
-        QUERYMODEL=8
-    endif
-    if (no.eq.24) then
-        model_type=3
-        level=2
-        QUERYMODEL=9
-    endif
-    if (no.eq.25) then
-        model_type=3
-        level=2
-        QUERYMODEL=10
-    endif
-    if (no.eq.26) then
-        model_type=3
-        level=2
-        QUERYMODEL=11
-    endif
-    if (no.eq.27) then
-        model_type=3
-        level=2
-        QUERYMODEL=12
-    endif
-    if (no.eq.28) then
-        model_type=3
-        level=2
-        QUERYMODEL=13
-    endif
-    if (no.eq.29) then
-        model_type=3
-        level=2
-        QUERYMODEL=14
-    endif
-    if (no.eq.30) then
-        model_type=3
-        level=2
-        QUERYMODEL=15
-    endif
-    if (no.eq.31) then
-        model_type=3
-        level=2
-        QUERYMODEL=16
-    endif
-    if (no.eq.32) then
-        model_type=2
-        level=2
-        QUERYMODEL=20
-    endif
-    if (no.eq.33) then
-        model_type=2
-        level=2
-        QUERYMODEL=4
-    endif
-    if (QUERYMODEL>0) modelname=EosName(QUERYMODEL)
+    index=0
+    DO i=1,20
+        DO j=1,3
+            if (Methods(j+1,i).gt.0) then
+                index=index+1
+                if (index.eq.no) then
+                    QUERYMODEL=Methods(1,i)
+                    model_type=j-1
+                    level=2
+                    modelname=EosName(QUERYMODEL)
+                    return
+                endif
+            endif
+        enddo
+    enddo
     return
 end function QUERYMODEL
 
