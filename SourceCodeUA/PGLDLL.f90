@@ -949,9 +949,14 @@ integer function QUERYMODEL(no, model_type, level, modelname)
         level=2
         QUERYMODEL=20
     endif
+    if (no.eq.33) then
+        model_type=2
+        level=2
+        QUERYMODEL=4
+    endif
     if (QUERYMODEL>0) modelname=EosName(QUERYMODEL)
     return
-    end function QUERYMODEL
+end function QUERYMODEL
 
 integer function FIND_COMP(name)
     character(255) name
