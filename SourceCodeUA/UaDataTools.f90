@@ -101,7 +101,14 @@
 	if(iEosOpt==14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc			!Diky model 18
 	if(iEosOpt==15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's PcSaft parameters		!Diky model 26
 	if(iEosOpt==16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's(Tb) PcSaft parameters	!Diky model 27
+	if(iEosOpt==17)CALL GetPrLorraine(NC,iErrGet)			!JRE 20210510 : Reads Jaubert's tcPR parameters including BIPs for GE mixing rule. 
+	if(iEosOpt==18)CALL GetEsdCas(NC,idCas,iErrGet)			!Results placed in USEd EsdParms. 				
+	if(iEosOpt==19)CALL GetLsgMem2(NC,ID,iErrGet)
 	if(iEosOpt==20)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2023 : Reads SptPcSaft parameters of Rehner et al.
+	!              1     2       3       4          5          6         7           8              9        10       
+	!data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
+	!		'tcPRq','EgcESD','EgcEsdTb','TffSPEAD','EgcPcSaft','EgcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
+	!             11    12      13         14          15          16             17        18       19        20       
 	!if(iEosOpt.eq.17)This is the model number for COSMOtherm, if one is required JRE 20200119.				!Diky model ??
 	!NewEos: Add here for initializing parms.
 	if(iErrGet .ne. 0)then

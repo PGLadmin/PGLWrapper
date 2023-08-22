@@ -70,10 +70,10 @@ integer function SETSTRING(tag, value)
                 exit
             end if
 		enddo
-		!SETSTRING=InitPGLDLL(errMsg)
+		SETSTRING=InitPGLDLL(errMsg) 
         SETSTRING=1
     else
-		!SETSTRING=InitPGLDLL(errMsg)
+		SETSTRING=InitPGLDLL(errMsg)
         SETSTRING=0
     endif
     !if(LOUD)write(dumpUnit,*)'SetString: returning. SETSTRING=',SETSTRING 
@@ -84,7 +84,7 @@ integer function InitPGLDLL(errMsg)
     use DllConst
     use GlobConst
     Implicit DoublePrecision(a-h,o-z)
-	Character(255) errMsg,CURDIR,local
+	Character(255) errMsg,CURDIR,local,dumString
 	LOGICAL ReadOptions
     !DEC$ ATTRIBUTES DLLEXPORT::InitPGLDLL
     !!MS$ ATTRIBUTES DLLEXPORT::InitPGLDLL
@@ -99,7 +99,8 @@ integer function InitPGLDLL(errMsg)
         MasterDir='c:\PGLWrapper'
 	    PGLInputDir=TRIM(masterDir)//'\Input'
         dumpUnit=686
-	    dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
+	    !dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
+	    dumpFile=TRIM(PGLInputDir)//'\JreDebugDLL.txt'
         open(dumpUnit,file=dumpFile)
         write(dumpUnit,*)'InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=',dumpUnit,LOUD,dumpFile
         return
@@ -135,21 +136,23 @@ integer function InitPGLDLL(errMsg)
 		InitPGLDLL=14 
 		return
 	endif 
-	if(ReadOptions)read(51,*,ioStat=ioErr)PGLInputDir  ! dir where all parms and bips are stored.
+	if(ReadOptions)read(51,*,ioStat=ioErr)dumString  ! dir where all parms and bips are stored.
 	if(ioErr /= 0)then
-		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list path\PGLInputDir.' 
+		errMsg=' InitPGLDLL: Error reading PGLDLL.ini. 2nd line should list path\PGLInputDir.' 
 		InitPGLDLL=15 
 		return
-	endif 
-    if (dumpUnit==686)then  ! You can also set DumpUnit and LOUD using iSetDumpUnit(), and iSetLoudTrue().
-	    dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
+    endif
+    !if(LOUD)PGLInputDir=TRIM(dumString)            ! do not change the input dir if LOUD=.FALSE.
+    PGLInputDir=TRIM(dumString)                     ! During development, I may want PGLInputDir to be, e.g., PGLWrapper\Input 
+    if (dumpUnit==686.and.LOUD)then  ! You can also set DumpUnit and LOUD using iSetDumpUnit(), and iSetLoudTrue().
+	    dumpFile=TRIM(PGLInputDir)//'\JreDebugDLL.txt'
 	    !dumpFile='c:PGLWrapper\JreDebugDLL.txt'
         open(dumpUnit,file=dumpFile)
         write(dumpUnit,*)'InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=',dumpUnit,LOUD,dumpFile
     endif
 	!read(51,*,ioStat=ioErr)dumpFile
 	!if(ioErr /= 0)write(*,*)'Activate: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
-	close(51)
+	close(51) !51=PGLDLL.ini
     return      
 end function InitPGLDLL
 
@@ -277,7 +280,7 @@ Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 		Call PGLWrapperStartup(NC,iEosOpt,localCas,iErrStart) !LoadCritParmsDb,IdDipprLookup,GetCrit
         if(LOUD)write(dumpUnit,*)'CalculateProperty1local: After Start, iErr,ID=',iErrStart,ID(1:NC) 
 	    if(iErrStart/=0)then
-            ierr=1
+            ierr=11
             goto 86
         endif
         oldEOS=iEosOpt
@@ -411,7 +414,7 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
     if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldEOS.ne.ieos) then
 		Call PGLWrapperStartup(NC,iEosOpt,localCas,iErrStart) !LoadCritParmsDb,IdDipprLookup,GetCrit
 	    if(iErrStart.NE.0)then
-		    ierr=3
+		    ierr=13
 		    return
         endif
         oldRN1=casrn1
@@ -649,38 +652,10 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 	
 	INITIAL=0
 
-	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas)
-	if(iErrCas/=0)then
-        ierr=1
-        return
-    endif
-	CALL GETCRIT(NC,iErrCrit)
-	if(iErrCrit/=0)then
-		ierr=2
-		return
-	endif
-	iErrGet=0 
     if (oldRN1.ne.casrn1 .or. oldRN2.ne.casrn2 .or. oldRN3.ne.casrn3 .or. oldEOS.ne.ieos) then
-	    if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
-	    if(iEosOpt.eq.2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms					!Diky model 12
-	    if(iEosOpt.eq.3)CALL GetPRWS(NC,iErrGet) 
-	    if(iEosOpt.eq.4)CALL GetEsdCas(NC,localCas,iErrGet)
-	    if(iEosOpt.eq.5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 6
-!	    if(iEosOpt.eq.6)CALL GetFloryWert(NC,ID,iErrGet)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.7)CALL GetNRTL (NC,ID,iErrGet)
-	    if(iEosOpt.eq.8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms
-	    if(iEosOpt.eq.10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 25
-	    if(iEosOpt.eq.11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters					!Diky model 22
-	    if(iEosOpt.eq.12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmami			!Diky model 23
-	    if(iEosOpt.eq.13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParmsEmamiTb			!Diky model 24
-	    if(iEosOpt.eq.14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)!Results placed in common: TptParms, HbParms		!Diky model 18
-	    if(iEosOpt.eq.15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 26
-	    if(iEosOpt.eq.16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters	!Diky model 27
-	    if(iEosOpt.eq.20)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2023 : Reads SptPcSaft parameters of Rehner et al.
-	    !NewEos: Add here for initializing parms.
-	    if(iErrGet.NE.0)then
-		    ierr=3
+		Call PGLWrapperStartup(NC,iEosOpt,localCas,iErrStart) !LoadCritParmsDb,IdDipprLookup,GetCrit
+	    if(iErrStart.NE.0)then
+		    ierr=13
 		    return
         endif
         oldRN1=casrn1
