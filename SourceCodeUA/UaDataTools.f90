@@ -1,27 +1,66 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	Integer Function ItsEven(iArg) ! returns 0 for odd and 1 for even.
+    integer iArg
+	ItsEven=1-MOD(iArg,2)
+	return
+	end
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	LOGICAL Function bEven(iArg) ! returns 0 for odd and 1 for even.
+    integer iArg,iTest
+	bEven=.FALSE.
+	iTest=(iArg/2.d0-iArg/2)*2.001d0
+	if(iTest==1)bEven=.TRUE.
+	return
+	end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode)
+Integer Function IsAssoc(idpas)
+	!USE GlobConst
+	USE CritParmsDb
+	IsAssoc=0
+	if(classDb(crIndex(idpas))=='assoc'.or.classDb(crIndex(idpas))=='Asso+')IsAssoc=1
+	return
+end
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Integer Function IsOdd(i)
+	IsOdd=mod(i,2)
+	return
+end
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Subroutine ReadRef(dataString,refString) ! ID() or idCas() USEd from GlobConst
+	character(*) dataString
+	character(*) refString
+	character*1 tabChar
+	tabChar = char(9)
+	length=LEN(  TRIM( dataString )  )
+	!idStart=1
+	do j=length,1,-1	!Count backwards until you find a tabChar.
+		if(dataString(j:j)==tabChar)exit
+		idStart=j
+	enddo
+	refString=dataString(idStart:length)
+	return
+end
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from GlobConst
 	!Purpose: CALL EOS Get___ ROUTINES, also includes LoadCritParmsDb(if needed),GetCrit, Get(EOS), GetBips, BipIo, 
-	!	SETS UP THE CRITS, EOSPARMS, bips, DEBUG status, FUGI(iEosOpt)
+	!	SETS UP THE CRITS, EOSPARMS, bips, 
 	!	Echoes user IO to Output.txt, and reports error checks. 
-	!	INITIALIZATION AND CALLING SEQUENCE FOR VLE, LLE, VLLE SUBROUTINES.
-	!reqd routines:
-	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
-	!	LmDifEzCov2.for, Mintools.for
-	!               1     2       3       4          5          6         7           8              9            10          11
+	!Terms:
+	!   idOpt=2 if idCas is USEd, idOpt=1 if ID(dippr) is USEd.
 	USE GlobConst
 	USE CritParmsDb
 	USE BIPs
-	USE EsdParms
+	!USE EsdParms
 	Implicit DoublePrecision(A-H,K,O-Z)
 	CHARACTER*77 errMsgPas !,readString,Property(22)
 	!CHARACTER*251 dumpFile
-    Integer  localCas(NMX),localID(NMX),iEosLocal,ierCode,NC 
+    Integer  localCas(NMX),iEosLocal,ierCode,NC !,localID(NMX) 
 	if(idOpt==2)then
 		localCas(1:NC)=idCas(1:NC)	! idCas USEd from GlobConst
 	elseif(idOpt==1)then
-		localID(1:NC)=ID(1:NC)	! idCas USEd from GlobConst
-		call IdCasLookup(NC,localID,iErrLook,errMsgPas) ! idCas USEd in GlobConst to set.
+		call IdCasLookup(NC,idCas,iErrLook,errMsgPas) ! ID input USEd from GlobConst. idCas is returned
 		if(iErrLook > 0)then
 			ierCode=11
 			if(LOUD)write(dumpUnit,*)'PGLStartup: from idDipprLookup-'//TRIM(errMsgPas)
@@ -49,7 +88,7 @@
 	USE GlobConst
 	USE CritParmsDb
 	USE BIPs
-	USE EsdParms
+	!USE EsdParms
 	Implicit DoublePrecision(A-H,K,O-Z)
 	CHARACTER*77 errMsgPas !,readString,Property(22)
 	!CHARACTER*251 dumpFile
@@ -72,7 +111,8 @@
 	if(LOUD)write(dumpUnit,*)'PGLWRapperStartup:localCas,idDippr=',(localCas(i),id(i), i=1,NC)
 	if(iErrCas/=0)then
         if(LOUD)write(dumpUnit,*)' Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
-        write(dumpUnit,*)ierCode,' PGLWRapperStartup:Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
+        write(dumpUnit,*)ierCode,' PGLWRapperStartup:Sorry, must abort.  Not found for CAS number(s)=',localCas(1:NC)
+        write(dumpUnit,*)' PGLWRapperStartup: ID()=', ID(1:NC)
 		ierCode=12
         goto 86
     endif
@@ -84,6 +124,8 @@
 		ierCode=13
 		goto 86
 	endif
+	iErrGet=SetNewEos(iEosOpt) !wipe out any instance of other eos.
+	iErrGet=1 !should be set to zero by Get__(), so something went wrong if iErrGet>0 after calls.
 	if(LOUD)write(dumpUnit,*)'calling GetEOS'
 	iErrGet=0
 	if(iEosOpt==1)CALL GetPR(NC,iErrGet)
@@ -105,9 +147,10 @@
 	if(iEosOpt==18)CALL GetEsdCas(NC,idCas,iErrGet)			!Results placed in USEd EsdParms. 				
 	if(iEosOpt==19)CALL GetLsgMem2(NC,ID,iErrGet)
 	if(iEosOpt==20)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2023 : Reads SptPcSaft parameters of Rehner et al.
+	if(iEosOpt==21)CALL GetPrLorraine(NC,iErrGet)			!JRE 20231010 : Reads Jaubert's tcPR parameters including BIPs for PPR78 mixing rule. 
 	!              1     2       3       4          5          6         7           8              9        10       
 	!data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
-	!		'tcPRq','EgcESD','EgcEsdTb','TffSPEAD','EgcPcSaft','EgcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
+	!		'tcPRq','EgcESD','EgcEsdTb','TffSPEAD','EgcPcSaft','EgcPcSaft(Tb)','tcPR-GE(W)','MEMSCED','LsgMem2','SptPcSaft'/
 	!             11    12      13         14          15          16             17        18       19        20       
 	!if(iEosOpt.eq.17)This is the model number for COSMOtherm, if one is required JRE 20200119.				!Diky model ??
 	!NewEos: Add here for initializing parms.
@@ -206,8 +249,8 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	subroutine IdDipprLookup(NC,idCas,iErr,errMsgPas)
-    USE GlobConst, only:ID,nmx,LOUD,dumpUnit,nCritSet
-	USE CritParmsDb, only:idCasDb,IDnum,CrIndex,nDeckDb
+    USE GlobConst, only:ID,nmx,LOUD,dumpUnit,nCritSet,class
+	USE CritParmsDb, only:idCasDb,IDnum,CrIndex,nDeckDb,classDb
 	Implicit NONE
     integer idCas(nmx),iErr,NC,iComp,iGotIt,I
 	character*77 errMsg(0:22),errMsgPas
@@ -230,7 +273,7 @@
 		do i=1,nDeckDb
 			if(idCasDb(i)==idCas(iComp))then
 				ID(iComp)=IDnum(i)
-				!class(iComp)=classdb(i)	!class() is not available. Call idCasLookup() if you need class().
+				class(iComp)=classdb(i)	!class() is not available. Call idCasLookup() if you need class().
 				iGotit=1
 				exit ! breaks the inner loop only?
 			endif
@@ -279,6 +322,10 @@
 	I=0
 	READ(40,'(a251)',ERR=861)dumString
 	READ(dumString,*,ERR=861)NDECK1
+	if(nDeck1 /= nCritSet)then
+		iErrCode=11
+		return
+	endif
 	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetCrit: more data in file than allocated'
 !	open(61,file='c:\spead\CalcEos\ParmsCrit.txt')
 	DO I=1,NDECK1
@@ -319,7 +366,7 @@
 	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: Success! DB is loaded.'
 	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in ParmsCrAdd file'
 	!write(dumpUnit,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
-
+	isReadCrit=.TRUE.	! indicates that the ParmsCrit DB has been loaded.
 	RETURN
 861	continue
 	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrit.txt. Path? Debug?'
@@ -618,15 +665,30 @@
 	end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	subroutine IdCasLookup(NC,idCas,ier,errMsgPas)
+subroutine IdCasLookup(NC,idCasPas,ier,errMsgPas)	!ID USEd from GlobConst
+    USE GlobConst, only:ID
+	USE CritParmsDb
+	!parameter(maxDb=3000)
+	character*77 errMsgPas !,errMsg(0:11),dumString
+	integer idCasPas(NC)
+	ier=0
+	errMsgPas=' IdCasLookup: No problem'
+	do i=1,NC
+		idCasPas(i)=idCasDb( CrIndex(ID(i)) )
+	enddo
+	return
+end
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	subroutine IdCasLookupOld(NC,idCas,ier,errMsgPas)
     USE GlobConst, only:ID,idTrc,nmx,class,DEBUG,LOUD,PGLinputDir,dumpUnit,name
+	USE CritParmsDb
 	parameter(maxDb=3000)
 	character*77 errMsg(0:11),errMsgPas,dumString
 	character*251 inFile
 	character*28 NameDb(maxDb)
 	!character*5 classdb(maxDb)
 	integer idCas(nmx)
-	integer idCasDb(maxDb),idDb(maxDb),idTrcDb(maxDb)
+	integer idDb(maxDb),idTrcDb(maxDb) !,idCasDb(maxDb),
     !OPEN(50,FILE='c:\spead\idTrcDipCas.TXT')
 		inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
 	if(LOUD)write(dumpUnit,*)'idCasLookup: inFile=',TRIM(inFile)
@@ -663,7 +725,7 @@
 			if(idDb(i).eq.id(iComp))then
 				idCas(iComp)=idCasDb(i)
 				idTrc(iComp)=idTrcDb(i)
-				!class(iComp)=classdb(i)
+				class(iComp)=classdb(i)
 				name(iComp)=TRIM(NameDb(i))
 				if(LOUD)write(dumpUnit,*)'IdCasLookup:idi,idCasi:',id(iComp),idCas(iComp) !,class(i)
 				iGotit=1
@@ -886,7 +948,7 @@ END ! subroutine GetCritCas()
       RETURN
       END
       
-      DOUBLE PRECISION FUNCTION RmsDev(N,X,Y)
+DOUBLE PRECISION FUNCTION RmsDev(N,X,Y)
       INTEGER N
       DOUBLE PRECISION X(N),Y(N),SqrtArg,SumSq
 !C     **********
@@ -907,9 +969,9 @@ END ! subroutine GetCritCas()
           RmsDev=DSQRT(SqrtArg)
       endif
       RETURN
-      END
+END
       
-      DOUBLE PRECISION FUNCTION SumSq(N,X)
+DOUBLE PRECISION FUNCTION SumSq(N,X)
 	  USE GlobConst !LOUD
       IMPLICIT NONE
       INTEGER N
@@ -963,36 +1025,36 @@ END ! subroutine GetCritCas()
       AGIANT = RGIANT/FLOATN
       DO 90 I = 1, N
          XABS = DABS(X(I))
-         IF (XABS .GT. RDWARF .AND. XABS .LT. AGIANT) GO TO 70
-            IF (XABS .LE. RDWARF) GO TO 30
+         IF (XABS .GT. RDWARF .AND. XABS .LT. AGIANT) GOTO 70
+            IF (XABS .LE. RDWARF) GOTO 30
 !C
 !C              SUM FOR LARGE COMPONENTS.
 !C
-               IF (XABS .LE. X1MAX) GO TO 10
-				if((XABS.EQ.0).AND.LOUD)write(dumpUnit,*) 'ENORM:XABS=0'
+               IF (XABS .LE. X1MAX) GOTO 10
+				if((XABS==0).AND.LOUD)write(dumpUnit,*) 'ENORM:XABS=0'
                   S1 = ONE + S1*(X1MAX/XABS)**2
 				!if(X1MAX.EQ.0)write(dumpUnit,*) 'ENORM:X1MAX=0'
                   X1MAX = XABS
-                  GO TO 20
+                  GOTO 20
 10          CONTINUE
                   S1 = S1 + (XABS/X1MAX)**2
 20          CONTINUE
-               GO TO 60
+               GOTO 60
 30       CONTINUE
 !C
 !C              SUM FOR SMALL COMPONENTS.
 !C
-               IF (XABS .LE. X3MAX) GO TO 40
+               IF (XABS .LE. X3MAX) GOTO 40
 				if((XABS.EQ.0).AND.LOUD)write(dumpUnit,*) 'SumSq:XABS=0'
                   S3 = ONE + S3*(X3MAX/XABS)**2
                   X3MAX = XABS
-                  GO TO 50
+                  GOTO 50
 40          CONTINUE
 				!if(X3MAX.EQ.0)write(dumpUnit,*) 'ENORM:X3MAX=0'
                   IF ( X3MAX.NE. ZERO) S3 = S3 + (XABS/X3MAX)**2
 50          CONTINUE
 60       CONTINUE
-            GO TO 80
+            GOTO 80
 70    CONTINUE
 !C
 !C           SUM FOR INTERMEDIATE COMPONENTS.
@@ -1026,21 +1088,4 @@ END ! subroutine GetCritCas()
 !C     LAST CARD OF FUNCTION SumSq.
 !C
       END
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	Integer Function ItsEven(iArg) ! returns 0 for odd and 1 for even.
-    integer iArg
-	ItsEven=1-MOD(iArg,2)
-	return
-	end
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	LOGICAL Function bEven(iArg) ! returns 0 for odd and 1 for even.
-    integer iArg,iTest
-	bEven=.FALSE.
-	iTest=(iArg/2.d0-iArg/2)*2.001d0
-	if(iTest==1)bEven=.TRUE.
-	return
-	end
 

@@ -60,7 +60,7 @@ subroutine GetPrTc(nComps,iErrCode)
 			if(ioErr/=0)write(dumpUnit,*)'GetPrTc: i,j,ioErr,String: ',iComp,jComp,ioErr,TRIM(dumString)
 
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!  NOTE!  Jaubert replaces Tc,Pc,acen with his values!!!      !!!!!!!!!!!!!!!!!
-			read(dumString,*,ioStat=ioErr)idBase,Tcj(iComp),PcBar,acenj(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp) &
+			read(dumString,*,ioStat=ioErr)idBase,Tcj(iComp),PcBar,acenj(iComp),dumTb,alphaL(iComp),alphaM(iComp),alphaN(iComp) &
 			                                                                           ,cVolCc_mol(iComp),zRa(iComp),tKmin(iComp)
 			!if( TminK(iComp) < 50.and.LOUD) write(dumpUnit,*)TRIM(dumString)
 			!if( TminK(iComp) < 50.and.LOUD)write(dumpUnit,*)'GetPrTc: Warning 50>Tmin=',TminK(iComp)

@@ -1,7 +1,7 @@
 
 MODULE PREosParms
-	USE GlobConst, only:nmx
-	Parameter( THIRD=1.D0/3,sqrt2=1.414213562373095d0,sqrt8=2*sqrt2 )
+	USE GlobConst, only:nmx,THIRD,SQRT2
+	Parameter( sqrt8=2*sqrt2 )
 	!etac = 1/( 1+(4-sqrt8)**third+(4+sqrt8)**third )
 	Parameter( etac=0.253076586541599d0,OMA = (40*etac+8)/(49-37*etac),OMB = etac/(etac+3)  )
 	DoublePrecision svKappa1(nmx)! For the PRsvWS model. Stryjek and Vera, can j chem eng, 64:323 (1986)

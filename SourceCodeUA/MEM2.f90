@@ -32,7 +32,7 @@
 	DoublePrecision sqArgA,sqArgD,sumA,sumD,errA,errD,FDold,FA1,XCtemp,hAD,hDA,hCC,bepsA,bepsD,bepsC,sumLnXi,dLnAlpha_dLnBeta
 	DoublePrecision, SAVE:: xOld(nmx),ralphAmean,ralphDmean,etaOld,rdfOld ! "SAVE" is equivalent to the static attribute
 	Integer, SAVE:: IDold(nmx)  								            ! static is equivalent to the "SAVE" attribute
-	Integer isZiter,nComps,iErr, iComp,isDonor,isAcceptor,iErrMEM1,iType,i,j,itMax,nIter
+	Integer isZiter,nComps,iErr, iComp,isDonor,isAcceptor,iErrMEM1,iType,i,j,itMax,nIter,idDiff
 	LOGICAL LOUDER,isAcid,moreDonors
 	Character*123 errMsg(22)
 	data etaOld,rdfOld,ralphAmean,ralphDmean/0.3583,3.0,1.0,1.0/ !This makes these values static for Intel Compiler without STATIC.
@@ -46,6 +46,9 @@
 	errMsg(14)=' MEM2: XA,XD, or XC < 0' 
 	errMsg(15)=' MEM2: etaOld < 0?' 
 	errMsg(16)=' MEM2: Sorry. Derivatives beyond zAssoc and uAssoc have not been implemented yet.'
+	errMsg(17)=' MEM2: sqArg < 0 for AA.'
+	errMsg(18)=' MEM2: sqArg < 0 for DD.'
+	errMsg(19)=' MEM2: sqArg < 0 for CC.'
 	if(isZiter < 0)then
 		iErr=16
 		if(LOUDER)write(dumpUnit,601)TRIM(errMsg(iErr))
@@ -64,7 +67,7 @@
 	rLnPhiAssoc(1:nComps)=0
     iErr=0  
 	picard=0.83D0
-	Ftol=1.D-7
+	Ftol=2.D-7
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
 	eta=rhoMol_cc*bVolMix
 	Call RdfCalc(rdfContact,dAlpha,eta)	!dAlpha = dLnAlpha/dLnRho = 1+dLn(g)_dLn(eta)
@@ -91,22 +94,34 @@
 				isAcid=.TRUE.
 				epsCC=3*( eAcceptorKcal_mol(iComp,iType)+eDonorKcal_mol(iComp,iType) )/2
 				!ralphC is not subscripted because 1603 is the only acid type and always the same.
-				ralphC=SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(epsCC/tKelvin/RgasCal*1000)-1.d0 )  ) 
+				sqArg=rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*( EXP(epsCC/tKelvin/RgasCal*1000)-1.d0 )
+				if(sqArg < 0)then
+					iErr=19
+					return
+				endif
+				ralphC=SQRT(  sqArg  ) 
 				! Note the "3*" in the exponent, which makes the C bond "special."
 				if(LOUDER)write(dumpUnit,'(a,F10.6,3E12.4)')' MEM2: epsCC,bondVol,ralphC',epsCC,bondVolNm3(iComp,iType),ralphC
 			endif
 			isAcceptor=0
 			if(nAcceptors(iComp,iType) > 0)isAcceptor=1
 			Fwertheim=EXP(eAcceptorKcal_mol(iComp,iType)/tKelvin/RgasCal*1000)-1.d0
-			!sqArg=rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim
-			ralphA(iComp,iType)=isAcceptor*SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim  )
+			sqArg=rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim
+			if(sqArg < 0)then
+				iErr=17
+				return
+			endif
+			ralphA(iComp,iType)=isAcceptor*SQRT(  sqArg  )
 			if(ralphA(iComp,iType) > ralphAmax)ralphAmax=ralphA(iComp,iType)
 			isDonor=0
 			if(nDonors(iComp,iType) > 0)isDonor=1
 			Fwertheim=EXP(eDonorKcal_mol(iComp,iType)   /tKelvin/RgasCal*1000)-1.d0
-			!sqArg=rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim
-			!if(sqArg < 0)write(dumpUnit,form612)' MEM2: iComp,iType,T,eDonor',iComp,iType,tKelvin,eDonorKcal_Mol(iComp,iType)
-			ralphD(iComp,iType)=isDonor*   SQRT(  rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim  )
+			sqArg=rhoMol_cc*rdfContact*bondVolNm3(iComp,iType)*avoNum*Fwertheim
+			if(sqArg < 0)then
+				iErr=18
+				return
+			endif
+			ralphD(iComp,iType)=isDonor*   SQRT(  sqArg  )
 			if(ralphD(iComp,iType) > ralphDmax)ralphDmax=ralphD(iComp,iType)
 			if(LOUDER)write(dumpUnit,form612)' MEM2:iComp,iType,ralphA,ralphD',iComp,iType,ralphA(iComp,iType),ralphD(iComp,iType)
 		enddo
@@ -144,9 +159,10 @@
 	if(LOUDER)write(dumpUnit,'(a,2E12.4,1x,8i6,1x)')' MEM2: x1,x1old,ID,IDold ',xFrac(1),xOld(1),(ID(i),i=1,nComps),IDold(1:nComps)
 	if(LOUDER)write(dumpUnit,601)' MEM2: etaOld,rdfOld ',etaOld,rdfOld
 	xDiff=SUM( (xFrac(1:nComps)-xOld(1:nComps))**2 )
-	if(  SUM( ID(1:nComps)-IDold(1:nComps) )/=0 .or. xDiff > Ftol/10.or.etaOld.le.0  )then	
+	idDiff=SUM( ABS(ID(1:nComps)-IDold(1:nComps)) )
+	if( idDiff /=0 .or. xDiff > Ftol/10 .or. etaOld < zeroTol  )then	
 	!Only use default estimate if compounds or composition have changed.
-		if(LOUDER)write(dumpUnit,form611)' MEM2:New IDs or X ',SUM( ID(1:nComps)-IDold(1:nComps) ),xDiff 
+		if(LOUDER)write(dumpUnit,form611)' MEM2:New IDs or X ',idDiff,xDiff 
 		ralphAmean=ralphAmax
 		ralphDmean=ralphDmax
 		if(moreDonors)then
@@ -159,9 +175,10 @@
 	else !if( SUM(xFrac(1:nComps)) < 0)then
 		if(etaOld > 0)then ! adapt old values.to accelerate Z iterations
 			sqArg=eta/etaOld*rdfContact/rdfOld
-			if(sqArg < zeroTol)then
+			if(sqArg < 0)then
 				iErr=12
 				if(LOUDER)write(dumpUnit,form610)' MEM2: sqArg err ralphMean. eta,etaOld,rdf,rdfOld',eta,etaOld,rdfContact,rdfOld
+				return
 			endif
 			ralphAmean=ralphAmean*SQRT(sqArg)
 			ralphDmean=ralphDmean*SQRT(sqArg)
@@ -201,12 +218,12 @@
 		sumD=0
 		do i=1,nComps !If ralphMeans are correct, then FA,FD are correct and we should get sumA=FD and sumD=FA.
 			do j=1,nTypes(i)
-				sumA=sumA+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*ralphA(i,j)/( 1+FA*ralphA(i,j) ) !=FD=FD0/(1+ralphAmean*FA)
-				sumD=sumD+xFrac(i)*nDegree(i,j)*nDonors(i,j)   *ralphD(i,j)/( 1+FD*ralphD(i,j) ) !=FA=FA0/(1+ralphDmean*FD) 
+				sumA=sumA+xFrac(i)*nDegree(i,j)*nAcceptors(i,j)*ralphA(i,j)/( 1+FA*ralphA(i,j) ) !*FA !=FD=FD0/(1+ralphAmean*FA)
+				sumD=sumD+xFrac(i)*nDegree(i,j)*nDonors(i,j)   *ralphD(i,j)/( 1+FD*ralphD(i,j) ) !*FD !=FA=FA0/(1+ralphDmean*FD) 
 			enddo	
 		enddo
-		errA=FA-sumD
-		errD=FD-sumA
+		errA=FA-sumD !/FD
+		errD=FD-sumA !/FA
 		error=MAX(ABS(errA),ABS(errD))
 		FAold=FA
 		FDold=FD
@@ -229,7 +246,12 @@
 	                                                       nIter,ID(1),ID(2),xFrac(1),tKelvin,ralphAmean,ralphDmean,FA,FD,errA,errD
 	!  fAssoc ITERATION HAS CONCLUDED
 	if(isAcid)then
-		FC=2*FC0_ralphC*ralphC/( 1+SQRT(1+4*FC0_ralphC*ralphC*ralphC) )
+		sqArg=1+SQRT(1+4*FC0_ralphC*ralphC*ralphC)
+		if(sqArg < 0)then
+			iErr=20
+			return
+		endif
+		FC=2*FC0_ralphC*ralphC/( sqArg )
 		XCtemp=1/(1+FC*ralphC)
 		if(XCtemp < zeroTol)then
 			iErr=14
@@ -403,7 +425,12 @@
 	SUMA=FA0
 	IF(ABS(errOld) < 1.D-9.and.LOUDER)write(dumpUnit,610)' MEM1: No assoc? FA0=',FA0	!don't iterate if errOld < 1D-9
 	IF(ABS(errOld) > 1.D-9)then	!don't iterate if errOld < 1D-9
-		fAssoc1=2*FA0/( 1+DSQRT(1+4*ralphMean*FA0) )  ! Eq.23 where FD0=FA0. This is exact for binary like benzene+methanol.
+		sqArg=1+4*ralphMean*FA0
+		if(sqArg < 0)then
+			iErr=17
+			return
+		endif
+		fAssoc1=2*FA0/( 1+DSQRT(sqArg) )  ! Eq.23 where FD0=FA0. This is exact for binary like benzene+methanol.
 		fAssoc=fAssoc1 
 		nIter=0
 		ERR=1111

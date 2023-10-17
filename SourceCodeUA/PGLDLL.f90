@@ -100,7 +100,7 @@ integer function InitPGLDLL(errMsg)
 	    PGLInputDir=TRIM(masterDir)//'\Input'
         dumpUnit=686
 	    !dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
-	    dumpFile=TRIM(PGLInputDir)//'\JreDebugDLL.txt'
+	    dumpFile=TRIM(PGLInputDir)//'\PGLDLLDebug.txt'
         open(dumpUnit,file=dumpFile)
         write(dumpUnit,*)'InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=',dumpUnit,LOUD,dumpFile
         return
@@ -145,7 +145,7 @@ integer function InitPGLDLL(errMsg)
     !if(LOUD)PGLInputDir=TRIM(dumString)            ! do not change the input dir if LOUD=.FALSE.
     PGLInputDir=TRIM(dumString)                     ! During development, I may want PGLInputDir to be, e.g., PGLWrapper\Input 
     if (dumpUnit==686.and.LOUD)then  ! You can also set DumpUnit and LOUD using iSetDumpUnit(), and iSetLoudTrue().
-	    dumpFile=TRIM(PGLInputDir)//'\JreDebugDLL.txt'
+	    dumpFile=TRIM(PGLInputDir)//'\PGLDLLDebug.txt'
 	    !dumpFile='c:PGLWrapper\JreDebugDLL.txt'
         open(dumpUnit,file=dumpFile)
         write(dumpUnit,*)'InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=',dumpUnit,LOUD,dumpFile
@@ -153,6 +153,7 @@ integer function InitPGLDLL(errMsg)
 	!read(51,*,ioStat=ioErr)dumpFile
 	!if(ioErr /= 0)write(*,*)'Activate: Error reading PGLDLLOptions.txt. 1st line should list path\dumpFile.' 
 	close(51) !51=PGLDLL.ini
+    if(isTDE)close(dumpUnit)    ! for TDE we must open and close in CalculatePropertyLocal__() or the dump file is too large.
     return      
 end function InitPGLDLL
 
@@ -169,6 +170,7 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 	    INITIALIZE_MODEL=5	! declare an error if dump is to console i/o when LOUD.
 	    return
     endif
+    !if(isTDE)open(dumpUnit,file=dumpFile)
     if (LOUD)write(dumpUnit,*)'INITIALIZE_MODEL: starting.'
     INITIALIZE_MODEL=0		! indicate no error to start
 	ieos=iEosLocal
@@ -233,6 +235,7 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 	    endif
     endif
 	if (LOUD)write(dumpUnit,*)'InitializeModel: returning. iErr=',INITIALIZE_MODEL
+    !if(isTDE)close(dumpUnit)
     return
 end function INITIALIZE_MODEL
 
@@ -254,6 +257,7 @@ Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 
     NC=1 !assume one component for all calculations (as of 1/1/2020 this is all we need).
     xFrac(1)=1  !   "
+    if(isTDE)open(dumpUnit,file=dumpFile)
     if(iEosOpt/=ieos)then
         if(LOUD)write(dumpUnit,611)'CalculateProperty1local: failed ieos check. iEosOpt=',iEosOpt
         iErr=15
@@ -361,6 +365,7 @@ Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 	if (iProperty==44) res=1/(cmprsblty*pKPa/zFactor)  !cmprsblty=(dP/dRho)T*(1/RT)
         if (iProperty==45) res=CpRes_R
 86  if(LOUD)write(dumpUnit,611)'CalculateProperty1local: returning, iErr,result=',iErr,res 
+    if(isTDE)close(dumpUnit)
     return
 end subroutine CalculateProperty1local
 
@@ -394,6 +399,7 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 	!CHARACTER*77 errMsgPas
 !	COMMON/eta/etaL,etaV,ZL,ZV
 	NC=2 !no of components
+    !if(isTDE)open(dumpUnit,file=dumpFile)
     iEosOpt=ieos
     iProperty=ABS(prp_id)
     localCas(1)=casrn1
@@ -431,75 +437,73 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 	    xPure1(1)=1
 	    xPure2(2)=1
 		!write(52,'(a)')'   T(K)   p(kPa)     x1  phas Vex(cc/mol) rho(mol/cc)  Hex(J/mol)  Gex(J/mol)   ln(gam1)   ln(gam2) '
-		!do while(notDone)
-			!read(51,*,ioStat=ioErr)tKelvin,pKPa,iPhase,xFrac(1)
         tKelvin = var1
         pKPa = var2
         xFrac(1) = var3
-			aPhase='VAP'
-			if(iPhase==0)aPhase='GAS'
-			if(iPhase==1)aPhase='LIQ'
-			xFrac(2) = 1-xFrac(1)
-			!if(xFrac(2) < 0)pause 'UaWrapper: Error xFrac(1) > 1  ??? '
-			!if(ioErr < 0)then   !this means we reached the end of the file
-			!	exit            !break the loop and return to remaining execution 
-			!elseif(ioErr > 0)then  
-			!	write(52,*)'Unexpected error (e.g. type mismatch?) reading line=',line
-			!	cycle
-			!endif
-			!line=line+1
-			iErr=0
-			pMPa=pKPa/1000
-			if( ABS(tKelvin-tPrevious) > 0.1 .or. ABS(pKPa-pPrevious) > 0.1 )then
-				CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
-				if(iErrF > 0)iErr=iErrF
-				hRes_RT=uRes_RT+zFactor-1
-				vPure1=rGas*tKelvin*zFactor/pMPa
-				chemPoPure1=FUGC(1) ! = ln(fPure1/P)
-				hRes1 = hRes_RT*rGas*tKelvin ! from module
-				CALL FugiTP( tKelvin,pMPa,xPure2,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
-				if(iErrF > 0)iErr=iErrF
-				hRes_RT=uRes_RT+zFactor-1
-				vPure2=rGas*tKelvin*zFactor/pMPa
-				chemPoPure2=FUGC(2) ! = ln(fPure2/P)
-				hRes2 = hRes_RT*rGas*tKelvin ! from module
-				tPrevious=tKelvin
-				pPrevious=pKPa
-			endif
-			!iPhase=1 !set as default
-			!if(expRho/1000 < rhoCritG_cc)iPhase=0
-				!if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
-			CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+		aPhase='VAP'
+		if(iPhase==0)aPhase='GAS'
+		if(iPhase==1)aPhase='LIQ'
+		xFrac(2) = 1-xFrac(1)
+		!if(xFrac(2) < 0)pause 'UaWrapper: Error xFrac(1) > 1  ??? '
+		!if(ioErr < 0)then   !this means we reached the end of the file
+		!	exit            !break the loop and return to remaining execution 
+		!elseif(ioErr > 0)then  
+		!	write(52,*)'Unexpected error (e.g. type mismatch?) reading line=',line
+		!	cycle
+		!endif
+		!line=line+1
+		iErr=0
+		pMPa=pKPa/1000
+		if( ABS(tKelvin-tPrevious) > 0.1 .or. ABS(pKPa-pPrevious) > 0.1 )then
+			CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+			if(iErrF > 0)iErr=iErrF
 			hRes_RT=uRes_RT+zFactor-1
-				!if(LOUD)print*,'UaWrapperMain: Check output from fugi()mix call. ier(1) = ',ier(1)
-			if(iErrF > 0)iErr=iErr+100*iErrF
-			if(iErr > 0)then
-				!if(LOUD)write(*,'(1x,2f8.3,F7.4,1x,a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,dum,dum,dum,dum,dum,iErr
-				!cycle
-                res = 0
-                return
-			endif
+			vPure1=rGas*tKelvin*zFactor/pMPa
+			chemPoPure1=FUGC(1) ! = ln(fPure1/P)
+			hRes1 = hRes_RT*rGas*tKelvin ! from module
+			CALL FugiTP( tKelvin,pMPa,xPure2,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+			if(iErrF > 0)iErr=iErrF
+			hRes_RT=uRes_RT+zFactor-1
+			vPure2=rGas*tKelvin*zFactor/pMPa
+			chemPoPure2=FUGC(2) ! = ln(fPure2/P)
+			hRes2 = hRes_RT*rGas*tKelvin ! from module
+			tPrevious=tKelvin
+			pPrevious=pKPa
+		endif
+		!iPhase=1 !set as default
+		!if(expRho/1000 < rhoCritG_cc)iPhase=0
+			!if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
+		CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+		hRes_RT=uRes_RT+zFactor-1
+			!if(LOUD)print*,'UaWrapperMain: Check output from fugi()mix call. ier(1) = ',ier(1)
+		if(iErrF > 0)iErr=iErr+100*iErrF
+		if(iErr > 0)then
+			!if(LOUD)write(*,'(1x,2f8.3,F7.4,1x,a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,dum,dum,dum,dum,dum,iErr
+			!cycle
+            res = 0
+            return
+		endif
 																														 
-			vMix=rGas*tKelvin*zFactor/pMPa
-			rhoMol_cc=1/vMix
-			activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
-			activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
-			hResMix = hRes_RT*rGas*tKelvin ! from module
-			vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
-			hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
-			gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)
-			!write(52,form610)aPhase,tKelvin,pKPa,xFrac(1),vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
-            if (iProperty==4) res = exp(activity1)
-            if (iProperty==5) res = exp(activity2)
-            if (iProperty==6) res = Rgas*(xFrac(1)*(activity1)+xFrac(2)*(activity2))
-            if (iProperty==81) res = 1000*rhoMol_cc
-            if (iProperty==89) res = 0.000001*vXsCc_mol
-            if (iProperty==36) res = 0.001*hXsJ_mol
-            if (iProperty==201) res = exp(FUGC(1))
-            if (iProperty==202) res = exp(FUGC(2))
-            if (iProperty==203) res = exp(FUGC(1))
-            if (iProperty==204) res = exp(FUGC(2))
-		!enddo !	while(notDone)
+		vMix=rGas*tKelvin*zFactor/pMPa
+		rhoMol_cc=1/vMix
+		activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
+		activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
+		hResMix = hRes_RT*rGas*tKelvin ! from module
+		vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
+		hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
+		gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)
+		!write(52,form610)aPhase,tKelvin,pKPa,xFrac(1),vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
+        if (iProperty==4) res = exp(activity1)
+        if (iProperty==5) res = exp(activity2)
+        if (iProperty==6) res = Rgas*(xFrac(1)*(activity1)+xFrac(2)*(activity2))
+        if (iProperty==81) res = 1000*rhoMol_cc
+        if (iProperty==89) res = 0.000001*vXsCc_mol
+        if (iProperty==36) res = 0.001*hXsJ_mol
+        if (iProperty==201) res = exp(FUGC(1))
+        if (iProperty==202) res = exp(FUGC(2))
+        if (iProperty==203) res = exp(FUGC(1))
+        if (iProperty==204) res = exp(FUGC(2))
+        !if(isTDE)close(dumpUnit)
         return
 end subroutine CalculateProperty2local
 
@@ -634,6 +638,7 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
 	DEBUG=.FALSE.
 	NC=3 !no of components
     iEosOpt=ieos
+    if(isTDE)open(dumpUnit,file=dumpFile)
     iProperty=ABS(prp_id)
     localCas(1)=casrn1
     localCas(2)=casrn2
@@ -750,6 +755,7 @@ subroutine CalculateProperty3local(ieos, casrn1, casrn2, casrn3, prp_id, var1, v
             if (iProperty==205) res = exp(FUGC(3))
             if (iProperty==206) res = exp(FUGC(3))
 		!enddo !	while(notDone)
+        if(isTDE)close(dumpUnit)
         return
 end subroutine CalculateProperty3local
 	

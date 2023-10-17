@@ -1309,15 +1309,19 @@ end module
 !c*****************************************************************************
 !   SETUP SUBROUTINES/FUNCTIONS
 !c*****************************************************************************
-      subroutine setup(PRLinputDir,err0)
+      subroutine setup(PGLinputDir,err0)
+		USE GlobConst, only:iEosOpt
         use comflash
         implicit none
-        integer :: err0,i
+        integer :: err0,i,iGEoption
         real(8) :: etac,zc
-        character*234 :: fileName,PRLinputDir
+        character*255 :: fileName,PGLinputDir
 !C--------------------------------------------------------------------
         err0 = 0
 !C      Load model definition and parameters
+!c      gE model          : 1 = van Laar, 2 = Wilson, 3 = UNIQUAC, 4 = NRTL
+		iGEoption=2
+		if(iEosOpt==21)iGEoption=1
         call read_option(err0)
         if(err0.ne.0) return
 !C      EoS copmponent-independent parameters
@@ -1335,7 +1339,7 @@ end module
 !C      Load Gauss coefficients for Gauss_Legendre integration
         err0 = 1
         fileName = "gauss_legendre.dat"
-        fileName =TRIM(PRLinputDir)//"\PrLorraineEtcFiles\" // trim(fileName)
+        fileName =TRIM(PGLinputDir)//"\PrLorraineEtcFiles\" // trim(fileName)
         OPEN(20,FILE=fileName,status='old',err=10)
         err0 = 0
         READ(20,*)
@@ -1553,6 +1557,7 @@ end module
 !c ----------------------------------------------------------------------------
 !c
      subroutine read_option(err0)
+	  USE GlobConst, only:iEosOpt
       use comflash
       implicit none
       integer :: err0
@@ -1563,15 +1568,12 @@ end module
       choix_r1r2 = 2
       r1 = -1.d0 - DSQRT(2.d0)
       r2 = -1.d0 + DSQRT(2.d0)
-      choice(1) = 2
+      choice(1) = 2		!
+!	Default is tcPRvtTwuWilson
 !c    Alpha function
-!c    Twu91
       FoncAlpha = 'TWU91'
-      choice(2) = 3
-
-!c    Mixing rule for b
-!c    Quadratic mixing rule
-!    Quadratic   : b_ij = {0.5 * [b_i^(1/s) + b_j^(1/s)]}^s * (1 - L_ij)
+      choice(2) = 3	!Designates the Twu alpha
+!c    Quadratic mixing rule for b: b_ij = {0.5 * [b_i^(1/s) + b_j^(1/s)]}^s * (1 - L_ij)
       choix_b = 2
       quadra_b = .true.
 !c   - Value of  parameter s   (for b quadratic)
@@ -1579,9 +1581,16 @@ end module
 !c   - Value of  parameter L12 (for b quadratic)
       Lij(1,2) = 0.0d0
       Lij(2,1) = Lij(1,2)
-
 !c    gE model          : 1 = van Laar, 2 = Wilson, 3 = UNIQUAC, 4 = NRTL
-      choix_ge = 2
+	  choix_ge=2
+	  if(iEosOpt==21)then	! Implement the PPR78 options.
+		FoncAlpha = 'SOAVE'
+		choice(2) = 1
+		choix_b = 1 
+		quadra_b = .FALSE.
+		puisb = 1
+		choix_ge = 1
+	  endif
 
       if(choix_ge.gt.4 .or. choix_ge.lt.1) THEN
          err0 = 5
@@ -2687,7 +2696,7 @@ end module
      &                       fg,ft,fp,fx,uRes_RT,aRes_RT,CvRes_R,CpRes_R,dpdRho_RT)	!JRE: fg ~ fugc
 	  !call FuPrLorraine_TP(icon,ntyp,mtyp,iErrPRL,T,P,X,rho,Z, &	 ! JRE 20210510
 	  !	&                FUGC,ft,fp,fx,uRes_RT,aRes_RT,CvRes_R,CpRes_R,dpdRho_RT)
-	  use GlobConst, only:dumpUnit
+	  use GlobConst, only:dumpUnit,form610
       use comflash
       implicit none
       integer :: icon,ntyp,mtyp,ierr
@@ -2705,13 +2714,16 @@ end module
       if ( icon.gt.4 ) ntemp = 2
 
       call cubgen(ntyp,mtyp,ierr,tKelvin,pMPa,zn,zFactor,fg,ft,fp,fx,aux) !JRE: pause here to enter sample calcs.
-	  if(ierr .ne. 0)return	! JRE20210615. Otherwise, zFactor=0 in denom can occur.
+	  if(ierr .ne. 0)then
+		  if(FORT)write (dumpUnit,*) ' FuPrLorraine_TP: CubGen(), iErr=',iErr
+		  return	! JRE20210615. Otherwise, zFactor=0 in denom can occur.
+	  endif
 
       !Outputs
 	  denom=(zFactor * rgas * tKelvin)
 	  if(denom < 1.d-11)then  ! JRE20210615
-		if(FORT)write (dumpUnit,*)'FuPrLorraine_TP: denom <= 0. Z,T,R',zFactor,tKelvin,rgas
-		if(FORT)write (dumpUnit,*) 'Check denom'
+		if(FORT)write (dumpUnit,form610)' FuPrLorraine_TP: denom <= 0. Z,T,R',zFactor,tKelvin,rgas
+		if(FORT)write (dumpUnit,form610) ' Check denom=',denom
 	  endif
       rho = pMPa/(zFactor * rgas * tKelvin) !mol/cm3
 	  etaPass=eta ! eta is USEd from comflash, needed for PsatEar
@@ -7086,27 +7098,30 @@ Subroutine GetPrLorraine(nComps,iErr)
     integer :: i,fluids(ncomax),err0,ierr
 	LOGICAL LOUDER
 	LOUDER=LOUD
-	!LOUDER=.TRUE.
+	LOUDER=.TRUE.
 	!LOUDER=.FALSE.
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or isPcSaft.
 	call GetPrTc(nComps,iErrGet) ! sets tKmin, as well as some other parameters that PrLorraine doesn't really use. 
-	tmemc = 0.0d0 !Array that stores old temperatures in memory in order to	save some time
-	itempc = 0    !Both of these need to be initialized to wipe out values stored for previous compounds.
-	nco=nComps ! copies nComps from GlobConst to comflash
+	tmemc = 0.0d0	!Array that stores old temperatures in memory in order to	save some time
+	itempc = 0		!Both of these need to be initialized to wipe out values stored for previous compounds.
+	nco=nComps		! copies nComps from GlobConst to comflash
 	if(nco > ncomax)then
 		iErr=1
+		if(LOUDER)write(*,*)'GetPrLorraine: nCoMax, nComps =',nCoMax,nComps
 		return
 	endif
     call setup(PGLinputDir,err0) ! COMPUTES OMEGAa, OMEGAb, Zc, 
 	!FYI: setup calls READ_OPTION() which hard codes choix_ge=2, meaning the "HV-uniquac/wilson" model. 
 	if(err0 > 0)then
 		iErr=2
+		if(LOUDER)write(*,*)'GetPrLorraine: Setup(), iErr=',err0
 		return
 	endif
 	fluids(1:2)=ID(1:2)
     call setfluid(PGLinputDir,fluids,err0)
 	if(err0 > 0)then
 		iErr=3
+		if(LOUDER)write(*,*)'GetPrLorraine: SetFluid(), iErr=',err0
 		return
 	endif
 	etaMax=1-zeroTol
