@@ -5,7 +5,7 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 	!NOTE: ndb(ESD)=ndb(CritParms) because we must first compute "Exact" values so all possible values will be tabulated. .
 	DoublePrecision eokPdb(ndb),vxDb(ndb),mShapeDb(ndb),KadNm3Db(ndb),epsA_kBdb(ndb),epsD_kBdb(ndb),ZcEsdDb(ndb),tauDb(ndb)
 	DoublePrecision eTotAssoc(nAssoc) ,tau(nTau) 													
-	Integer, SAVE::         IndexEsd(9999),NDdb(ndb),NDSdb(ndb),NASdb(ndb) 
+	Integer, SAVE::         IndexEsd(99999),NDdb(ndb),NDSdb(ndb),NASdb(ndb) 
 	LOGICAL, SAVE::         isReadEsd	
 	Integer idTau(nTau),idBeta(nBeta),idAlpha(nAlpha),idAssoc(nAssoc)	! for MemSced.
 !	data idBeta/ 501, 502, 504, 507, 510, 518, 840, 1071, 1080, 1090, 1093, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1114,& 
@@ -50,6 +50,9 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 	USE CritParmsDb
 	IMPLICIT DoublePrecision(A-H,O-Z)
 	character*251 inFile,dumString
+    LOGICAL LOUDER
+    LOUDER=LOUD
+    LOUDER=.TRUE.
 	!EQUIVALENCE(IndexEsd(1),CrIndex(1))   !This doesn't work. CrIndex is in module, similar to "common" prohibition. JRE20230911
 
 	iErrCode=0
@@ -57,10 +60,11 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 		iErrCode=13
 		return
 	endif
-	do iComp=1,nCritSet		! Initialize to Exact parameter value.
-		IndexEsd( IDnum(iComp) )=CrIndex( IDnum(iComp) ) ! All compds in CritParmsDb included in EsdParmsDb, 
+	do iComp=nCritSet,1,-1! Initialize to Exact parameter value.
+		iTemp=CrIndex( IDnum(iComp) )
+        IndexEsd( IDnum(iComp) )=iTemp ! All compds in CritParmsDb included in EsdParmsDb, 
 		!i=CrIndex( IDnum(iComp) )
-		i=iComp	! i=line in ParmsCrit. line=[1,nCritSet] Here, we append columns of ESD parms to the columns of ParmsCrit for all.
+		i=iComp	! i=line in ParmsCrit. line=[1,nCritSet] Here, we effectively append columns of ESD parms to the columns of ParmsCrit for all.
 		call ExactEsd1(IDnum(i),VxDb(i),c1,mShapeDb(i),eokPdb(i),ZcEsdDb(i),iErr)
 		if(iEosOpt==18)tauDb(i)=0
 	enddo
@@ -75,6 +79,11 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 		READ (40,'(a222)',ioStat=ioErr)dumString
 		READ (dumString,*,ioStat=ioErr)IdEsd
 		i=IndexEsd( IdEsd )
+        if(i < 1 .or. i > nCritSet)then
+            IF(LOUDER)write(dumpUnit,*)' ExactEsd: missing from ParmsPrTcJaubert, idEsd=',idEsd
+            iErrCode=14		!probably, idEsd is not included in ParmsPrTcJaubert
+            return
+        endif
 		if(iEosOpt==18)then
 			READ (dumString,*,ioStat=ioErr)IdEsd,mShapeDb(I),eokPdb(i),VxDb(I),tauDb(i),KadNm3Db(i),&
 		                                                 epsD_kBdb(i),epsA_kBdb(i),NDdb(i),NDSdb(i),NASdb(i)
@@ -343,6 +352,7 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	!  Ref:  Elliott and Lira, Introductory Chemical Engineering Thermo, p564 (1999).
 	!parameter (nmx=55)
 	DoublePrecision k1
+    character*5 tempClass
 	!DoublePrecision vx(nmx),c(nmx),q(nmx),eokP(nmx)
 	LOGICAL LOUDER
 	LOUDER=LOUD
@@ -350,10 +360,12 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	ierComp=0
 	iErr=0				  
 	isAssoc=0
-	if(TRIM(class(CrIndex(ID1)))=='assoc' .or. TRIM(class(CrIndex(ID1)))=="Asso+")isAssoc=1
+    indexTemp=CrIndex(ID1)
+    tempClass=TRIM(classDb(CrIndex(ID1)))
+	if(tempClass=='assoc' .or. tempClass=='Asso+')isAssoc=1
 	if(isAssoc>0)then
 		iErr=11
-		if(LOUDER)write(dumpUnit,*)'ExactESD: no parms for ID,class=',ID1,TRIM(class(CrIndex(ID1)))
+		if(LOUDER)write(dumpUnit,*)'ExactESD: no parms for ID,class=',ID1,TRIM(classDb(CrIndex(ID1)))
 		if(LOUDER)write(dumpUnit,*) 'ExactESD:check ID.'
 	endif	
 	isHelium=0

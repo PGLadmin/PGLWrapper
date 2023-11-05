@@ -34,7 +34,7 @@ MODULE GlobConst
 	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)
 	          !avoNum[=]cm3/(nm3*mol), kB[=]MPa.nm3/K. cf. PGL6ed, Table 6.1
 	!          https://www.nist.gov/si-redefinition 
-	PARAMETER (nCritSet=1749,tabChar=char(9)) ! This is the number of compounds that should be found in LoadCritParmsDb. 
+	PARAMETER (nCritSet=1760,tabChar=char(9)) ! This is the number of compounds that should be found in LoadCritParmsDb. 
 	!          Change this parameter if you add more compounds.	It must be consistent or you will get a LOAD error.
     !nmx is the max allowed number of Compounds
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)

@@ -126,15 +126,16 @@
     end
 
 	!***********************************************************************
-	SUBROUTINE FUGI( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,zFactor,iErr )
+	SUBROUTINE FUGI( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,zFactor,ierFugi )
 	! This is a dummy routine to patch legacy code through to newer FugiTP(). 
 	USE GlobConst
 	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
 	!USE comflash, only:ncomax ! PrLorraine's module for many constants. ncomax needed to dimension properly
-	IMPLICIT DOUBLEPRECISION( A-H,O-Z )
+	IMPLICIT DoublePrecision( A-H,O-Z )
 	DoublePrecision xFrac(*),FUGC(*)
+    Integer ierFugi(12)
 	CALL       FugiTP( tKelvin,pMPa,xFrac,nComps,LIQ,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
-	iErr=iErrF
+	ierFugi(1)=iErrF
 	return
 	end
 

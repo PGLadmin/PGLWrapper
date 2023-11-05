@@ -1,4 +1,4 @@
-37 idDippr	mEff,vEff,logCrhoDo			etag	eps_kChain=0.6*TcComp*( e0+deltaMeff*(e1+deltaMeff*e2) )	isNalkane	Name
+37 idDippr	mEff,vEffNm3,logCrhoDo,etag,eps_kChain=0.6*TcComp*( e0+deltaMeff*(e1+deltaMeff*e2) )	isNalkane	Name
 1	1.0000	0.0259	-3.7670	0.5700	4.3	1	Methane
 2	1.1100	0.0411	-3.7427	0.6126	12.4	1	Ethane
 3	1.2200	0.0556	-3.7403	0.6475	31.5	1	Propane
@@ -11,7 +11,7 @@
 64	2.2100	0.1848	-3.8962	0.8054	270.2	1	n-dodecane
 68	2.6500	0.2428	-3.9678	0.8377	363.2	1	n-hexadecane
 2081	4.1900	0.4340	-4.1637	0.8974	609.4	1	C30(pred)
-6000	7.4900	0.8704	-4.4224	0.9426	903.9	1	C60(pred)
+8657	7.4900	0.8704	-4.4224	0.9426	903.9	1	C60(pred)
 1938	1.361	0.04628	-3.606	0.653	33.2	0	CS2
 909	1.072	0.03337	-3.553	0.644	0.0	0	CO2
 137	1.387	0.08942	-3.747	0.690	255.7	0	cyclohexane

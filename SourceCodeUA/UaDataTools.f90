@@ -42,130 +42,6 @@ Subroutine ReadRef(dataString,refString) ! ID() or idCas() USEd from GlobConst
 	refString=dataString(idStart:length)
 	return
 end
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from GlobConst
-	!Purpose: CALL EOS Get___ ROUTINES, also includes LoadCritParmsDb(if needed),GetCrit, Get(EOS), GetBips, BipIo, 
-	!	SETS UP THE CRITS, EOSPARMS, bips, 
-	!	Echoes user IO to Output.txt, and reports error checks. 
-	!Terms:
-	!   idOpt=2 if idCas is USEd, idOpt=1 if ID(dippr) is USEd.
-	USE GlobConst
-	USE CritParmsDb
-	USE BIPs
-	!USE EsdParms
-	Implicit DoublePrecision(A-H,K,O-Z)
-	CHARACTER*77 errMsgPas !,readString,Property(22)
-	!CHARACTER*251 dumpFile
-    Integer  localCas(NMX),iEosLocal,ierCode,NC !,localID(NMX) 
-	if(idOpt==2)then
-		localCas(1:NC)=idCas(1:NC)	! idCas USEd from GlobConst
-	elseif(idOpt==1)then
-		call IdCasLookup(NC,idCas,iErrLook,errMsgPas) ! ID input USEd from GlobConst. idCas is returned
-		if(iErrLook > 0)then
-			ierCode=11
-			if(LOUD)write(dumpUnit,*)'PGLStartup: from idDipprLookup-'//TRIM(errMsgPas)
-			return
-		endif
-		localCas(1:NC)=idCas(1:NC)	! idCas USEd from GlobConst
-	else
-		ierCode=12
-		return
-	endif
-	Call PGLWrapperStartup(NC,iEosLocal,localCas,ierCode)
-	return
-	end
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	Subroutine PGLWrapperStartup(NC,iEosLocal,localCas,ierCode)
-	!Purpose: CALL EOS Get___ ROUTINES, also includes LoadCritParmsDb(if needed),GetCrit, Get(EOS), GetBips, BipIo, 
-	!	SETS UP THE CRITS, EOSPARMS, bips, DEBUG status, FUGI(iEosOpt)
-	!	Echoes user IO to Output.txt, and reports error checks. 
-	!	INITIALIZATION AND CALLING SEQUENCE FOR VLE, LLE, VLLE SUBROUTINES.
-	!reqd routines:
-	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
-	!	LmDifEzCov2.for, Mintools.for
-	!               1     2       3       4          5          6         7           8              9            10          11
-	USE GlobConst
-	USE CritParmsDb
-	USE BIPs
-	!USE EsdParms
-	Implicit DoublePrecision(A-H,K,O-Z)
-	CHARACTER*77 errMsgPas !,readString,Property(22)
-	!CHARACTER*251 dumpFile
-    Integer  localCas(NMX),iEosLocal,ierCode,NC 
-	
-	idCas(1:NC)=localCas(1:NC)
-    if(LOUD)write(dumpUnit,*)'PGLWrapperStartup: starting.NC,iEosOpt,idCas=',NC,iEosOpt ,idCas(1:NC)
-
-	INITIAL=0
-	iEosOpt=iEosLocal
-	ierCode=0 ! Initialize to failure in the iEosOpt write slot to make it easier to terminate if any Get_ functions fail.
-	iErrCrit=0
-	if(nDeckDb.ne.nCritSet)call LoadCritParmsDb(iErrCrit) !nDeckDb.ne.nCritSet indicates that LoadCrit has not been called.
-	if(iErrCrit > 0)then
-		if(LOUD)write(dumpUnit,*)'PGLWRapperStartup: Error from LoadCritParmsDb, iErrCrit=',iErrCrit
-		ierCode=11
-		goto 86
-	endif
-	call IdDipprLookup(NC,localCas,iErrCas,errMsgPas) ! ID USEd in GlobConst to set.
-	if(LOUD)write(dumpUnit,*)'PGLWRapperStartup:localCas,idDippr=',(localCas(i),id(i), i=1,NC)
-	if(iErrCas/=0)then
-        if(LOUD)write(dumpUnit,*)' Sorry, must abort.  Not found for CAS number(s)=', (localCas(i),i=1,NC)
-        write(dumpUnit,*)ierCode,' PGLWRapperStartup:Sorry, must abort.  Not found for CAS number(s)=',localCas(1:NC)
-        write(dumpUnit,*)' PGLWRapperStartup: ID()=', ID(1:NC)
-		ierCode=12
-        goto 86
-    endif
-	if(LOUD)write(dumpUnit,*)'idDippr,class=',ID(1),TRIM(class(1))
-	CALL GETCRIT(NC,iErrCrit)
-	if(iErrCrit/=0)then
-		if(LOUD)write(dumpUnit,*)'Error in Main: ErrorCode from GetCrit = ',iErrCrit
-		write(dumpUnit,*)ierCode,' Error in Main: ErrorCode from GetCrit = ',iErrCrit
-		ierCode=13
-		goto 86
-	endif
-	iErrGet=SetNewEos(iEosOpt) !wipe out any instance of other eos.
-	iErrGet=1 !should be set to zero by Get__(), so something went wrong if iErrGet>0 after calls.
-	if(LOUD)write(dumpUnit,*)'calling GetEOS'
-	iErrGet=0
-	if(iEosOpt==1)CALL GetPR(NC,iErrGet)
-	if(iEosOpt==2)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USEd EsdParms					!Diky model 12
-	if(iEosOpt==3)CALL GetPRWS(NC,iErrGet) 
-	if(iEosOpt==4)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USEd EsdParms					!Diky model 12
-	if(iEosOpt==5)CALL GetTpt(NC,ID,iErrGet,errMsgPas)   !Results placed in USEd: SpeadParms, Assoc			!Diky model 6
-	if(iEosOpt==7)CALL GetNRTL (NC,ID,iErrGet)
-	if(iEosOpt==8)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc
-	if(iEosOpt==9)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc
-	if(iEosOpt==10)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Gross's PcSaft parameters		!Diky model 25
-	if(iEosOpt==11)CALL GetPrTc(NC,iErrGet)		!JRE 2019 : Reads Jaubert's parameters						!Diky model 22
-	if(iEosOpt==12)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms, Assoc				!Diky model 23
-	if(iEosOpt==13)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms, Assoc				!Diky model 24
-	if(iEosOpt==14)CALL GetTpt(NC,ID,iErrGet,errMsgPas)	!Results placed in USEd: SpeadParms, Assoc			!Diky model 18
-	if(iEosOpt==15)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's PcSaft parameters		!Diky model 26
-	if(iEosOpt==16)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2019 : Reads Emami's(Tb) PcSaft parameters	!Diky model 27
-	if(iEosOpt==17)CALL GetPrLorraine(NC,iErrGet)			!JRE 20210510 : Reads Jaubert's tcPR parameters including BIPs for GE mixing rule. 
-	if(iEosOpt==18)CALL GetEsdCas(NC,idCas,iErrGet)			!Results placed in USEd EsdParms. 				
-	if(iEosOpt==19)CALL GetLsgMem2(NC,ID,iErrGet)
-	if(iEosOpt==20)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2023 : Reads SptPcSaft parameters of Rehner et al.
-	if(iEosOpt==21)CALL GetPrLorraine(NC,iErrGet)			!JRE 20231010 : Reads Jaubert's tcPR parameters including BIPs for PPR78 mixing rule. 
-	!              1     2       3       4          5          6         7           8              9        10       
-	!data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
-	!		'tcPRq','EgcESD','EgcEsdTb','TffSPEAD','EgcPcSaft','EgcPcSaft(Tb)','tcPR-GE(W)','MEMSCED','LsgMem2','SptPcSaft'/
-	!             11    12      13         14          15          16             17        18       19        20       
-	!if(iEosOpt.eq.17)This is the model number for COSMOtherm, if one is required JRE 20200119.				!Diky model ??
-	!NewEos: Add here for initializing parms.
-	if(iErrGet .ne. 0)then
-		if(LOUD)write(dumpUnit,*)ierCode,' Error in Main: failed to get required dbase props.'
-		if(LOUD)write(dumpUnit,*)iErrGet,' PGLWrapperStartup:Get(EOS) failed. iErrGet=',iErrGet
-		ierCode=iErrGet*10
-		goto 86
-	endif
-    if(LOUD)write(dumpUnit,*)'PGLWrapperStartup: Success so far... Got EOS Parms for iEosOpt=',iEosOpt
-86	return
-	end	   !PGLWrapperStartup
-
-
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine ReadNext(inUnit,nexString3,maxLines,maxVars,bHeader,header77,nVars,var,nLines,iErr)
 	! Purpose: Read uncounted data with "next" character string between data sets.
@@ -336,8 +212,12 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
 !		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 !			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
 !		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
-		READ (dumString,*)IDnum(I),TCD(I),PcTemp,ACEND(I),TbD(i),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I), &
+		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PcTemp,ACEND(I),TbD(i),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I), &
 		                                                              solParmD(i),rhoG_cc,rMwD(i),classDb(i),formDb(i),NAMED(i)
+        if(ioErr /= 0)then
+            iErrCode=12
+            return
+        endif
 !1	190.56	4.599	0.0115	0.1473	0.9075	1.8243	-3.5604	0.2894	85	 74828	11.62	0.4224	16.04
 		PCD(I)=PcTemp !/10
 		if(rhoG_cc < zeroTol)rhoG_cc=1

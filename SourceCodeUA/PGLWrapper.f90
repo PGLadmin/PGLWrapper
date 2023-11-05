@@ -8,7 +8,7 @@
 
 	CHARACTER(300) CURDIR !TO DETERMINE WHERE TO LOOK FOR PARM FILES ETC.
 	CHARACTER*77 readString,Property(22) !,errMsgPas
-	CHARACTER*251 outFile ,dumpFile
+	CHARACTER*251 outFile !,dumpFile
 	!CHARACTER*3 aPhase
     DoublePrecision xFrac(NMX) !,FUGC(NMX),xPure1(NMX),xPure2(NMX) !FUGI requires mole fraction specification because it is written generally for mixtures.
     Integer  localCas(NMX),prp_id
