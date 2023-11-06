@@ -8,7 +8,7 @@ MODULE DLLConst
 	!              1     2       3       4          5          6         7           8              9        10       
 	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
 			'tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
-	!          11     12       13         14          15          16             17         18      19         20       
+	!             11    12      13         14          15          16             17        18       19        20       
 END MODULE DLLConst
 
 
@@ -454,13 +454,29 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 		!line=line+1
 		iErr=0
 		pMPa=pKPa/1000
+		if( ABS(tKelvin-tPrevious) > 0.1 .or. ABS(pKPa-pPrevious) > 0.1 )then
+			CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+			if(iErrF > 0)iErr=iErrF
+			hRes_RT=uRes_RT+zFactor-1
+			vPure1=rGas*tKelvin*zFactor/pMPa
+			chemPoPure1=FUGC(1) ! = ln(fPure1/P)
+			hRes1 = hRes_RT*rGas*tKelvin ! from module
+			CALL FugiTP( tKelvin,pMPa,xPure2,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
+			if(iErrF > 0)iErr=iErrF
+			hRes_RT=uRes_RT+zFactor-1
+			vPure2=rGas*tKelvin*zFactor/pMPa
+			chemPoPure2=FUGC(2) ! = ln(fPure2/P)
+			hRes2 = hRes_RT*rGas*tKelvin ! from module
+			tPrevious=tKelvin
+			pPrevious=pKPa
+		endif
 		!iPhase=1 !set as default
 		!if(expRho/1000 < rhoCritG_cc)iPhase=0
 			!if(LOUD)write(*,'(a,f7.2,1x,f9.5,i4,f9.4)')' UaWrapper: calling fugi. T,P,iPhase,x1:',tKelvin,pMPa,iPhase,xFrac(1)
 		CALL FugiTP( tKelvin,pMPa,xFrac,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
 		hRes_RT=uRes_RT+zFactor-1
 			!if(LOUD)print*,'UaWrapperMain: Check output from fugi()mix call. ier(1) = ',ier(1)
-		if(iErrF > 0)iErr=iErrF
+		if(iErrF > 0)iErr=iErr+100*iErrF
 		if(iErr > 0)then
 			!if(LOUD)write(*,'(1x,2f8.3,F7.4,1x,a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,dum,dum,dum,dum,dum,iErr
 			!cycle
@@ -470,47 +486,23 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
 																														 
 		vMix=rGas*tKelvin*zFactor/pMPa
 		rhoMol_cc=1/vMix
+		activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
+		activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
 		hResMix = hRes_RT*rGas*tKelvin ! from module
+		vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
+		hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
+		gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)
 		!write(52,form610)aPhase,tKelvin,pKPa,xFrac(1),vXsCc_mol,rhoMol_cc,hXsJ_mol,gXsJ_mol,activity1,activity2
+        if (iProperty==4) res = exp(activity1)
+        if (iProperty==5) res = exp(activity2)
+        if (iProperty==6) res = Rgas*(xFrac(1)*(activity1)+xFrac(2)*(activity2))
         if (iProperty==81) res = 1000*rhoMol_cc
+        if (iProperty==89) res = 0.000001*vXsCc_mol
+        if (iProperty==36) res = 0.001*hXsJ_mol
         if (iProperty==201) res = exp(FUGC(1))
         if (iProperty==202) res = exp(FUGC(2))
         if (iProperty==203) res = exp(FUGC(1))
         if (iProperty==204) res = exp(FUGC(2))
-        if (iProperty==4.or.iProperty==5.or.iProperty==6.or.iProperty==36.or.iProperty==89)then
-		    if( ABS(tKelvin-tPrevious) > 0.01 .or. ABS(pKPa-pPrevious) > 0.1 )then
-			    CALL FugiTP( tKelvin,pMPa,xPure1,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
-			    if(iErrF > 0)iErr=iErr+100*iErrF
-			    hRes_RT=uRes_RT+zFactor-1
-			    vPure1=rGas*tKelvin*zFactor/pMPa
-			    chemPoPure1=FUGC(1) ! = ln(fPure1/P)
-			    hRes1 = hRes_RT*rGas*tKelvin ! from module
-			    CALL FugiTP( tKelvin,pMPa,xPure2,NC,iPhase,rhoMol_cc,zFactor,aRes_RT,FUGC,uRes_RT,iErrF )
-			    if(iErrF > 0)iErr=iErr+100*iErrF
-			    hRes_RT=uRes_RT+zFactor-1
-			    vPure2=rGas*tKelvin*zFactor/pMPa
-			    chemPoPure2=FUGC(2) ! = ln(fPure2/P)
-			    hRes2 = hRes_RT*rGas*tKelvin ! from module
-			    tPrevious=tKelvin
-			    pPrevious=pKPa
-		    endif
-		    if(iErr > 0)then
-			    !if(LOUD)write(*,'(1x,2f8.3,F7.4,1x,a3,1x,6E12.4,i8)')tKelvin,pKPa,xFrac(1),aPhase,dum,dum,dum,dum,dum,iErr
-			    !cycle
-                res = 0
-                return
-		    endif
-		    activity1=FUGC(1)-chemPoPure1 ! = ln(fi/xi*fiPure) 
-		    activity2=FUGC(2)-chemPoPure2 ! = ln(fi/xi*fiPure)
-		    vXsCc_mol = vMix - (xFrac(1)*vPure1	+ xFrac(2)*vPure2)
-		    hXsJ_mol = hResMix - (xFrac(1)*hRes1 + xFrac(2)*hRes2)
-		    gXsJ_mol =  (xFrac(1)*activity1 + xFrac(2)*activity2)
-            if (iProperty==4) res = exp(activity1)
-            if (iProperty==5) res = exp(activity2)
-            if (iProperty==6) res = Rgas*(xFrac(1)*(activity1)+xFrac(2)*(activity2))
-            if (iProperty==36) res = 0.001*hXsJ_mol
-            if (iProperty==89) res = 0.000001*vXsCc_mol
-        endif
         !if(isTDE)close(dumpUnit)
         return
 end subroutine CalculateProperty2local
