@@ -995,7 +995,7 @@ end	!Subroutine QueryParPureSpead
 		if(LOUD)write(dumpUnit,*)TRIM( errMsg(iErr) )
 		return
 	endif
-	c1=zRefCoeff(iComp,1)+3
+	c1=zRefCoeff(iComp,1)+3 ! Z=(1+z1*eta+z2*eta^2+z3*eta^3)/(1-eta)^3=1+(c1*eta+c2*eta^2+c3*eta^3)/(1-eta)^3
 	c2=zRefCoeff(iComp,2)-3
 	c3=zRefCoeff(iComp,3)+1
 	void=1.d0-etaRef  ! etaRef has been corrected for temperature-dependent softness, important for H2,He,...

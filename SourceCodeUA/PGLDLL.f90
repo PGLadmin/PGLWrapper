@@ -508,8 +508,8 @@ subroutine CalculateProperty2local(ieos, casrn1, casrn2, prp_id, var1, var2, var
             if (iProperty==4) res = exp(activity1)
             if (iProperty==5) res = exp(activity2)
             if (iProperty==6) res = Rgas*(xFrac(1)*(activity1)+xFrac(2)*(activity2))
-            if (iProperty==36) res = 0.001*hXsJ_mol
-            if (iProperty==89) res = 0.000001*vXsCc_mol
+            if (iProperty==36) res = 0.001d0*hXsJ_mol		! TDE uses kJ/mol
+            if (iProperty==89) res = 0.000001d0*vXsCc_mol	! TDE uses m3/mol
         endif
         !if(isTDE)close(dumpUnit)
         return
