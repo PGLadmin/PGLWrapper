@@ -26,7 +26,7 @@ C3H8                                                                  !Chemical 
 #TWU91 PARAMETERS (L, M, N)
 0.74550354       0.91332849       0.76097428                          
 #VOLUME TRANSLATION PARAMETER [cm3/mol]
--3.73493632                                                           
+-3.7349                                                           
  
 #TEMPERATURE-DEPENDENT PROPERTIES
 LDN                                                                   

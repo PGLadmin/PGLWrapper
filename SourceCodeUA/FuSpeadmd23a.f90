@@ -2,18 +2,19 @@
 MODULE SpeadParms
 	USE GlobConst, only:nmx,ID,Tc,CvRes_R,etaMax,Rgas,RgasCal,zeroTol,etaPure,bVolCc_mol,LOUD,tKmin !need most of GlobConst here  
 	USE Assoc !need all of assoc so USE SpeadParms automatically includes Assoc
-	DoublePrecision zRefCoeff(nmx,5),a1Coeff(nmx,5),a2Coeff(nmx,5),vMolecNm3(nmx) !,rMwPlus(nmx)
+	DoublePrecision zRefCoeff(nmx,5),a1Coeff(nmx,5),a2Coeff(nmx,5),vMolecNm3(nmx),AresRep_RT !,rMwPlus(nmx)
 	!,tKmin(nmx) !promoted to GlobConst
 	DoublePrecision ks0,ks1	       ! Parameters to estimate Sxs of Vahid and Elliott (2014)
 	!Parameter(ks0= -0.04d0,ks1=0) ! best I could do based on avg of the entire system AV 11/29/08
 	Integer nTptCoeffs
 	LOGICAL bGaussEx
-	DoublePrecision GexG0(nmx),GexG1(nmx),GexEta0(nmx) ! Gaussian Extrapolation parameters
+	DoublePrecision GexG0(nmx),GexG1(nmx),GexEta0(nmx)	! Gaussian Extrapolation parameters
+    DoublePrecision A0mix,A1mix,A2mix,Z0mix,Z1mix,Z2mix	! to share if desired.
 	LOGICAL isHeNeH2(nmx) ! flag to indicate ultracryo compounds.
 	!nnx = Total number of united-atom sites in a molecule.
 END MODULE SpeadParms
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	SUBROUTINE GetTptCas(nComps,idCasPas,iErrCode,errMsgPas)
+	SUBROUTINE GetmixCas(nComps,idCasPas,iErrCode,errMsgPas)
 	!  Purpose:	load up the parms for tpt, including HbParms. We only load hbonding parameters for types that actually hbond.  
 	!			This makes the summations and arrays more compact in the Wertheim functions.
 	!  
@@ -43,16 +44,16 @@ END MODULE SpeadParms
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	SUBROUTINE GetTpt(nComps,idComp,iErrCode,errMsgPas)
-	!  Purpose:	load up the parms for tpt, including HbParms. We only load hbonding parameters for types that actually hbond.  
+	!  Purpose:	load the parms for tpt, including HbParms. We only load hbonding parameters for types that actually hbond.  
 	!           This makes the summations and arrays more compact in the Wertheim functions.
 	!  
 	!  PROGRAMMED BY:  JRE 2/02
-	!  REVISION DATE:  2/93 - FOR ESD COMPATIBILITY JRE
 	! 
 	!  LOOKS UP THE TPT PROPERTIES AND RETURNS them in USEd Assoc and SpeadParms
 	!
 	!  INPUT
-	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
+    !	 nComps - # of compounds to look up
+	!    idComp - VECTOR OF COMPONENT DIPPR ID'S FOR COMPUTATIONS
 	!  OUTPUT
 	USE GlobConst
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
@@ -73,7 +74,7 @@ END MODULE SpeadParms
 	LOUDER=LOUD
 	!LOUDER=.TRUE. !COMMENT OUT FOR RELEASE
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isESD or isPcSaft.
-	isTPT=.TRUE. ! in GlobConst simplifies calls in FUGI and FuVtot
+	bTPT=.TRUE. ! in GlobConst simplifies calls in FUGI and FuVtot
     etaMax = 0.99D0 ! if eta > etaMax, errors will be declared
 	bGaussEx=.FALSE.
 	if(iEosOpt==20)bGaussEx=.TRUE.
@@ -612,7 +613,7 @@ end	!Subroutine QueryParPureSpead
 !C Modified by AFG 2011 : isZiter is redefined																							  C
 !C																												  C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
- 	SUBROUTINE FuTpt( tKelvin,pMPa,gmol,nComps,LIQ,chemPo,rhoMol_cc,zFactor,aRes,uRes,iErr )	  !AUG 10
+ SUBROUTINE FuTpt( tKelvin,pMPa,gmol,nComps,LIQ,chemPo,rhoMol_cc,zFactor,aRes,uRes,iErr )	  !AUG 10
 	!SUBROUTINE FuTpt(tKelvin,pMPa,gmol,nComps,LIQ,chemPo,zFactor,ier)
 	USE GlobConst  !aRes_RT,uRes_RT etc
 	USE SpeadParms !GlobConst(some)+Assoc(XA,XD,XC)+AiCoeffs etc.
@@ -907,13 +908,13 @@ end	!Subroutine QueryParPureSpead
 	if(LOUDER)write(dumpUnit,*)'Exiting FuTpt: Please correct xFrac'
 	iErr=17
 	return
-	END	 ! Subroutine FuTpt()
+END	Subroutine FuTpt
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! CODED BY AV 06/26/06. cf. DannerGess/SPEADCI paper. IECR08
 ! PURPOSE: DEVELOPING SpeadGamma MODEL. cf.SPEADCI paper IECR, 47:7955 (08).
-	SUBROUTINE FuSpeadGamma(tKelvin,pMPa,xFrac,nComps,LIQ,chemPo,zFactor,iErr)
+SUBROUTINE FuSpeadGamma(tKelvin,pMPa,xFrac,nComps,LIQ,chemPo,zFactor,iErr)
 	USE SpeadParms
 	USE VpDb
 	USE Assoc
@@ -967,11 +968,11 @@ end	!Subroutine QueryParPureSpead
 		enddo
 	endif
 	return
-	end
+end SUBROUTINE FuSpeadGamma
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	Subroutine TptTerms(isZiter,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErr)
+Subroutine TptTerms(isZiter,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErr)
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs
 	Implicit DoublePrecision(A-H,K,O-Z)
@@ -1096,13 +1097,13 @@ end	!Subroutine QueryParPureSpead
 	endif
 
 	return
-	end
+end	Subroutine TptTerms
 	
  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
  ! Compute the derivatives of the third order GaussEx taking Gex parms, eta and T, as input.
  ! phi=sum(iComp)sum(iType) [bVol0(iComp,iType)*sum(jComp,jType)epsij*ratioA3ij]	where ratioA3=A3/A2.
  ! Since 3*A3/A2 = (g0)*exp(-g1*[(eta-eta0)^2-eta0^2]), then phi is already a Gaussian. For Ahmad, gFun=exp(phi/tKelvin)
-	Subroutine GaussFun3(tKelvin,eta,Gf,dGf_dEta,d2Gf_dEta2,cpGf,uDepGf,iErr)
+Subroutine GaussFun3(tKelvin,eta,Gf,dGf_dEta,d2Gf_dEta2,cpGf,uDepGf,iErr)
 	USE SpeadParms, only:GexG0,GexG1,GexEta0
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	G0=GexG0(1)
@@ -1159,19 +1160,20 @@ end	!Subroutine QueryParPureSpead
 		!uDepGf=2*gFun*( -2/6 + 3/6 )
 	endif
 	return
-	end
+end Subroutine GaussFun3
 
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	subroutine MixRule(isZiter,gmol,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aRepQuadPart,aAttQuadPart,iErr) 
+subroutine MixRule(isZiter,gmol,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,aRepQuadPart,aAttQuadPart,iErr) 
 	!need bVolMix to get rho from eta because alpha(i) ~ rho*bondVol(i) ~ eta*bondVol(i)/bVolMix
 	!need vMolecNm3 in Wertheim	just because Marty wrote the code badly.  
-	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
-	USE BIPs
+	USE GlobConst
+	USE SpeadParms, only:zRefCoeff,A1Coeff,A2Coeff !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
+    USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	character*77 errMsg(22)
 	DoublePrecision xFrac(nmx),aRepQuadPart(nmx),aAttQuadPart(nmx),gmol(nmx)
 	!DoublePrecision, SAVE:: solParEntro(nmx),solParEnerg(nmx),etaStd,etaRefStd, !SAVE keeps these in memory even after initCall
-	DoublePrecision bRef(nmx),bVolRef,tKelvin,eta,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix
+	DoublePrecision bRef(nmx),bVolRef,tKelvin,eta,bVolMix !,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix
     DoublePrecision etaRef,a0j,a1j,a2j,z0j,z1j,z2j,a0i,a1i,a2i,z0i,z1i,z2i
 	data initCall/1/		! best I could do based on avg of the entire system AV 11/29/08
 							! Note that polymer solutions are very sensitive to the BIPs and should be optimized via KD option
@@ -1374,12 +1376,12 @@ end	!Subroutine QueryParPureSpead
 	initCall=0
 
 	return
-	end
+end	subroutine MixRule
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
-	subroutine AxsCalc(xFrac,eta,nComps,tKelvin,a0Mix,iErr) 
+subroutine AxsCalc(xFrac,eta,nComps,tKelvin,A0MixPas,iErr)	!A0mix USEd in SpeadParms 
 	!need bVolMix to get rho from eta because alpha(i) ~ rho*bondVol(i) ~ eta*bondVol(i)/bVolMix
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs
@@ -1463,6 +1465,7 @@ end	!Subroutine QueryParPureSpead
 			a0Mix=a0Mix+xFrac(iComp)*xFrac(jComp)*aRefij
 		enddo  !jComp
 	enddo !iComp
+	a0MixPas=a0Mix
 			!zRefij=SQRT( bVoli*bVolj/(a0i*a0j) ) /2
 			!zRefij=zRefij*( z0i*a0j+a0i*z0j )/bVolMix*(1-ksij)	! [=] Zref because a0j/sqrt(a0ij) and sqrt(bi*bj)/bMix cancel
 			!dKijDeta=(-ks1ij(iComp,jComp)*eta)/(1-ksij) !really this is eta*dKijDeta/(1-ksij)
@@ -1525,7 +1528,7 @@ end	!Subroutine QueryParPureSpead
 	!aRefKij=a0KijMix
 	!aAttKij=(a1KijMix+a2KijMix/tKelvin)/tKelvin
 	return
-	end
+end	subroutine AxsCalc
 	
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !C Written by AGF, Nov. 2009																					  C
@@ -1554,19 +1557,20 @@ end	!Subroutine QueryParPureSpead
 	USE GlobConst, only: cmprsblty,CvRes_R
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs !NOTE: USE Assoc is not here because no assoc is computed.
+    USE FugiParts !, only: uResRep,aResRep
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	!PARAMETER(etaStep=2.d0/1000.d0,maxRhoStep=1.d0/etaStep)
 	Character*77 errMsg(22)
-	Integer iErrF
+	Integer iErrF,idCheck(nmx)
 	LOGICAL LOUDER
 	DoublePrecision xFrac(nmx),aRepQuadPart(nmx),aAttQuadPart(nmx),bRef(nmx),gmol(nmx),chemPo(nmx),aRes,uRes 
-    DoublePrecision bVolRef,tKelvin,eta,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,zAssoc,aAssoc,uAssoc,zFactor,rhoMol_cc
-	common/FugiParts/fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),Zrep,Zatt,Zassoc,aRep,aAtt,aAssoc
+    DoublePrecision bVolRef,tKelvin,eta,bVolMix,zFactor,rhoMol_cc !,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix
 	data initCall/1/
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
 
 	iErr=0
+    uResRep=0	! not true for H2 but OK otherwise. ToDo: Fix when H2 is done.
 	errMsg(11)=' FuTptVtot Error: Nonsense input. e.g. eta > 1'
 	!errMsg(4)=' FuTptVtot Error: a1i or a2i > 0'
 	errMsg(12)=' FuTptVtot Error: Wertheim returned error.'
@@ -1608,6 +1612,7 @@ end	!Subroutine QueryParPureSpead
 	eta3=eta2*eta
 	eta4=eta3*eta
 	if( eta > etaMax)then
+        idCheck=ID		!for debugging, since ID is USEd and can't be queried.
 		if(LOUDER)write(dumpUnit,*) 'FuTptVtot: eta > etaMax. eta,etaMax=',eta,etaMax
 		if(LOUDER)write(dumpUnit,*)
         iErr=11
@@ -1678,6 +1683,7 @@ end	!Subroutine QueryParPureSpead
 	aRep=aTvRef 
 	aRes=aRep+aAtt+aAssoc !+aDepNC
 	uRes=uAtt+uAssoc
+    AresRep_RT=aRep
 	
 	aRes_RT=aRes
 	uRes_RT=uRes
@@ -1723,7 +1729,7 @@ end	!Subroutine QueryParPureSpead
 	character*77 errMsg(11)
 	!DIMENSION XA(nmx,maxTypes),XD(nmx,maxTypes),XC(nmx,maxTypes)
 	DoublePrecision a0Pure(2),a1Pure(2),a2Pure(2),xFrac(nmx),aRepQuadPart(nmx),aAttQuadPart(nmx)
-	DoublePrecision a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix,tKelvin,bVolMix,eta
+	DoublePrecision tKelvin,bVolMix,eta !,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix
 	errMsg(1)='XsAs Error: This routine permits only 2 components.'
 	iErr=0
 	if(nComps.ne.2)then
@@ -1814,7 +1820,7 @@ DATA cof/76.18009172947146d0,-86.50532032941677d0,24.01409824083091d0,-1.2317395
 	IMPLICIT DoublePrecision(A-H,O-Z)
 	DoublePrecision xFracPert(nmx),chemPo(nmx),xFrac(nmx),gmol(nmx),bRef(nmx),bVolRef
 	DoublePrecision aRepQuadPart(nmx),aAttQuadPart(nmx),zPlus,zMinus,zMid !,zRefMix(5)!,a1Mix(5),a2Mix(5)
-    DoublePrecision tKelvin,etaPlus,etaMinus,bVolMix,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix
+    DoublePrecision tKelvin,etaPlus,etaMinus,bVolMix !,a0Mix,a1Mix,a2Mix,z0Mix,z1Mix,z2Mix
 
 	iErr=0
 	totMoles=SUM(gmol) ! SUM() is an intrinsic function

@@ -28,19 +28,19 @@
 	if(iEosOpt.eq.0)iEosOpt=1
 	if(iEosOpt==1)then
 		call FugiPR( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr )
-	elseif(isESD)then ! iEosOpt=2,4,12,13 
+	elseif(bESD)then ! iEosOpt=2,4,12,13 
 		call FugiESD(tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr)
 	elseif(iEosOpt==3)then
 	    call FugiPRWS( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,zFactor,iErr )
 	elseif(iEosOpt.eq.8)then
 		call FuSpeadGamma( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,zFactor,iErr )
-	elseif(isTPT)then ! 
+	elseif(bTPT)then ! 
  	    call FuTpt( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr )	  !AUG 10
 	elseif(iEosOpt.eq.7)then
 		call FuNRTL( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr )
 	elseif(iEosOpt==19)then
 		call FuLsgMem2( tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr )
-	elseif(isPcSaft)then !iEosOpt=11,13
+	elseif(bPcSaft)then !iEosOpt=11,13
 		call FugiPcSaft(tKelvin,pMPa,xFrac,nComps,LIQ,FUGC,rhoMol_cc,zFactor,aRes,uRes,iErr)
  	    !if(LOUD)print*,'Sorry: PcSaft not available at this time'!call FugiPcSaft(T,P,X,NC,LIQ,FUGC,zFactor,ier)	 ! Need to define this
 	elseif(iEosOpt.eq.11)then
@@ -50,7 +50,7 @@
 		ntyp= -1 !vapor. Note: ntyp=0 returns the min fugacity phase.
 		if(LIQ==1)ntyp=1
 		iErrPRL=0
-		call FuPrLorraine_TP(icon,ntyp,mtyp,iErrPRL,tKelvin,pMPa,xFrac,rho,zFactor, &	 ! JRE 20210510
+		call FuPrLorraine_TP(icon,ntyp,mtyp,iErrPRL,tKelvin,pMPa,xFrac,rhoMol_cc,zFactor, &	 ! JRE 20210510
 		&                fg,ft,fp,fx,uRes,aRes,CvRes_R,CpRes_R,dpdRho_RT)
 		FUGC(1:nComps)=fg(1:nComps)
 		!c     mtyp:     (o):      indicator for phase type; ic returns
@@ -99,13 +99,13 @@
 	if(iEosOpt==1)then
 		call FuPrVtot(isZiter,tKelvin,vTotCc,gmol,nComps,FUGC,zFactor,aRes,uRes,iErr)
 	!elseif(iEosOpt==4)then ! unused for now.
-	elseif(isESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
+	elseif(bESD)then ! (iEosOpt==2.or.iEosOpt==6.or.iEosOpt==12) all assume ESD96. 
 		call FuEsdVtot(isZiter,tKelvin,vTotCc,gmol,nComps,FUGC,zFactor,aRes,uRes,iErr)
-	elseif(isTPT)then
+	elseif(bTPT)then
 		call FuTptVtot(isZiter,zFactor,aRes,uRes,FUGC,vTotCc,tKelvin,gmol,nComps,iErr)	  !AFG 2011
 	elseif(iEosOpt==11)then
 		call FuPrTcVtot(isZiter,tKelvin,vTotCc,gmol,nComps,FUGC,zFactor,aRes,uRes,iErr)
-	elseif(isPcSaft)then
+	elseif(bPcSaft)then
 		call FugiPcSaftVtot(nComps,tKelvin,vTotCc,gmol,pMPa,zFactor,aRes,uRes,FUGC,iErr)
 	elseif(iEosOpt==17)then
 		icon=2 ! returns fugc and T,V derivatives. See GetPrLorraine for more options. 

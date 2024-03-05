@@ -179,7 +179,7 @@
 	iErr=0
 	!Example 1. Acetone(1)+chloroform(2) with speadmd model.
 	write(dumpUnit,*)'Example 1. Acetone(1)+chloroform(2)'
-	isTpt=.TRUE.				!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
+	bTpt=.TRUE.				!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
 	nTypes(1)=3					!acetone
 	nDegree(1,3)=1
 	nDonors(1,3)=1
@@ -247,7 +247,7 @@
 	iErr=0
 	!Example 2. THF(1)+chloroform(2) with speadmd model.
 	write(dumpUnit,*)'Example 2. THF(1)+chloroform(2)'
-	isTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
+	bTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
 	nTypes(1)=1						!THF
 	nDegree(1,1)=1
 	nDonors(1,1)=1
@@ -327,7 +327,7 @@
 	iErr=0
 	!Example 3. Dioxane(1)+chloroform(2) with speadmd model. cf. EL2ed Example 19.3, p779. 
 	write(dumpUnit,*)'Example 3. Dioxane(1)+chloroform(2)'
-	isTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
+	bTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
 	nTypes(1)=1						!14dioxane...
 	nDegree(1,1)=1
 	nDonors(1,1)=2
@@ -392,7 +392,7 @@
 	Implicit DoublePrecision(A-H,K,O-Z)
 	DoublePrecision IDACest(NMX),sumLnXPure1(2),sumLnxPure2(2)
 	iErr=0
-	isTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
+	bTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
 	!Example 4. 135trioxane(1)+chloroform(2) with speadmd model.
 	write(dumpUnit,*)'Example 4. 135trioxane(1)+chloroform(2)'
 	nTypes(1)=1						!135trioxane...
@@ -461,7 +461,7 @@
 	iErr=0
 	!Example 5. methanol(1)+THF(2) with speadmd model.  
 	write(dumpUnit,*)'Example 5. methanol(1)+THF(2)'
-	isTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
+	bTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
 	nTypes(1)=1						!methanol
 	nDegree(1,1)=1
 	nDonors(1,1)=1
@@ -529,7 +529,7 @@
 	iErr=0
 	!Example 6. acetone(1)+methanol(2) with speadmd model.  
 	write(dumpUnit,*)'Example 6. acetone(1)+methanol(2)'
-	isTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
+	bTpt=.TRUE.					!for rdfCalc, isTPT uses Carnahan-Starling instead of vdw or ESD. 
 	nTypes(1)=1						!acetone
 	nDegree(1,1)=1
 	nDonors(1,1)=1

@@ -124,7 +124,7 @@
 	!                                                  XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
 	!if(LouderWert)write(dumpUnit,*) 'Wertheim: MEM2 estimate. Calling XsolJre'
     iDoSolvation=0
-    if(isESD)iDoSolvation=0
+    if(bESD)iDoSolvation=0
     !if(isAcid > 0)iDoSolvation=1	 ! FYI: rmsErr on XsolJre2a is 1E-6
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	if(iDoSolvation > 0)then  !checkup: 1E-111  ! Refine from ESD96 if necessary
@@ -145,7 +145,7 @@
 				nSitesTot=nSitesTot+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) 
 				!ndHb(iType) should be zero if iType does not hBond.
 				iComplex=nDonors(iComp,iType)*nAcceptors(iComp,iType)
-				IF( isTpt ) THEN
+				IF( bTpt ) THEN
 					eHbKcal_mol(iComp,iType)=( eDonorKcal_mol(iComp,iType)+eAcceptorKcal_mol(iComp,iType) )/2.d0 
 				ENDIF		
 				if(iComplex.ne.0)iComplex=1  !in general, nDs or nAs could be 2, 3,... (e.g. water). Complexation is T/F.

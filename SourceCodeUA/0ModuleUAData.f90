@@ -3,8 +3,8 @@ MODULE ModelSettings ! Keep everything in one place so adding a model is easier.
 	integer nParInert(nModels),nParAssoc(nModels),nParPolar(nModels),nParMix(nModels) ! 
 	Character*15 EosName(nModels)
 	!              1     2       3       4          5          6         7           8              9        10       
-	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
-			'tcPRq','EgcESD','EgcEsdTb','TffSPEAD','EgcPcSaft','EgcPcSaft(Tb)','tcPR-GE(W)','MEMSCED','LsgMem2','SptPcSaft',&
+	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','FloryMEM2',' NRTL','SpeadGamMEM2','SPEAD11','PcSaft',&
+			'tcPRq','EgcESD','EgcEsdTb','TffSPEAD','EgcPcSaft','EgcPcSafTb','tcPR-GE(W)','MEMSCED','LsgMem2','SptPcSaft',&
 	!             11    12      13         14          15          16             17        18       19        20       
 			'tcPPR78'/
 	!             21    12      13         14          15          16             17        18       19        20       
@@ -46,11 +46,11 @@ MODULE GlobConst
 	DoublePrecision vLiq(nmx)		!liquid molar volume in cm3/mol
 	DoublePrecision tKmin(nmx)		!model's minimum recommended temperature, especially for P^vp. Only warning. e.g., SLE OK.
 	DoublePrecision CpRes_R, CvRes_R, cmprsblty !cmprsblty=(dP/dRho)T*(1/RT)	= Z+rho*dZ/dRho
-	character*255 masterDir,PGLinputDir,dumpFile
+	character*255 masterDir,PGLinputDir,dumpFile,errMsgPass
 	character*30 NAME(nmx)
 	character*5 class(nmx) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. PGL6edClasses.xls)
     Logical, SAVE :: LOUD,CheckDLL,isTDE   !LOUD=.TRUE. means writing debug info. CheckDLL=.TRUE. means direct debug info to DebugDLL.txt; isTDE means the call is coming from TDE
-	LOGICAL DEBUG, isESD, isTPT, isPcSaft 
+	LOGICAL DEBUG, bESD, bTPT, bPcSaft 
 	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
 	DoublePrecision etaPass 
     DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. Set in the Get_ function for the EOS
@@ -73,16 +73,16 @@ contains
 	implicit none
 	integer newEosOpt
 	SetNewEos=0
-	isESD=.FALSE.
-	isTPT=.FALSE.
-	isPcSaft=.FALSE.
+	bESD=.FALSE.
+	bTPT=.FALSE.
+	bPcSaft=.FALSE.
 	iEosOpt=newEosOpt
 	return
 	end function SetNewEos
 END MODULE GlobConst
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). 1st Sums sites per molecule then  molecules.
-	USE GlobConst, only:nmx,isTPT,isESD,iEosOpt,LOUD,dumpUnit,dumpFile ! nmx is the maximum number of compounds, typically 55. 
+	USE GlobConst, only:nmx,bTPT,bESD,iEosOpt,LOUD,dumpUnit,dumpFile ! nmx is the maximum number of compounds, typically 55. 
 	implicit NONE
 	integer maxTypes,nsx,maxTypesGlobal,localPool	
 	PARAMETER (maxTypes=44,nsx=maxTypes,maxTypesGlobal=999) 
@@ -109,7 +109,7 @@ contains
 	Integer iRdfOpt,iErrCode
 	! Input:
 	! eta = packing fraction
-	! iEosOpt, isESD, isTPT cf. GlobConst
+	! iEosOpt, bESD, bTPT cf. GlobConst
 	! Output:
 	! rdfContact= radial distribution function at contact
 	! dAlpha=dLn(alpha)/dLn(rho)
@@ -123,9 +123,9 @@ contains
 	!			= 3, activity coefficient model form (rdf=universal constant=g(eta=0.4)
 	!			= 4, ESD form, geometric association rule.
 	iRdfOpt=0					!ESD non-geometric form
-	if(isESD)then
+	if(bESD)then
 		iRdfOpt=4	!ESD geometric form
-	elseif(isTPT)then
+	elseif(bTPT)then
 		iRdfOpt=2	!CS form
 	elseif(iEosOpt==6)then
 		iRdfOpt=3	!activity model
@@ -167,7 +167,7 @@ END MODULE Assoc
 MODULE FugiParts
 	USE GlobConst, only:nmx
 	DoublePrecision rLnGamRep(nmx),rLnGamAtt(nmx),rLnGamAssoc(nmx),rLnGamFH(nmx) ! These supplement .../FugiParts/
-	DoublePrecision fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),Zrep,Zatt,Zassoc,aRep,aAtt,aAssoc,uAtt,uAssoc
+	DoublePrecision fugRep(nmx),fugAtt(nmx),fugAssoc(nmx),Zrep,Zatt,Zassoc,aRep,aAtt,aAssoc,uRep,uAtt,uAssoc
 END MODULE FugiParts
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE CritParmsDb
@@ -193,7 +193,7 @@ MODULE BIPs	 ! For molecular level binary interaction parameters.
 	DoublePrecision HIJ(nmx,nmx),HTIJ(nmx,nmx) !molecular hBonding BIPs for ESD. (Spead aBipAd,aBipDa are site based.)
 	DoublePrecision Lij(nmx,nmx) !covolume adjustment.  bVolMix=sum(sum(xi*xj*bij)); bij=(1-Lij)*(bi+bj)/2
 	DoublePrecision xsTau(nmx,nmx),xsTauT(nmx,nmx),xsAlpha(nmx,nmx)	!this is for the PRWS/xsNRTL mixing rule.
-	DoublePrecision tDat(maxPts),PDAT(maxPts),XDAT(maxPts),YDAT(maxPts),gamDat(maxPts) !,deviate(maxPts) 
+	DoublePrecision TDAT(maxPts),PDAT(maxPts),XDAT(maxPts),YDAT(maxPts),gamDat(maxPts) !,deviate(maxPts) 
 	!can't include Deviate() cuz it's an argument for LmDif.
 	DoublePrecision pDatMin,pDatMax
 	Integer id1Dat(maxPts),id2Dat(maxPts)  ! sometimes need to indicate whether the data are for comp1 or comp2. e.g. SLE.

@@ -73,8 +73,8 @@ module comflash
         integer, parameter :: st_idx = 15
 
 
-        real(8),parameter :: r = 83.14411d0 ! bar.cm3.mol^(-1).K^(-1)
-        real(8),parameter :: rgas = 8.314411d0 ! J/mol/K
+        real(8),parameter :: r = 83.14462618d0		!83.14411d0 ! bar.cm3.mol^(-1).K^(-1) modified to PGL6ed values
+        real(8),parameter :: rgas = 8.314462618d0	!8.314411d0 ! J/mol/K
         real(8) :: t_ref,v_ref
 
         real(8) :: t0,p0,ntt,vt,mmolt,zt,denst,dropout,zp(phmax)
@@ -1329,7 +1329,7 @@ end module
      &         ((1.d0-r2)*(1.d0-r1)**2)**(1.d0/3.d0) + 1.d0
         etac = 1.d0 / etac
 
-        zc = 1.d0/(3.d0 - etac*(1.d0+r1+r2))
+        zc = 1.d0/(3.d0 - etac*(1.d0+r1+r2))	!r1= -(1+sqrt2), r2 = sqrt2-1 => r1+r2= -1-sqrt2+sqrt2-1 = -2
 
         omegab = zc*etac
 
@@ -2701,7 +2701,7 @@ end module
       implicit none
       integer :: icon,ntyp,mtyp,ierr
       real(8) :: tKelvin,pMPa,zn(ncomax),rho,zFactor,uRes_RT,denom,etaPass !,xFrac(ncomax)
-      real(8) :: aRes_RT,CvRes_R,CpRes_R,dpdRho_RT
+      real(8) :: aRes_RT,hRes_RT,sRes_R,CvRes_R,CpRes_R,dpdRho_RT,sResCheck
       real(8) :: fg(ncomax),ft(ncomax),fp(ncomax),fx(ncomax,ncomax),aux(15)
 	  LOGICAL FORT	! JRE20210615
 !c-----------------------------------------------------------------------------
@@ -2728,8 +2728,13 @@ end module
       rho = pMPa/(zFactor * rgas * tKelvin) !mol/cm3
 	  etaPass=eta ! eta is USEd from comflash, needed for PsatEar
 
-      uRes_RT = aux(3)
-      aRes_RT = aux(4)
+      uRes_RT = aux(3)/(rgas*tKelvin)										
+      aRes_RT = aux(4)/(rgas*tKelvin)
+      uRes_RT = aux(11)										
+      aRes_RT = aux(12)
+      sRes_R  = aux(14)
+      sResCheck=uRes_RT - aRes_RT
+      hRes_RT = aux(1) 
 
       CpRes_R = aux(6)
       CvRes_R = aux(7)
@@ -2766,11 +2771,11 @@ end module
       rho = sum(zn(1:nco)) / vTotCm3 !rho = n / V (mol/cm3)
       zFactor = pMPa / rgas / tKelvin / rho
 
-      uRes_RT = aux(3)
-      aRes_RT = aux(4)
+      uRes_RT = aux(11)
+      aRes_RT = aux(12)
 
-      CpRes_R = aux(6)
-      CvRes_R = aux(7)
+      CpRes_R = aux(6)/rgas
+      CvRes_R = aux(7)/rgas
 
       dpdRho_RT = - aux(8) / rho**2 * 1.0d-12 !aux(10) = (dPdv)/RT (uSI)
 
@@ -2798,7 +2803,7 @@ end module
 !c     ft:     (o):      t-derivative of fg
 !c     fp:     (o):      p-derivative of fg
 !c     fx:     (o):      scaled composition derivative of fg
-!c     aux:    (o):      various residual properties
+!c     aux:    (o):      various residual properties (cf. volgen for defs)
 !c
       use comflash
       implicit none
@@ -2810,7 +2815,7 @@ end module
 !c-----local variables
       integer :: i,j,k,n,ider,istab,icx,i3r,ierr
 !      integer :: i3r
-      real(8) :: v0,lnphi_c(ncomax)
+      real(8) :: v0,lnphi_c(ncomax),rho,zDeTrans
       real(8) :: x(ncomax)
       real(8) :: Cpec,Cvec,eta0,g0,g0r,hec,sec,sumr,sumx
 !c-----------------------------------------------------------------------------
@@ -2902,15 +2907,21 @@ end module
 !c
       if ( ntemp.ne.0 ) then
          call hec_calc(x,t,v0,hec)
+        zDeTrans = z - cm * p0 / rt
+         rho=p0/(zDeTrans*rgas*t)
 !c------excess enthalpy/r stored in aux(3)
-         aux(1) = (hec - cm*p) / rgas
-         sec = hec / t / rgas - g0r !sRes/R = (hRes - gRes)/RT
-!c------excess entropy/r stored in aux(4)
+         aux(1)  = (hec - cm*p) / rgas
+         aux(13) = (hec - cm*p) / rgas/t    ! hRes/RT
+         sec = hec / t / rgas - g0r !sDep/R = (hDep - gDep)/RT
+!c------Sdep/Rgas stored in aux(4)
          aux(2) = sec
+		 aux(14)= sec +LOG(zz)       !Sres/R
+         aux(15)= sec +LOG(zDeTrans)
 !c------excess internal energy/RT stored in aux(11)
-         aux(3) = hec / t / rgas - zz !uRes/RT = (hRes - PV)/RT = hRes/RT - Z
+         aux(11) = hec / t / rgas - (zz-1) !uRes/RT = (hRes - PV)/RT = hRes/RT - Z
 !c------excess Helmholtz energy/RT stored in aux(12)
-         aux(4) = g0r - zz !aRes/RT = (gRes - PV)/RT = gRes/RT - Z
+         aux(12) = g0r - (zz-1) + LOG(zz) !aDep/RT = (gDep - PV)/RT = gDep/RT - Z
+         aux(4) = aux(12) * rgas * t		! aux( 4)=Adep
 !c
 !c     residual cp required
 !c
@@ -2954,7 +2965,7 @@ end module
       end !subroutine cubgen
 !c
 !c-----------------------------------------------------------------------------
-!c
+!c		
       subroutine volgen(t,vv,x,p,fg,ft,fv,fx,aux,ierr)
 	  use GlobConst, only: dumpUnit
       use comflash
@@ -2978,6 +2989,18 @@ end module
 !c       fv    vol-derivative of fg (const temp)        (output)
 !c       fx    comp-derivative of fg (const t. and v)   (output)
 !c       aux   various residual properties              (output)
+!              1=Hdep [J/mol]
+!              2=Sdep [J/molK]
+!              3=Udep [J/mol]
+!              4=Adep [J/mol]
+!              5=excess heat capacity/r (?)
+!              6=(Cp-Cpig)/Rgas
+!              7=(Cv-Cvig)/Rgas
+!              8=dpdv_RT (uSI)
+!              9=dpdt bar --> MPa
+!              10=dvdt  (uSI)
+!              11=Ures/RT
+!              12=Ares/RT
 !c---------------------------------------------------
 !c---  modified and corrected april 2021
 !c---
@@ -3001,11 +3024,11 @@ end module
       call regles_melange(ider,ntemp,x2)
 
 !c     Eta calculation
-      vv2 = vv/sumn + cm !"Detranslation"
+      vv2 = vv/sumn + cm !"Translation". vv is the input value of vTotCm3
       eta = bm/vv2
       if(eta < 0 .or. eta > 1)then
         ierr = 21
-        write (dumpUnit,*) 'volgen: violation of 0 < eta < 1.'
+        write (dumpUnit,'(a,8E12.4)') ' volgen: eta,bm,vv2',eta,bm,vv2
         continue
         return
       endif
@@ -3056,15 +3079,17 @@ end module
             endif
             if ( ntemp.ne.0 ) then
                 call hec_calc(x,t,vv2,hec)
-!c--------------excess enthalpy/r stored in aux(3)
-                aux(1) = (hec - cm*peq) / rgas
+!c--------------excess enthalpy/rt stored in aux(1)
+                aux(1) = (hec - cm*p) / rgas 		 ! JRE I changed peq(bar) to p(MPa)
                 sec = (hec - g0r*rgas*t) / t / rgas
-!c--------------excess entropy/r stored in aux(4)
+!c--------------excess entropy/r stored in aux(2) = Sdep/R.
                 aux(2) = sec
-!c--------------excess internal energy/RT stored in aux(11)
+!c--------------excess internal energy/RT stored in aux(3,11)
                 aux(3) = hec - zz * rgas * t
-!c------ -------excess Helmholtz energy/RT stored in aux(12)
-                aux(4) = g0r - zz * rgas * t
+				aux(11)= aux(3)/rgas/t					!JRE: I added #11, 12.
+!c------ -------excess Helmholtz energy/RT stored in aux(4,12)
+                aux(4) = g0r - zz * rgas * t		! aux( 4)=Adep
+				aux(12)= aux(4)/rgas/t !+ DLOG(zz)		! JRE: aux(12)=Adep/RT, don't subtracd ln(Z) yet. 
 
                 ft(1:n) = dlphidt(1:n) - lnphi_c(1:n) * (dpdt/peq + 1.0d0/t)    !d ln phi(i) / dT
 
@@ -3080,8 +3105,8 @@ end module
             endif
          endif
       endif
-      zz = z - cm * peq / rt
-      aux(5) = (g0r - cm*p / rgas / t) !gRes/RT (J/mol)
+      zz = z - cm * peq / rt	!Zactual=Pbar/RT*(Vtrans-c)
+      aux(5) = (g0r - cm*p / rgas / t) !gDep/RT (J/mol) = GresTrans/RT -pMPa/RT*c
       end ! subroutine volgen()
 !c
 !c-----------------------------------------------------------------------------
@@ -4604,7 +4629,7 @@ end module
        peq = z*rtsb*eta
        dpdeta = (dzdeta*eta + z)*rtsb
        return
-       end
+       end subroutine eqet
 !c
 !c**********************************************************************
 !c
@@ -4625,7 +4650,7 @@ end module
        q = 1.d0/(r1-r2)*DLOG((1.d0-r2*eta)/(1.d0-r1*eta))
 !c
 !c      y = 1 / (1 - eta) = v / (v - bm)
-       lphi0 = dlog(y/z) ! -Ln(z) - Ln[(v-bm)/v] = -lnZ - ln(1-bm*rho)
+       lphi0 = dlog(y/z) ! -Ln(z) - Ln[(v-bm)/v] = -lnZ - ln(1-bm*rho) = -lnZ-ln(1-B/Z)= -lnZ-ln(Z-B)+lnZ=ln(Z-B)
 
        do i=1,nco
           lphi(i) = lphi0 + (z-1.d0)*derbm(i)/bm -q*aai(i)
@@ -7126,13 +7151,13 @@ Subroutine GetPrLorraine(nComps,iErr)
 	endif
 	etaMax=1-zeroTol
 	do i=1,nComps
-		bVolCc_mol(i)=b(i) !found in comflash ~line 109
+		bVolCc_mol(i)=b(i) !found in comflash ~line 109. Divide by 10 because Lorraine assumes Rgas=83.1447.
 	enddo
 	if(LOUDER)then
         write(*,*)'Pure-compound properties'
-        write(*,105)'Component','Tc (K)','Pc (bar)','L','M','N','c (cm3/mol)'
+        write(*,105)'Component','Tc (K)','Pc (bar)','L','M','N','b (cm3/mol)','c (cm3/mol)'
         do i = 1,nco
-            write(*,106)trim( idComp(i,1) ),tc(i),pc(i),parL(i),parM(i),parN(i),c(i)
+            write(*,106)trim( idComp(i,1) ),tc(i),pc(i),parL(i),parM(i),parN(i),b(i),c(i)
         enddo
         !BIP
         write(*,*)
@@ -7142,8 +7167,8 @@ Subroutine GetPrLorraine(nComps,iErr)
         enddo
         write(*,*)
 	endif
-105 FORMAT(T2,A,T28,A,T41,A,T54,A,T65,A,T74,A,T84,A)
-106 FORMAT(T2,A,T25,F10.4,T40,F8.4,T52,F8.4,T63,F8.4,T72,F8.4,T84,F8.3)
+105 FORMAT(T2,A,T28,A,T41,A,T54,A,T65,A,T74,A,T84,A,T96,A)
+106 FORMAT(T2,A,T25,F10.4,T40,F8.4,T52,F8.4,T63,F8.4,T72,F8.4,T84,F8.3,T96,F8.3)
 	return
 end subroutine !GetPrLorraine
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

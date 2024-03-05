@@ -213,7 +213,7 @@ contains
 subroutine load_pure_and_binary_parameters
 
   use BASIC_VARIABLES, only: compna_input
-  use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, dumpUnit !JRE LOUD=.FALSE. to silence I/O feedback.
+  use GlobConst, only: LOUD, bVolCc_mol, bPcSaft, iEosOpt, dumpUnit !JRE LOUD=.FALSE. to silence I/O feedback.
 
   !-----------------------------------------------------------------------------
   integer                                    :: i, j
@@ -465,7 +465,7 @@ end subroutine pcsaft_pure_parameters
 
 subroutine pcsaft_binary_parameters
 
-  use GlobConst, only: LOUD, bVolCc_mol, isPcSaft, iEosOpt, ID, PGLinputDir,dumpUnit !JRE LOUD=.FALSE. to silence I/O feedback.
+  use GlobConst, only: LOUD, bVolCc_mol, bPcSaft, iEosOpt, ID, PGLinputDir,dumpUnit !JRE LOUD=.FALSE. to silence I/O feedback.
   implicit none
 
   !-----------------------------------------------------------------------------
@@ -11208,14 +11208,14 @@ subroutine GetPcSaft(nComps,casrn,iErr)
 	!call read_problem_definition - already done
 	!  Get current directory
     if(LOUDER)write(dumpUnit,*)'GetPcSaft: nComps,casrn=',nComps,casrn
-	isPcSaft=.FALSE.
+	bPcSaft=.FALSE.
     iErr=1
 	if(iEosOpt==10 .or. iEosOpt==15 .or. iEosOpt==16 .or. iEosOpt==20)iErr=0
 	if(LOUDER.and.iErr==1)write(dumpUnit,*)'GetPcSaft: wrong iEosOpt=',iEosOpt
 	if(iErr==1)return
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or other similar.
 	etaMax=0.5D0 ! based on slight extrapolation from "eta_start =" in CalculateSinglePhase. See also Jaubert's paper on anomalies.
-	isPcSaft=.TRUE.
+	bPcSaft=.TRUE.
 	if(iEosOpt==10)then
 		parmFile=TRIM(PGLinputDir)//'\PcSaft_database\pcsaft_pure_parametersGross.txt' 
 		if(LOUDER)write(dumpUnit,*)'parmFile=',TRIM(parmFile)

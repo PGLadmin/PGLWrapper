@@ -293,7 +293,11 @@ end
 		return
 	endif
 	iErrCode=0
-	DO iComp=1,NC
+    if(NC < 1)then
+        iErrCode=11
+        return
+    endif
+    DO iComp=1,NC
 		J=CrIndex(ID(iComp)) !USEd from CritParmsDb
 		if(J==ndb)then		 !This is the indicator that ID(iComp) is not found in Db. cf. LoadCritParmsDb
 			iGotIt=0

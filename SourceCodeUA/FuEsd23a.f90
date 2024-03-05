@@ -143,8 +143,8 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
 	idCas(1:NC)=idCasPas(1:NC) ! workaround after promoting idCas to GlobConst 
-	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isTPT or isPcSaft.
-	isESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI
+	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of bTPT or bPcSaft.
+	bESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI
 	if(LOUDER)write(dumpUnit,*)' GetEsdCas: idCas()=',idCas(1:NC) 
 	if(LOUDER)write(dumpUnit,*)' GetEsdCas: ID()=',ID(1:NC) 
 	if(LOUDER)write(dumpUnit,610)' GetEsdCas: Tc()=',Tc(1:NC)
@@ -835,7 +835,7 @@ end	!subroutine ExactEsd
 		ENDDO
 	endif
 	!I've lost faith in uAssoc for MEM2. Differentiate numerically.
-	if(isTPT)then  ! disables because isESD =/= isTPT. Change to isMEM2 if you want to enable. 
+	if(bTPT)then  ! disables because isESD =/= isTPT. Change to isMEM2 if you want to enable. 
 		Tplus =tKelvin*(1+stepSize)
 		Tminus=tKelvin*(1-stepSize)
 		CALL MEM2(isZiter,Tplus ,xFrac,NC,rho,Zdum,aPlus ,uAssoc,CVI,iErrMEM )! reusing CVI here to avoid replacing fugAssoc

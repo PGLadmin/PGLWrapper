@@ -24,18 +24,29 @@ subroutine GetPrTc(nComps,iErrCode)
 	integer GetBIPs
 	LOGICAL LOUDER
 	LOUDER=LOUD
-	LOUDER=.TRUE.
+	!LOUDER=.TRUE.
 	NC=nComps
     iErrCode=0
 	etaMax=1-zeroTol
 	! note:  bips are passed back through module /BIPs/
-
+    if(ID(1) < 1)then
+        iErrCode=861
+        if(LOUDER)write(dumpUnit,*)' GetPrTc:ID(1) not defined. Did you set ID?'
+        return
+    endif
+	if(Tc(1) < zeroTol)then
+        iErrCode=862
+        if(LOUDER)write(dumpUnit,*)' GetPrTc:Tc(1) not defined. Calling GetCrit.'
+		CALL GETCRIT(nComps,iErrCrit)	! ID() from USEd GlobConst
+        if(iErrCrit /= 0)return
+        iErrCode=0
+    endif       
 	TcEos(1:nComps)=Tc(1:nComps) !This EOS is consistent with experimental values for critical properties.
 	PcEos(1:nComps)=Pc(1:nComps)
 	ZcEos(1:nComps)=Zc(1:nComps)
 
-		inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
-		bipFile=TRIM(PGLinputDir)//'\BipPRtc.txt' ! // is the concatenation operator
+	inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
+	bipFile=TRIM(PGLinputDir)//'\BipPRtc.txt' ! // is the concatenation operator
 	if(LOUD)write(dumpUnit,*)'GetPrTc: inFile= ',TRIM(inFile)
 	open(40,file=inFile,ioStat=ioErr)
 	if(ioErr/=0.and.LOUDER)then
@@ -69,7 +80,8 @@ subroutine GetPrTc(nComps,iErrCode)
 			Pcj(iComp)=PcBar !/10 !JRE changed the database to MPa JRE 20200504
 			IF(idBase==id(iComp))THEN
 				iGotIt=1  !this will kick us to the next component
-				bVolCc_mol(iComp)=OMB*Rgas*TCj(iComp)/PCj(iComp)-cVolCc_mol(iComp)
+				bVolCc_mol(iComp)=OMB*Rgas*TCj(iComp)/PCj(iComp)
+				!bVolCc_mol(iComp)=bVolCc_mol(iComp)+cVolCc_mol(iComp)
 				if(LOUDER)write(dumpUnit,'(i7,5f13.4)')ID(iComp),alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp) &
 				                                                                                                     ,tKmin(iComp)
 				if(LOUDER)write(dumpUnit,'(a,5f13.4)')' Jaubert Tc,Pc,acen,bVol= ', Tcj(iComp),Pcj(iComp),acenj(iComp), &
@@ -196,7 +208,7 @@ end	!Subroutine SetParPurePrTc
 	!
 	!   NOTE:           UNITS OF ALL THE INPUTS SHOULD BE
 	!                   CONSISTENT WITH UNITS OF Rgas.  EXCEPT
-	!                   FOR THIS, THE USER MAY CHOOSE HIS OWN UNITS.
+	!                   FOR THIS, THE USER MAY CHOOSE THEIR OWN UNITS.
 	!
 	!   REQD. ROUTINES:
 	!         THE USER MUST SUPPLY A ROUTINE FOR CALCULATING BINARY
@@ -216,9 +228,7 @@ end	!Subroutine SetParPurePrTc
 	!         ACTION,SRKNR
 	!
 	!   SUBPROGRAM RESTRICTIONS:
-	!         AS WRITTEN, THE MAXIMUM NUMBER OF COMPONENTS
-	!         THAT CAN BE CONSIDERED IS TEN.  THIS RESTRICTION CAN BE
-	!         OVERCOME BY CHANGING THE DIMENSION STATEMENTS.
+	!         THIS VERSION DOES NOT IMPLEMENT GE MIXING RULES. USE PrTcLorraine FOR THAT.
 	!
 	!   GENERAL COMMENTS:
 	!         BRIEFLY, THE ALGORITHM CALLS FOR THE CALCULATION
@@ -231,11 +241,8 @@ end	!Subroutine SetParPurePrTc
 	!
 	!   REFERENCES:
 	!		  J.R. Elliott, C.T. Lira, Introductory Chemical Engineering Thermodynamics, p 334 (1999). 2ed p262 (2012).
-	!		
 	!         PENG, D-Y, ROBINSON, D.B. IEC Fun,15: 59–64
-	!
 	!         SOAVE, G., CHEM. ENG. SCI., 27:1197 (1972).
-	!
 	!         Cismondi: J. Chem. Eng. Data 2019, 64, 2093-2109
 	!         Jaubert:FPE, 429 (2016) 301-312
 	!
@@ -247,18 +254,21 @@ end	!Subroutine SetParPurePrTc
 	DoublePrecision FUGC(NC),xFrac(NC),gMol(NC) 
 	DoublePrecision ALA(nmx,nmx),TdLAL_dT(nmx),T2d2LAL_dT2(nmx),NdC_b_dni
     DoublePrecision argLog,tKelvin,eta,zFactor !,bVol(nmx)
+	character*77 errMsg(0:22),errMsgPas
+    LOGICAL LOUDER
 	data initCall/1/
 	!  prBIPs are passed in from GetPrBIPs()
 	iErrZ=0
-	!if(zFactor < BIGB)iErrZ=13
-	!IF( (zFactor+(1+sqrt2)*BIGB) < 0) iErrZ=14
-	!IF(dChemPo > 33) iErrZ=15
-	!if(iErrZ=6)'FuPrTcVtot: 0~cmprsblty=',cmprsblty
-	!if(iErrTmin.ne.0)iErrZ=5
-	!iErrZ=17  if dChemPo > 33
-	
+    errMsg(0)='FuPrTcVtot: No problem'
+    errMsg(5)='FuPrTcVtot: warning. tKelvin < TKmin for this EOS.'
+    errMsg(13)='(zFactor < BIGB)iErrZ=13'
+    errMsg(14)='(zFactor+(1+sqrt2)*BIGB) < 0) iErrZ=14'
+    errMsg(15)='(dChemPo > 33) iErrZ=15'
+    errMsg(16)='FuPrTcVtot: 0~cmprsblty. Cannot divide.'
+	LOUDER=LOUD
+    LOUDER=.TRUE.
 	!  COMPUTE THE MOLECULAR PARAMETERS A AND B AND THEIR CROSS COEFFS
-	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot:OMA,OMB',OMA,OMB
+	if(LOUDER.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot:OMA,OMB',OMA,OMB
 	totMol=sum(gMol(1:NC))
 	if( vTotCc < 1E-11 .and. LOUD)write(dumpUnit,*)'FuPrTcVtot: 0 ~ vTotCc=',vTotCc
 	rhoMol_cc=totMol/vTotCc
@@ -266,9 +276,9 @@ end	!Subroutine SetParPurePrTc
 	iErrTmin=0
 	TcVolatile=1234
 	do iComp = 1,NC
-		if(PCj(iComp)==0)then
+		if(PCj(iComp)<zeroTol.or.TCj(iComp)<zeroTol)then
 			iErrZ=11
-			if(LOUD)write(dumpUnit,'(a,F7.2,5F8.3)')' FuPrTcVtot: nonsense input. Tc,Pc,L,M,N,c: ',TCj(iComp),PCj(iComp), &
+			if(LOUDER)write(dumpUnit,'(a,F7.2,5F8.3)')' FuPrTcVtot: nonsense input. Tc,Pc,L,M,N,c: ',TCj(iComp),PCj(iComp), &
 			                                              alphaL(iComp),alphaM(iComp),alphaN(iComp),cVolCc_mol(iComp),tKmin(iComp)
 			cycle
 		endif
@@ -307,13 +317,13 @@ end	!Subroutine SetParPurePrTc
 	enddo
 	if( tKelvin < tKmin(iVolatile) )iErrTmin=1
 	if(iErrTmin.ne.0)then
-		if(LOUD.and.initCall==1)write(dumpUnit,'(a,5f8.2)' )' FuVtot: T,Tmin(i)',tKelvin,( tKmin(i),i=1,NC)
+		if(LOUD.and.initCall==1)write(dumpUnit,'(a,5f8.2)' )' FuPrTcVtot: T,Tmin(i)',tKelvin,( tKmin(i),i=1,NC)
 		iErrZ=5
 	endif
 	if(iErrZ>10)return
 	eta=bMix*rhoMol_cc
 	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot: eta,bMix',eta,bMix
-	if(LOUD.and.initCall==1)write(dumpUnit,'(a,3(1PE11.4))')' FuPrTcVtot:TdLAL_dT,T2d2LAL_dT2',TdLAL_dT(1),T2d2LAL_dT2(1)
+	if(LOUD.and.initCall==1)write(dumpUnit,'(a,3(E11.4))')' FuPrTcVtot:TdLAL_dT,T2d2LAL_dT2',TdLAL_dT(1),T2d2LAL_dT2(1)
 	if(ABS(totMol-1) > 1e-5)then
 		if(LOUD)write(dumpUnit,*) 'FuPrTcVtot warning: totMol= ',totMol
 		!iErrZ=2
@@ -343,8 +353,18 @@ end	!Subroutine SetParPurePrTc
 	if(aMix < zeroTol .and. LOUD)write(dumpUnit,*)'FuPrTcVtot:0~aMix,aCrit,alpha,Tr=',aMix,aCrit,alpha,Tr
 	if(bMix < zeroTol .and. LOUD)write(dumpUnit,*)'FuPrTcVtot:bMix~0=',bMix
 
-	eta=bMix*rhoMol_Cc
 	crho=cMix*rhoMol_Cc
+	eta=bMix*rhoMol_Cc+crho
+    vTotCc_mol=vTotCc/totMol
+    vTrans=vTotCc_mol+cMix	!translation
+    eta=bMix/vTrans			!eta=bMix/(vTotCc_mol+cMix)
+    if(eta > 1 .or. eta < zeroTol)then
+        write(dumpUnit,*)'FuPrTcVtot: eta out of bounds. eta=',eta
+        !if(LOUDER)pause 'Check eta'
+        iErrZ=14
+        return
+    endif
+	c_b = cMix/bMix
 	!write(dumpUnit,*)'FuPrTcVtot: eta,bMix,cMix=',eta,bMix !,cMix
 
 
@@ -359,7 +379,6 @@ end	!Subroutine SetParPurePrTc
 !       1+di*y = 0 => di = -1/yi; yi = [ -bq +/- sqrt(bq^2 - 4cq) ]/2; 
 !        denom = [ (1+d1y)(1+d2y) ] = 1 + (d1+d2) y + d1d2 y^2 => bq = (d1+d2) = C+1; -cq = -d1*d2 = 1-2(c/b)^2 = C    ; 
 !           d2 = cq/d1 => d1 + cq/d1 = bq => d1^2 + cq -bqd1 = 0 => d1 = ( bq +/- sqrt(bq^2-4*cq) )/2	= (bq +/- sqrtNqq)/2
-	c_b = cMix/bMix
 	bq=2+4*c_b
 	cq= 2*(c_b)*(c_b)-1
 	! qq = -(bq^2-4cq) ; sqrtNqq=sqrt(-qq) = (d1-d2)=(1+c/b)*sqrt8
@@ -370,12 +389,18 @@ end	!Subroutine SetParPurePrTc
 	zRep=eta * dArep_dEta
 	d1=1+sqrt2+c_b*(2+sqrt2) !=( bq+sqrtNqq )/2=[(2+4x)+(1+x)sqrt8]/2 = 1+2x+(1+x)*sqrt2 = 1+sqrt2+x*(2+sqrt2) ! = 2cq/(bq-sqrtNqq)
 	d2=1-sqrt2+c_b*(2-sqrt2) !=( bq-sqrtNqq )/2=[(2+4x)-(1+x)sqrt8]/2 = 1+2x-(1+x)*sqrt2 = 1-sqrt2+x*(2-sqrt2) ! = 2cq/(bq+sqrtNqq)
+	r1=1+sqrt2 !+(2+sqrt2) !=( bq+sqrtNqq )/2=[(2+4x)+(1+x)sqrt8]/2 = 1+2x+(1+x)*sqrt2 = 1+sqrt2+x*(2+sqrt2) ! = 2cq/(bq-sqrtNqq)
+	r2=1-sqrt2 !+(2-sqrt2) !=( bq-sqrtNqq )/2=[(2+4x)-(1+x)sqrt8]/2 = 1+2x-(1+x)*sqrt2 = 1-sqrt2+x*(2-sqrt2) ! = 2cq/(bq+sqrtNqq)
 	!  2	  +c_b*2          = d1+d2 = 2*(1+x)
 	denom = 1+eta*bq + cq*eta*eta ! (1+d1*eta)*(1+d2*eta) = (1+(d2+d1)*eta+d1*d2*eta^2); 
-	dAatt_dEta= -aMix/(bMix*Rgas*tKelvin)/denom	 ! Jaubert Eq.7
+    denom=(1+r1*eta)*(1+r2*eta)
+    a_bRT=aMix/(bMix*Rgas*tKelvin)
+	dAatt_dEta= -a_bRT/denom	 ! Jaubert Eq.7
 	zAtt=eta*dAatt_dEta
-	zFactor = 1+zRep+zAtt 
-	pMPa=zFactor*rhoMol_Cc*Rgas*tKelvin
+	zTrans = 1+zRep+zAtt 
+	pMPa=zTrans*Rgas*tKelvin/bMix*eta
+    translation=cMix*pMPa/Rgas/tKelvin
+    zFactor=zTrans -translation	! deTranslation Z=P*Vtrans/RT-cm*P/RT=P*vTotCc_mol/RT=zTrans*vTotCc_mol/vTrans
 
 	!write(dumpUnit,*)'qq,sqrt(-qq)',qq,sqrtNqq
 	!write(dumpUnit,*)'b,c/b',bMix,c_b
@@ -385,20 +410,23 @@ end	!Subroutine SetParPurePrTc
 	!write(dumpUnit,*)'d1-,d2-',d1Minus,d2Minus
 	BIGA = aMix*pMPa/(Rgas*Rgas*tKelvin*tKelvin)
 	BIGB = bMix*pMPa/(Rgas*tKelvin)
-	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot: zFactor,pMPa=',zFactor,pMPa
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot: zTrans,pMPa=',zTrans,pMPa
 	!
 	!  CALCULATE FUGACITY COEFFICIENTS OF INDIVIDUAL COMPONENTS
 	!
-	!BIGMES=BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
+	!BIGMES=BIGA/BIGB/sqrt8*DLOG( (zTrans+(1+sqrt2)*BIGB)/(zTrans+(1-sqrt2)*BIGB) )
 	!argLog1 = (2*cq*eta+bq-sqrtNqq)/(2*cq*eta+bq+sqrtNqq)	! argLog1 may be < 0, but then so is argLog2
 	!argLog2 = (         bq-sqrtNqq     )/(         bq+sqrtNqq     )
 	argLog1 = 1+d1*eta
 	argLog2 = 1+d2*eta
 
 	argLog = argLog1/argLog2
-	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot: argLog1,2=',argLog1,argLog2
+    argLog = (1+r2*eta)/(1+r1*eta)
+    denom_r2r1= -sqrt8	! Jaubert sets r2= -2.414 and r1= +0.414 but we apply opposite signs here. So 1/(r2-r1)is +ve here.
+	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTcVtot: argLog0,1,2=',argLog,argLog1,argLog2
 	if(loud .and. argLog < zeroTol)write(dumpUnit,*) 'FuPrTcVtot: argLog 1or2 < 0',argLog1,argLog2
 	aResAtt= -BIGA/BIGB/sqrtNqq*DLOG( argLog )
+	aResAtt= -BIGA/BIGB/denom_r2r1*DLOG( argLog )
 	!write(dumpUnit,*)'a/bRT,alpha', BIGA/BIGB,alpha
 	!write(dumpUnit,*)'zAtt,aAtt',zAtt,aResAtt
 	aAttRKPR = -BIGA/BIGB/(d1-d2)*DLOG( (1+d1*eta)/(1+d2*eta) )
@@ -407,7 +435,7 @@ end	!Subroutine SetParPurePrTc
 	!write(dumpUnit,*)'RKPR: zAtt,aAtt',zAttRKPR, aAttRKPR
 	!write(dumpUnit,*)'denom: tcPR,RKPR', denom,denomRKPR
 	!write(dumpUnit,*)'check values'
-	!BIGMESOld=BIGA/BIGB/sqrt8*DLOG( (zFactor+(1+sqrt2)*BIGB)/(zFactor+(1-sqrt2)*BIGB) )
+	!BIGMESOld=BIGA/BIGB/sqrt8*DLOG( (zTrans+(1+sqrt2)*BIGB)/(zTrans+(1-sqrt2)*BIGB) )
 	!write(dumpUnit,*)'BigMes,BigMesOld:',BigMes,BigMesOld
 	aRes= -LOG(1-eta) + aResAtt
 	!uDep/RT = beta*d(A/RT)/dBeta = -T*d(A/RT)/dT = -T* [-A/RT^2 + (1/RT)*dA/dT ] = A/RT - (dA/dT)/R = A/RT*[1-(T/alpha)*dAlpha/dT]
@@ -435,14 +463,14 @@ end	!Subroutine SetParPurePrTc
 	! Z = P/rhoRT => dZ/dRho = (P/RT)(-1/rho^2) + 1/(rhoRT)*dP/dRho; rho*dZ/dRho = (P/RT)(-1/rho) + 1/(RT)*dP/dRho; 
 	!cmprsblty=(dP/dRho)T*(1/RT) = Z+rho*dZ/dRho 
 	dZ_dEta = 1/( voidFrac*voidFrac ) + dAatt_dEta + eta*d2Aatt_dEta2
-	cmprsblty=zFactor+eta*dZ_dEta
+	cmprsblty=zTrans+eta*dZ_dEta
 	!cmprsblty=cmprsblty*1.804 ! dunno why, but works for CH4.
 	!PGL6edEq.6.24=> CpRes_R = CvRes_R-1-[Z+TdZ/dT]^2/[Z+rho*dZ/dRho]
 	if( ABS(cmprsblty) > 1.D-11)then
-		!if(LOUD)write(dumpUnit,*)'(dP/dT)/rhoR=',(zFactor+TdZ_dT)
+		!if(LOUD)write(dumpUnit,*)'(dP/dT)/rhoR=',(zTrans+TdZ_dT)
 		! Z=1/(1-eta)-a/bRT*F(eta)=> T*dZ_dT= +a/bRT*F(eta)-F(eta)/bRT*T*da/dT = ZATT*(-1+TdaMixDt/a)
 		TdZ_dT = ZATT*(-1+TdaMixDt/aMix)
-		CpRes_R = CvRes_R-1 + (zFactor+TdZ_dT)*(zFactor+TdZ_dT)/cmprsblty
+		CpRes_R = CvRes_R-1 + (zTrans+TdZ_dT)*(zTrans+TdZ_dT)/cmprsblty
 	else
 		if(LOUD)write(dumpUnit,*)'FuPrTcVtot: 0~cmprsblty=',cmprsblty
 		iErrZ=6
@@ -451,7 +479,7 @@ end	!Subroutine SetParPurePrTc
 
 	if(isZiter.ne.0)goto 861  ! It's good to know cmprsblty even if isZiter==1. e.g. slope of spinodal, critPure, ...
 
-	if(zFactor < BIGB)then
+	if(zTrans < BIGB)then
 		iErrZ=13
 		goto 861
 	endif
@@ -461,18 +489,21 @@ end	!Subroutine SetParPurePrTc
 		DO jComp=1,NC
 			SUMXA = SUMXA + xFrac( jComp)*ALA(iComp,jComp)
 		enddo
-
-		IF( (zFactor+(1+sqrt2)*BIGB) < 0 .or. zFactor < BIGB) THEN
+		SUMXAi=sum( xFrac(1:NC)*ALA(iComp,1:NC) )
+		IF( (zTrans+(1+sqrt2)*BIGB) < 0 .or. zTrans < BIGB) THEN
 			!	AVOID CALCULATION OF NEGATIVE LOGARITHMS BUT INDICATE ERROR.
 			ChemPoRes = 33
 			iErrZ=14
 		ELSE
 			NdC_b_dni= ( cVolCc_mol(iComp) - cMix*bVolCc_mol(iComp)/bMix )/bMix	!NOTE: declared DoublePrecision.
 			!BIGB=b*P/RT  ; c_b = cMix/bMix
-			ChemPoRes = bVolCc_mol(iComp)/bMix*(zFactor-1) - DLOG(1-eta) & 
-			!+ aResAtt*( 2*SUMXA/aMix - bVolCc_mol(ICOMP)/bMix ) + zFactor*(cMix-cVolCc_mol(iComp))*rhoMol_cc ! Privat(2016a) Eq 14
-			+ aResAtt*( 2*SUMXA/aMix - bVolCc_mol(ICOMP)/bMix - NdC_b_dni/(1+c_b) ) &
+			ChemPoRep = -DLOG(1-eta) -DLOG(zTrans)
+			!+ aResAtt*( 2*SUMXA/aMix - bVolCc_mol(ICOMP)/bMix ) + zTrans*(cMix-cVolCc_mol(iComp))*rhoMol_cc ! Privat(2016a) Eq 14
+			ChemPoRes=ChemPoRep+ aResAtt*( 2*SUMXA/aMix - bVolCc_mol(ICOMP)/bMix - NdC_b_dni/(1+c_b) ) &
 			+ zAtt*(1-eta)*NdC_b_dni/(1+c_b)  
+			ChemPoRes=ChemPoRep+ aResAtt*( 2*SUMXA/aMix - bVolCc_mol(ICOMP)/bMix ) !- NdC_b_dni/(1+c_b) ) &
+            ChemPoRes=ChemPoRep + (zTrans-1)*bVolCc_mol(ICOMP)/bMix + aResAtt*(2*SUMXAi/aMix-bVolCc_mol(ICOMP)/bMix)
+            !ChemPoRes=ChemPoRes+DLOG(zTrans)
 		END IF
 		IF(ChemPoRes > 33) THEN
 			!	AVOID EXPONENT OVERFLOW. DON'T INDICATE ERROR. IT MAY BE N-HEXANE AT P>1GPa AND 298K.
@@ -480,18 +511,28 @@ end	!Subroutine SetParPurePrTc
 			ChemPoRes = 33
 		endif
 		FUGC(ICOMP) = (ChemPoRes)
-	enddo
+    enddo
+    HTrans=Ures+zTrans-1
+    Gtrans=SUM( xFrac(1:NC)*FUGC(1:NC) )
+    SdepTrans=Htrans-Gtrans
+    SresTrans=SDepTrans-DLOG(zTrans)
+    GresTrans=Gtrans+DLOG(zTrans)
+    AresCheck=GresTrans-(zTrans-1)			! this value is the same as Ares_RT above (in trans space). OK!
+    pMPa=zTrans*Rgas*tKelvin/bMix*eta		! line 4620 of PrLorraine
+    translation=cMix*pMPa/Rgas/tKelvin
+    zFactor=zTrans -translation	! deTranslation Z=P*Vtrans/RT-cm*P/RT=P*vTotCc_mol/RT=zTrans*vTotCc_mol/vTrans
+    Gdep_RT=Gtrans -translation
+    Hdep_RT=HTrans -translation
+    Sdep_R =Hdep_RT-Gdep_RT
+    Adep_RT=Gdep_RT-(zFactor-1)
+    Ures_RT=Hdep_RT-(zFactor-1)
+    Gres_RT=Gdep_RT+DLOG(zTrans)
+    Ares_RT=Gres_RT-(zFactor-1)
+    Sres_R =Ures_RT-Ares_RT
 	if(LOUD.and.initCall==1)write(dumpUnit,*)'FUGC(1-NC)',(fugc(i),i=1,nc)
-!	if(LIQ.eq.0)then
-!	  etaV=BIGB/zFactor
-!	  zFactorV=zFactor
-!	ELSE
-!	  etaL=BIGB/zFactor
-!	  zFactorL=zFactor
-!	ENDIF
-
 861	continue
-	initCall=0	 
+	initCall=0
+	errMsgPas=errMsg(iErrZ)	 
 	RETURN
 	END	!Subroutine FuPrTcVtot()
 
@@ -595,6 +636,7 @@ end	!Subroutine SetParPurePrTc
 	xFrac(1:NC)=gMol(1:NC)/totMoles
 	if( ABS(totMoles-1) > zeroTol .and. LOUD)write(dumpUnit,*)'FuPrTc: ??? totMoles,x(1)=',totMoles,xFrac(1) 
 	bMix=SUM( xFrac(1:NC)*bVolCc_mol(1:NC) )
+	cMix=SUM( xFrac(1:NC)*cVolCc_mol(1:NC) )
 	if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTc: bMix=',bMix
 	aRes=86.8686	  ! initialize to avoid NAN on error return
 	uRes=86.8686
@@ -607,7 +649,7 @@ end	!Subroutine SetParPurePrTc
 	pb_RT = pMPa*bMix/(Rgas*tKelvin)
 	eta=pb_RT/1.001d0  	!super high pressures can generate eta>1 because Z>>1. Check eta in if() below.
 	if(LIQ==1 .or. LIQ==3 .or. eta>etaMax)eta=etaMax/1.001d0 !organize to improve precision when P~1E-11.
-	rhoMol_Cc=eta/bMix
+    rhoMol_cc=1/(bMix/eta-cMix)	!eta=bMix/(1/rhoMol_cc+cMix), 1/rhoMol_cc=bMix/eta-cMix
 	if(LOUD.and.initCall==1)write(dumpUnit,'( a,3(1PE11.4) )')' FuPrTc: 1st FuVtot. rhoMol_cc,eta=', rhoMol_cc,eta 
 	call FuPrTcVtot(isZiter,tKelvin,1/rhoMol_Cc,xFrac,NC,FUGC,zFactor,aDep,uDep,iErrZ)
 	!write(dumpUnit,*)'check initial values'
@@ -641,7 +683,7 @@ end	!Subroutine SetParPurePrTc
 			if(LOUD)write(dumpUnit,*) 'FuPrTc: eta > 1. nIter=',nIter
 			!if(LOUD)pause
 		endif
-		rhoMol_cc=eta/bMix
+		rhoMol_cc=1/(bMix/eta-cMix)	!eta=bMix/(1/rhoMol_cc+cMix), 1/rhoMol_cc=bMix/eta-cMix
 		vTotCc=totMoles/rhoMol_cc
 		if(LOUD.and.initCall==1)write(dumpUnit,*)'FuPrTc:',NITER,'th FuVtot. eta=', eta 
 		call FuPrTcVtot(isZiter,tKelvin,vTotCc,xFrac,NC,FUGC,zFactor,aDep,uDep,iErrZ)
@@ -703,7 +745,7 @@ end	!Subroutine SetParPurePrTc
 		!call BeepMsg(errMsg(iErr))
 	endif
 	!  ITERATION ON RHO HAS CONCLUDED.  GET DEPARTURES AND FUGACITY COEFFS.
-	rhoMol_cc=eta/bMix
+	rhoMol_cc=1/(bMix/eta-cMix)	!eta=bMix/(1/rhoMol_cc+cMix), 1/rhoMol_cc=bMix/eta-cMix
 	vTotCc=totMoles/rhoMol_cc
     if(LIQ > 1)goto 861
 	!
