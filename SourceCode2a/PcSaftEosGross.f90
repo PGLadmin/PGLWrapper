@@ -11166,7 +11166,7 @@ end subroutine jacobi_eigenvalue
 subroutine GetPcSaft(nComps,casrn,iErr)
 	!USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
 	!use input_output, only: read_problem_definition
-	use GlobConst ! e.g.: LOUD, bVolCc_mol, isPcSaft, iEosOpt, SetNewEos, PGLinputDir,pi,avoNum,Tc,Pc,Zc,TcEos,PcEos,ZcEos,tKmin,ID
+	use GlobConst ! e.g.: LOUD, bVolCc_mol, bPcSaft, iEosOpt, SetNewEos, PGLinputDir,pi,avoNum,Tc,Pc,Zc,TcEos,PcEos,ZcEos,tKmin,ID
 	use BASIC_VARIABLES, only: ncomp, t_input, p_input, x_input, compna_input
 	use PARAMETERS, only: dp, nsite
 	use eos_constants
