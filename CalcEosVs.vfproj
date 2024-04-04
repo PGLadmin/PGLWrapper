@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioProject ProjectCreator="Intel Fortran" Keyword="Console Application" Version="11.0" ProjectIdGuid="{3B35F66C-ABB1-403A-8AB6-17C76D5C735D}">
+	<Platforms>
+		<Platform Name="Win32"/>
+		<Platform Name="x64"/></Platforms>
+	<Configurations>
+		<Configuration Name="Debug|Win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Debug|x64">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|Win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|x64">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
+	<Files>
+		<Filter Name="Header Files" Filter="fi;fd;h;inc"/>
+		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
+		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\0ModuleUAData.f90"/>
+		<File RelativePath="..\CalcEos\SourceCode23a\CR2e.f90"/>
+		<File RelativePath="..\..\..\MINPACK\DEIGSRT.FOR"/>
+		<File RelativePath="..\..\..\MINPACK\DGAUSSJ.FOR"/>
+		<File RelativePath="..\..\..\MINPACK\DPYTHAG.FOR"/>
+		<File RelativePath="..\..\..\MINPACK\DTQLI.FOR"/>
+		<File RelativePath="..\..\..\MINPACK\DTRED2.FOR"/>
+		<File RelativePath="..\CalcEos\SourceCode23a\Flashsubs1b.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\FuEsd23a.f90"/>
+		<File RelativePath="..\CalcEos\SourceCode23a\FuFloryWert2a.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\FugiLSG-MEM2.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\FugiNRTL.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\FugiPr2a.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\FugiPrTc.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\fugiPRtcWS.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\fugiPRWS1a.for"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\FuSpeadmd23a.f90"/>
+		<File RelativePath="..\..\..\MINPACK\INDEXX.FOR"/>
+		<File RelativePath="..\..\..\MINPACK\LmdifEzCov2.for"/>
+		<File RelativePath="..\CalcEos\SourceCode23a\MainMenu2d.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\MEM2.f90"/>
+		<File RelativePath="..\CalcEos\SourceCode23a\MenuItems2c.f90"/>
+		<File RelativePath="..\..\..\MINPACK\MinTools.for"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCode2a\PcSaftEosGross.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\PGLDLL.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\PGLFugiDefs.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCode2a\PrLorraine.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\UaDataTools.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\UaEosTools.f90"/>
+		<File RelativePath="..\..\..\PGLWrapper\SourceCodeUA\Wertheim23a.f90"/></Filter></Files>
+	<Globals/></VisualStudioProject>

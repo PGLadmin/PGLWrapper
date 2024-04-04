@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioProject ProjectCreator="Intel Fortran" Keyword="Dll" Version="11.0" ProjectIdGuid="{3016B63B-4466-448E-A31C-65C0B0EA0971}">
+	<Platforms>
+		<Platform Name="Win32"/></Platforms>
+	<Configurations>
+		<Configuration Name="Debug|Win32" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" DebugParameter="debugParameterAll" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" AssemblyDebug="linkAssemblyDebugFull" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|Win32" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
+	<Files>
+		<Filter Name="Header Files" Filter="fi;fd;h;inc"/>
+		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
+		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
+		<File RelativePath=".\SourceCodeUA\0ModuleUAData.f90"/>
+		<File RelativePath=".\SourceCodeUA\FuEsd23a.f90"/>
+		<File RelativePath=".\SourceCodeUA\FugiLSG-MEM2.f90"/>
+		<File RelativePath=".\SourceCodeUA\FugiNRTL.f90"/>
+		<File RelativePath=".\SourceCodeUA\FugiPr2a.f90"/>
+		<File RelativePath=".\SourceCodeUA\FugiPrTc.f90"/>
+		<File RelativePath=".\SourceCodeUA\fugiPRtcWS.f90"/>
+		<File RelativePath=".\SourceCodeUA\fugiPRWS1a.for"/>
+		<File RelativePath=".\SourceCodeUA\FuSpeadmd23a.f90"/>
+		<File RelativePath=".\SourceCodeUA\MEM2.f90"/>
+		<File RelativePath=".\SourceCode2a\PcSaftEosGross.f90"/>
+		<File RelativePath=".\SourceCodeUA\PGLDLL.f90"/>
+		<File RelativePath=".\SourceCodeUA\PGLFugiDefs.f90"/>
+		<File RelativePath=".\SourceCode2a\PrLorraine.f90"/>
+		<File RelativePath=".\SourceCodeUA\UaDataTools.f90"/>
+		<File RelativePath=".\SourceCodeUA\UaEosTools.f90"/>
+		<File RelativePath=".\SourceCodeUA\Wertheim23a.f90"/></Filter></Files>
+	<Globals/></VisualStudioProject>
