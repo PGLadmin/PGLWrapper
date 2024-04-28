@@ -257,7 +257,7 @@ Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 
     NC=1 !assume one component for all calculations (as of 1/1/2020 this is all we need).
     xFrac(1)=1  !   "
-    if(isTDE)open(dumpUnit,file=dumpFile)
+    if(LOUD.and.isTDE)open(dumpUnit,file=dumpFile)
     if(iEosOpt/=ieos)then
         if(LOUD)write(dumpUnit,611)'CalculateProperty1local: failed ieos check. iEosOpt=',iEosOpt
         iErr=15
