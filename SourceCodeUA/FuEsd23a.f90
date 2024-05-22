@@ -471,7 +471,7 @@ subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 		c(i) = cShape
 		q(i) = qShape
 		eokP(i)=TC(i)*rlnY1
-		bVolCc_mol(i)=8.314*Tc(i)/Pc(i)*Bc
+		bVolCc_mol(i)=Rgas*Tc(i)/Pc(i)*Bc
 		vx(i)=bVolCc_mol(i)
 	enddo
 	return
