@@ -1,7 +1,7 @@
 !MAIN PROGRAM FOR CALLING PGLDLL.DLL. This is untested code using iso_c_binding
+	USE GlobConst
 	character(255) errMsg 
     character*255 tag, value,hello !, local
-    LOGICAL LOUD
 
 INTERFACE
 	integer function InitPGLDLL(hello)
@@ -31,6 +31,27 @@ INTERFACE
 		double Precision var1, var2
 	end function CalculateProperty
 END INTERFACE
+  integer i1, cnt, clen, status, nbsl
+  character arg*100,cmd*100
+  call get_command (cmd, clen, status)
+  call get_command_argument (0, cmd, clen, status)
+  cnt = command_argument_count ()
+  do i1 = 1, cnt
+     call get_command_argument (i, arg, clen, status)
+  end do
+        MasterDir='c:\PGLWrapper'
+        nbsl=0
+        do i1=100,1,-1
+            if (cmd(i1:i1).eq.'\') then
+                nbsl=nbsl+1
+                if (nbsl.eq.2) then
+                    MasterDir=cmd(1:i1-1)
+                    PGLInputDir=trim(masterDir)//'\input'
+                exit
+                end if
+            end if
+		enddo
+        
     !tag='LOCATION'
     !value='c:\PGLWrapper|'
     !iErr=SetString(tag,value)

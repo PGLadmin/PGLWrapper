@@ -96,7 +96,6 @@ integer function InitPGLDLL(errMsg)
         dumpUnit=686
     else
 	    LOUD=.TRUE.
-        MasterDir='c:\PGLWrapper'
 	    PGLInputDir=TRIM(masterDir)//'\Input'
         dumpUnit=686
 	    !dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
