@@ -363,18 +363,17 @@ END MODULE SpeadParms
 		if(iErrCode.ne.0) write(dumpUnit,*)'GetTpt: bipFile read error=',iErrCode
     end if
 
-	!load aBipAD matrix
-		bipHbFile=TRIM(PGLinputDir)//'\BipDA.txt' ! // is the concatenation operator
+	!load aBipDA matrix
+    bipHbFile=TRIM(PGLinputDir)//'\BipDA.txt' ! // is the concatenation operator
 	!if(LOUDER)write(dumpUnit,*)'GetTpt: Only BipDA is needed.'
 	call GetAssocBips(bipHbFile,aBipDA,ierABip) !in WertheimVv.f90. idLocalType,nTypesTot USE Assoc 
+    bNeedFullWertheim=.FALSE.
 	do i=1,nTypesTot
 		do j=1,nTypesTot
-			aBipAD(j,i)=aBipDA(i,j)
+			aBipAD(j,i)=aBipDA(i,j) !e.g., the acceptor on j is the same for ADji as for DAij.
+            if( ABS(aBipDA(i,j)) > zeroTol) bNeedFullWertheim=.TRUE.
 		enddo
 	enddo
-
-	!load aBipDA matrix
-
 	if(LOUDER)THEN ! DISPLAY RELEVANT kijAD
 		write(dumpUnit,*)'bipHbFile=',TRIM(bipHbFile)
 		write(dumpUnit,*)' Solvation BIPs'

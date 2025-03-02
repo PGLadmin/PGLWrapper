@@ -1,4 +1,3 @@
-
 	!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	!  ELLIOTT'S SUBROUTINE 
 	!  20221202 Initial adaptation of MEM2 for speadmd. 
@@ -7,7 +6,9 @@
 	USE GlobConst
 	USE Assoc ! XA,XD,XC,NAcceptors(nmx),NDonors(nmx),NDegree(nmx),...
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (FA,FD) AND properties (zAssoc, lnPhiAssoc,...) given T,rho,x
-	!  Reference: Elliott, IECR, 61(42):15724 (2022). doi: 10.1021/acs.iecr.2c02723
+	!  References: 
+    !		Elliott, IECR, 61(42):15724 (2022). doi.org/10.1021/acs.iecr.2c02723
+    !       Elliott, JCED, 69:458–471 (2024). doi.org/10.1021/acs.jced.3c00394
 	!  INPUT:
 	!  isZiter = 1 if only zAssoc,aAssoc are required (for zFactor iterations), 0 for lnPhiAssoc,uAssoc, -1 if Cv etc are required.
 	!  tKelvin = T(K), real*8

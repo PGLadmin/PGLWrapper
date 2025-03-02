@@ -34,7 +34,7 @@ MODULE GlobConst
 	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)
 	          !avoNum[=]cm3/(nm3*mol), kB[=]MPa.nm3/K. cf. PGL6ed, Table 6.1
 	!          https://www.nist.gov/si-redefinition 
-	PARAMETER (nCritSet=1761,tabChar=char(9)) ! This is the number of compounds that should be found in LoadCritParmsDb. 
+	PARAMETER (nCritSet=1762,tabChar=char(9)) ! This is the number of compounds that should be found in LoadCritParmsDb. 
 	!          Change this parameter if you add more compounds.	It must be consistent or you will get a LOAD error.
     !nmx is the max allowed number of Compounds
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
@@ -97,7 +97,7 @@ MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) ba
 	Integer localType(localPool),idLocalType(maxTypes)	!To accumulate site lists in Wertheim to minimize aBipAd,aBipDa size
 	DoublePrecision aBipAD(maxTypes,maxTypes),aBipDA(maxTypes,maxTypes) !association bips
 	DoublePrecision XA(nmx,maxTypes),XD(nmx,maxTypes),XC(nmx,maxTypes),cvAssoc
-	LOGICAL LOUDERWert
+	LOGICAL LOUDERWert,bNeedFullWertheim
 	 
 	!localType is an index of just the types occuring in the current mixture.  
 	!e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.

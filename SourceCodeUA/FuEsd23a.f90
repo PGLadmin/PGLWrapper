@@ -60,7 +60,7 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 		iErrCode=13
 		return
 	endif
-	do iComp=nCritSet,1,-1! Initialize to Exact parameter value.
+	do iComp=1,nCritSet,1! Initialize to Exact parameter value.
 		iTemp=CrIndex( IDnum(iComp) )
         IndexEsd( IDnum(iComp) )=iTemp ! All compds in CritParmsDb included in EsdParmsDb, 
 		!i=CrIndex( IDnum(iComp) )
@@ -126,8 +126,8 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!  OUTPUT(to EsdParms)   qShape,eokP,VX,KadNm3,epsA_kB,epsD_kB,ND,NDS,NAS, 
-	USE GlobConst !is implied by USE ASSOC. GlobConst includes ID,Tc,Pc,Zc,acen,...
-	USE EsdParms
+	USE GlobConst   !is implied by USE ASSOC. GlobConst includes ID,Tc,Pc,Zc,acen,...
+	USE EsdParms	!Note: EsdParms reads the parameters  from disk 
 	USE EsdMem2ParmsDb
 	USE Assoc ! For eAcceptor,eDonor,... 
 	USE BIPs
@@ -144,7 +144,8 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	!LOUDER=.TRUE.
 	idCas(1:NC)=idCasPas(1:NC) ! workaround after promoting idCas to GlobConst 
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of bTPT or bPcSaft.
-	bESD=.TRUE. ! in GlobConst, simplifies calls in FuVtot or FUGI
+	bESD=.TRUE. ! USEd in GlobConst, simplifies calls in FuVtot or FUGI
+    bNeedFullWertheim=.FALSE. ! USEd in Assoc, ESD applies MEM2&MEM1 by convention. 
 	if(LOUDER)write(dumpUnit,*)' GetEsdCas: idCas()=',idCas(1:NC) 
 	if(LOUDER)write(dumpUnit,*)' GetEsdCas: ID()=',ID(1:NC) 
 	if(LOUDER)write(dumpUnit,610)' GetEsdCas: Tc()=',Tc(1:NC)
@@ -158,13 +159,10 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	PcEos(1:nComps)=Pc(1:nComps)
 	ZcEos(1:nComps)=Zc(1:nComps)
 
-	inFile=TRIM(PGLinputDir)//'\ParmsEsd96.TXT'
-	if(iEosOpt==12)inFile=TRIM(PGLinputDir)//'\ParmsEsdEmami.txt' ! // is the concatenation operator
-	if(iEosOpt==13)inFile=TRIM(PGLinputDir)//'\ParmsEsdEmamiTb.txt' ! // is the concatenation operator
-	if(isMEM2)then
-		if(.NOT.isReadEsd)Call LoadEsdDb(iErr)		! Let iErr=iErr(LoadEsdDb)
-		if(iErr > 10)return
+	if(isMEM2)then ! The MEM2 option uses the approach of loading the entire database (~1800 compounds) at outset. 
+		if(.NOT.isReadEsd)Call LoadEsdDb(iErr)		! LoadEsdDb puts ESD parms into memory for all nCritSet compds.
 		if(iErr > 10 .and. LOUD)write(dumpUnit,*)' GetEsdCas: iErr(LoadEsdDb)=',iErr
+		if(iErr > 10)return
 		do J=1,NC
 			i=IndexEsd( ID(J) ) 
 			q(J)=mShapeDb(I)
@@ -184,131 +182,123 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 			ZcEos(J)=ZcEsdDb(i)
 			tau(j)=tauDb(i)
 		enddo
-		goto 711
-	endif
-	OPEN(31,FILE=inFile)
-	if(LOUDER)write(dumpUnit,*)'GetEsdCas:inFile=',TRIM(inFile)
-	if(LOUDER)write(dumpUnit,*) 'Check the ESD parms file location.'
+	else ! read data from hard drive
+		inFile=TRIM(PGLinputDir)//'\ParmsEsd96.TXT'
+		if(iEosOpt==12)inFile=TRIM(PGLinputDir)//'\ParmsEsdEmami.txt' ! // is the concatenation operator
+		if(iEosOpt==13)inFile=TRIM(PGLinputDir)//'\ParmsEsdEmamiTb.txt' ! // is the concatenation operator
+		OPEN(31,FILE=inFile)
+		if(LOUDER)write(dumpUnit,*)'GetEsdCas:inFile=',TRIM(inFile)
+		if(LOUDER)write(dumpUnit,*) 'Check the ESD parms file location.'
+		READ(31,*)nDeck
+		if(LOUDER)write(dumpUnit,602)' GetEsdCas: nDeck=',nDeck
+		do i=1,nDeck
+			READ(31,'(a222)')dumString
+			!if(isMEM2)then
+			!	READ(dumString,*,ioStat=ioErr)IDA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)&
+			!	                                                                            ,NDA(i),NDSA(I),NASA(I),idCasa(i)
+				!if(LOUDER)write(dumpUnit,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)
+			!else ! iEosOpt=2,12,13 all use ESD96.
+				READ(dumString,*,ioStat=ioErr)IDA(I),CAi,QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I) ,idCasa(i)
+				!READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I),NDA(I),NASA(I),idCasa(i)
+				if(NASA(I).ne.NDSA(I))NASA(I)=0	 ! ESD96 requires that NAS=NDS for all compounds.
+				NDSA(I)=NASA(I)
+				eAccEpsK(i)=DHA(I)*1000/RgasCal
+				eDonEpsK(i)=eAccEpsK(i)
+				!if(LOUDER)write(dumpUnit,603)'GetEsdCas: inFile~',i,IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
+			!endif
+			!write(dumpUnit,*),*)IDA(I),CA(I),QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I)  ,idCasa(i)
+			if(ioErr/=0 .and. LOUDER)write(dumpUnit,'(a,a)')' GetESDCas: error reading ',TRIM(inFile),' line=',TRIM(dumString)
+			if(  ( idCasa(i)==id(1) .or. idCasa(i)==id(2) ) .and. LOUDER  )write(dumpUnit,*)'Found in ParmsEsd idCas=',idCasa(i) 
+		enddo !i=1,NC
+		CLOSE(31)
+		if(LOUDER)write(dumpUnit,*)'nDeck,id(nDeck)=',nDeck,ida(nDeck)
+		if(LOUDER)write(dumpUnit,*)'nDeck,idCas()=',nDeck,(idCas(i),i=1,NC)
 
-
-	READ(31,*)nDeck
-	if(LOUDER)write(dumpUnit,602)' GetEsdCas: nDeck=',nDeck
-	do i=1,nDeck
-		READ(31,'(a222)')dumString
-		!if(isMEM2)then
-		!	READ(dumString,*,ioStat=ioErr)IDA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)&
-		!	                                                                            ,NDA(i),NDSA(I),NASA(I),idCasa(i)
-			!if(LOUDER)write(dumpUnit,602)'From inFile:',IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I)
-		!else ! iEosOpt=2,12,13 all use ESD96.
-			READ(dumString,*,ioStat=ioErr)IDA(I),CAi,QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I) ,idCasa(i)
-			!READ(dumString,*,ioStat=ioErr)IDA(I),QA(I) ,eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I),NDA(I),NASA(I),idCasa(i)
-			if(NASA(I).ne.NDSA(I))NASA(I)=0	 ! ESD96 requires that NAS=NDS for all compounds.
-			NDSA(I)=NASA(I)
-			eAccEpsK(i)=DHA(I)*1000/RgasCal
-			eDonEpsK(i)=eAccEpsK(i)
-			!if(LOUDER)write(dumpUnit,603)'GetEsdCas: inFile~',i,IDCASA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eAccEpsK(I)
-		!endif
-		!write(dumpUnit,*),*)IDA(I),CA(I),QA(I) ,eokA(I),bVolA(I),NDA(I),KCSTA(I),DHA(I),NASA(I),NDSA(I)  ,idCasa(i)
-		if(ioErr/=0 .and. LOUDER)write(dumpUnit,'(a,a)')' GetESDCas: error reading ',TRIM(inFile),' line=',TRIM(dumString)
-		if(  ( idCasa(i)==id(1) .or. idCasa(i)==id(2) ) .and. LOUDER  )write(dumpUnit,*)'Found in ParmsEsd idCas=',idCasa(i) 
-	enddo !i=1,NC
-	NDI=0
-	I=0  !overrides headerless reading. Set I=1 to re-activate.
-	DO while(I > 0) !reads to end of file w/o reading nDeck
-		READ(31,*,ERR=861,END=50)IDA(I),QA(I),eokA(I),bVolA(I),KCSTA(I),eDonEpsK(I),eAccEpsK(I),NDSA(I),NASA(I),idCasa(i)
-		i=i+1
-		cycle
-50		exit !terminate do loop
-	enddo
-	!nDeck=I   
-61	FORMAT(I5,2(F8.4,1X),2(F9.3,1X),I3,1X,E11.4,1X,F8.4)
-	CLOSE(31)
-	if(LOUDER)write(dumpUnit,*)'nDeck,id(nDeck)=',nDeck,ida(nDeck)
-	if(LOUDER)write(dumpUnit,*)'nDeck,idCas()=',nDeck,(idCas(i),i=1,NC)
-
-    !  Begin by computing corr states values.  these will be replaced if in dbase
-    ierCompExact=0
-	if(iEosOpt > 4)then
-		ierCompExact=11 !Declare error because iEosOpt > 4 means using only GC parameters from one of ParmsEsdEmami__
-	else
-		if(Tc(1) < 4)call GetCritCas(NC,idCas,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
-		call ExactEsd(NC,vx,c,q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc. Check ParmsEsd before fail.
-		!mShape(1:nmx)=Q(1:nmx)
-		if(iErrExact>0)then
-			if(LOUDER)write(dumpUnit,*)'GetESDWarning: iErrExact=',iErrExact,' ierComp='	,ierCompExact(1:NC)
-		endif
-	endif
-
-	nTypes(1:NC)=1	 !all esd versions use nTypes=1. Multifunctional molecules require SPEADMD.
-	DO J=1,NC
-        bVolCc_mol(j)=vx(j) !Copy ExactEsd value first. Replaced below if in dbase.
-		ND(J)=0
-		NDS(J)=0
-		NAS(J)=0
-		nDegree(J,1)=0
-		nDonors(J,1)=0
-		nAcceptors(J,1)=0
-		eAcceptorKcal_mol(j,1)=0
-		eDonorKcal_mol(j,1)=0
-		bondVolNm3(j,1)=0
-		iGotIt(J)=0
-		DO I=1,NDECK
-			IF(IDCASA(I).EQ.IDCas(J))THEN
-				iGotIt(J)=1
-				eokP(J)=eokA(I)
-				!ND(J)=NDA(I)
-				q(J)=QA(I)
-				c(J)=1+(q(J)-1)*(4-1.9d0)/4 ! 4/(4-1.9)=1.90476
-				vx(J)=bVolA(I)
-				bVolCc_mol(J)=vx(J) !need bVol generally for every EOS. Included in GlobConst
-				KCSTAR(J)=KCSTA(I) ! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
-				epsA_kB(J)=eAccEpsK(I)
-				epsD_kB(J)=eDonEpsK(I)
-				ND(J)=NDA(i)
-				DH(J)=DHA(I)*1000/RgasCal/ Tc( j)	! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
-        		tKmin(J)=0.4d0*Tc(J) ! this is the general rule for ESD.
-				NAS(J)=NASA(I)
-				NDS(J)=NDSA(I)
-				iComplex=0
-				if(NAS(j)*NDS(j) > 0)iComplex=1
-				if(iComplex==0 .and. iEosOpt==2)KCSTAR(j)=0 ! Disable solvation for iEosOpt==2 unless self-assoc.
-				KadNm3(j)=KcStar(j) !KcStar[=] nm^3 since 2021.
-				nDegree(j,1)=NDA(i)
-				nAcceptors(j,1)=NASA(i)
-				nDonors(j,1)=NDSA(i)
-				eAcceptorKcal_mol(j,1)=eAccEpsK(I)/1000*(RgasCal)	! cf. Table 6.1 of PGL6ed
-				eDonorKcal_mol(j,1)=eDonEpsK(I)/1000*(RgasCal)
-				bondVolNm3(j,1)=KcSta(i) !*bVolCc_mol(j)/avoNum
-				if(LOUDER)write(dumpUnit,602)'GetEsdCAS:iGotIt! id,bVol,eAcc=',ID(j),vx(J),eAccEpsK(I)
-				if(louder)write(dumpUnit,*)'GetEsdCas:nTypes,nDeg,nAcc,nDon=',nTypes(j),nDegree(j,1),nAcceptors(j,1),nDonors(j,1)
-				exit !exits this do loop, not the outer one.
-			ENDIF
-		enddo
-		if(iGotIt(J)==0)then
-			if(ierCompExact( j).ne.0 )then
-				iErr=11 !Parms missing and iErrExact.ne.0 for at least one component 
-				if(LOUDER)write(dumpUnit,*)'GetEsdCas:Parms missing and iErrExact.ne.0 for component = ', j
-				goto 861
-			else
-				if(LOUD)write(dumpUnit,*)'Corr. States used for EsdParms of component=',j
+		!  Begin by computing corr states values.  these will be replaced if in dbase
+		ierCompExact=0
+		if(iEosOpt > 4)then
+			ierCompExact=11 !Declare error because iEosOpt > 4 means using only GC parameters from one of ParmsEsdEmami__
+		else
+			if(Tc(1) < 4)call GetCritCas(NC,idCas,iErrCrit) !GetCritCas assumes ID(GlobConst)=IdCas
+			call ExactEsd(NC,vx,c,q,eokP,iErrExact,ierCompExact) !iErrExact = 100+iComp if compd is assoc. Check ParmsEsd before fail.
+			!mShape(1:nmx)=Q(1:nmx)
+			if(iErrExact>0)then
+				if(LOUDER)write(dumpUnit,*)'GetESDWarning: iErrExact=',iErrExact,' ierComp='	,ierCompExact(1:NC)
 			endif
-        end if
-    enddo
+		endif
+
+		nTypes(1:NC)=1	 !all esd versions use nTypes=1. Multifunctional molecules require SPEADMD.
+		DO J=1,NC
+			bVolCc_mol(j)=vx(j) !Copy ExactEsd value first. Replaced below if in dbase.
+			ND(J)=0
+			NDS(J)=0
+			NAS(J)=0
+			nDegree(J,1)=0
+			nDonors(J,1)=0
+			nAcceptors(J,1)=0
+			eAcceptorKcal_mol(j,1)=0
+			eDonorKcal_mol(j,1)=0
+			bondVolNm3(j,1)=0
+			iGotIt(J)=0
+			DO I=1,NDECK
+				IF(IDCASA(I).EQ.IDCas(J))THEN
+					iGotIt(J)=1
+					eokP(J)=eokA(I)
+					!ND(J)=NDA(I)
+					q(J)=QA(I)
+					c(J)=1+(q(J)-1)*(4-1.9d0)/4 ! 4/(4-1.9)=1.90476
+					vx(J)=bVolA(I)
+					bVolCc_mol(J)=vx(J) !need bVol generally for every EOS. Included in GlobConst
+					KCSTAR(J)=KCSTA(I) ! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
+					epsA_kB(J)=eAccEpsK(I)
+					epsD_kB(J)=eDonEpsK(I)
+					ND(J)=NDA(i)
+					DH(J)=DHA(I)*1000/RgasCal/ Tc( j)	! new format for ParmsEsd used bondVolNm3, and epsHbKcal/mol.  JRE 20200428
+        			tKmin(J)=0.4d0*Tc(J) ! this is the general rule for ESD.
+					NAS(J)=NASA(I)
+					NDS(J)=NDSA(I)
+					iComplex=0
+					if(NAS(j)*NDS(j) > 0)iComplex=1
+					if(iComplex==0 .and. iEosOpt==2)KCSTAR(j)=0 ! Disable solvation for iEosOpt==2 unless self-assoc.
+					KadNm3(j)=KcStar(j) !KcStar[=] nm^3 since 2021.
+					nDegree(j,1)=NDA(i)
+					nAcceptors(j,1)=NASA(i)
+					nDonors(j,1)=NDSA(i)
+					eAcceptorKcal_mol(j,1)=eAccEpsK(I)/1000*(RgasCal)	! cf. Table 6.1 of PGL6ed
+					eDonorKcal_mol(j,1)=eDonEpsK(I)/1000*(RgasCal)
+					bondVolNm3(j,1)=KcSta(i) !*bVolCc_mol(j)/avoNum
+					if(LOUDER)write(dumpUnit,602)'GetEsdCAS:iGotIt! id,bVol,eAcc=',ID(j),vx(J),eAccEpsK(I)
+					if(louder)write(dumpUnit,*)'GetEsdCas:nTypes,nDeg,nAcc,nDon=',nTypes(j),nDegree(j,1),nAcceptors(j,1),nDonors(j,1)
+					exit !exits this do loop, not the outer one.
+				ENDIF
+			enddo
+			if(iGotIt(J)==0)then
+				if(ierCompExact( j).ne.0 )then
+					iErr=11 !Parms missing and iErrExact.ne.0 for at least one component 
+					if(LOUDER)write(dumpUnit,*)'GetEsdCas:Parms missing and iErrExact.ne.0 for component = ', j
+					goto 861
+				else
+					if(LOUD)write(dumpUnit,*)'Corr. States used for EsdParms of component=',j
+				endif
+			end if
+		enddo
+		if(iErr/=0)then
+			if(LOUDER)write(dumpUnit,*) 'GetEsdCas: error for at least one compound'
+			continue
+		endif
+        
+		if(LOUDER)then
+			write(dumpUnit,*)'  ID     NAME       mESD    eok      bVol    Nd   KADnm3   eDon   eAcc(kcal/mol)'
+			do i=1,NC
+				write(dumpUnit,606)IDCas(i),NAME(i),q(i),eokP(i),vx(i),NDS(i),NAS(i),KadNm3(i),&
+																 eDonorKcal_mol(i,1),eAcceptorKcal_mol(i,1) !/1000
+			enddo
+        endif
+    endif ! MEM2 or not MEM2
+61	FORMAT(I5,2(F8.4,1X),2(F9.3,1X),I3,1X,E11.4,1X,F8.4)
 601 format(1x,a,8e12.4)
 602 format(1x,a,i11,8e12.4)
 603 format(1x,a,2i11,8e12.4)
-	if(iErr/=0)then
-		if(LOUDER)write(dumpUnit,*) 'GetEsdCas: error for at least one compound'
-		continue
-	endif
-        
-	if(LOUDER)then
-        write(dumpUnit,*)'  ID     NAME       mESD    eok      bVol    Nd   KADnm3   eDon   eAcc(kcal/mol)'
-	    do i=1,NC
-		    write(dumpUnit,606)IDCas(i),NAME(i),q(i),eokP(i),vx(i),NDS(i),NAS(i),KadNm3(i),&
-			                                                 eDonorKcal_mol(i,1),eAcceptorKcal_mol(i,1) !/1000
-        enddo
-    end if
 606	format(i9,1x,a11,f9.3,f8.2,f8.2,2i3,1x,f8.6,2f8.0)
 
 	!note:  bips are passed back through USEd BIPs
@@ -342,83 +332,12 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	return
 end	!GetEsdCas
 !------------------------------------------------------------------------------------
-!------------------------------------------------------------------------------------  
-subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
-	USE GlobConst
-	USE CritParmsDb
-	Implicit DoublePrecision(A-H,K,O-Z)
-	!  compute ESD parameters for non-associating compounds based on the more exact solution
-	!  for Zc, Bc, and Yc vs. cShape
-	!  Ref:  Elliott and Lira, Introductory Chemical Engineering Thermo, p564 (1999).
-	!parameter (nmx=55)
-	DoublePrecision k1
-    character*5 tempClass
-	!DoublePrecision vx(nmx),c(nmx),q(nmx),eokP(nmx)
-	LOGICAL LOUDER
-	LOUDER=LOUD
-	!LOUDER=.TRUE.
-	ierComp=0
-	iErr=0				  
-	isAssoc=0
-    indexTemp=CrIndex(ID1)
-    tempClass=TRIM(classDb(CrIndex(ID1)))
-	if(tempClass=='assoc' .or. tempClass=='Asso+')isAssoc=1
-	if(isAssoc>0)then
-		iErr=11
-		if(LOUDER)write(dumpUnit,*)'ExactESD: no parms for ID,class=',ID1,TRIM(classDb(CrIndex(ID1)))
-		if(LOUDER)write(dumpUnit,*) 'ExactESD:check ID.'
-	endif	
-	isHelium=0
-	if( id1==913 .or. ID1==7440597)isHelium=1
-	if(isHelium==1)then
-		iErr=13
-		if(LOUDER)write(dumpUnit,*)'ExactESD: Parms not available for helium ID=',ID1
-		return
-	endif	
-	isH2=0
-	if( id1==902 .or. ID1==133740 .or. id1==925 .or. id1==7782390)isH2=1
-	if(isH2==1)then
-		iErr=12
-		if(LOUDER)write(dumpUnit,*)'ExactESD: Parms not available for H2 or D2 ID=',ID1
-		return
-	endif	
-
-	Wci=ACEND(CrIndex(ID1))
-	cShape=1+3.535*Wci+	0.533*Wci*Wci
-	if(cShape < zeroTol)then
-		if(LOUDER)write(*,form611) ' ExactEsd1: ID,cShape =',ID1,cShape
-		iErr=13
-		cShape=1
-		return
-	endif
-	RooTCinv=1/SQRT(cShape)
-	k1=1.7745d0
-	qShape=1+1.90476*(cShape-1)
-	ZcEsd=1.d0/3.d0+RooTCinv*(.0384+RooTCinv*(-.062+RooTCinv*(0.0723-.0577*RooTCinv)))
-	atemp=9.5d0*qShape*1.9d0+4*cShape*k1-k1*1.9d0
-	quadB=k1*1.9*ZcEsd+3*atemp
-	sqArg=quadB*quadB+4*atemp*(4*cShape-1.9)*(9.5*qShape-k1)/ZcEsd
-	if(sqArg < zeroTol)then
-		if(LOUDER)write(*,form611) 'ExactEsd1: ID,sqArg =',ID1,sqArg
-		iErr=14
-		return
-	endif
-	Bc=ZcEsd*ZcEsd*(-quadB+SQRT(sqArg))/(2*atemp*(4*cShape-1.9))
-	Yc=ZcEsd*ZcEsd*ZcEsd/(atemp*Bc*Bc)
-	rlnY1=LOG(Yc+1.0617)
-	c1 = cShape
-	q1 = qShape
-	eokP1=TcD(CrIndex(ID1))*rlnY1
-	Vx1=8.314*TcD(CrIndex(ID1))/PcD(CrIndex(ID1))*Bc
-	return
-end	!subroutine ExactEsd1
-!------------------------------------------------------------------------------------  
 subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 	USE GlobConst
 	Implicit DoublePrecision(A-H,K,O-Z)
-	!  compute ESD2 parameters for hydrocarbons based on the more exact solution
-	!  for Zc, Bc, and Yc vs. cShape
-	!  Ref:  Elliott and Lira, Introductory Chemical Engineering Thermo, p564 (1999).
+	!  compute ESD2 parameters for hydrocarbons based on the exact solution
+	!  for Zc, Bc, and Yc vs. qShape
+	!  Ref:  Elliott and Lira, Introductory Chemical Engineering Thermo, p564 (1999), also wikipedia.
 	!parameter (nmx=55)
 	DoublePrecision k1
 	DoublePrecision vx(nmx),c(nmx),q(nmx),eokP(nmx)
@@ -453,21 +372,26 @@ subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 			if(LOUDER)write(dumpUnit,*)'ExactESD: Parms not available for H2 or D2 ID=',ID(i)
 			ierComp(i)=2
 			cycle
-		endif	
+        endif	
 
-		Wci=ACEN(i)
+		k1=1.7745d0
+		k2=1.0617d0
+        Zm=9.5d0
+        cqFactor=4/(4-1.9d0)
+        Wci=ACEN(i)
 		cShape=1+3.535*Wci+	0.533*Wci*Wci
 		RooTCinv=1/SQRT(cShape)
-		k1=1.7745
-		qShape=1+1.90476*(cShape-1)
-		ZcTmp=1.d0/3.d0+RooTCinv*(.0384+RooTCinv*(-.062+RooTCinv*(0.0723-.0577*RooTCinv)))
-		atemp=9.5*qShape*1.9+4*cShape*k1-k1*1.9
-		quadB=k1*1.9*ZcTmp+3*atemp
-		sqArg=quadB*quadB+4*atemp*(4*cShape-1.9)*(9.5*qShape-k1)/ZcTmp
+		qShape=1+cqFactor*(cShape-1)
+		!ZcTmp=1.d0/3.d0+RooTCinv*(.0384+RooTCinv*(-.062+RooTCinv*(0.0723-.0577*RooTCinv)))
+        RootQinv=1/sqrt(qShape)
+        ZcTmp=( 1+RootQinv*(.1451d0+RootQinv*(-.2046d0+RootQinv*(0.0323d0-0*RootQinv))) )/3
+ 		atemp=Zm*qShape*1.9d0+4*cShape*k1-k1*1.9d0
+		quadB=k1*1.9d0*ZcTmp+3*atemp
+		sqArg=quadB*quadB+4*atemp*(4*cShape-1.9d0)*(Zm*qShape-k1)/ZcTmp
 
-		Bc=ZcTmp*ZcTmp*(-quadB+SQRT(sqArg))/(2*atemp*(4*cShape-1.9))
+		Bc=ZcTmp*ZcTmp*(-quadB+SQRT(sqArg))/(2*atemp*(4*cShape-1.9d0))
 		Yc=ZcTmp*ZcTmp*ZcTmp/(atemp*Bc*Bc)
-		rlnY1=LOG(Yc+1.0617)
+		rlnY1=LOG(Yc+k2)
 		c(i) = cShape
 		q(i) = qShape
 		eokP(i)=TC(i)*rlnY1
@@ -476,6 +400,78 @@ subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 	enddo
 	return
 end	!subroutine ExactEsd
+!------------------------------------------------------------------------------------  
+subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
+! ExactEsd1 gets the exact solution for EsdParms for a single compound by referencing ID1 through the linked list of MEM2 style.
+	USE GlobConst
+	USE CritParmsDb
+	Implicit DoublePrecision(A-H,K,O-Z)
+	!  compute ESD parameters for non-associating compounds based on the more exact solution
+	!  for Zc, Bc, and Yc vs. cShape
+	!  Ref:  Elliott and Lira, Introductory Chemical Engineering Thermo, p564 (1999).
+	!parameter (nmx=55)
+	DoublePrecision k1
+    character*5 tempClass
+	!DoublePrecision vx(nmx),c(nmx),q(nmx),eokP(nmx)
+	LOGICAL LOUDER
+	LOUDER=LOUD
+	!LOUDER=.TRUE.
+	ierComp=0
+	iErr=0				  
+	isAssoc=0
+    tempClass=TRIM(classDb(CrIndex(ID1)))
+	if(tempClass=='assoc' .or. tempClass=='Asso+')isAssoc=1
+	if(isAssoc>0)then
+		iErr=11
+		if(LOUDER)write(dumpUnit,*)'ExactESD: no parms for ID,class=',ID1,tempClass
+		if(LOUDER)write(dumpUnit,*) 'ExactESD:check ID.'
+	endif	
+	isHelium=0
+	if( id1==913 .or. ID1==7440597)isHelium=1
+	if(isHelium==1)then
+		iErr=13
+		if(LOUDER)write(dumpUnit,*)'ExactESD: Parms not available for helium ID=',ID1
+		return
+	endif	
+	isH2=0
+	if( id1==902 .or. ID1==133740 .or. id1==925 .or. id1==7782390)isH2=1
+	if(isH2==1)then
+		iErr=12
+		if(LOUDER)write(dumpUnit,*)'ExactESD: Parms not available for H2 or D2 ID=',ID1
+		return
+	endif	
+
+	k1=1.7745d0
+	k2=1.0617d0
+    Zm=9.5d0
+    cqFactor=4/(4-1.9d0)
+	Wci=ACEND(CrIndex(ID1))
+	cShape=1+3.535d0*Wci+0.533d0*Wci*Wci
+	if(cShape < zeroTol)then
+		if(LOUDER)write(*,form611) ' ExactEsd1: ID,cShape =',ID1,cShape
+		iErr=13
+		cShape=1
+		return
+	endif
+	RooTCinv=1/SQRT(cShape)
+	qShape=1+cqFactor*(cShape-1)
+	!ZcTmp=1.d0/3.d0+RooTCinv*(.0384+RooTCinv*(-.062+RooTCinv*(0.0723-.0577*RooTCinv)))
+    RootQinv=1/sqrt(qShape)
+    ZcTmp=( 1+RootQinv*(.1451d0+RootQinv*(-.2046d0+RootQinv*(0.0323d0-0*RootQinv))) )/3
+ 	atemp=Zm*qShape*1.9d0+4*cShape*k1-k1*1.9d0
+	quadB=k1*1.9d0*ZcTmp+3*atemp
+	sqArg=quadB*quadB+4*atemp*(4*cShape-1.9d0)*(Zm*qShape-k1)/ZcTmp
+
+	Bc=ZcTmp*ZcTmp*(-quadB+SQRT(sqArg))/(2*atemp*(4*cShape-1.9d0))
+	Yc=ZcTmp*ZcTmp*ZcTmp/(atemp*Bc*Bc)
+	rlnY1=LOG(Yc+k2)
+	c1 = cShape
+	q1 = qShape
+	eokP1=TcD(CrIndex(ID1))*rlnY1
+	Vx1=Rgas*TcD(CrIndex(ID1))/PcD(CrIndex(ID1))*Bc
+	return
+end	!subroutine ExactEsd1
+!------------------------------------------------------------------------------------  
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!	FugiESD
 	!   LATEST REVISION : 

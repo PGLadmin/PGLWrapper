@@ -187,23 +187,25 @@ end
 	!character*132 readText,dumText
 	!character*12  form
 	character*251 inFile,dumString
+	LOGICAL LOUDER
+    LOUDER=LOUD
+    !LOUDER=.TRUE.
 	iErrCode=0
     ndbLocal=3000
-	CrIndex=ndb ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
+    !print*,'LoadCritParmsDb: entered. iErrCode=',iErrCode
+    ndbUsed=ndb
+	!CrIndex=ndbUsed ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
 	inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
-	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: CritFile=',TRIM(inFile)
+	if(LOUDER)print*,'LoadCrit: PGLinputDir/inFile=',TRIM(inFile)
+	if(LOUDER)write(dumpUnit,*)'LoadCritParmsDb: CritFile=',TRIM(inFile)
 !	OPEN(40,FILE=inFile,FORM='BINARY')
 	OPEN(40,FILE=inFile)
 	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
 	I=0
-	READ(40,'(a251)',ERR=861)dumString
-	READ(dumString,*,ERR=861)NDECK1
-	if(nDeck1 /= nCritSet)then
-		iErrCode=11
-		return
-	endif
-	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetCrit: more data in file than allocated'
-!	open(61,file='c:\spead\CalcEos\ParmsCrit.txt')
+	READ(40,'(a251)',ioStat=ioErr)dumString
+    if(ioErr /= 0)iErrCode=11
+	if(ioErr==0)READ(dumString,*,ioStat=ioErr)NDECK1
+    if(ioErr /=0)NDECK1=nCritSet+123 !if header omits the number of records(e.g. for python benefit), we recover...
 	DO I=1,NDECK1
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
 		!if(i.eq.691)write(dumpUnit,*)
@@ -212,9 +214,14 @@ end
 !		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 !			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
 !		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
-		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PcTemp,ACEND(I),TbD(i),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I), &
+		if(ioErr==0)READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PcTemp,ACEND(I),TbD(i),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I), &
 		                                                              solParmD(i),rhoG_cc,rMwD(i),classDb(i),formDb(i),NAMED(i)
-        if(ioErr /= 0)then
+		if(ioErr < 0)then ! -ve ioErr signals end of file.
+            NDECK1=I-1 !here is how we recover the omitted NDECK1.
+            exit
+        elseif(i > nCritSet)then
+            continue
+        elseif(ioErr /= 0)then
             iErrCode=12
             return
         endif
@@ -223,14 +230,17 @@ end
 		if(rhoG_cc < zeroTol)rhoG_cc=1
 		vLiqD(i)=rMwD(i)/rhoG_cc
 		CrIndex(IDnum(i))=i
-		if(ioErr.ne.0.and.LOUD)write(dumpUnit,*)'LoadCritParmsDb: error reading ParmsCrit.txt. line=',i
-		if(i==1.and.LOUD)then
+		if(ioErr.ne.0.and.LOUDER)write(dumpUnit,*)'LoadCritParmsDb: error reading ParmsCrit.txt. line=',i
+		if(i==1.and.LOUDER)then
 			write(dumpUnit,602)IDnum(I),idCasDb(I),TCD(I),PCD(I),ZCD(I),ACEND(I),solParmD(I),vLiqD(i),rMwD(i) !&
 			write(dumpUnit,*)'LoadCrit: classDb,formDb,nameD=',classDb(i),formDb(i),NAMED(i)
 		endif
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
-
+	if(NDECK1 /= nCritSet)then
+		iErrCode=12
+        return
+    endif
 100	FORMAT(I5,2X,A20,2X,F7.2,2X,F8.4,2X,F7.4,2X,F7.4)
 101	format(i5,11f10.0,i10,3a4,1x,a12,a33)
 102	format(i5,11f10.3,i10,3a4,1x,a12,a33)
@@ -240,10 +250,10 @@ end
 	                                                                                          ! Cas#  tC  pC  vC  FORM        Name 
 	CLOSE(40)
 	!if((nDeck1).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
-	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Skipping ParmsCrAdd.'
+	if(LOUDER)write(dumpUnit,*)'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Skipping ParmsCrAdd.'
 	nDeckDb=NDECK1
-	if(nDeckDb.ne.nCritSet.and.LOUD)write(dumpUnit,*) 'LoadCritParmsDb: nCritSet is inconsistent.nDeck,nCrit=',nDeckDb,nCritSet
-	if(LOUD)write(dumpUnit,*)'LoadCritParmsDb: Success! DB is loaded.'
+	if(nDeckDb.ne.nCritSet.and.LOUDER)write(dumpUnit,*) 'LoadCritParmsDb: nCritSet is inconsistent.nDeck,nCrit=',nDeckDb,nCritSet
+	if(LOUDER)write(dumpUnit,*)'LoadCritParmsDb: Success! DB is loaded.'
 	!if((nDeck).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in ParmsCrAdd file'
 	!write(dumpUnit,*)' ID    Name                  Tc(K)   Pc(MPa)    acen      Zc'
 	isReadCrit=.TRUE.	! indicates that the ParmsCrit DB has been loaded.
@@ -287,8 +297,9 @@ end
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
 	!	eHbKcalMol(nmx),bondVolNm3(nmx),ND(nmx),NDS(nmx),NAS(nmx)
-	if(nDeckDb.ne.nCritSet)Call LoadCritParmsDb(iErrLoadCrit)
+	if(nDeckDb.ne.nCritSet)Call LoadCritParmsDb(iErrLoadCrit) !this is a signal that LoadCrit__ was not called successfully yet.
 	if(iErrLoadCrit > 0)then
+        iErrCode=8686
 		if(LOUDER)write(dumpUnit,*)'GetCrit: error from LoadCritParmsDb. Thats all folks!'
 		return
 	endif
@@ -773,9 +784,9 @@ END ! subroutine GetCritCas()
       return
       end
       
-      DOUBLE PRECISION FUNCTION ENORM(N,X)
+      FUNCTION ENORMua(N,X)
       INTEGER N
-      DOUBLE PRECISION X(N),SqrtArg,SumSq
+      DOUBLE PRECISION X(N),SqrtArg,SumSq,ENORMua
 !C     **********
 !C
 !C     FUNCTION ENORM
@@ -786,9 +797,9 @@ END ! subroutine GetCritCas()
 !C     THE EUCLIDEAN NORM IS COMPUTED BY ACCUMULATING THE SUM OF
       SqrtArg=SumSq(N,X)
       if(SqrtArg .lt. 0.D0)then
-          ENORM=86.8686
+          ENORMua=86.8686
       else
-          ENORM=SQRT(SqrtArg)
+          ENORMua=SQRT(SqrtArg)
       endif
       RETURN
       END

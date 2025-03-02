@@ -16,23 +16,30 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
 	!USE EsdParms
 	Implicit DoublePrecision(A-H,K,O-Z)
 	CHARACTER*77 errMsgPas !,readString,Property(22)
-	!CHARACTER*251 dumpFile
     Integer  localCas(NMX),iEosLocal,ierCode,NC !,localID(NMX) 
+    LOGICAL LOUDER
+    LOUDER=.TRUE.
+    LOUDER=LOUD
+    if(LOUDER)print*,'PGLStartup:NC,iEosLocal,idOpt',NC,iEosLocal,idOpt
 	if(idOpt==2)then
 		localCas(1:NC)=idCas(1:NC)	! idCas USEd from GlobConst
+		if(LOUDER)print*,'PGLStartup: from GlobConst...localCas=',localCas(1:NC)
 	elseif(idOpt==1)then
-		call IdCasLookup(NC,idCas,iErrLook,errMsgPas) ! ID input USEd from GlobConst. idCas is returned
+		call IdCasLookup(NC,localCas,iErrLook,errMsgPas) ! ID input USEd from GlobConst. idCas is returned
 		if(iErrLook > 0)then
 			ierCode=11
-			if(LOUD)write(dumpUnit,*)'PGLStartup: from idDipprLookup-'//TRIM(errMsgPas)
+			if(LOUDER)write(dumpUnit,*)'PGLStartup: from idDipprLookup-'//TRIM(errMsgPas)
 			return
 		endif
-		localCas(1:NC)=idCas(1:NC)	! idCas USEd from GlobConst
+		idCas(1:NC)=localCas(1:NC)	! after Lookup, idCas USEd from GlobConst is replaced.
+		if(LOUDER)print*,'PGLStartup: from Lookup...localCas=',localCas(1:NC)
 	else
 		ierCode=12
 		return
-	endif
+    endif
+    if(LOUDER)print*,'PGLStartup: calling PGLWrapperStartup. localCas=',localCas(1:NC)
 	Call PGLWrapperStartup(NC,iEosLocal,localCas,ierCode)
+    if(LOUDER)print*,'PGLStartup: returned from PGLWrapperStartup. ierCode=',ierCode
 	return
 	end
 
@@ -126,7 +133,7 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
 	end	   !PGLWrapperStartup
 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	SUBROUTINE PsatEar(tK,pMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCode)
+SUBROUTINE PsatEar(tK,pMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCode)
 	!COMPUTE VAPOR PRESSURE GIVEN tK AND INITIAL GUESS (IE.pMPa)
 	!Ref: Eubank et al, IECR 31:942 (1992)
 	!AU:  JRE Aug2010
@@ -150,11 +157,11 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
     errMsg(16)='PsatEar: FUGI returned T < Tmin error'
     errMsg(17)='PsatEar: Calculated Psat < 0.0001 MPa error'
     errMsg(18)='PsatEar: Tr > 1-zeroTol'
-    errMsg(19)='Critical Error from fugacity calculation'
+    errMsg(19)='Terminal Error from fugacity calculation'
     errMsg(20)='rhoVap/rhoLiq < 0'
 	LOUDER=LOUD
-	LOUDER=.TRUE.
-	LOUDER=.FALSE.
+	!LOUDER=.TRUE.
+	!LOUDER=.FALSE.
 	if(LOUDER.and.initCall==1)write(dumpUnit,*)'EAR method'
 	tMin=Tc(1)*0.25
 	xFrac(1)=1
@@ -214,7 +221,7 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
 		pEubank=Rgas*tK/(1/rhoVap-1/rhoLiq)*( aDepLiq-aDepVap +DLOG(rhoLiq/rhoVap) ) !EAR method of Eubank and Hall (1995)
 		!pOld=pEubank/10  !JRE: I find Eubank overestimates P sometimes. It even gets higher than pMax
 	else ! If Tr < 0.85, compute pSatItic estimate  FPE,501:112236(19), JCP,110:3043(99)
-		pOld=1D-1 !If p < 0, then the vapor density goes negative and log(rhoLiq/rhoVap) is indeterminate.
+		pOld=1D-3 !If p < 0, then the vapor density goes negative and log(rhoLiq/rhoVap) is indeterminate.
         !NOTE: Don't use pOld=0 when pOld > 0. You might get an error because vdw loop doesn't cross zero!
 		if(LOUDER)write(dumpUnit,*)'PsatEar:calling liquid fugi for ITIC initial guess. ID,Tc=',ID(1),Tc(1)
 		CALL FugiTP( tK,Pold,xFrac,NC,1,rhoLiq,zLiq,aResLiq,FUGC,uSatL,iErrF )

@@ -113,21 +113,19 @@
 610	format(1x,a,8E12.4)
 	
 	rhoMol_cc=eta/bVolMix
-	!write(dumpUnit,*) 'Wertheim: Calling MEM1'
 	if(LOUDER)call MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErrMEM1 )! XA,XD USE Assoc
 	if(LOUDER)write(dumpUnit,'(a,8f9.4)')' Wertheim-MEM1:eta,fAssoc,zAssoc,aAssoc,uAssoc',eta,fAssoc,zAssoc,aAssoc,uAssoc
-	!write(dumpUnit,*) 'Wertheim:Results from MEM1'
 	if(LOUDER)write(dumpUnit,610)' Wertheim-MEM1:fAssoc,zAssoc=',fAssoc,zAssoc 
 	call MEM2(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErr )!,rLnPhiAssoc,ier)
 	if(LOUDER)write(dumpUnit,610)' Wertheim-MEM2:eta,zAssoc,aAssoc,uAssoc',eta,zAssoc,aAssoc,uAssoc
 	!if(LOUDER)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):', &
 	!                                                  XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
 	!if(LouderWert)write(dumpUnit,*) 'Wertheim: MEM2 estimate. Calling XsolJre'
-    iDoSolvation=0
-    if(bESD)iDoSolvation=0
-    !if(isAcid > 0)iDoSolvation=1	 ! FYI: rmsErr on XsolJre2a is 1E-6
+    !iDoSolvation=0
+    !if(bESD)iDoSolvation=0
+    if(isAcid > 0)bNeedFullWertheim=.TRUE.	 ! FYI: rmsErr on XsolJre2a is 1E-6
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	if(iDoSolvation > 0)then  !checkup: 1E-111  ! Refine from ESD96 if necessary
+	if(bNeedFullWertheim)then  !checkup: 1E-111  ! Refine from MEM2 if necessary
 		nSitesTot=0
 		one=1
 		half=one/2 !defined in GlobConst
@@ -144,21 +142,6 @@
 				if(idType(iComp,iType)==1603)isAcid=1
 				nSitesTot=nSitesTot+xFrac(iComp)*nDegree(iComp,iType)*( nAcceptors(iComp,iType)+nDonors(iComp,iType) ) 
 				!ndHb(iType) should be zero if iType does not hBond.
-				iComplex=nDonors(iComp,iType)*nAcceptors(iComp,iType)
-				IF( bTpt ) THEN
-					eHbKcal_mol(iComp,iType)=( eDonorKcal_mol(iComp,iType)+eAcceptorKcal_mol(iComp,iType) )/2.d0 
-				ENDIF		
-				if(iComplex.ne.0)iComplex=1  !in general, nDs or nAs could be 2, 3,... (e.g. water). Complexation is T/F.
-				bigYhb=iComplex*(EXP(eHbKcal_mol(iComp,iType)/tKelvin/RgasCal*1000)-1) !iComplex permits eHb > 0, but XA=XD=1.
-
-				SQARG=bondVolNm3(iComp,iType)*avoNum*rhoMol_cc*rdfContact*bigYhb
-				IF(SQARG < 0)THEN
-					if(LouderWert)write(dumpUnit,*) 'neg alpha in wertheim. ETA=',ETA
-					iErrCode=3
-					if(LouderWert)write(dumpUnit,*)
-					RETURN
-				ENDIF
-				ralph(iComp,iType)=DSQRT( SQARG )
 			enddo
 		enddo
 		!XA=1 !set to unity means no association	          
@@ -194,7 +177,7 @@
 
 		!Check if Old guesses are better. During Z iteration, Old result may be close. 20201224:
 		!Also, compute FAsolv, FDsolv, and rmsErrSolv, without SRCR.
-		if(isAcid==1)call XsolJre2a(xFrac,rhoMol_cc,tKelvin,nComps,ierXsol)	 ! XA,XD,XC passed through module Assoc.
+		call XsolJre2a(xFrac,rhoMol_cc,tKelvin,nComps,ierXsol)	 ! XA,XD,XC passed through module Assoc.
 		!if(LouderWert)write(dumpUnit,'(a,  5F10.6,3F10.1)')' XA(1,4),XA(2,3),XD(2,3):', &
 		!                                             XA(1,4),XA(2,3),XD(2,3) ,deltaAlphaA(1,4),deltaAlphaD(2,3),deltaAlphaD(2,3) 
         if(ierXsol.ne.0)then
@@ -679,9 +662,8 @@
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	Subroutine AlphaSp(isZiter,iComp,iType,jComp,jType,tKelvin,rho,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij, &
 	                                                                                                                    dAlphCCij)
-	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,dumpUnit,RgasCal,form610
+	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,dumpUnit,RgasCal,form610,bTPT
 	USE Assoc !aBipAD,aBipDA
-	USE BIPs  !H((I,J) for ESD
 	implicit doublePrecision(a-h,k,o-z)
 	!note: because aBip is on a type-type basis, we don't need to quadruply subscript it.
 	indexi=localType( idType(iComp,iType) )	!reference to local type list so aBip matrix is small.
@@ -690,8 +672,9 @@
 	YDj=EXP( eDonorKcal_Mol(jComp,jType)/(tKelvin*RgasCal/1000) ) - 1.d0
 	YAi=EXP( eAcceptorKcal_Mol(iComp,iType)/(tKelvin*RgasCal/1000) ) - 1.d0
 	YAj=EXP( eAcceptorKcal_Mol(jComp,jType)/(tKelvin*RgasCal/1000) ) - 1.d0
-	dHdaij=( (eDonorKcal_Mol(iComp,iType)+eAcceptorKcal_Mol(jComp,jType))*aBipDA(indexi,indexj) ) 
-	dHadij=( (eAcceptorKcal_Mol(iComp,iType)+eDonorKcal_Mol(jComp,jType))*aBipAD(indexi,indexj) ) 
+    ! dH__ below are used only for deviations from square-root combining rule (SRCR).
+	dHdaij=( (eDonorKcal_Mol(iComp,iType)+eAcceptorKcal_Mol(jComp,jType))/2*aBipDA(indexi,indexj) ) 
+	dHadij=( (eAcceptorKcal_Mol(iComp,iType)+eDonorKcal_Mol(jComp,jType))/2*aBipAD(indexi,indexj) ) 
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	eta=rho*bVolMix
 	call RdfCalc(eta,rdfContact,dAlpha)
@@ -719,13 +702,13 @@
 	!! Keeping intra association. It would prevent e.g. ethoxyGlycol ether from solvating with the hydroxy in pure fluid. 
 	!alphADij=iComplexAD*KVEadij*rho*rdfContact
 	!alphDAij=iComplexDA*KVEdaij*rho*rdfContact
-	alphADij=iComplexAD*( ralphAi*ralphDj+aBipAD(indexi,indexj)*KVEadij*rho*rdfContact )
-	alphDAij=iComplexAD*( ralphDi*ralphAj+aBipDA(indexi,indexj)*KVEdaij*rho*rdfContact )
+	alphADij=iComplexAD*( ralphAi*ralphDj+KVEadij*rho*rdfContact ) !Note: aBipADij applies to dHadij above, not here.
+	alphDAij=iComplexDA*( ralphDi*ralphAj+KVEdaij*rho*rdfContact )
 	if(alphADij<0 .or. alphDAij<0)then
 		if(LouderWert)write(dumpUnit,*)'alphADij,alphDAij',alphADij,alphDAij
 		if(LouderWert)write(dumpUnit,*) 'AlphaSp: -ve alpha? Thats weird.'
 	endif
-	if(isZiter==1)return
+	if(isZiter==1)return !No need for derivative properties if this call is for Z-factor iteration.
 	!ralph=(rootRhogK*Y)^0.5
 	!dLnRalph=(beta/ralph)*0.5/ralph*dAlpha/dBeta=	0.5*dLnAlpha/dLnBeta 
 	dLnAlphAi=eAcceptorKcal_mol(iComp,iType)/(RgasCal/1000*tKelvin)	! = dLnAlph__/dLnBeta
