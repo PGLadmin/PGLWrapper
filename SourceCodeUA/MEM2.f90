@@ -360,6 +360,7 @@
 	DoublePrecision, STATIC:: xOld(nmx),ralphMean,etaOld,rdfOld ! static is equivalent to the "SAVE" attribute
 	Integer, STATIC:: IDold(nmx)  								            ! static is equivalent to the "SAVE" attribute
 	Integer isZiter,nComps,iErr, iComp,iType,i,j,itMax,nIter,nSitesTot,iComplex,iErrCode !,iErrMEM,moreDonors,isDonor,isAcceptor
+    character*133 errMsg(0:22)
 	LOGICAL LOUDER,isAcid
 	!common/MEM2parts/FA,FD,betadFA_dBeta,betadFD_dBeta,aAssocPas,uAssocPas,zAssocPas
 	!  NDi     = THE DEGREE OF POLYMERIZATION OF COMPO i
@@ -369,6 +370,11 @@
 	LOUDER=LOUD	! from GlobConst
 	!LOUDER=LOUDERWert
 	!LOUDER= .TRUE. ! for local debugging.
+    errMsg(0)="MEM1: Success!"
+    errMsg(4)="MEM1: No convergence on fAssoc."
+    errMsg(13)="MEM1: alpha < 0!"
+    errMsg(14)="MEM1: XAij < 0 for some i,j,XA!"
+    errMsg(17)="MEM1: (1+4*ralphMean*FA) < 0!"
 	bVolMix=SUM(xFrac(1:nComps)*bVolCc_mol(1:nComps))
 	eta=rhoMol_cc*bVolMix
 	Call RdfCalc(rdfContact,dAlpha,eta)
@@ -399,7 +405,7 @@
 			sqArg=bondVolNm3(iComp,iType)*avoNum*rhoMol_cc*rdfContact*bigYhb
 			IF(sqArg < 0)THEN
 				if(LOUDER)write(dumpUnit,*) 'neg alpha in wertheim. eta=',eta
-				iErrCode=3
+				iErr=13
 				if(LOUDER)write(dumpUnit,*)
 				RETURN
 			ENDIF
@@ -460,7 +466,7 @@
 		ENDDO
 		IF(nIter > itMax-1)THEN
 			if(LOUDERWert)write(dumpUnit,*)'ERROR - NO CNVRG ON fAssoc'
-			iErrCode=4
+			iErr=4
 			if(LOUDER)write(dumpUnit,*)
 			return
 		ENDIF

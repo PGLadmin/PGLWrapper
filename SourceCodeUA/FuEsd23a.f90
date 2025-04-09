@@ -682,8 +682,17 @@ end	!subroutine ExactEsd1
 	Integer initCall
 	DoublePrecision k1(nmx) 
 	LOGICAL LOUDER
+    Character*133 errMsg(0:22)
 	!common/MEM2parts/FA,FD,betadFA_dBeta,betadFD_dBeta,aAssocPas,uAssocPas,zAssocPas
 	DATA K10,K2,ZM,initCall/1.7745D0,1.0617D0,9.5D0,1/
+    errMsg(0)='Success!'
+    errMsg(11)='FuEsdVtot: nonsense T(K),totMoles,vTotCc as input.'
+    errMsg(12)='FuEsdVtot: Xi<0 for some i.'
+    errMsg(5)='FuEsdVtot: T(K) < Tmin(all i).'
+    errMsg(11)='FuEsdVtot: nonsense T(K),totMoles,vTotCc as input.'
+    errMsg(11)='FuEsdVtot: nonsense T(K),totMoles,vTotCc as input.'
+    errMsg(11)='FuEsdVtot: nonsense T(K),totMoles,vTotCc as input.'
+    
 
 	LOUDER=LOUD
 	!LOUDER=.TRUE.

@@ -26,6 +26,7 @@ END MODULE SpeadParms
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!  OUTPUT
+    !  Reference: Elliott, FPE, 416:27-41 (2016);  10.1016/j.fluid.2015.10.013
 	USE GlobConst,  only: PGLinputDir,idCas,ID
 	USE Assoc
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
@@ -72,7 +73,7 @@ END MODULE SpeadParms
     character*77 errMsgPas
 	logical LOUDER !,CheckDLL
 	LOUDER=LOUD
-	!LOUDER=.TRUE. !COMMENT OUT FOR RELEASE
+	LOUDER=.TRUE. !COMMENT OUT FOR RELEASE
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isESD or isPcSaft.
 	bTPT=.TRUE. ! in GlobConst simplifies calls in FUGI and FuVtot
     etaMax = 0.99D0 ! if eta > etaMax, errors will be declared
@@ -254,7 +255,7 @@ END MODULE SpeadParms
 			read(inHbFile,*,ERR=862)nDeck
 			DO jType=1,nDeck
 				read(inHbFile,'(a222)')dumString
-				if(LOUDER)write(dumpUnit,*)TRIM(dumString)
+				!if(LOUDER)write(dumpUnit,*)TRIM(dumString)
 				read(dumString,*,ERR=862)mainType,iSubType,ndsBase,nasBase,bondVolDb,bondRateDb,dHDonorKcalDb,dHAcceptorKcalDb
 				idTypeDb=mainType*100+iSubType
 				IF(idTypeDb==idType(iComp,iType))THEN

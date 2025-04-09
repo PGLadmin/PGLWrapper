@@ -1,4 +1,4 @@
-    
+! Ref: Gross and Sadowski, IECR, 41:5510-5515 (2002)
 !> \file mod_basic_variables.f90
 !! \brief Several modules with all basic variables.
 !!

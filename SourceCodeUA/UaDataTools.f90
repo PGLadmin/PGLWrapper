@@ -204,8 +204,9 @@ end
 	I=0
 	READ(40,'(a251)',ioStat=ioErr)dumString
     if(ioErr /= 0)iErrCode=11
-	if(ioErr==0)READ(dumString,*,ioStat=ioErr)NDECK1
-    if(ioErr /=0)NDECK1=nCritSet+123 !if header omits the number of records(e.g. for python benefit), we recover...
+	!if(ioErr==0)READ(dumString,*,ioStat=ioErr)NDECK1
+    !if(ioErr /=0)
+    NDECK1=nCritSet+123 !if header omits the number of records(e.g. for python benefit), we recover...
 	DO I=1,NDECK1
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
 		!if(i.eq.691)write(dumpUnit,*)

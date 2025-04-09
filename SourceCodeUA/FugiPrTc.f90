@@ -10,7 +10,8 @@ END MODULE PrTcParms
 subroutine GetPrTc(nComps,iErrCode)
 	!  
 	!  PURPOSE:  LOOKS UP THE PrTc PARAMETERS AND STORES THEM IN USEd PREosParms
-	!  Reference:   Jaubert et al., JCED,63, 3980-3988 (2018)
+	!  Reference:  Jaubert et al., JCED,63, 3980-3988 (2018)
+	!              Piña-Martinez, Privat, Nikolaidis, Economou, JN Jaubert, IECR, 60:17228-17247 (2021)
 	!  Background: TC stands for "translated consistent." a volume-translated PR EOS usin Twu alpha function 
 	!
 	!  INPUT
