@@ -6,7 +6,7 @@ MODULE DLLConst
 	Integer oldRN1,oldRN2,oldRN3,oldEOS
 	Character*15 EosName(20) 
 	!              1     2       3       4          5          6         7           8              9        10       
-	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
+	data EosName/'PR76','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PC-SAFT',&
 			'tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
 	!          11     12       13         14          15          16             17         18      19         20       
 END MODULE DLLConst
@@ -774,43 +774,47 @@ integer function QUERYMODEL(no, model_type, level, modelname)
     !!MS$ ATTRIBUTES DLLEXPORT::QUERYMODEL
     !Each line below defines one exposed method
     !The meaning of its 4 items:
-    !Method ID; Pure compound support; Binary mixtures; Ternary mixtures
-    integer,DIMENSION(4,20) :: Methods = RESHAPE([1,1,1,1, &
-        2,1,2,0, &
-        3,1,2,0, &
-        4,1,2,0, &
-        5,1,2,0, &  !5
-        6,1,2,0, &
-        7,1,4,0, &
-        8,1,2,0, &
-        9,1,2,0, &
-        10,1,2,0, & !10
-        11,1,2,0, &
-        12,1,2,0, &
-        13,1,2,0, &
-        14,1,2,0, &
-        15,1,2,0, & !15
-        16,1,2,0, &
-        17,1,2,0, &
-        18,1,2,0, &
-        19,1,4,0, &
-        20,1,2,0 &  !20
-        ], [4,20])
+    !Method ID; Pure compound support; Binary mixtures; Ternary mixtures; Exposed in public version
+    logical :: public_version=.false.
+    integer,DIMENSION(5,20) :: Methods = RESHAPE([1,1,1,1,1, &
+        2,1,2,0,1, &
+        3,1,2,0,0, &
+        4,1,2,0,1, &
+        5,1,2,0,1, &  !5
+        6,1,2,0,0, &
+        7,1,4,0,0, &
+        8,1,2,0,0, &
+        9,1,2,0,0, &
+        10,1,2,0,1, & !10
+        11,1,2,0,0, &
+        12,1,2,0,0, &
+        13,1,2,0,0, &
+        14,1,2,0,0, &
+        15,1,2,0,0, & !15
+        16,1,2,0,0, &
+        17,1,2,0,17, &
+        18,1,2,0,0, &
+        19,1,4,0,0, &
+        20,1,2,0,0 &  !20
+        ], [5,20])
     QUERYMODEL=0
-    index=0
     DO i=1,20
-        DO j=1,3
-            if (Methods(j+1,i).gt.0) then
-                index=index+1
-                if (index.eq.no) then
-                    QUERYMODEL=Methods(1,i)
+        index=Methods(1,i)
+        if (index.eq.no) then
+            DO j=1,3
+                if (Methods(j+1,i).gt.0) then
+                    if (public_version.and.(Methods(5,i).eq.0)) then
+                        QUERYMODEL=-1
+                    else
+                        QUERYMODEL=Methods(1,i)
+                    end if
                     model_type=Methods(j+1,i)
                     level=2
                     modelname=EosName(QUERYMODEL)
                     return
                 endif
-            endif
-        enddo
+            enddo
+        endif
     enddo
     return
 end function QUERYMODEL
