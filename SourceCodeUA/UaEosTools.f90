@@ -10,36 +10,45 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
 	!	Echoes user IO to Output.txt, and reports error checks. 
 	!Terms:
 	!   idOpt=2 if idCas is USEd, idOpt=1 if ID(dippr) is USEd.
-	USE GlobConst
-	USE CritParmsDb
-	USE BIPs
+	USE GlobConst, only:ID,idCas,NMX,LOUD
+	USE CritParmsDb, only:idCasDb,CrIndex
+	!USE BIPs
 	!USE EsdParms
 	Implicit DoublePrecision(A-H,K,O-Z)
-	CHARACTER*77 errMsgPas !,readString,Property(22)
-    Integer  localCas(NMX),iEosLocal,ierCode,NC !,localID(NMX) 
+	!CHARACTER*77 errMsgPas !,readString,Property(22)
+    Integer  iEosLocal,ierCode,NC !,localID(NMX) 
+    Integer localCas(NMX) 
     LOGICAL LOUDER
-    LOUDER=.TRUE.
+    !localCas(1:NC)=0
     LOUDER=LOUD
-    if(LOUDER)print*,'PGLStartup:NC,iEosLocal,idOpt',NC,iEosLocal,idOpt
+    LOUDER=.TRUE.
+    if(LOUD)print*,'PGLStartup:NC,iEosLocal,idOpt',NC,iEosLocal,idOpt
 	if(idOpt==2)then
 		localCas(1:NC)=idCas(1:NC)	! idCas USEd from GlobConst
-		if(LOUDER)print*,'PGLStartup: from GlobConst...localCas=',localCas(1:NC)
-	elseif(idOpt==1)then
-		call IdCasLookup(NC,localCas,iErrLook,errMsgPas) ! ID input USEd from GlobConst. idCas is returned
-		if(iErrLook > 0)then
-			ierCode=11
-			if(LOUDER)write(dumpUnit,*)'PGLStartup: from idDipprLookup-'//TRIM(errMsgPas)
-			return
-		endif
-		idCas(1:NC)=localCas(1:NC)	! after Lookup, idCas USEd from GlobConst is replaced.
-		if(LOUDER)print*,'PGLStartup: from Lookup...localCas=',localCas(1:NC)
+		!if(LOUDER)print*,'PGLStartup: from GlobConst...localCas=',localCas(1:NC)
+	elseif(idOpt==1)then ! idOpt==1 means idDippr takes the lead.
+		do i=1,NC
+			localCas(i)=idCasDb( CrIndex(ID(i)) )
+		enddo
+		!call IdCasLookup(NC,localCas,iErrLook,errMsgPas) ! ID input USEd from GlobConst. localCas is returned
+		!if(iErrLook > 0)then
+		!	ierCode=11
+		!	if(LOUDER)write(dumpUnit,*)'PGLStartup: from idCasLookup-'//TRIM(errMsgPas)
+		!	return
+  !      endif
+  !      do i=1,NC
+  !          idCas(i)=localCas(i) !store to USEd GlobConst
+  !      enddo
+		!idCas(1:NC)=localCas(1:NC)	! after Lookup, idCas USEd from GlobConst is replaced.
+		if(LOUD)print*,'PGLStartup: from Lookup...localCas=',localCas(1:NC)
 	else
-		ierCode=12
+		iercode=12
 		return
     endif
-    if(LOUDER)print*,'PGLStartup: calling PGLWrapperStartup. localCas=',localCas(1:NC)
+    if(LOUD)print*,'PGLStartup: calling PGLWrapperStartup. localCas=',localCas(1:NC)
 	Call PGLWrapperStartup(NC,iEosLocal,localCas,ierCode)
-    if(LOUDER)print*,'PGLStartup: returned from PGLWrapperStartup. ierCode=',ierCode
+    idCas(1:NC)=localCas(1:NC)
+    if(LOUD)print*,'PGLStartup: returned from PGLWrapperStartup. ierCode=',ierCode
 	return
 	end
 
@@ -53,18 +62,21 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
 	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
 	!	LmDifEzCov2.for, Mintools.for
 	!               1     2       3       4          5          6         7           8              9            10          11
-	USE GlobConst
-	USE CritParmsDb
-	USE BIPs
+	USE GlobConst !, only:ID,idCas,NMX,dumpUnit,LOUD,SetNewEos,class
+	USE CritParmsDb, only:nDeckDb
+	!USE BIPs
 	!USE EsdParms
 	Implicit DoublePrecision(A-H,K,O-Z)
 	CHARACTER*77 errMsgPas !,readString,Property(22)
 	!CHARACTER*251 dumpFile
-    Integer  localCas(NMX),iEosLocal,ierCode,NC 
-	
+    Integer  iEosLocal,ierCode,NC 
+    Integer  localCas(NMX) !,dummyCas(NMX)
+    LOGICAL LOUDER
+	LOUDER=LOUD
+    !LOUDER=.TRUE.
 	idCas(1:NC)=localCas(1:NC)
     if(LOUD)write(dumpUnit,*)'PGLWrapperStartup: starting.NC,iEosOpt,idCas=',NC,iEosOpt ,idCas(1:NC)
-
+	!dummyCas(1:NC)=idCas(1:NC)
 	INITIAL=0
 	iEosOpt=iEosLocal
 	ierCode=0 ! Initialize to failure in the iEosOpt write slot to make it easier to terminate if any Get_ functions fail.

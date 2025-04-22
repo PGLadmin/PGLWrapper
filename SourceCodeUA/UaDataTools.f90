@@ -215,14 +215,18 @@ end
 !		READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
 !			,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,idCasDb(I) !,tCode,pCode,vCode,form,NAMED(I)
 !		READ (dumString,'(a127,3a4,a12,a30)')readText,tCode,pCode,vCode,form,NAMED(I)
-		if(ioErr==0)READ (dumString,*,ioStat=ioErr)IDnum(I),TCD(I),PcTemp,ACEND(I),TbD(i),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I), &
+		if(ioErr==0)READ (dumString,*,ioStat=ioErr2)IDnum(I),TCD(I),PcTemp,ACEND(I),TbD(i),TwuL,TwuM,TwuN,cVt,ZCD(I),Tmin,idCasDb(I), &
 		                                                              solParmD(i),rhoG_cc,rMwD(i),classDb(i),formDb(i),NAMED(i)
 		if(ioErr < 0)then ! -ve ioErr signals end of file.
             NDECK1=I-1 !here is how we recover the omitted NDECK1.
+            if(LOUDER)print*,'LoadCritDB: EOF reached. NDECK1=',NDECK1
             exit
         elseif(i > nCritSet)then
-            continue
+            NDECK1=I-1 !here is how we recover the omitted NDECK1.
+            if(LOUDER)print*,'LoadCritDB: i>nCritSet?. i,NDECK1,ioErr=',i,NDECK1,ioErr
+            exit
         elseif(ioErr /= 0)then
+            if(LOUDER)print*,'LoadCritDB: ioErr=/=0 i,NDECK1,ioErr=',i,NDECK1,ioErr
             iErrCode=12
             return
         endif
@@ -351,10 +355,13 @@ end
     USE VpDb ! Stores all the coefficients.
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
     character*255 inFile
+    LOGICAL LOUDER
+    LOUDER=LOUD
+    !LOUDER=.TRUE.
 	iErrCode=0
     inFile=TRIM(PGLinputDir)//'\CoeffsVp2a.TXT'
     OPEN(662,FILE=inFile,ioStat=ioErr)
-    if(ioErr/=0.and.LOUD)write(dumpUnit,*) 'GetVpDb: error opening CoeffsVp2a.txt'
+    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'GetVpDb: error opening CoeffsVp2a.txt'
     !open(662,file='junk.txt')
 	!C	open(61,FILE='ParmsCrit.dta',FORM='BINARY')
 	!ndeck1=1974
@@ -368,12 +375,12 @@ end
 		!if(i.eq.691)write(dumpUnit,*)
 		READ(662,*,ioStat=ioErr)IDnum(I),rMINTD(I) ,VALMIND(I) ,rMAXTD(I),VALMAXD(I),AVGDEVD(I),NUMCOEFFD(I), &
 		                                                                                      (vpCoeffsd(i,iCoeff),iCoeff=1,5)  
-	    if(ioErr/=0.and.LOUD)write(dumpUnit,*) 'inFile=',TRIM(inFile)
-	    if(ioErr/=0.and.LOUD)write(dumpUnit,*) 'ioErr,line,id,vpCoeffs=',ioErr,I,IDnum(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
-	    if(ioErr/=0.and.LOUD)write(dumpUnit,*) 'GetVp: error reading CoeffsVp2a.txt'
+	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'inFile=',TRIM(inFile)
+	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'ioErr,line,id,vpCoeffs=',ioErr,I,IDnum(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
+	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'GetVp: error reading CoeffsVp2a.txt'
 		indexVpDb(IDnum(I))=I ! vpCoeffs(iComp,iCoeff)=vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)
     enddo
-    if(LOUD)write(dumpUnit,*)'GetVpDb: Success! USE VpDb for vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)'
+    if(LOUDER)write(dumpUnit,*)'GetVpDb: Success! USE VpDb for vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)'
 	CLOSE(662)
     return
     end
@@ -562,16 +569,18 @@ end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine IdCasLookup(NC,idCasPas,ier,errMsgPas)	!ID USEd from GlobConst
-    USE GlobConst, only:ID
+    USE GlobConst, only:ID,NMX
 	USE CritParmsDb
 	!parameter(maxDb=3000)
 	character*77 errMsgPas !,errMsg(0:11),dumString
-	integer idCasPas(NC)
+	integer idCasPas(NMX)
+    idCasPas(1:NC)=0
 	ier=0
 	errMsgPas=' IdCasLookup: No problem'
 	do i=1,NC
 		idCasPas(i)=idCasDb( CrIndex(ID(i)) )
-	enddo
+    enddo
+    !print*,'IdCasLookup: idCas=',idCasPas(1:NC)
 	return
 end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

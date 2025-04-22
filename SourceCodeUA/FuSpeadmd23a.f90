@@ -1009,6 +1009,7 @@ Subroutine TptTerms(isZiter,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErr)
 	endif
 	a0i=0.5d0*(c1+c2+c3)/void2-(c2+2*c3)/void-c3*LOG(void)-0.5d0*(c1-c2-3*c3)
 	!when void=1, a0i=0.5d0*(c1+c2+c3)-(c2+2*c3)-0.5d0*(c1-c2-3*c3) = 0.5*(c1-c1)+c2*(0.5-1+0.5)+c3*(0.5-2+0.5*3)=0 OK! 
+    !e.g., CS: C3=0,C1=4,C2= -2.  a0i=(4*eta-3eta^2)/(1-eta)^2.
 	dA0iDeta=(c1+etaRef*(c2+etaRef*c3))/void3  ! =zRef/eta	 
 	etaDA0iDeta=etaRef*dA0iDeta  ! =zRef... See 28 lines below	 
 

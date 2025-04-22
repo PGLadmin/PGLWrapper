@@ -423,8 +423,8 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	if(tempClass=='assoc' .or. tempClass=='Asso+')isAssoc=1
 	if(isAssoc>0)then
 		iErr=11
-		if(LOUDER)write(dumpUnit,*)'ExactESD: no parms for ID,class=',ID1,tempClass
-		if(LOUDER)write(dumpUnit,*) 'ExactESD:check ID.'
+		if(LOUDER)write(dumpUnit,*)'ExactESD: TcPcw parms for ID,class=',ID1,tempClass
+		if(LOUDER)write(dumpUnit,*) 'ExactESD:check ID. if Class isAssoc, '
 	endif	
 	isHelium=0
 	if( id1==913 .or. ID1==7440597)isHelium=1
@@ -456,12 +456,21 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	RooTCinv=1/SQRT(cShape)
 	qShape=1+cqFactor*(cShape-1)
 	!ZcTmp=1.d0/3.d0+RooTCinv*(.0384+RooTCinv*(-.062+RooTCinv*(0.0723-.0577*RooTCinv)))
+	if(qShape < 0)then
+		if(LOUD)print*,'ExactESD1: q < 0??? ID,q=',ID1,qShape
+		iErr=14
+		return
+	endif
     RootQinv=1/sqrt(qShape)
     ZcTmp=( 1+RootQinv*(.1451d0+RootQinv*(-.2046d0+RootQinv*(0.0323d0-0*RootQinv))) )/3
  	atemp=Zm*qShape*1.9d0+4*cShape*k1-k1*1.9d0
 	quadB=k1*1.9d0*ZcTmp+3*atemp
 	sqArg=quadB*quadB+4*atemp*(4*cShape-1.9d0)*(Zm*qShape-k1)/ZcTmp
-
+	if(sqArg < 0)then
+		if(LOUD)print*,'ExactESD1: sqArg(Bc) < 0??? ID,q,sqArg=',ID1,qShape,sqArg
+		iErr=15
+		return
+	endif
 	Bc=ZcTmp*ZcTmp*(-quadB+SQRT(sqArg))/(2*atemp*(4*cShape-1.9d0))
 	Yc=ZcTmp*ZcTmp*ZcTmp/(atemp*Bc*Bc)
 	rlnY1=LOG(Yc+k2)
