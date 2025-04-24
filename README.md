@@ -3,6 +3,7 @@
 ## J. Richard Elliott, Vladimir Diky, Thomas Knotts IV, W. Vincent Wilding
 
 Welcome to the PGL6ed GitHub Landing Page! Many of the methods in PGL6ed are sufficiently complicated that software support can be very helpful for readers to implement. Furthermore, we would like to ensure that our evaluations are consistent with the models as conceived by their authors and reproducible by any knowledgeable reader of PGL6ed. Therefore, we provide resources here to aid in those applications. Note that other resources are available at [PGL6ed.byu.edu](http://PGL6ed.byu.edu), primarily tables of group contribution constants for ideal gas properties pertaining to Chapter 4. Please note that all resources are provided here in good spirit but no guarantees of accuracy are intended or implied. If readers encounter errors, [please open a new issue](issues/new). The codes provided are written in Fortran, usually conforming to F90 standards but occasionally implementing Fortran77.
+Keywords: Thermodynamics, Equations of State, COSMO-RS, COSMO-SAC, Local Coupled Cluster (LCC) vs. Group Contribution Estimation of Ideal Gas Formation, Critical Properties, Vapor Pressure Correlation and Prediction, Fluid Density, Virial Coefficients, Thermal Properties (H, Cp, compressibility), Vapor-Liquid and Liquid-Liquid and Solid-Liquid Phase Equilibrium (VLE, LLE, SLE), Quasichemical Theory, Infinite Dilution Activity Coefficients (IDACs), Viscosity, Thermal Conductivity, Diffusion, Surface Tension. 
 
 ## Resources
 
