@@ -8,9 +8,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	LOGICAL Function bEven(iArg) ! returns 0 for odd and 1 for even.
     integer iArg,iTest
-	bEven=.FALSE.
+	bEven=.TRUE.
 	iTest=(iArg/2.d0-iArg/2)*2.001d0
-	if(iTest==1)bEven=.TRUE.
+	if(iTest==1)bEven=.FALSE.
 	return
 	end
 
