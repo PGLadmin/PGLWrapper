@@ -359,7 +359,7 @@
 	DoublePrecision sumA,hAD,hDA,bepsA,sumLnXi,dLnAlpha_dLnBeta,fOld,fAssoc1,fAssoc,ERR,change,bigYhb
 	DoublePrecision, STATIC:: xOld(nmx),ralphMean,etaOld,rdfOld ! static is equivalent to the "SAVE" attribute
 	Integer, STATIC:: IDold(nmx)  								            ! static is equivalent to the "SAVE" attribute
-	Integer isZiter,nComps,iErr, iComp,iType,i,j,itMax,nIter,nSitesTot,iComplex,iErrCode !,iErrMEM,moreDonors,isDonor,isAcceptor
+	Integer isZiter,nComps,iErr, iComp,iType,i,j,itMax,nIter,nSitesTot,iComplex !,iErrMEM,moreDonors,isDonor,isAcceptor
     character*133 errMsg(0:22)
 	LOGICAL LOUDER,isAcid
 	!common/MEM2parts/FA,FD,betadFA_dBeta,betadFD_dBeta,aAssocPas,uAssocPas,zAssocPas

@@ -9,7 +9,7 @@
 	!USE GlobConst
 	character*77 errMsg(11)
     LOGICAL HyBond,bAssoc(nmx),LOUDER
-	DoublePrecision ralph(nmx,maxTypes),xFrac(nmx),rLnPhiAssoc(nmx),vMolecNm3(nmx) !bondVolNm3(nmx),
+	DoublePrecision xFrac(nmx),rLnPhiAssoc(nmx),vMolecNm3(nmx) !ralph(nmx,maxTypes),bondVolNm3(nmx),
 	DoublePrecision xaOld(nmx,maxTypes),xdOld(nmx,maxTypes) !,alphAD(nmx,maxTypes),alphDA(nmx,maxTypes)
     DoublePrecision rdfContact,dAlpha,eta
     DoublePrecision tKelvin,bVolMix,alphADij,alphDAij,alphCCij,dAlphADij,dAlphDAij,dAlphCCij

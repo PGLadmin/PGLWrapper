@@ -478,6 +478,7 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	q1 = qShape
 	eokP1=TcD(CrIndex(ID1))*rlnY1
 	Vx1=Rgas*TcD(CrIndex(ID1))/PcD(CrIndex(ID1))*Bc
+	ZcEsd=ZcTmp
 	return
 end	!subroutine ExactEsd1
 !------------------------------------------------------------------------------------  

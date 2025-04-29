@@ -171,16 +171,16 @@ END MODULE SpeadParms
                 etaFactor=bVolRef(iComp,Tc(iComp))/bVolCc_mol(iComp) ! tKelvin=Tc(i) here. JRE 20200406
 				!etaFactor=1
 				if(LOUDER)write(dumpUnit,*)' bVol(Tc)/bVolCc_mol =  ' ,etaFactor
-                if(LOUDER)write(dumpUnit,*)'  eta     zRef     A1/100    A2/10000   rho(g/cc)   zRefCs'
+                if(LOUDER)write(dumpUnit,*)'  eta     zRef     A1/100   A2/10000    Z1/100   Z2/10000  rho(g/cc)  zRefCs'
 				etaStd=0.4d0
-				increment=5
-                do i=5,85,increment
+				increment=1
+                do i=0,85,increment
                     eta=i/1.D2
                     etaRef=eta*etaFactor
 					rhoG_cc=eta*rMw(iComp)/bVolCc_mol(iComp)
 					ZrefCs = 4*eta*(1-eta/2)/(1-eta)**3
 	                call TptTerms(isZiter,iComp,eta,etaStd,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
-                    if(LOUDER)write(dumpUnit,'(f7.4,6f10.5)')eta,z0i,a1i/100,a2i/(100*100),rhoG_cc,zRefCs
+                    if(LOUDER)write(dumpUnit,'(f7.4,8f10.5)')eta,z0i,a1i/100,a2i/(100*100),z1i/100,z2i/(100*100),rhoG_cc,zRefCs
                     if(a1i > 0)iErrCode=5
                     if(a2i > 0)iErrCode=6
 					if(iErrCode > 0 .and. eta < etaMax)etaMax=eta-increment/1.D2 !Might still get useful results.
@@ -999,6 +999,7 @@ Subroutine TptTerms(isZiter,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErr)
 	c1=zRefCoeff(iComp,1)+3 ! Z=(1+z1*eta+z2*eta^2+z3*eta^3)/(1-eta)^3=1+(c1*eta+c2*eta^2+c3*eta^3)/(1-eta)^3
 	c2=zRefCoeff(iComp,2)-3
 	c3=zRefCoeff(iComp,3)+1
+	etaRef=eta ! TODO: Check why etaRef=0.4=const if it's Tdep eta??? JRE: 20250428
 	void=1.d0-etaRef  ! etaRef has been corrected for temperature-dependent softness, important for H2,He,...
 	void2=void*void
 	void3=void*void2
@@ -1027,7 +1028,7 @@ Subroutine TptTerms(isZiter,iComp,eta,etaRef,a0i,a1i,a2i,z0i,z1i,z2i,iErr)
 	denom=(1.d0+50.d0*eta3)
 	a1iCrude=a1Coeff(iComp,1)*eta+a1Coeff(iComp,2)*eta*ePart1+a1Coeff(iComp,3)*eta3*ePart2+a1Coeff(iComp,4)		
 	da1i_detaCrude=a1Coeff(iComp,1)+a1Coeff(iComp,2)*(ePart1+eta*dePart1)+a1Coeff(iComp,3)*(3.d0*eta2*ePart2+eta3*dePart2)	  
-
+				  != a11                  +a12*ePart1*(1-6*eta^3) +   a13*eta^2*(0.6+2*eta)/(0.2+eta)^2
 	a2iCrude=(a2Coeff(iComp,1)*eta+a2Coeff(iComp,2)*eta2+a2Coeff(iComp,3)*eta3+a2Coeff(iComp,4)*eta4)/denom
 	da2i_detaCrude=(a2Coeff(iComp,1)+2.d0*a2Coeff(iComp,2)*eta+3.d0*a2Coeff(iComp,3)*eta2+4.d0*a2Coeff(iComp,4)*eta3 &
 	                                                                                       -150.d0*eta2*a2iCrude)/denom

@@ -90,7 +90,7 @@
 	RETURN
 862	continue
 	write(*,*)'GetFlory error - error reading ParmsFloryWert.txt. Path?'
-	write(*,*)'nDeck,iCompo',NdeckFloryWert,j
+	write(*,*)'nDeck,iCompo',NdeckFloryWert
 	if(LOUD)pause
 	return                      
 	END
