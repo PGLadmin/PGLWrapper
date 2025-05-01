@@ -6490,8 +6490,8 @@ SUBROUTINE KIJDB(NC)
 	open(631,file=outFile)
 	if(bTPT)write(6 ,'(a,3F9.3)')' G0,G1,e0 ',G0,G1,eta0
 	if(bTPT)write(631,'(a,3F9.3)')'G0,G1,e0 ',G0,G1,eta0
-	write(*,*)'  T(K)     PsatMPa     rhoVap    rhoLiq(g/cc)'
-	write(631,*)'  T(K)    PsatMPa   rhoVap    rhoLiq(g/cc)'
+	write(*,*)'  T(K)',tabChar,'   PsatMPa',tabChar,'rhoVap',tabChar,'rhoLiq(g/cc)',tabChar,'etaVap',tabChar,'etaLiq'
+	write(631,*)'  T(K)',tabChar,'   PsatMPa',tabChar,'rhoVap',tabChar,'rhoLiq(g/cc)',tabChar,'etaVap',tabChar,'etaLiq'
 	do iStep=1,nSteps+1
 		tKelvin=TLo+delT*(iStep-1)
 		call PsatEar(tKelvin,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode)
@@ -6500,26 +6500,28 @@ SUBROUTINE KIJDB(NC)
 			exit
 		endif
 		!call EqualArea(NC,gmol,tKelvin,Psat,vLCc,vVCc)
-		write(* ,'(F8.2,1x,3F9.7,i3)')tKelvin,pMPa,rhoV*rMw(1),rhoL*rMw(1),ierCode
-		write(631,'(F8.2,1x,3F9.7,i3)')tKelvin,pMPa,rhoV*rMw(1),rhoL*rMw(1),ierCode
+		write(* ,'(F8.2,a1,5(F9.6,a1),i3)')tKelvin,tabChar,pMPa,tabChar,rhoV*rMw(1),tabChar,rhoL*rMw(1),tabChar,rhoV*bVolCC_mol(1),tabChar,rhoL*bVolCC_mol(1),tabChar,ierCode
+		write(631,'(F8.2,a1,5(F9.6,a1),i3)')tKelvin,tabChar,pMPa,tabChar,rhoV*rMw(1),tabChar,rhoL*rMw(1),tabChar,rhoV*bVolCC_mol(1),tabChar,rhoL*bVolCC_mol(1),tabChar,ierCode
 	enddo
 	tKelvin=0.96*Tc(1)
 	do while(tKelvin.gt.0)
 		call PsatEar(tKelvin,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode)
 		!call EqualArea(NC,gmol,tKelvin,Psat,vLCc,vVCc)
-		write(*,'(F8.2,1x,3F9.6,i3)')tKelvin,pMPa,rhoV*rMw(1),rhoL*rMw(1),ierCode
+		write(*,'(F8.2,1x,5F9.6,i3)')tKelvin,pMPa,rhoV*rMw(1),rhoL*rMw(1),rhoV*bVolCC_mol(1),rhoL*bVolCC_mol(1),ierCode
 		if(pMPa > 1.D-3)then
-			write(631,'(F8.2,1x,3F9.6,i3)')tKelvin,pMPa,rhoV*rMw(1),rhoL*rMw(1),ierCode
+			write(631,'(F8.2,a1,5(F9.6,a1),i3)')tKelvin,tabChar,pMPa,tabChar,rhoV*rMw(1),tabChar,rhoL*rMw(1),tabChar,rhoV*bVolCC_mol(1),tabChar,rhoL*bVolCC_mol(1),tabChar,ierCode
 		else
-			write(631,'(F8.2,1x,3(E11.4,1x),i3)')tKelvin,pMPa,rhoV*rMw(1),rhoL*rMw(1),ierCode
+			write(631,'(F8.2,a1,5(E11.4,a1),i3)')tKelvin,tabChar,pMPa,tabChar,rhoV*rMw(1),tabChar,rhoL*rMw(1),tabChar,rhoV*bVolCC_mol(1),tabChar,rhoL*bVolCC_mol(1),tabChar,ierCode
 		endif
 		write(*,*)'ENTER Temperature (K). (-ve to stop) '
 		READ(*,*) tKelvin
 	enddo
 	rhoc=Pc(1)*rMw(1)/( Zc(1)*8.31434*Tc(1) )
 	etac=rhoc/rMw(1)*bVolCc_Mol(1)
-	write(* ,'(F8.2,1x,5F9.6)')tc(1),pc(1),rhoc,rhoc,Zc(1),etac
-	write(631,'(F8.2,1x,5F9.6)')tc(1),pc(1),rhoc,rhoc,Zc(1),etac
+	write( * ,*)'Tc(K)',tabChar,'PcMPa',tabChar,'rhoc(g/cc)',tabChar,'Zc',tabChar,'etac'
+	write(631,*)'Tc(K)',tabChar,'PcMPa',tabChar,'rhoc(g/cc)',tabChar,'Zc',tabChar,'etac'
+	write( * ,'(F8.2,a1,5(F9.6,a1))')tc(1),tabChar,pc(1),tabChar,rhoc,tabChar,Zc(1),tabChar,etac
+	write(631,'(F8.2,a1,5(F9.6,a1))')tc(1),tabChar,pc(1),tabChar,rhoc,tabChar,Zc(1),tabChar,etac
 	close(631) 
 	if(LOUDER)write(*,*) 'Your results are in ',TRIM(outFile)
 	if(LOUDER)pause
