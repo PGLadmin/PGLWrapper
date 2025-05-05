@@ -1,5 +1,11 @@
- EOS=          5 SPEADMD        
+ EOS=          1 PR             
   NUMBER OF COMPONENTS (0 TO QUIT)   
-           1
+           2
   ID NOS. OF THE COMPONENTS OR ZEROS FOR LIST  
-        9591
+        1101        1060
+ DO YOU WANT TO MODIFY THE BIP MATRIX? (Y/N)
+  
+  The requested type of calculation is:
+tx
+  The requested type of calculation is:
+qt
