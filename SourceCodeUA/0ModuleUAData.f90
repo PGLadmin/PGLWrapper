@@ -1,5 +1,5 @@
 MODULE ModelSettings ! Keep everything in one place so adding a model is easier. See also QUERYMODEL(PGLDLL.f90).
-	parameter(nModels=21)
+	parameter(nModels=22)
 	integer nParInert(nModels),nParAssoc(nModels),nParPolar(nModels),nParMix(nModels) ! 
 	Character*15 EosName(nModels)
 	!              1     2       3       4          5          6         7           8              9        10       
