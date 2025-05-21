@@ -776,7 +776,7 @@ integer function QUERYMODEL(no, model_type, level, modelname)
     !The meaning of its 4 items:
     !Method ID; Pure compound support; Binary mixtures; Ternary mixtures; Exposed in public version
     logical :: public_version=.false.
-    integer,DIMENSION(5,20) :: Methods = RESHAPE([1,1,1,1,1, &
+    integer,DIMENSION(5,22) :: Methods = RESHAPE([1,1,1,1,1, &
         2,1,2,0,1, &
         3,1,2,0,0, &
         4,1,2,0,1, &
@@ -795,10 +795,12 @@ integer function QUERYMODEL(no, model_type, level, modelname)
         17,1,2,0,17, &
         18,1,2,0,0, &
         19,1,4,0,0, &
-        20,1,2,0,0 &  !20
-        ], [5,20])
+        20,1,2,0,0, &  !20
+        21,1,2,0,0, &
+        22,1,2,0,0  &
+        ], [5,22])
     QUERYMODEL=0
-    DO i=1,20
+    DO i=1,22
         index=Methods(1,i)
         if (index.eq.no) then
             DO j=1,3
