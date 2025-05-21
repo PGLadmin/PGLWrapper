@@ -804,7 +804,7 @@ integer function QUERYMODEL(no, model_type, level, modelname)
         index=Methods(1,i)
         if (index.eq.no) then
             DO j=1,3
-                if (Methods(j+1,i).gt.0) then
+                if ((Methods(j+1,i).gt.0).and.((model_type==0).or.(model_type==j))) then
                     if (public_version.and.(Methods(5,i).eq.0)) then
                         QUERYMODEL=-1
                     else
