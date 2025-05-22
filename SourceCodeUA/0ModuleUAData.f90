@@ -1,18 +1,18 @@
 MODULE ModelSettings ! Keep everything in one place so adding a model is easier. See also QUERYMODEL(PGLDLL.f90).
-	parameter(nModels=21)
+	parameter(nModels=22)
 	integer nParInert(nModels),nParAssoc(nModels),nParPolar(nModels),nParMix(nModels) ! 
 	Character*15 EosName(nModels)
 	!              1     2       3       4          5          6         7           8              9        10       
 	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','FloryMEM2',' NRTL','SpeadGamMEM2','SPEAD11','PcSaft',&
 			'tcPRq','EgcESD','EgcEsdTb','TffSPEAD','EgcPcSaft','EgcPcSafTb','tcPR-GE(W)','MEMSCED','LsgMem2','SptPcSaft',&
 	!             11    12      13         14          15          16             17        18       19        20       
-			'tcPPR78'/
-	!             21    12      13         14          15          16             17        18       19        20       
-	!               1 2 3 4 5  6 7 8  9 10 11 12 13 14 15 16 17 18 19 20 21
-	data nParInert /0,3,0,3,11,0,0,11,0, 3, 4, 3,11, 0, 3, 3, 3, 3, 3, 3, 3/	! e.g. m, sigma, eps/kB. for PcSaft & ESD
-	data nParAssoc /0,2,0,2, 0,0,0, 0,0, 2, 0, 2, 0, 0, 2, 2, 2, 2, 2, 2, 2/	! GC&Tff EOS's have zero adj par's 
-	data nParPolar /0,0,0,0, 0,0,0, 0,0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0/	! GC&Tff EOS's have zero adj par's 
-	data nParMix   /1,1,3,1, 1,1,1, 1,1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1/	! Mostly kij.
+			'tcPPR78','NRTLPA'/
+	!             21    22      23         24          25          26             27        28       29        30       
+	!               1 2 3 4 5  6 7 8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
+	data nParInert /0,3,0,3,11,0,0,11,0, 3, 4, 3,11, 0, 3, 3, 3, 3, 3, 3, 3, 0/	! e.g. m, sigma, eps/kB. for PcSaft & ESD
+	data nParAssoc /0,2,0,2, 0,0,0, 0,0, 2, 0, 2, 0, 0, 2, 2, 2, 2, 2, 2, 2, 6/	! GC&Tff EOS's have zero adj par's 
+	data nParPolar /0,0,0,0, 0,0,0, 0,0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0/	! GC&Tff EOS's have zero adj par's 
+	data nParMix   /1,1,3,1, 1,1,1, 1,1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 3/	! Mostly kij.
 	! nParMix:
     !    PcSaft(10): lij(Tang-Gross,2010) and kij_assoc are also defined but we don't use them in PGLDLL for now. JRE 20230822
     !    tcPRq(11): kij (for now, could include betaij later). JRE 20210531

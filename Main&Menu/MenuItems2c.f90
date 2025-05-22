@@ -289,10 +289,10 @@
 	!data nx,x1/13,0.0001,0.05,0.1,.2,.3,.4,.5,.6,.7,.8,.9,0.95,0.9999/
 	LOUDER=LOUD
 	LOUDER=.TRUE.
-    if(LOUDER)then
-	    if(nc.gt.2)pause 'error - this option is only for 2 compos'
+	if(NC>2)then
+	    if(LOUDER)pause 'error - this option is only for 2 compos'
+		return
     end if
-	if(nc.gt.2)return
 	!if(LOUD)write(*,*)'enter file NAME for output'
 	!read(*,'(A1)')outfile
 	outFile=TRIM(masterDir)//'\output\Binodal.txt'
@@ -302,23 +302,36 @@
 602	FORMAT(' COMPONENT IS',2X,A20,2X,'ID NO. IS  ',i5)
 603	FORMAT(4X,'LIQUID X',4X,'VAPOR Y',3X,'fugcL(MPa)',4X,'fugcV(MPa)')           
 604	FORMAT(4X,2(F7.4,4X),2(F7.4,8X))
-605 format(1X,F7.2,2X,F10.6,1X,4(f13.11,1X))
+605 format(1X,F7.2,'	',F10.6,'	',4(f13.11,'	'))
 606	FORMAT(F12.5,3X,F7.2,1X,F7.4,1X,4(F6.4,3X))
 610	FORMAT(21X,4(F10.4,4X))      
 	WRITE(6,*)'ENTER PRESSURE(MPa) and starting Temperature (K)'
 	READ(5,*)P,T
 	if(LOUD)write(*,600)
 	write(633,600)
-	MAXIT=1111
+	MAXIT=111
 	zero=0
-
-	WRITE(*,*)' '
-	WRITE(*,*)'ENTER FEED COMPOSITION      '
-	READ(5,*)(ZFEED(I),I=1,NC)
+	zFeed(1:NC)=0.5d0 ! initialize to avoid potential errors in intel fortran.
+	if(NC>2)then
+		WRITE(*,*)' '
+		WRITE(*,*)'ENTER FEED COMPOSITION      '
+		READ(5,*)(ZFEED(I),I=1,NC)
+	endif
 	!c  zFeed is passed through common
 	kPas(1)=1111
 	kPas(2)=.001
-	init=1
+	INIT=3
+	if(INIT>1)then
+		INIT=1
+		tFactor=1.05d0
+		itMax=MAXIT
+		CALL LLEFL(T,P,NC,INIT,kPas,ITMAX,zFeed,X,xU,UOF,iErrCode)
+		if(iErrCode > 10)then
+			iErr=11
+			print*,'The guessed temperature is above Tc (consolute T). No LLE here.'
+			return
+		endif
+	endif
 	do iTempK=1,1000
 		ITMAX=MAXIT
 		CALL LLEFL(T,P,NC,INIT,kPas,ITMAX,zFeed,X,xU,UOF,iErrCode)
@@ -331,8 +344,8 @@
 		if(iErrCode.ne.0.or.kPas(1).lt.1.05)goto 86
 
 		tIncrease=5
-		if(kPas(1).lt.2)tIncrease=1
-		if(kPas(1).lt.1.3)tIncrease=0.5
+		if(kPas(1) < 3)tIncrease=1
+		if(kPas(1) < 1.5)tIncrease=0.5
 		T=T+tIncrease
 	enddo
 
@@ -4966,8 +4979,9 @@ SUBROUTINE KIJDB(NC)
 	!close(61)
 	initCall=1
 	ANSWER='Y'
+	ITMAX=111
+	zFeed(1:NC)=0.5d0
     initK=1
-	INIT=3 !check d2G/dx1^2 on first call and search spinodal to determine initial guess.
     write(601,*)'T,P,Uof,x(1),xU(1),x(2),xU(2)'
 	do while(ANSWER.NE.'N'.AND.ANSWER.NE.'n')
 1		continue
@@ -4977,19 +4991,13 @@ SUBROUTINE KIJDB(NC)
 		write(52,*)T,P
 		if(NC==2.and.initCall==1)then
 			initCall=0
-			tFactor=1.05d0
-			itMax=22
-			Call LLConsolute(NC,T,P,tFactor,itMax,x1Con,Tcon,Gcon,dG_dx1,uncert,iErrCon) !Consolute T is max T for binodal.
-			if(iErrCon > 10)then
-				iErr=11
-				print*,'The guessed temperature is above Tc (consolute T). No LLE here.'
-				exit
+			INIT=3 !check d2G/dx1^2 on first call and search spinodal to determine initial guess.
+			call LLEFL(T,P,NC,INIT,KINIT,ITMAX,zFeed,X,XU,UOF,iErrCode)
+			if(iErrCode>9)then
+				print*,'Binodal: stopping at initial call to LLEFL. iErrCode=',iErrCode
+				return
 			endif
-			Try2=Tcon/1.01	  !Ignore warnings (iErrCon < 10). Try again starting from the last best estimate of Tcon. 
-			tFactor=1.001d0
-			itMax=22
-			Call LLConsolute(NC,Try2,P,tFactor,itMax,x1Con,Tcon,Gcon,dG_dx1,uncert,iErrCon)
-			write(dumpUnit,610)'FYI: upper Tcon,x1con,uncert=',Tcon,x1con,uncert
+			INIT=1 ! bootstrap future guesses
         elseif(NC > 2)then ! For NC=2, K, zFeed, and UOF will be computed from results.
             if(initK==1)then
 				WRITE(6,*)'ENTER GUESSES FOR xUi/XLiS   '

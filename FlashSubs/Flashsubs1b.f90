@@ -2272,8 +2272,8 @@
 			else
 				x(1)=x1SpinLo/2
 				x(2)=1-x(1)
-				xU(1)=(x1SpinHi+1)/2
-				xU(2)=1-xU(1)
+				xU(2)=(1-x1SpinHi)/2
+				xU(1)=1-xU(2)
 			endif ! Done with initialize=2 by adopting x1Spin for init.
 			if(initialize==3)then ! pick x1estLo and x1estHi from tangent line.
 				if(LOUDER)write(dumpUnit,610)' LLEFL: INIT=3, x1con,x1spinLo,x1spinHi=',x1con,x1spinLo,x1spinHi
@@ -2324,10 +2324,10 @@
 					dG_dX1Hi=dG_dX1	!USEd in GibbsMin, Computed from rLnGam.
 					if(LOUDER)write(dumpUnit,610)'LLEFL: slope,dG/dX1Lo,dG/dX1Hi=',slope,dG_dX1,dG_dX1Hi
 				endif
-				x(1)=x1estLo
+				x(1)=x1estLo*0.9d0
 				x(2)=1-x(1)
-				xU(1)=x1estHi
-				xU(2)=1-xU(1)
+				xU(2)=(1-x1estHi)*0.9d0
+				xU(1)=1-xU(2)
 			endif
 		elseif(initialize==1)then
 			x(1)=(1-calcK(2))/(calcK(1)-calcK(2))
@@ -2395,7 +2395,7 @@
 				iErrCode=17
 				exit
 			endif
-			dev=( 0.5d0-ABS(0.5-x(1)) )/( 0.5d0-ABS(0.5-x1Lo) )	! %dev in xSolute where solute is whichever has smallest composition.
+			dev=( 0.5d0-ABS(0.5-x(1)) )/( 0.5d0-ABS(0.5-x1Lo) )	! LOG(below) %dev in xSolute where solute is whichever has smallest composition.
 			if( ABS(DLOG(dev+zeroTol)) < LLTol)exit ! 3 sig figs on xSolute ~ close enough!
 			if( ABS((calcK(1)-calcKold(1))/calcKold(1))+ABS((calcK(2)-calcKold(2))/calcKold(2))	< LLTol)exit
 			calcKold(1:NC)=calcK(1:NC) 
