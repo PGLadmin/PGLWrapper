@@ -776,7 +776,7 @@ integer function QUERYMODEL(no, model_type, level, modelname)
     !The meaning of its 4 items:
     !Method ID; Pure compound support; Binary mixtures; Ternary mixtures; Exposed in public version
     logical :: public_version=.false.
-    integer,DIMENSION(5,20) :: Methods = RESHAPE([1,1,1,1,1, &
+    integer,DIMENSION(5,22) :: Methods = RESHAPE([1,1,1,1,1, &
         2,1,2,0,1, &
         3,1,2,0,0, &
         4,1,2,0,1, &
@@ -795,14 +795,16 @@ integer function QUERYMODEL(no, model_type, level, modelname)
         17,1,2,0,17, &
         18,1,2,0,0, &
         19,1,4,0,0, &
-        20,1,2,0,0 &  !20
-        ], [5,20])
+        20,1,2,0,0, &  !20
+        21,1,2,0,0, &
+        22,1,2,0,0  &
+        ], [5,22])
     QUERYMODEL=0
-    DO i=1,20
+    DO i=1,22
         index=Methods(1,i)
         if (index.eq.no) then
             DO j=1,3
-                if (Methods(j+1,i).gt.0) then
+                if ((Methods(j+1,i).gt.0).and.((model_type==0).or.(model_type==j))) then
                     if (public_version.and.(Methods(5,i).eq.0)) then
                         QUERYMODEL=-1
                     else
@@ -956,3 +958,40 @@ integer function SETPAR(n, newvalue)
     return
 end function SETPAR
     
+function SubstID(id_type, num_id, string_id)
+    USE GlobConst, only:ID,idCas,PGLinputDir,DumpUnit,LOUD
+	parameter(maxDb=3000)
+    integer SubstID
+    character *32 id_type
+    character *128 string_id
+    integer num_id
+	character inFile*251
+	dimension IdTrcDb(maxDb),idDb(maxDb),idCasDb(maxDb)
+    !DEC$ ATTRIBUTES DLLEXPORT::SUBSTID
+    !!MS$ ATTRIBUTES DLLEXPORT::SUBSTID
+	if (idCasDb(1)==0) then
+	inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
+	OPEN(50,FILE=inFile)
+    read(50,*)idCasDb(1)
+	do i=1,maxDb
+		read(50,*,END=101)IdTrcDb(i),idDb(i),idCasDb(i)	!Read and store the id DB on first call only.
+		cycle
+101     continue !transfer here when END is found.
+		numDb=i-1
+		exit !terminate do loop
+	enddo
+	close(50)
+	end if
+	do i=1,maxDb
+		if(initCall==1)read(50,*,END=101)IdTrcDb(i),idDb(i),idCasDb(i)	!Read and store the id DB on first call only.
+		if( IdTrcDb(i)==num_id )then
+			SubstID=idCasDb(i)
+			exit !terminate do loop
+		end if
+		if( idDb(i)==num_id )then
+			SubstID=idCasDb(i)
+			exit !terminate do loop
+		end if
+	enddo
+    return
+end function SubstID
