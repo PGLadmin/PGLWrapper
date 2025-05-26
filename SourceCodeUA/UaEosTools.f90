@@ -10,12 +10,12 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
 	!	Echoes user IO to Output.txt, and reports error checks. 
 	!Terms:
 	!   idOpt=2 if idCas is USEd, idOpt=1 if ID(dippr) is USEd.
-	USE GlobConst, only:ID,idCas,NMX,LOUD
+	USE GlobConst, only:ID,idCas,idTrc,NMX,LOUD
 	USE CritParmsDb, only:idCasDb,CrIndex
 	!USE BIPs
 	!USE EsdParms
 	Implicit DoublePrecision(A-H,K,O-Z)
-	!CHARACTER*77 errMsgPas !,readString,Property(22)
+	CHARACTER*77 errMsgPas !,readString,Property(22)
     Integer  iEosLocal,ierCode,NC !,localID(NMX) 
     Integer localCas(NMX) 
     LOGICAL LOUDER
@@ -41,6 +41,8 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
   !      enddo
 		!idCas(1:NC)=localCas(1:NC)	! after Lookup, idCas USEd from GlobConst is replaced.
 		if(LOUD)print*,'PGLStartup: from Lookup...localCas=',localCas(1:NC)
+	elseif(idOpt==3)then
+		call IdTrcLookup(NC,IdTrc,ier,errMsgPas)
 	else
 		iercode=12
 		return

@@ -517,48 +517,53 @@ end
 	end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	subroutine IdCcLookup(NC,idcc,ier,errMsgPas)
-    USE GlobConst
+	subroutine IdTrcLookup(NC,IdTrc,ier,errMsgPas)
+    USE GlobConst, only:ID,idCas,PGLinputDir,DumpUnit,LOUD
 	parameter(maxDb=3000)
-	character*77 errMsg(0:11),errMsgPas
+	character*77 errMsg(0:22),errMsgPas
 	character inFile*251
-	dimension idcc(NC)
-	dimension idCcDb(maxDb),idDb(maxDb)
-		inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
-		OPEN(50,FILE=inFile)
+	dimension IdTrc(*)
+	dimension IdTrcDb(maxDb),idDb(maxDb),idCasDb(maxDb)
+	data initCall/1/
+	inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
+	OPEN(50,FILE=inFile)
 	errMsg(0)='No Problem'
-	errMsg(1)='IdCcLookup Error: at least one id not found'
+	errMsg(11)='IdTrcLookup Error: at least one id not found'
 	ier=0
 	i=0
 	ID(1)=0
 	do i=1,maxDb
-		read(50,*,END=101)idCcDb(i),idDb(i)
-		if(idCcDb(i).eq.idcc(1))ID(1)=idDb(i)
+		if(initCall==1)read(50,*,END=101)IdTrcDb(i),idDb(i),idCasDb(i)	!Read and store the id DB on first call only.
+		if( IdTrcDb(i)==IdTrc(1) )ID(1)=idDb(i)
+		if( IdTrcDb(i)==IdTrc(1) )idCas(1)=idCasDb(i)
 		cycle
-101		continue
+101		continue !transfer here when END is found.
 		numDb=i-1
 		exit !terminate do loop
 	enddo
-	if(id(1).eq.0)then
-		ier=1
-		if(LOUD)write(dumpUnit,*)'GetCrit:Did not find idcc(1)=',idcc(1)
+	initCall=0
+	if(id(1)==0)then
+		ier=11
+		if(LOUD)write(dumpUnit,*)'GetCrit:Did not find IdTrc(1)=',IdTrc(1)
 		errMsgPas=errMsg(ier)
 		return
 	endif
+	if(NC < 2)return
 	do iComp=2,NC
 		ID(iComp)=0
 		iGotIt=0
 		i=0
-		do while(iGotIt.eq.0.and.i.lt.numDb)
+		do while(iGotIt==0.and.i < numDb)
 			i=i+1
-			if(idCcDb(i).eq.idcc(iComp))then
+			if(IdTrcDb(i).eq.IdTrc(iComp))then
 				ID(iComp)=idDb(i)
+				idCas(iComp)=idCasDb(i)
 				iGotit=1
 			endif
 		enddo
-		if(id(iComp).eq.0)then		
-			ier=1
-			if(LOUD)write(dumpUnit,*)'Did not find idcc(i).i,idcc=',iComp,idcc(1)
+		if(id(iComp)==0)then		
+			ier=11
+			if(LOUD)write(dumpUnit,*)'Did not find IdTrc(i).i,IdTrc=',iComp,IdTrc(1)
 			errMsgPas=errMsg(ier)
 			return
 		endif
