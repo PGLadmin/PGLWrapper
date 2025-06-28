@@ -52,7 +52,7 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 	character*251 inFile,dumString
     LOGICAL LOUDER
     LOUDER=LOUD
-    LOUDER=.TRUE.
+    !LOUDER=.TRUE.
 	!EQUIVALENCE(IndexEsd(1),CrIndex(1))   !This doesn't work. CrIndex is in module, similar to "common" prohibition. JRE20230911
 
 	iErrCode=0
@@ -448,7 +448,7 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	Wci=ACEND(CrIndex(ID1))
 	cShape=1+3.535d0*Wci+0.533d0*Wci*Wci
 	if(cShape < zeroTol)then
-		if(LOUDER)write(*,form611) ' ExactEsd1: ID,cShape =',ID1,cShape
+		if(LOUDER)write(dumpUnit,form611) ' ExactEsd1: ID,cShape =',ID1,cShape
 		iErr=13
 		cShape=1
 		return
@@ -457,7 +457,7 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	qShape=1+cqFactor*(cShape-1)
 	!ZcTmp=1.d0/3.d0+RooTCinv*(.0384+RooTCinv*(-.062+RooTCinv*(0.0723-.0577*RooTCinv)))
 	if(qShape < 0)then
-		if(LOUD)print*,'ExactESD1: q < 0??? ID,q=',ID1,qShape
+		if(LOUD)write(dumpUnit,*)'ExactESD1: q < 0??? ID,q=',ID1,qShape
 		iErr=14
 		return
 	endif
@@ -467,7 +467,7 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	quadB=k1*1.9d0*ZcTmp+3*atemp
 	sqArg=quadB*quadB+4*atemp*(4*cShape-1.9d0)*(Zm*qShape-k1)/ZcTmp
 	if(sqArg < 0)then
-		if(LOUD)print*,'ExactESD1: sqArg(Bc) < 0??? ID,q,sqArg=',ID1,qShape,sqArg
+		if(LOUD)write(dumpUnit,*)'ExactESD1: sqArg(Bc) < 0??? ID,q,sqArg=',ID1,qShape,sqArg
 		iErr=15
 		return
 	endif
