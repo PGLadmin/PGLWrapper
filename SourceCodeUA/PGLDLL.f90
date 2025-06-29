@@ -121,7 +121,7 @@ integer function INITPGLDLL(errMsg)
         dumpUnit=686
 	    !dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
 	    dumpFile=TRIM(PGLInputDir)//'\PGLDLLDebug.txt'
-        dumpFile='C:\PGLWrapper\PGLDLLDebug.txt'
+        !dumpFile='C:\PGLWrapper\PGLDLLDebug.txt'
         open(dumpUnit,file=TRIM(dumpFile))
         write(dumpUnit,*)'InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=',dumpUnit,LOUD,dumpFile
         return

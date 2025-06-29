@@ -1,5 +1,5 @@
  InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=         686 T 
- C:\PGLWrapper\PGLDLLDebug.txt                                                  
+ c:\PGLWrapper\Input\PGLDLLDebug.txt                                            
                                                                                 
                                                                                 
                    
@@ -143,7 +143,7 @@ FugiEsd eta,CHNG,niter 0.31062 0.5253E-10  9
   MEM1: FA,sumA  0.1335E+00  0.1335E+00
  MEM1: eta,fAssoc,zAssoc=  0.3106E+00  0.1335E+00 -0.4349E-01
   MEM1: i,XA(i,j)=       1  0.9822E+00
-  MEM1:fAssoc,zAssoc,dAlpha,h^M,sumLnXi  0.1335E+00 -0.4349E-01  0.2440E+01  0.1782E-01  0.1224-310
+  MEM1:fAssoc,zAssoc,dAlpha,h^M,sumLnXi  0.1335E+00 -0.4349E-01  0.2440E+01  0.1782E-01  0.3953-311
   MEM1:         fugAssocBefore= -0.6164E-01
   MEM1: nTypes()=           1
  MEM1:i,j,eA,bepsA,BdLnAlph_dLnB       1       1  0.1300E+00  0.2181E+00  0.1113E+01
