@@ -74,7 +74,7 @@ function ISETMASTERDIR(input) bind(C, name="ISETMASTERDIR")
     end do
     ISETMASTERDIR = -86
     MasterDir=TRIM(inputStr)
-    if(LOUD)write(dumpUnit,*)'iSetMasterDir: MasterDir=',TRIM(MasterDir)
+    if(LOUD.AND. .NOT. isTDE)write(dumpUnit,*)'iSetMasterDir: MasterDir=',TRIM(MasterDir)
     ISETMASTERDIR = 0
 end function ISETMASTERDIR    
 
@@ -122,11 +122,11 @@ integer function INITPGLDLL(errMsg)
 	    !dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
 	    dumpFile=TRIM(PGLInputDir)//'\PGLDLLDebug.txt'
         !dumpFile='C:\PGLWrapper\PGLDLLDebug.txt'
-        open(dumpUnit,file=TRIM(dumpFile))
+        open(dumpUnit,file=dumpFile)
         write(dumpUnit,*)'InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=',dumpUnit,LOUD,dumpFile
         return
 	endif
-        
+    !NOTE: since .NOT.isTDE returns, this code executes when isTDE. 
 	errMsg=' From InitPGLDLL: No problem in InitPGLDLL function. PGLDLL.ini has been loaded.'
 	local=TRIM(MasterDir)//'\PGLDLL.ini'
 	ioErr=0
@@ -191,7 +191,7 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 	    INITIALIZE_MODEL=5	! declare an error if dump is to console i/o when LOUD.
 	    return
     endif
-    !if(isTDE)open(dumpUnit,file=dumpFile)
+    if(isTDE)open(dumpUnit,file=dumpFile)
     if (LOUD)write(dumpUnit,*)'INITIALIZE_MODEL: starting.'
     INITIALIZE_MODEL=0		! indicate no error to start
 	ieos=iEosLocal
@@ -256,7 +256,7 @@ integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 	    endif
     endif
 	if (LOUD)write(dumpUnit,*)'InitializeModel: returning. iErr=',INITIALIZE_MODEL
-    !if(isTDE)close(dumpUnit)
+    if(isTDE)close(dumpUnit)
     return
 end function INITIALIZE_MODEL
 
@@ -272,13 +272,13 @@ Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
     INTEGER localCas(nmx)
     integer NC,IPROPERTY,IPHASE,INITIAL,iErrStart,line,ierCode,iErrF,iErrDerv,isZiter,notDone
     DoublePrecision tKelvin,vTotCc,Z,aRes,uRes,rhoLiq,rhoVap,uSatL,uSatV,chemPot,pKPa,pMPa,zFactor
+    if(LOUD.and.isTDE)open(dumpUnit,file=dumpFile)
     if(LOUD)write(dumpUnit,*)'CalculateProperty1local: ieos,casrn,prp_id=',ieos,casrn 
     if(LOUD)write(dumpUnit,610)'CalculateProperty1local: var1,var2=',var1,var2
 610 format(1x,a,12E12.4)
 
     NC=1 !assume one component for all calculations (as of 1/1/2020 this is all we need).
     xFrac(1)=1  !   "
-    !if(LOUD.and.isTDE)open(dumpUnit,file=dumpFile)
     if(iEosOpt/=ieos)then
         if(LOUD)write(dumpUnit,611)'CalculateProperty1local: failed ieos check. iEosOpt=',iEosOpt
         iErr=15
@@ -386,7 +386,7 @@ Subroutine CalculateProperty1local(ieos, casrn, prp_id, var1, var2, res, ierr)
 	if (iProperty==44) res=1/(cmprsblty*pKPa/zFactor)  !cmprsblty=(dP/dRho)T*(1/RT)
         if (iProperty==45) res=CpRes_R
 86  if(LOUD)write(dumpUnit,611)'CalculateProperty1local: returning, iErr,result=',iErr,res 
-    if(isTDE)close(dumpUnit)
+    if(LOUD.and.isTDE)close(dumpUnit)
     return
 end subroutine CalculateProperty1local
 
