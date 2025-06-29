@@ -65,15 +65,16 @@ END MODULE SpeadParms
 	Integer GetBIPs
 	Integer idComp(nComps),iErrCode,nComps  !localType is an index of just the types occuring in the current mixture.
 	!DoublePrecision bondRate(nmx,maxTypes) !local to this subroutine.
-	DoublePrecision gmol(nmx),chemPo(nmx),solParEntro(nmx),bVolRef
+	DoublePrecision gmol(nmx),chemPo(nmx),solParEntro(nmx),solParA1(nmx),bVolRef,ks00ij
     DoublePrecision etaStd,eta,a0i,a1i,a2i,z0i,z1i,z2i,zFactorLo,zFactorHi,aRes,uRes
 	character*88 bipFile,bipHbFile,ParmsHbFile,ParmsTptFile
 	character*366 dumString
 	character*77 errMsg(0:11)
     character*77 errMsgPas
 	logical LOUDER !,CheckDLL
+	data ks00ij/ -0.04d0 /
 	LOUDER=LOUD
-	LOUDER=.TRUE. !COMMENT OUT FOR RELEASE
+	!LOUDER=.TRUE. !COMMENT OUT FOR RELEASE
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isESD or isPcSaft.
 	bTPT=.TRUE. ! in GlobConst simplifies calls in FUGI and FuVtot
     etaMax = 0.99D0 ! if eta > etaMax, errors will be declared
@@ -326,7 +327,7 @@ END MODULE SpeadParms
 	iErrCode=GetBIPs(bipFile,ID,nC)
 	!Special for speadmd repulsive term:
 	!ks0= -0.04*18*nComps/ SUM(bRef(1:nComps)) !ks0= -0.04*18*Nc/sum(bRef) is a crude rule so that kijS0->0 for polymer blends
-	ks0= -0.04*18*nComps/ SUM(bVolCC_mol(1:nComps)) ! This rule fails Michelsen-Kistenmacher for a ternary mixture !!!!
+	ks0= ks00ij*18*nComps/ SUM(bVolCC_mol(1:nComps)) ! This rule fails Michelsen-Kistenmacher for a ternary mixture !!!!
 	ks1=0 ! see data statement
 	!if(LOUD)write(dumpUnit,*)'Enter estimate for ks0'
 	!read(*,*)ks0
@@ -337,8 +338,8 @@ END MODULE SpeadParms
 	do iComp=1,nComps
 		call TptTerms(isZiter,iComp,etaStd,etaRefStd,a0i,a1i,a2i,z0i,z1i,z2i,iErrTpt)
 		solParEntro(iComp)=SQRT( a0i*RgasCal*298.d0*etaRefStd/bVolCC_mol(iComp) )
-		!solParEnerg(iComp)=SQRT(-a1i*RgasCal*etaStd/bVolCc_mol(iComp) )
-		!if(LOUD)write(dumpUnit,'(a,i4,2(f8.2))')' i,delSi,delUi',iComp,solParEntro(iComp),solParEnerg(iComp)
+		solParA1(iComp)=SQRT(-a1i*RgasCal*etaStd/bVolCc_mol(iComp) )
+		if(LOUDER)write(dumpUnit,'(a,i4,2(f8.2))')' i,delSi,delA1i',iComp,solParEntro(iComp),solParA1(iComp)
 	enddo
 	do iComp=1,nComps
 		do jComp=1,nComps
@@ -1294,7 +1295,7 @@ subroutine MixRule(isZiter,gmol,tKelvin,eta,nComps,bVolMix,a0Mix,a1Mix,a2Mix,z0M
 			!_ASSERT( (a0i*a0j) > 0 )
 			ksij=( ks0ij(iComp,jComp) )			! so ksij=0 if iComp=jComp
 			!ksij=0 ! this is what Neil assumes.
-			if(iComp==jComp .and. ksij /= 0 )write(*,*)'Mixrule: ksii =/= 0????'
+			if(iComp==jComp .and. ksij /= 0 )write(dumpUnit,*)'Mixrule: ksii =/= 0????'
 			if((ABS(a0i)<1e-22 .or. ABS(a0j)<1e-22) .and. LOUD)write(dumpUnit,*) 'MixRule:a0i or a0j ~ 0. Watch for divide error.' 
 			!zRefij=SQRT( bRef(iComp)*bRef(jComp)/(a0i*a0j) ) /2.d0
 			!zRefij=zRefij*( z0i*a0j+a0i*z0j )/bRefMix*(1-ksij)	! [=] zRef because a0j/sqrt(a0ij) and sqrt(bi*bj)/bMix units cancel
@@ -1401,7 +1402,7 @@ subroutine AxsCalc(xFrac,eta,nComps,tKelvin,A0MixPas,iErr)	!A0mix USEd in SpeadP
   	etaStd=0.4
     etaRefStd=etaStd*bRefMix/bVolMix
 	do iComp=1,nComps
-		call TptTerms(isZiter,iComp,etaStd,etaRef,a0i,a1i,a2i,etaDA0iDeta,etaDA1iDeta,etaDA2iDeta,iErrTpt)
+		call TptTerms(isZiter,iComp,etaStd,etaRefStd,a0i,a1i,a2i,etaDA0iDeta,etaDA1iDeta,etaDA2iDeta,iErrTpt)
 		solParEntro(iComp)=SQRT( a0i*RgasCal*298*etaStd/bRef(iComp) )
 		solParEnerg(iComp)=SQRT(-a1i*RgasCal*etaStd/bVolCc_mol(i) )
 		if(LOUD)write(dumpUnit,'(a,i4,2(f8.2))')' i,delSi,delUi',iComp,solParEntro(iComp),solParEnerg(iComp)
@@ -1458,8 +1459,8 @@ subroutine AxsCalc(xFrac,eta,nComps,tKelvin,A0MixPas,iErr)	!A0mix USEd in SpeadP
 			bVolj=bVolCc_mol(jComp)
 			call TptTerms(isZiter,jComp,eta,etaRef,a0j,a1j,a2j,z0j,z1j,z2j,iErrTpt)
 			vij=( bRef(iComp)+bRef(jComp) )/2
-			chiS=vij/RgasCal/298*(solParEntro(iComp)-solParEntro(jComp))**2
-			ksij=(ks0ij(iComp,jComp)+eta*ks1ij(iComp,jComp))*chiS
+			chiSo=(solParEntro(iComp)-solParEntro(jComp))**2	   !NOTE: solPar[=]1/b. This is chiS when ksij=0. See paper.
+			ksij=(ks0ij(iComp,jComp)+eta*ks1ij(iComp,jComp))*vij/RgasCal/298*chiSo
 			!NOTE: genlzd value for ksij is -0.04, but only when i.ne.j!!!!!!!!!!!!!!!!!!!!!!
 			!ksij=0 ! this is what Neil assumes.
 			!_ASSERT( (a0i*a0j).gt.0 )
@@ -1559,7 +1560,7 @@ end	subroutine AxsCalc
 	USE GlobConst, only: cmprsblty,CvRes_R
 	USE SpeadParms !GlobConst+Assoc(XA,XD,XC)+AiCoeffs etc.
 	USE BIPs !NOTE: USE Assoc is not here because no assoc is computed.
-    USE FugiParts !, only: uResRep,aResRep
+    USE FugiParts !, only: uRep,aRep
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	!PARAMETER(etaStep=2.d0/1000.d0,maxRhoStep=1.d0/etaStep)
 	Character*77 errMsg(22)

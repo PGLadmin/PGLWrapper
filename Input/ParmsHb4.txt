@@ -13,8 +13,8 @@
 12 2	1	1	0.000800	0	.3	1.7	Alkyne C≡ of <CN> in nitrile (with 2302)
 12 3	1	0	0.000003 	0	0	0	Alkyne C≡, vinylacetylene 
 12 4	1	0	0.000800 	0	0	0	Alkyne C≡, 2alkyne
-13 2	2	2	0.001800	0	4.2	2.2	H2O  old version
-13 1	2	2	0.001070	0	3.8	1.8	H2O  AB Amir Version
+13 2	2	2	0.001800	0	2.2	4.3	H2O  old version
+13 1	2	2	0.001070	0	1.82	3.83	H2O  AB Amir Version
 14 1	1	1	0.001000	0	5	5	MeOH
 14 2	1	1	0.000700	0	5.3	5.3	EtOH
 14 3	1	1	0.000700	0	4.8	4.8	nC4OH,nC5OH,(todo: resim C4OH w/203site&reoptimize,1ols
