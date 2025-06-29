@@ -1,64 +1,76 @@
 !MAIN PROGRAM FOR CALLING PGLDLL.DLL. This is untested code using iso_c_binding
-	USE GlobConst
-	character(255) errMsg 
+    USE GlobConst
+    use iso_c_binding
+    character(255) errMsg 
     character*255 tag, value,hello !, local
+    integer i1, cnt, clen, status, nbsl
+    character arg*100,cmd*100
 
-INTERFACE
-	integer function InitPGLDLL(hello)
-		!DEC$ATTRIBUTES DLLIMPORT :: InitPGLDLL  
-		character(255) hello
-	end function InitPGLDLL
+interface
+    integer function INITPGLDLL(errMsg)
+        !DEC$ ATTRIBUTES DLLIMPORT, ALIAS:"INITPGLDLL" :: InitPGLDLL
+        character(255) errMsg
+    end function INITPGLDLL
 	integer function SetLoudTrue(hello)
-		!DEC$ATTRIBUTES DLLIMPORT :: SetLoudTrue  
+    !DEC$ ATTRIBUTES, ALIAS:"SETLOUDTRUE" :: SetLoudTrue
 		character(255) hello
 	end function SetLoudTrue
     integer function iSetDumpUnit(aPlace)
         character(4) aPlace
         !DEC$ ATTRIBUTES DLLIMPORT::iSetDumpUnit
 	end function iSetDumpUnit
+    integer(c_int) function ISETMASTERDIR(input) bind(C, name="ISETMASTERDIR")
+        use iso_c_binding
+        character(kind=c_char), dimension(*) :: input
+    end function ISETMASTERDIR
 	integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
-		!DEC$ATTRIBUTES DLLIMPORT :: INITIALIZE_MODEL
+		!DEC$ATTRIBUTES :: INITIALIZE_MODEL
 		integer iEosLocal, Rn1, Rn2, Rn3
 	end function INITIALIZE_MODEL
 	integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
-		!DEC$ATTRIBUTES DLLIMPORT :: Calculate1 
+		!DEC$ATTRIBUTES :: Calculate1 
 		integer modelid, casrn1, propertyid, localprpid, ierr
 		double Precision t, p, res, uncert
 	end function Calculate1
 	DoublePrecision function CalculateProperty(ieos, casrn, prp_id, var1, var2, ierr)
-		!DEC$ATTRIBUTES DLLIMPORT :: CalculateProperty 
+		!DEC$ATTRIBUTES :: CalculateProperty 
 		integer ieos, casrn, prp_id, ierr
 		double Precision var1, var2
 	end function CalculateProperty
+	DoublePrecision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
+		!!!DEC$ATTRIBUTES :: CalculateProperty2 
+		integer ieos, casrn1, casrn2, prp_id, ierr
+		double Precision var1, var2, var3
+	end function CalculateProperty2
 END INTERFACE
-  integer i1, cnt, clen, status, nbsl
-  character arg*100,cmd*100
-  call get_command (cmd, clen, status)
-  call get_command_argument (0, cmd, clen, status)
-  cnt = command_argument_count ()
-  do i1 = 1, cnt
-     call get_command_argument (i, arg, clen, status)
-  end do
-        MasterDir='c:\PGLWrapper'
-        nbsl=0
-        do i1=100,1,-1
-            if (cmd(i1:i1).eq.'\') then
-                nbsl=nbsl+1
-                if (nbsl.eq.2) then
-                    MasterDir=cmd(1:i1-1)
-                    PGLInputDir=trim(masterDir)//'\input'
-                exit
-                end if
+    call get_command (cmd, clen, status)
+    call get_command_argument (0, cmd, clen, status)
+    cnt = command_argument_count ()
+    do i1 = 1, cnt
+        call get_command_argument (i, arg, clen, status)
+    end do
+    nbsl=0
+    do i1=100,1,-1
+        if (cmd(i1:i1).eq.'\') then
+            nbsl=nbsl+1
+            if (nbsl.eq.2) then
+                MasterDir=cmd(1:i1-1)
+                PGLInputDir=trim(masterDir)//'\input'
+            exit
             end if
-		enddo
-        
+        end if
+    enddo
+    ! Above code is for running from command line. For debugging&testing in VS Studio:
+    MasterDir='c:\PGLWrapper'
+    PGLInputDir=trim(MasterDir)//'\input'
+    iErr=iSetMasterDir(MasterDir) !Copy the location of MasterDir into the DLL GlobConst.       
     !tag='LOCATION'
     !value='c:\PGLWrapper|'
     !iErr=SetString(tag,value)
-    iErr=iSetLoudTrue(errMsg)
+    iErr=iSetLoudTrue(errMsg) ! LOUD=.TRUE. => debug info 
     iDumpUnit=iSetDumpUnit('FILE')
     !if (LOUD)iDumpUnit=iSetDumpUnit('FILE')
-	iErr=InitPGLDLL(errMsg)
+	iErr=INITPGLDLL(errMsg)
 	if(iErr > 10)then
 		write(*,'(a)')' DLLTestMain: InitPGLDLL! ErrMsg=',errMsg
 		write(*,*)' DLLTestMain: iErr=',iErr
@@ -70,7 +82,7 @@ END INTERFACE
 	call Test1
 	call Test2
 	call Test3
-
+    pause 'Check the output. It should say: 34.47, 0.762,0.0095,0.762,5.75'
     stop
 END !main Program
 
@@ -117,13 +129,16 @@ subroutine Test2
     var3 = 0.0013779105351375952
     prp_id = 201        !vapor chemical potential of component 1. 
     prp=CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3,  ierr)
-    write(*,*) 'Test2: iErr,P,x1,prp,=',iErr,var2,var3,prp
+    write(*,*) 'Test2: iErr,  T(K)   P(kPa)   x1    prp'
+    write(*,'(i4,1x,2f9.2,1x,f8.5,1x,E11.4)') iErr,var1,var2,var3,prp
     var2 = 91911.609110881604
     prp=CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3,  ierr)
-    write(*,*) 'Test2: P,x1,prp,iErr=',var2,var3,prp,iErr
+    !write(*,*) 'Test2: iErr,  T(K)   P(kPa)   x1    prp'
+    write(*,'(i4,1x,2f9.2,1x,f8.5,1x,E11.4)') iErr,var1,var2,var3,prp
     var2 = 1000
     prp=CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3,  ierr)
-    write(*,*) 'Test2: P,x1,prp,iErr=',var2,var3,prp,iErr
+    !write(*,*) 'Test2: iErr,  T(K)   P(kPa)   x1    prp'
+    write(*,'(i4,1x,2f9.2,1x,f8.5,1x,E11.4)') iErr,var1,var2,var3,prp
     return
 
     ieos = 2

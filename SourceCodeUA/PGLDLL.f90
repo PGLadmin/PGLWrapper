@@ -57,6 +57,27 @@ integer function iSetDumpUnit(input)
     return
 end function iSetDumpUnit
 
+function ISETMASTERDIR(input) bind(C, name="ISETMASTERDIR")
+    use iso_c_binding
+    use GlobConst
+    !DEC$ ATTRIBUTES DLLEXPORT :: ISETMASTERDIR
+    implicit none
+    character(kind=c_char), dimension(*) :: input
+    integer(c_int) :: ISETMASTERDIR
+    character(len=255) :: inputStr
+    integer :: i
+
+    inputStr = ''
+    do i = 1, 255
+        if (input(i) == c_null_char) exit
+        inputStr(i:i) = input(i)
+    end do
+    ISETMASTERDIR = -86
+    MasterDir=TRIM(inputStr)
+    if(LOUD)write(dumpUnit,*)'iSetMasterDir: MasterDir=',TRIM(MasterDir)
+    ISETMASTERDIR = 0
+end function ISETMASTERDIR    
+
 integer function SETSTRING(tag, value)
 	USE GlobConst
     character*255 tag, value , errMsg
@@ -80,16 +101,16 @@ integer function SETSTRING(tag, value)
     return
 end function SETSTRING
 
-integer function InitPGLDLL(errMsg)
+integer function INITPGLDLL(errMsg)
     use DllConst
     use GlobConst
     Implicit DoublePrecision(a-h,o-z)
 	Character(255) errMsg,CURDIR,local,dumString
 	LOGICAL ReadOptions
-    !DEC$ ATTRIBUTES DLLEXPORT::InitPGLDLL
+    !DEC$ ATTRIBUTES DLLEXPORT :: INITPGLDLL    
     !!MS$ ATTRIBUTES DLLEXPORT::InitPGLDLL
 	
-	InitPGLDLL=0
+	INITPGLDLL=0
     DEBUG=.FALSE.
 	if(isTDE)then
 		errMsg=' From InitPGLDLL: isTDE==.TRUE. Checking PGLDLL.ini for instructions.'
@@ -100,7 +121,8 @@ integer function InitPGLDLL(errMsg)
         dumpUnit=686
 	    !dumpFile=TRIM(MasterDir)//'\JreDebugDLL.txt'
 	    dumpFile=TRIM(PGLInputDir)//'\PGLDLLDebug.txt'
-        open(dumpUnit,file=dumpFile)
+        dumpFile='C:\PGLWrapper\PGLDLLDebug.txt'
+        open(dumpUnit,file=TRIM(dumpFile))
         write(dumpUnit,*)'InitPGLDLL: DLL has started. dumpUnit,LOUD,dumpFile=',dumpUnit,LOUD,dumpFile
         return
 	endif
@@ -112,33 +134,33 @@ integer function InitPGLDLL(errMsg)
 	if(ReadOptions)OPEN(51,file=local,ioStat=ioErr)
 	if(ioErr /= 0)then
 		errMsg=' From InitPGLDLL: Error opening PGLDLL.ini Check that this file is where project is defined.'
-		InitPGLDLL=11 
+		INITPGLDLL=11 
 		return
 	endif
 
 !	if(ReadOptions)read(51,*,ioStat=ioErr)CURDIR !  Confirm directory where PGLDLL.dll is defined. e.g., where mdp or dll is.
 !	if(ioErr /= 0)then
 !		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list path\curdir.' 
-!		InitPGLDLL=12 
+!		INITPGLDLL=12 
 !		return
 !   endif
     DEBUG=.FALSE. 
 !	if(ReadOptions)read(51,*,ioStat=ioErr)DEBUG	 !  T/F for debug mode
 !	if(ioErr /= 0)then
 !		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 2nd line should list .TRUE. or .FALSE. to use debug dirs'
-!		InitPGLDLL=13 
+!		INITPGLDLL=13 
 !		return
 !	endif 
 	if(ReadOptions)read(51,*,ioStat=ioErr)LOUD	 !  T/F for outputting intermediate calculations to dumpFile DebugDLL.txt.
 	if(ioErr /= 0)then
 		errMsg=' InitPGLDLL: Error reading PGLDLLOptions.txt. 1st line should list .TRUE. or .FALSE. for DebugDLL.txt'
-		InitPGLDLL=14 
+		INITPGLDLL=14 
 		return
 	endif 
 	if(ReadOptions)read(51,*,ioStat=ioErr)dumString  ! dir where all parms and bips are stored.
 	if(ioErr /= 0)then
 		errMsg=' InitPGLDLL: Error reading PGLDLL.ini. 2nd line should list path\PGLInputDir.' 
-		InitPGLDLL=15 
+		INITPGLDLL=15 
 		return
     endif
     !if(LOUD)PGLInputDir=TRIM(dumString)            ! do not change the input dir if LOUD=.FALSE.
@@ -154,7 +176,7 @@ integer function InitPGLDLL(errMsg)
 	close(51) !51=PGLDLL.ini
     if(isTDE)close(dumpUnit)    ! for TDE we must open and close in CalculatePropertyLocal__() or the dump file is too large.
     return      
-end function InitPGLDLL
+end function INITPGLDLL
 
 integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
 	USE GlobConst
@@ -967,23 +989,24 @@ function SubstID(id_type, num_id, string_id)
     integer num_id
 	character inFile*251
 	dimension IdTrcDb(maxDb),idDb(maxDb),idCasDb(maxDb)
+    data initCall/1/
     !DEC$ ATTRIBUTES DLLEXPORT::SUBSTID
     !!MS$ ATTRIBUTES DLLEXPORT::SUBSTID
-	if (idCasDb(1)==0) then
-	inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
-	OPEN(50,FILE=inFile)
-    read(50,*)idCasDb(1)
-	do i=1,maxDb
-		read(50,*,END=101)IdTrcDb(i),idDb(i),idCasDb(i)	!Read and store the id DB on first call only.
-		cycle
-101     continue !transfer here when END is found.
-		numDb=i-1
-		exit !terminate do loop
-	enddo
-	close(50)
-	end if
-	do i=1,maxDb
-		if(initCall==1)read(50,*,END=101)IdTrcDb(i),idDb(i),idCasDb(i)	!Read and store the id DB on first call only.
+	if (initCall==1) then
+	    inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
+	    OPEN(50,FILE=inFile)
+        read(50,*)idCasDb(1)
+	    do i=1,maxDb
+		    read(50,*,END=101)IdTrcDb(i),idDb(i),idCasDb(i)	!Read and store the id DB on first call only.
+		    cycle
+101         continue !transfer here when END is found.
+		    numDb=i-1
+		    exit !terminate do loop
+	    enddo
+	    close(50)
+        initCall=0
+    endif
+    do i=1,maxDb
 		if( IdTrcDb(i)==num_id )then
 			SubstID=idCasDb(i)
 			exit !terminate do loop
