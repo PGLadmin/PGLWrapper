@@ -47,11 +47,12 @@ IMPLICIT NONE
 ! 2.6.4 print PCSAFT parameters
 ! 2.6.5 version for distribution. Remove the factor of 2 on symmetrical association constants
 ! 2.6.6 add capability for KADN and EPSN for CPA, ESD, VDW
+! 2.6.7 modify loadsites to save Ksave, Esave
 ! revise 'ver' when making changes to code.
 
-! character(len=10) :: ver = '2.6.5rel'
+! character(len=10) :: ver = '2.6.7TPT1'
 ! Append RTPT or TPT1 so that debug code shows the option used for compiled code.
-character(len=10) :: ver = '2.6.6TPT1'
+character(len=10) :: ver = '2.6.7TPT1'
 
 INTEGER n, NSUB,  NSUP
 !
@@ -98,7 +99,7 @@ INTEGER n, NSUB,  NSUP
 INTEGER lgrp, lgrpe, JGRP, kcalcs
 ! aspmx =1 if association or solvation is present in mixture (or pure components)
 ! nsites is the number of sites in the aspen simulation file, nsitesp is the number of sites present in the function call based on components.
-integer aspmx, nsites, nsitesp
+integer nsites, nsitesp
 integer i,j,k,l
 real*8 bmix, eta, etamix,etamixU, etamixD, R, Tsav
 character(len=8) name_grp1, name_grp2
@@ -136,11 +137,11 @@ type (species) :: compp(n) ! components present
 ! When command line debugging is complete or when you need to run from GUI agin, do not forget
 ! to comment these lines and recompile, or the run will freeze waiting for input in the background,
 ! and you won't see the prompt from the GUI.
- !IF (ienter .EQ. 0) THEN
- !WRITE(*,'(A)') 'Enter a number'
- !READ (*,*) ienter
- !ienter = 1
- !ENDIF
+!  IF (ienter .EQ. 0) THEN
+!  WRITE(*,'(A)') 'Enter a number'
+!  READ (*,*) ienter
+!  ienter = 1
+!  ENDIF
 
 delT = 0.1D0
 
@@ -340,7 +341,6 @@ select case (kop(4))
                 write(global_nh,'(6G12.5)') alpha
                 write(global_nh,*) ' *** GMNRTL Physical tau'
                 write(global_nh,'(6G12.5)') tau
-                WRITE(GLOBAL_NH,*) ' *** GMNRTL - User Site in Aspen Simulation (subset may be used)'
             endif
             call nrtl(gammares, n, x, tau, alpha)
         endif ! kcalc is odd
@@ -387,7 +387,6 @@ select case (kop(4))
             write(global_nh,'(6G12.5)') bparam
             write(global_nh,*) ' *** GMUwilson Physical Lambda'
             write(global_nh,'(6G12.5)') Lambda
-            WRITE(GLOBAL_NH,*) ' *** GMU - User Site in Aspen Simulation (subset may be used)'
         endif
         call wilson(gammares, n, x, Lambda)
         endif ! kcalc is odd
@@ -426,7 +425,6 @@ select case (kop(4))
                 write(global_nh,'(6G12.5)') bparam
                 write(global_nh,*) ' *** GMUscathild Physical AIJ'
                 write(global_nh,'(6G12.5)') AIJ
-                WRITE(GLOBAL_NH,*) ' *** GMU - User Site in Aspen Simulation (subset may be used)'
             endif
             call scathild(gammares, x, V, n, Aij,R, T)
         endif ! kcalc is odd
@@ -466,7 +464,6 @@ select case (kop(4))
                 write(global_nh,'(6G12.5)') bparam
                 write(global_nh,*) ' *** GMUnagata Physical aij + bij/T'
                 write(global_nh,'(6G12.5)') aparam + bparam/T
-                WRITE(GLOBAL_NH,*) ' *** GMU - User Site in Aspen Simulation (subset may be used)'
             endif
             ! call nagata1(gammares, n, x, UNIQR, aparam)
             call nagata1(gammares, n, x, V, aparam + bparam/T)
