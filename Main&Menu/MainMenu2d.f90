@@ -57,7 +57,7 @@
 	LOUD =.FALSE.
 	!LOUD = .TRUE.
     RELEASE=.FALSE.
-    RELEASE=.TRUE.
+    !RELEASE=.TRUE.
 	PGLInputDir='c:\PGLWrapper\input'
     IF(RELEASE)PGLInputDir=TRIM(masterDir)//'\input'
 	dumpUnit=6

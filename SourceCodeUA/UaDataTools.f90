@@ -196,7 +196,7 @@ end
     ndbUsed=ndb
 	!CrIndex=ndbUsed ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
 	inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
-	if(LOUDER)print*,'LoadCrit: PGLinputDir/inFile=',TRIM(inFile)
+	if(LOUDER)write(dumpUnit,*)'LoadCrit: PGLinputDir/inFile=',TRIM(inFile)
 	if(LOUDER)write(dumpUnit,*)'LoadCritParmsDb: CritFile=',TRIM(inFile)
 !	OPEN(40,FILE=inFile,FORM='BINARY')
 	OPEN(40,FILE=inFile)
@@ -207,7 +207,7 @@ end
 	!if(ioErr==0)READ(dumString,*,ioStat=ioErr)NDECK1
     !if(ioErr /=0)
     NDECK1=nCritSet+123 !if header omits the number of records(e.g. for python benefit), we recover...
-	DO I=1,NDECK1
+	DO I=1,NDECK1 !Loading the entire CritDB into RAM
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
 		!if(i.eq.691)write(dumpUnit,*)
 !		READ (40,ERR=861)IDnum(I),TCD(I),PCD(I),ZCD(I),ACEND(I) &
@@ -219,14 +219,14 @@ end
 		                                                              solParmD(i),rhoG_cc,rMwD(i),classDb(i),formDb(i),NAMED(i)
 		if(ioErr < 0)then ! -ve ioErr signals end of file.
             NDECK1=I-1 !here is how we recover the omitted NDECK1.
-            if(LOUDER)print*,'LoadCritDB: EOF reached. NDECK1=',NDECK1
+            if(LOUDER)write(dumpUnit,*)'LoadCritDB: EOF reached. NDECK1=',NDECK1
             exit
         elseif(i > nCritSet)then
             NDECK1=I-1 !here is how we recover the omitted NDECK1.
-            if(LOUDER)print*,'LoadCritDB: i>nCritSet?. i,NDECK1,ioErr=',i,NDECK1,ioErr
+            if(LOUDER)write(dumpUnit,*)'LoadCritDB: i>nCritSet?. i,NDECK1,ioErr=',i,NDECK1,ioErr
             exit
         elseif(ioErr /= 0)then
-            if(LOUDER)print*,'LoadCritDB: ioErr=/=0 i,NDECK1,ioErr=',i,NDECK1,ioErr
+            if(LOUDER)write(dumpUnit,*)'LoadCritDB: ioErr=/=0 i,NDECK1,ioErr=',i,NDECK1,ioErr
             iErrCode=12
             return
         endif
@@ -302,8 +302,13 @@ end
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
 	!	eHbKcalMol(nmx),bondVolNm3(nmx),ND(nmx),NDS(nmx),NAS(nmx)
-	if(nDeckDb.ne.nCritSet)Call LoadCritParmsDb(iErrLoadCrit) !this is a signal that LoadCrit__ was not called successfully yet.
-	if(iErrLoadCrit > 0)then
+    iErrLoadCrit=0
+	if(nDeckDb.ne.nCritSet)then
+        NDtemp=nDeckDb
+        NCritTmp=nCritSet
+        Call LoadCritParmsDb(iErrLoadCrit) !this is a signal that LoadCrit__ was not called successfully yet.
+    endif
+    if(iErrLoadCrit > 0)then
         iErrCode=8686
 		if(LOUDER)write(dumpUnit,*)'GetCrit: error from LoadCritParmsDb. Thats all folks!'
 		return
@@ -517,48 +522,53 @@ end
 	end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	subroutine IdCcLookup(NC,idcc,ier,errMsgPas)
-    USE GlobConst
+	subroutine IdTrcLookup(NC,IdTrc,ier,errMsgPas)
+    USE GlobConst, only:ID,idCas,PGLinputDir,DumpUnit,LOUD
 	parameter(maxDb=3000)
-	character*77 errMsg(0:11),errMsgPas
+	character*77 errMsg(0:22),errMsgPas
 	character inFile*251
-	dimension idcc(NC)
-	dimension idCcDb(maxDb),idDb(maxDb)
-		inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
-		OPEN(50,FILE=inFile)
+	dimension IdTrc(*)
+	dimension IdTrcDb(maxDb),idDb(maxDb),idCasDb(maxDb)
+	data initCall/1/
+	inFile=TRIM(PGLinputDir)//'\idTrcDipCas.TXT' ! // is the concatenation operator
+	OPEN(50,FILE=inFile)
 	errMsg(0)='No Problem'
-	errMsg(1)='IdCcLookup Error: at least one id not found'
+	errMsg(11)='IdTrcLookup Error: at least one id not found'
 	ier=0
 	i=0
 	ID(1)=0
 	do i=1,maxDb
-		read(50,*,END=101)idCcDb(i),idDb(i)
-		if(idCcDb(i).eq.idcc(1))ID(1)=idDb(i)
+		if(initCall==1)read(50,*,END=101)IdTrcDb(i),idDb(i),idCasDb(i)	!Read and store the id DB on first call only.
+		if( IdTrcDb(i)==IdTrc(1) )ID(1)=idDb(i)
+		if( IdTrcDb(i)==IdTrc(1) )idCas(1)=idCasDb(i)
 		cycle
-101		continue
+101		continue !transfer here when END is found.
 		numDb=i-1
 		exit !terminate do loop
 	enddo
-	if(id(1).eq.0)then
-		ier=1
-		if(LOUD)write(dumpUnit,*)'GetCrit:Did not find idcc(1)=',idcc(1)
+	initCall=0
+	if(id(1)==0)then
+		ier=11
+		if(LOUD)write(dumpUnit,*)'GetCrit:Did not find IdTrc(1)=',IdTrc(1)
 		errMsgPas=errMsg(ier)
 		return
 	endif
+	if(NC < 2)return
 	do iComp=2,NC
 		ID(iComp)=0
 		iGotIt=0
 		i=0
-		do while(iGotIt.eq.0.and.i.lt.numDb)
+		do while(iGotIt==0.and.i < numDb)
 			i=i+1
-			if(idCcDb(i).eq.idcc(iComp))then
+			if(IdTrcDb(i).eq.IdTrc(iComp))then
 				ID(iComp)=idDb(i)
+				idCas(iComp)=idCasDb(i)
 				iGotit=1
 			endif
 		enddo
-		if(id(iComp).eq.0)then		
-			ier=1
-			if(LOUD)write(dumpUnit,*)'Did not find idcc(i).i,idcc=',iComp,idcc(1)
+		if(id(iComp)==0)then		
+			ier=11
+			if(LOUD)write(dumpUnit,*)'Did not find IdTrc(i).i,IdTrc=',iComp,IdTrc(1)
 			errMsgPas=errMsg(ier)
 			return
 		endif
