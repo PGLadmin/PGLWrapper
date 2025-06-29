@@ -9,7 +9,9 @@ MODULE sitenspecies
         END TYPE siteinfo
 
         TYPE species
-                LOGICAL	:: selfassoc = .FALSE.	! False by default, True if self associating
+                LOGICAL	:: selfassoc = .FALSE.	! Flase by default, True if self associating
+                LOGICAL	:: dnr = .FALSE.	! Flase by default, True if donors on species
+                LOGICAL	:: acpt = .FALSE.	! Flase by default, True if acceptors on species
                 INTEGER	:: nsite = 0		! number of sites on species
                 INTEGER	:: sid(5) = (/ 0,0,0,0,0 /)	! site (defined above) indexes to point to the sites on the species, vector size limits the # sites on a species
                 REAL*8	:: x = 0D0 		! mole fraction

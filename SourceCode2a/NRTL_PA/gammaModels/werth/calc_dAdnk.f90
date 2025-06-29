@@ -30,7 +30,7 @@ if((kcalc.eq.1).and.(kop1.gt.1)) then
     if(n.eq.1) then
         write(global_nh,*)'Pure component-------------'
     else
-        write(global_nh,*)'Site hosts-----------------'
+        write(global_nh,*)'Site hosts (for function call)-----------------'
         write(FMT,'("(",I0,"(I5))")') ns ! make format string for ns columns
         write(global_nh,FMT) site(:)%host
     endif
