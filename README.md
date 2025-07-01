@@ -22,3 +22,78 @@ The [Input](Input) directory is also important because it provides resources for
 
 We do appreciate that there is much room for improvement in the quality of these codes, extensions to other languages (e.g., Python), and the nature of our organization. We encourage readers to make those improvements and we look forward to learning about that progress. We simply provide what we have as examples of one way to achieve the desired outcomes. In this way, we hope to contribute to our stated mission:
 > "to survey the field of physical property estimation in order to promote the best approaches and objectively characterize the quality of the available methods, such that current applications are reliable and future progress of the field is advanced."
+
+## Sample Projects
+
+There are three projects that can be built easily using the codes from the PGLAdmin GitHub: PGLDLL, PGLDLLTest, and PGLEos. PGLDLL and its …Test function form the most expected use case. We presume that most readers will have their own flash codes and regression codes for optimizing BIPs and similar parameters. For them, we hope to facilitate incorporating the essential codes from PGL. A DLL might not be the easiest way to implement these codes, however. Readers may prefer to simply add these .f90 files into their existing projects. That should be easy, but don’t forget to carry along the PGLWrapper\input directory where the parameter files for the various EOSs are located. 
+
+Support for the PGLEos project has been added as an afterthought. We are happy to share these codes, but there are probably many superior codes available. The primary additions from PGLDLL to PGLEos are the MainMenu, MenuItems, FlashSubs, and MinPack. The MainMenu provides a crude console interface to a long list of computational options. Most of these are common bubble, dew, and flash routines for VLE, LLE, SLE, and SFE. A few options are available for critical points and parameter regression. We use the LmDif code from MinPack to perform most optimizations. The PGLEos project was used for evaluations of VLE, LLE, IDACs, and SLE. The databases for these evaluations are included in the PGLWrapper\input directory. The PGLDLL was used for evaluations in Chapter 6 and Chapter 7 through the TDE interface. Those evaluation databases are not available. Readers are welcome to use the PGLEos codes, but please do not expect support when, for example, a difficult flash in the critical region fails to converge. Readers are encouraged to develop their own codes for their own applications. We welcome learning about those developments. 
+
+The following suggestions were developed for a recent installation of Windows Visual Studio Community 2019 using the 2025 Fortran Essentials (IFX) without the Math Kernel. This configuration minimizes the impact of the Fortran installation on hard drive space (~2GB). 
+
+To build PGLDLL, add the following as "existing” files:
+SourceCodeUA:
+0ModuleUAData
+FuEsd23a
+FuFloryWert2a
+FugiLSG-MEM2
+FugiNRTL
+FugiPr2a
+FugiPrTc
+fugiPRtcWS
+fugiPRWS1a
+FuSpeadmd23a
+MEM2
+PGLDLL.f90
+PGLWrapper.f90
+PGLFugiDefs
+UaDataTools
+UaEosTools
+Wertheim23a
+
+SourceCode2a:
+PcSaftEosGross
+PrLorraine
+
+To build the PGLDLLTest project, add the following as "existing” files:
+0ModuleUAData
+DLLTestMain
+(You will need to paste PGLDLL.DLL and PGDLL.lib into the dir where \Debug\PGLDLLTest.exe is built. You may also need to specify PGLDLL.lib in the “Additional Dependencies” of PGLDLLTest(IFX) > properties > Linker > Input.)
+
+To build the PGLEos project, add the following as "existing” files:
+SourceCodeUA:
+0ModuleUAData
+FuEsd23a
+FuFloryWert2a
+FugiLSG-MEM2
+FugiNRTL
+FugiPr2a
+FugiPrTc
+fugiPRtcWS
+fugiPRWS1a
+FuSpeadmd23a
+MainMenu2d
+MEM2
+MenuItems2c
+PGLFugiDefs
+UaDataTools
+UaEosTools
+Wertheim23a
+
+SourceCode2a:
+PcSaftEosGross
+PrLorraine
+
+FlashSubs:
+CR2e
+Flashsubs1b
+
+MinPack:
+DEIGSRT
+DGAUSSJ
+DPYTHAG
+DTQLI
+DTRED2
+INDEXX
+LmdifEzCov2
+MinTools

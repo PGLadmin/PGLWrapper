@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VisualStudioProject ProjectCreator="Intel Fortran" Keyword="Dll" Version="11.0" ProjectIdGuid="{3016B63B-4466-448E-A31C-65C0B0EA0971}">
+<VisualStudioProject ProjectType="typeDynamicLibrary" ProjectCreator="Intel Fortran" Keyword="Dll" Version="11.0" ProjectIdGuid="{A1CE4915-147A-4694-9F1D-8B856C1BC5F6}">
 	<Platforms>
 		<Platform Name="Win32"/>
 		<Platform Name="x64"/>
 	</Platforms>
 	<Configurations>
-		<Configuration Name="Debug|Win32" ConfigurationType="typeDynamicLibrary">
-			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" DebugParameter="debugParameterAll" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
-			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" AssemblyDebug="linkAssemblyDebugFull" SubSystem="subSystemWindows" LinkDLL="true"/>
+		<Configuration Name="Debug|Win32" UseCompiler="ifortCompiler" ConfigurationType="typeDynamicLibrary">
+			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
+			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemWindows" LinkDLL="true"/>
 			<Tool Name="VFResourceCompilerTool"/>
 			<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
 			<Tool Name="VFCustomBuildTool"/>
@@ -16,9 +16,20 @@
 			<Tool Name="VFPostBuildEventTool"/>
 			<Tool Name="VFManifestTool" SuppressStartupBanner="true"/>
 		</Configuration>
-		<Configuration Name="Release|Win32" ConfigurationType="typeDynamicLibrary">
+		<Configuration Name="Debug|x64" UseCompiler="ifxCompiler" ConfigurationType="typeDynamicLibrary">
+			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
+			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+			<Tool Name="VFResourceCompilerTool"/>
+			<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+			<Tool Name="VFCustomBuildTool"/>
+			<Tool Name="VFPreLinkEventTool"/>
+			<Tool Name="VFPreBuildEventTool"/>
+			<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;C:\Users\ellio\source\repos\PGLDLL\x64\Debug\PGLDLL.dll&quot; &quot;C:\Users\ellio\source\repos\PGLDLLTest\x64\Debug&quot;"/>
+			<Tool Name="VFManifestTool" SuppressStartupBanner="true"/>
+		</Configuration>
+		<Configuration Name="Release|Win32" UseCompiler="ifortCompiler" ConfigurationType="typeDynamicLibrary">
 			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL"/>
-			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+			<Tool Name="VFLinkerTool" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
 			<Tool Name="VFResourceCompilerTool"/>
 			<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
 			<Tool Name="VFCustomBuildTool"/>
@@ -27,50 +38,45 @@
 			<Tool Name="VFPostBuildEventTool"/>
 			<Tool Name="VFManifestTool" SuppressStartupBanner="true"/>
 		</Configuration>
-		<Configuration Name="Debug|x64" ConfigurationType="typeDynamicLibrary">
-			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" DebugParameter="debugParameterAll" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
-			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" AssemblyDebug="linkAssemblyDebugFull" SubSystem="subSystemWindows" LinkDLL="true"/>
-			<Tool Name="VFResourceCompilerTool"/>
-			<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
-			<Tool Name="VFCustomBuildTool"/>
-			<Tool Name="VFPreLinkEventTool"/>
-			<Tool Name="VFPreBuildEventTool"/>
-			<Tool Name="VFPostBuildEventTool"/>
-			<Tool Name="VFManifestTool" SuppressStartupBanner="true"/>
-		</Configuration>
-		<Configuration Name="Release|x64" ConfigurationType="typeDynamicLibrary">
+		<Configuration Name="Release|x64" UseCompiler="ifxCompiler" ConfigurationType="typeDynamicLibrary">
 			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL"/>
-			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+			<Tool Name="VFLinkerTool" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
 			<Tool Name="VFResourceCompilerTool"/>
 			<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
 			<Tool Name="VFCustomBuildTool"/>
 			<Tool Name="VFPreLinkEventTool"/>
 			<Tool Name="VFPreBuildEventTool"/>
-			<Tool Name="VFPostBuildEventTool"/>
+			<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;C:\Users\ellio\source\repos\PGLDLL\x64\Debug\PGLDLL.dll&quot; &quot;C:\Users\ellio\source\repos\PGLDLLTest\x64\Debug&quot;"/>
 			<Tool Name="VFManifestTool" SuppressStartupBanner="true"/>
 		</Configuration>
 	</Configurations>
 	<Files>
-		<Filter Name="Header Files" Filter="fi;fd;h;inc"/>
+		<Filter Name="Header Files" Filter="fi;fd"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
-		<File RelativePath=".\SourceCodeUA\0ModuleUAData.f90"/>
-		<File RelativePath=".\SourceCodeUA\FuEsd23a.f90"/>
-		<File RelativePath=".\SourceCodeUA\FugiLSG-MEM2.f90"/>
-		<File RelativePath=".\SourceCodeUA\FugiNRTL.f90"/>
-		<File RelativePath=".\SourceCodeUA\FugiPr2a.f90"/>
-		<File RelativePath=".\SourceCodeUA\FugiPrTc.f90"/>
-		<File RelativePath=".\SourceCodeUA\fugiPRtcWS.f90"/>
-		<File RelativePath=".\SourceCodeUA\fugiPRWS1a.for"/>
-		<File RelativePath=".\SourceCodeUA\FuSpeadmd23a.f90"/>
-		<File RelativePath=".\SourceCodeUA\MEM2.f90"/>
-		<File RelativePath=".\SourceCode2a\PcSaftEosGross.f90"/>
-		<File RelativePath=".\SourceCodeUA\PGLDLL.f90"/>
-		<File RelativePath=".\SourceCodeUA\PGLFugiDefs.f90"/>
-		<File RelativePath=".\SourceCode2a\PrLorraine.f90"/>
-		<File RelativePath=".\SourceCodeUA\UaDataTools.f90"/>
-		<File RelativePath=".\SourceCodeUA\UaEosTools.f90"/>
-		<File RelativePath=".\SourceCodeUA\Wertheim23a.f90"/></Filter>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\0ModuleUAData.f90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FuEsd23a.f90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FugiLSG-MEM2.F90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FugiNRTL.F90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FugiPr2a.F90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FugiPrTc.F90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\fugiPRtcWS.F90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\fugiPRWS1a.for"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FuSpeadmd23a.f90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\MEM2.f90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCode2a\PcSaftEosGross.f90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\PGLDLL.f90">
+			</File>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\PGLFugiDefs.F90">
+			</File>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\PGLWrapper.F90">
+			</File>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCode2a\PrLorraine.f90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\UaDataTools.F90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\UaEosTools.f90"/>
+			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\Wertheim23a.f90"/>
+		</Filter>
+		<File RelativePath=".\ReadMe.txt"/>
 	</Files>
 	<Globals/>
 </VisualStudioProject>
