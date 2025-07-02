@@ -1,4 +1,7 @@
 *Debug/
 *Release/
 *.obj
+*.suo
+*.u2d
+*.user
 PGLDll.dll
