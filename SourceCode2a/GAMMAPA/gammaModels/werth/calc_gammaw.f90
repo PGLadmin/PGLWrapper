@@ -27,7 +27,7 @@ SUBROUTINE calc_gammaw(gammaw, kcalc, kop1, gcalcFlag, n, ns, comp, site, T, &
 ! Parameter:
 !	- KADplus	(ns,ns)		[??]
 
-USE sitenspecies
+USE sitenspecies, only: siteinfo, species !pass other variables for legacy reasons
 IMPLICIT NONE
 
 INTENT(OUT)	::	gammaw

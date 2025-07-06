@@ -3,7 +3,7 @@ SUBROUTINE gcalc(del, gterm1, gterm2, gcalcFlag, n, ns, KADplus, &
 !
 !
 ! Note: no input checkings are done, need to be done before calling the subroutine
-USE sitenspecies
+USE sitenspecies, only: siteinfo, species ! for legacy reasons
 IMPLICIT NONE
 
 INTENT(OUT)	::	del, gterm1, gterm2

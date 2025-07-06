@@ -1,13 +1,13 @@
 SUBROUTINE calc_dAdnk(dAdnk, kcalc, kop1, gcalcFlag, n, ns, comp, site, T, rho_mix, &
 			rho_pure, KADplus, bvol, sigma, m, epsok)
 
-USE sitenspecies
+use CONSTANTS
+USE sitenspecies, only: siteinfo, species !pass other variables for legacy reasons
+
 IMPLICIT NONE
 INTENT(OUT)	::	dAdnk
 INTENT(IN)	::	gcalcFlag, n, ns, comp, site, T, rho_mix, rho_pure, &
 			KADplus, bvol, sigma, m, epsok
-
-#include "dms_global.cmn" ! permits printing to print to history
 
 LOGICAL, PARAMETER	::	debug = .False. ! .True. for debugging mode, set .False. to mute
 INTEGER gcalcFlag, n, ns, i, j, k, kop1, kcalc
@@ -28,21 +28,21 @@ CALL calcX(Y, ns, rho_mix, site%xhost, site%noccur, del)
 
 if((kcalc.eq.1).and.(kop1.gt.1)) then
     if(n.eq.1) then
-        write(global_nh,*)'Pure component-------------'
+        write(outfile,*)'Pure component-------------'
     else
-        write(global_nh,*)'Site hosts (for function call)-----------------'
+        write(outfile,*)'Site hosts (for function call)-----------------'
         write(FMT,'("(",I0,"(I5))")') ns ! make format string for ns columns
-        write(global_nh,FMT) site(:)%host
+        write(outfile,FMT) site(:)%host
     endif
-	write(global_nh,*) 'Site name'
+	write(outfile,*) 'Site name'
 	write(FMT,'("(",I0,"(A8,2X))")') ns ! make format string for ns columns
-    write(global_nh,FMT) site(:)%name
-    write(global_nh,*)'Site fractions, in order of sites'
+    write(outfile,FMT) site(:)%name
+    write(outfile,*)'Site fractions, in order of sites'
 	write(FMT,'("(",I0,"(F12.5))")') ns ! make format string for ns columns
-    write(global_nh,FMT) Y
-    write(global_nh,*)'del matrix by row'
+    write(outfile,FMT) Y
+    write(outfile,*)'del matrix by row'
 	write(FMT,'("(",I0,"(G12.5))")') ns ! make format string for ns columns
-    write(global_nh,FMT) ((del(i,j), j=1,ns), i=1,ns)
+    write(outfile,FMT) ((del(i,j), j=1,ns), i=1,ns)
 endif
 
 CALL debug_print_start

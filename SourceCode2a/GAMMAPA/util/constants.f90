@@ -1,0 +1,5 @@
+MODULE CONSTANTS
+	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,R=avoNum*kB)
+	PARAMETER outfile = 2000 !unit number for output
+	PARAMETER missing = 1D35
+END MODULE CONSTANTS
