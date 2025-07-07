@@ -20,9 +20,16 @@ integer :: start_index, KOP(10)
 ! local variables
 integer ::  i, j, k, hostid, nsiteparm, id1, id2, dnrflagmx, acptflagmx
 character*500 :: data_line
-character*100 :: data_field
+character*100 :: data_field, filesites
 
-OPEN(UNIT=1001, FILE="..\..\Input\GAMMAPA\MEOH-ETOH-CYCLHEX.txt")
+print *, 'Enter a the name of the sites input file (tab-delimited):'
+read(*,'(A)') filesites
+print *, 'You entered:', trim(filesites)
+filesites = '..\..\Input\GAMMAPA\'//filesites
+print *, ' '
+
+
+OPEN(UNIT=1001, FILE=trim(filesites))
 READ(UNIT=1001, END=106, FMT='(A)') data_line ! title
 READ(UNIT=1001, END=106, FMT='(A)') data_line ! KOP
 start_index = 1

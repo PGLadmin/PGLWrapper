@@ -35,7 +35,7 @@ if((kcalc.eq.1).and.(kop1.gt.1)) then
         write(outfile,FMT) site(:)%host
     endif
 	write(outfile,*) 'Site name'
-	write(FMT,'("(",I0,"(A8,2X))")') ns ! make format string for ns columns
+	write(FMT,'("(",I0,"(A,2X))")') ns ! make format string for ns columns
     write(outfile,FMT) site(:)%name
     write(outfile,*)'Site fractions, in order of sites'
 	write(FMT,'("(",I0,"(F12.5))")') ns ! make format string for ns columns

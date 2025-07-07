@@ -17,7 +17,15 @@ integer :: start_index, npair, index1, index2, compid1, compid2
 integer :: i, j, id1, id2
 character*500 :: data_line
 character*100 :: data_field
-OPEN(UNIT=1001, FILE="..\..\Input\GAMMAPA\NTRL.txt")
+character*100 :: filenrtl
+
+print *, 'Enter a the name of the NRTL parameter file (tab-delimited):'
+read(*,'(A)') filenrtl
+print *, 'You entered:', trim(filenrtl)
+filenrtl = '..\..\Input\GAMMAPA\'//filenrtl
+print *, ' '
+
+OPEN(UNIT=1001, FILE=trim(filenrtl))
 start_index = 1
 READ(UNIT=1001, END=106, FMT='(A)') data_line
 call parse_line(start_index,data_line,data_field)

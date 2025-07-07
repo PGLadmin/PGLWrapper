@@ -37,6 +37,7 @@
 PROGRAM GAMMAPA
 
 use constants
+! constants includes the outfile id which should not be used for another file
 use sitenspecies
 use VOLUMES
 USE PHYS_PARMS
@@ -59,11 +60,21 @@ integer i,j,k,l
 ! for physical and combinatorial models
 ! aparam, bparam for NRTL, Nagata, Wilson, tau for NRTL, Aij for SH
 
+print *, 'Welcome to the GAMMAPA program.'
+print *, ' '
+print *, 'Output will be written to <project>/Output/GAMMAPAout.txt'
+print *, ' '
+print *, 'You will be prompted for the case-insensitive file names of the two input files.'
+print *, 'The files should reside in the folder <project>/Input/GAMMAPA.'
+print *, ' '
+
+
 call loadsites(KOP)
 
 ! nc is now known
 IF(.NOT.ALLOCATED(x))allocate(x(nc))
 IF(.NOT.ALLOCATED(gamma))allocate(gamma(nc))
+IF(.NOT.ALLOCATED(dgamma))allocate(dgamma(nc))
 IF(.NOT.ALLOCATED(aparam))allocate(aparam(nc,nc))
 IF(.NOT.ALLOCATED(bparam))allocate(bparam(nc,nc))
 IF(.NOT.ALLOCATED(alpha))allocate(alpha(nc,nc))
@@ -79,19 +90,19 @@ DO i = 1, nc
 END DO
 
 ! Prepare for output
-OPEN(outfile, file="GAMMAPAout.txt")
+OPEN(outfile, file="..\..\Output\GAMMAPAout.txt")
 
 if(kop(1).gt.0) then
     WRITE(outfile,"(120('-'))")
-	WRITE(outfile,'(A57 ,A10)') 'Print debug info. GAMMAPA version ',ver
-	WRITE(outfile,'(A20,10I3)') 'Option codes ', (kop(i),i=1,10)
-    WRITE(outfile,900) KCALC, NC
-    WRITE(outfile,*) ' *** Component Identifiers'
+	WRITE(outfile,'(A,A10)') 'Print debug info. GAMMAPA version ',ver
+	WRITE(outfile,'(A,10I3)') 'Option codes ', (kop(i),i=1,10)
+    WRITE(outfile,900) NC
+    WRITE(outfile,*) '*** Species Identifiers'
     do i=1,nc
         WRITE (outfile, '(3X, I4, 3X, I4, 3X, A20)') i, comp(i)%id, comp(i)%name
     enddo
 endif
-900  FORMAT(' KCALC, NC', I3, 1X, I3)
+900  FORMAT('n Species ', I3)
 
 ! load physical parameters
 select case (kop(4))
@@ -147,14 +158,27 @@ ENDIF
 
 
 
-! set composition of interest
-x = (/ 0.3D0, 0.7D0, 0D0 /)
 Kcalc = 1
-T = 323.15 ! K
-P = 1 ! bar
-call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
+T = 298.15D0 ! K
+P = 1D0 ! bar
+write(outfile,'(A, I3 )') 'Kcalc ', Kcalc
+write(outfile, '(A, 2F10.2)') 'T(K) P(bar) ', T, P
+! set composition of interest
+! example loop for a binary.
+! recall x is shared in sitenspecies
+write(outfile,'(A)') 'X, lngamma, gamma'
+do i = 1, 11
+    x(1) = dble(i-1)/10D0
+    x(2) = 1-x(1)
+    call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
+    write(outfile, '(6F15.6)') X(:), gamma(:), dexp(gamma(:))
+enddo
 
 close(outfile)
+
+print *, 'Program has ended normally. The output is in Output/GAMMAPAout.txt.'
+print *, 'Press any key to close this window.'
+pause
 
 END PROGRAM GAMMAPA
 
@@ -202,7 +226,6 @@ enddo
 ! these are the ln(gamma) and d(ln(gamma)/dT)
 gamma = (/ (0D0, k=1,nc) /)
 dgamma = (/ (0.D0, k=1,nc) /)  ! this is d(ln gamma)/dT
-dgamma = (/ (0.D0, k=1,nc) /)  ! this is d(ln gamma)/dT
 gammares = (/ (0D0, k=1,nc) /)
 dgammares = (/ (0D0, k=1,nc) /)
 gammacomb = (/ (0D0, k=1,nc) /)
@@ -226,7 +249,7 @@ if((kop(1).gt.1)) THEN
  write(outfile,*)'Site1, Site2, index1, index2, Keps, eps, kad'
  do l = 1, nsites
     do k = 1, nsites
-        write(outfile,'(2A20, 2I4, 3G12.5)') site(i)%name,site(j)%name,k,l,kad(k,l)*(dexp(eps(k,l)/T)-1D0), eps(k,l), kad(k,l)
+        write(outfile,'(2A20, 2I4, 3G12.5)') site(l)%name,site(k)%name,k,l,kad(k,l)*(dexp(eps(k,l)/T)-1D0), eps(k,l), kad(k,l)
     enddo !k
  enddo !l
 endif
@@ -244,13 +267,13 @@ if ((kop(1).gt.1).and.(mod(kcalc,2).gt.0)) write(outfile,*) 'Component id, volum
 if (kop(3) .gt. 0) then
     if (KCALC .gt. 1) then ! calculate values needed for T derivative
         do i = 1,nc
-            CALL VLU(VU(i),i,VEQ(i),vparms(i,:),T + delT/2D0)
-            CALL VLU(VD(i),i,VEQ(i),vparms(i,:),T - delT/2D0)
+            CALL VLU(VU(i),i,VEQ(i),vparms(:,i),T + delT/2D0)
+            CALL VLU(VD(i),i,VEQ(i),vparms(:,i),T - delT/2D0)
         enddo
     endif !kcalc > 1
 	if (MOD(KCALC,2).gt.0) then	! calculate molar volume
         do i = 1,nc
-            CALL VLU(V(i),i,VEQ(i),vparms(i,:),T)
+            CALL VLU(V(i),i,VEQ(i),vparms(:,i),T)
         enddo
     endif !kcalc is odd
 endif
@@ -362,7 +385,7 @@ if (aspmx.eq.1) then ! only execute if association exists
 		rho = 1D0/V ! molar density mol/cc
 		rhomix = 1D0/(dot_product(x,V)) ! mol/cc
 
-		CALL calc_gammaw(gammaw, kcalc, kop(1), kop(2), n, nsites, comp, site, &
+		CALL calc_gammaw(gammaw, kcalc, kop(1), kop(2), nc, nsites, comp, site, &
 							   T, rhomix, rho, KAD, eps, bvol, &
 							   PCSAFT_sigma, PCSAFT_m, PCSAFT_epsok)
 	endif
@@ -495,7 +518,7 @@ endif !kop(1).gt.0
 !
 !     Format statements
 !
- 1000   FORMAT (I3,1X, 2A20, 7F15.6)
+ 1000   FORMAT (I3,1X, A8, 2X, 7F15.6)
  1001	FORMAT (F15.6,A1,F15.6,100(A2, I3, A3, A20, 7(A1,F15.6))) ! format for gamma, hex csv files, up to 100 components
  1002	FORMAT (F15.6,A1,F15.6,100(A2, I3, A3, A20, 2(A1,F15.6))) ! format for vol csv files, up to 100 components
  1010   FORMAT (' I     NAME          X         lnGAMMAres    lnGAMMAcomb  lnGAMMAcombcorr       lnGAMMAw       lnGAMMA      dlnGAMMA')
