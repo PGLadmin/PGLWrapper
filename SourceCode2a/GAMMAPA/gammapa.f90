@@ -55,7 +55,7 @@ INTEGER KOP(10), KCALC
 real*8 T, P
 REAL*8, dimension(:), allocatable :: gamma, dgamma
 
-integer i,j,k,l
+integer i,j,k
 
 ! for physical and combinatorial models
 ! aparam, bparam for NRTL, Nagata, Wilson, tau for NRTL, Aij for SH
@@ -91,15 +91,17 @@ END DO
 
 ! Prepare for output
 OPEN(outfile, file="..\..\Output\GAMMAPAout.txt")
+OPEN(debugfile, file="..\..\Output\GAMMAPAdebug.txt")
+
 
 if(kop(1).gt.0) then
-    WRITE(outfile,"(120('-'))")
-	WRITE(outfile,'(A,A10)') 'Print debug info. GAMMAPA version ',ver
-	WRITE(outfile,'(A,10I3)') 'Option codes ', (kop(i),i=1,10)
-    WRITE(outfile,900) NC
-    WRITE(outfile,*) '*** Species Identifiers'
+    WRITE(debugfile,"(120('-'))")
+	WRITE(debugfile,'(A,A10)') 'Print debug info. GAMMAPA version ',ver
+	WRITE(debugfile,'(A,10I3)') 'Option codes ', (kop(i),i=1,10)
+    WRITE(debugfile,900) NC
+    WRITE(debugfile,*) '*** Species Identifiers'
     do i=1,nc
-        WRITE (outfile, '(3X, I4, 3X, I4, 3X, A20)') i, comp(i)%id, comp(i)%name
+        WRITE (debugfile, '(3X, I4, 3X, I4, 3X, A20)') i, comp(i)%id, comp(i)%name
     enddo
 endif
 900  FORMAT('n Species ', I3)
@@ -109,41 +111,41 @@ select case (kop(4))
     case (0)
         call loadnrtl()
         if(kop(1).gt.1) then
-            write(outfile,*) ' *** GMNRTL Physical aij'
-            write(outfile,'(6G12.5)') aparam
-            write(outfile,*) ' *** GMNRTL Physical bij'
-            write(outfile,'(6G12.5)') bparam
-            write(outfile,*) ' *** GMNRTL Physical alpha'
-            write(outfile,'(6G12.5)') alpha
+            write(debugfile,*) ' *** GMNRTL Physical aij'
+            write(debugfile,'(6G12.5)') aparam
+            write(debugfile,*) ' *** GMNRTL Physical bij'
+            write(debugfile,'(6G12.5)') bparam
+            write(debugfile,*) ' *** GMNRTL Physical alpha'
+            write(debugfile,'(6G12.5)') alpha
         endif
 
     case (1) ! wilson
 !        call loadwilson(aparam, bparam) !not yet written
         if(kop(1).gt.1) then
-            write(outfile,*) ' *** GMUwilson Physical aij'
-            write(outfile,'(6G12.5)') aparam
-            write(outfile,*) ' *** GMUwilson Physical bij'
-            write(outfile,'(6G12.5)') bparam
+            write(debugfile,*) ' *** GMUwilson Physical aij'
+            write(debugfile,'(6G12.5)') aparam
+            write(debugfile,*) ' *** GMUwilson Physical bij'
+            write(debugfile,'(6G12.5)') bparam
         endif
 
     case (2) !scatchard hildebrand (eqn Elliott/Lira 12.24,12.25)
 !        call loadsh(aparam, bparam)  !not yet written
         if(kop(1).gt.1) then
-            write(outfile,*) ' *** GMUscathild Physical aij'
-            write(outfile,'(6G12.5)') aparam
-            write(outfile,*) ' *** GMUscathild Physical bij'
-            write(outfile,'(6G12.5)') bparam
+            write(debugfile,*) ' *** GMUscathild Physical aij'
+            write(debugfile,'(6G12.5)') aparam
+            write(debugfile,*) ' *** GMUscathild Physical bij'
+            write(debugfile,'(6G12.5)') bparam
         endif
 
 	case (3) ! Nagata1
 !        call loadnagata(aparam, bparam)  !not yet written
         if(kop(1).gt.1) then
-            write(outfile,*) ' *** GMUnagata Physical aij'
-            write(outfile,'(6G12.5)') aparam
-            write(outfile,*) ' *** GMUnagata Physical bij'
-            write(outfile,'(6G12.5)') bparam
-            write(outfile,*) ' *** GMUnagata Physical aij + bij/T'
-            write(outfile,'(6G12.5)') aparam + bparam/T
+            write(debugfile,*) ' *** GMUnagata Physical aij'
+            write(debugfile,'(6G12.5)') aparam
+            write(debugfile,*) ' *** GMUnagata Physical bij'
+            write(debugfile,'(6G12.5)') bparam
+            write(debugfile,*) ' *** GMUnagata Physical aij + bij/T'
+            write(debugfile,'(6G12.5)') aparam + bparam/T
         endif
 
 end select
@@ -151,14 +153,19 @@ end select
 IF (kop(2) .EQ. 3) THEN
 	if ((kop(1).gt.1).and.(mod(kcalc,2).gt.0)) then
         do i = 1, nc
-            write(outfile,'(I4, 3G12.5)') (i), PCSAFT_m(i), PCSAFT_sigma(i), PCSAFT_epsok(i)
+            write(debugfile,'(I4, 3G12.5)') (i), PCSAFT_m(i), PCSAFT_sigma(i), PCSAFT_epsok(i)
         enddo
 	endif
 ENDIF
 
 
 
-Kcalc = 1
+! Kcalc
+! 1 - calculate only gammas
+! 2 - calculate only gamma derivative, d(ln gamma)/dT
+! 3 - calculate both gamma and gamma derivative
+
+Kcalc = 3
 T = 298.15D0 ! K
 P = 1D0 ! bar
 write(outfile,'(A, I3 )') 'Kcalc ', Kcalc
@@ -166,19 +173,41 @@ write(outfile, '(A, 2F10.2)') 'T(K) P(bar) ', T, P
 ! set composition of interest
 ! example loop for a binary.
 ! recall x is shared in sitenspecies
-write(outfile,'(A)') 'X, lngamma, gamma'
+write(outfile,'(A)') 'x, lngamma, gamma, hex'
 do i = 1, 11
     x(1) = dble(i-1)/10D0
     x(2) = 1-x(1)
     call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
-    write(outfile, '(6F15.6)') X(:), gamma(:), dexp(gamma(:))
+    write(outfile, '(8F15.6)') X(:), gamma(:), dexp(gamma(:)), -R*T**2*(dot_product(x,dgamma))
 enddo
 
 close(outfile)
+close(debugfile)
 
 print *, 'Program has ended normally. The output is in Output/GAMMAPAout.txt.'
 print *, 'Press any key to close this window.'
 pause
+
+if(allocated(gamma)) deallocate(gamma)
+if(allocated(dgamma)) deallocate(dgamma)
+if(allocated(aparam)) deallocate(aparam)
+if(allocated(bparam)) deallocate(bparam)
+if(allocated(alpha)) deallocate(alpha)
+if(allocated(Aij)) deallocate(Aij)
+if(allocated(site)) deallocate(site)
+if(allocated(comp)) deallocate(comp)
+if(allocated(x)) deallocate(x)
+if(allocated(KAD)) deallocate(KAD)
+if(allocated(eps)) deallocate(eps)
+if(allocated(PCSAFT_sigma)) deallocate(PCSAFT_sigma)
+if(allocated(PCSAFT_m)) deallocate(PCSAFT_m)
+if(allocated(PCSAFT_epsok)) deallocate(PCSAFT_epsok)
+if(allocated(veq)) deallocate(veq)
+if(allocated(bvol)) deallocate(bvol)
+if(allocated(r_uniquac)) deallocate(r_uniquac)
+if(allocated(q_uniquac)) deallocate(q_uniquac)
+if(allocated(vstd)) deallocate(vstd)
+if(allocated(vparms)) deallocate(vparms)
 
 END PROGRAM GAMMAPA
 
@@ -195,16 +224,24 @@ END DO
 index = i
 END SUBROUTINE FINDINDEX
 !*********************************************************
- SUBROUTINE GAMMACALC(kop, Kcalc, T, P, gamma, dgamma)
+SUBROUTINE GAMMACALC(kop, Kcalc, T, P, gamma, dgamma)
 
- use CONSTANTS
- use sitenspecies
- use VOLUMES
+use CONSTANTS
+use sitenspecies
+use VOLUMES
 use PHYS_PARMS
 
-integer kop(10)
-real*8 T, P, rhomix, rhomixu, rhomixd
-real*8, dimension(nc) :: gamma, dgamma, gammares, dgammares, dgammaresd, gammacomb, &
+implicit none
+
+integer, INTENT(IN) :: Kcalc
+real*8, INTENT(IN) :: T, P
+real*8, dimension(nc), INTENT(OUT) :: gamma, dgamma
+
+INTEGER i, j, k, l, kop(10)
+! The intent of KOP is input, but the user for certain models inconsistent values
+! can be specified, so the values can be overwritten below.
+REAL*8 delT, rhomix, rhomixu, rhomixd
+real*8, dimension(nc) :: gammares, dgammares, dgammaresd, gammacomb, &
  dgammacomb, dgammacombd, gammacombcorr, dgammacombcorr, dgammacombcorrd
 real*8, dimension(nc) :: gammaw, dgammaw, dgammawd
 real*8, dimension(nc) :: bvdw, VU, VD, V, rho, rhou, rhod
@@ -242,14 +279,14 @@ DO k = 1, nsites
 END DO
 
 if((kop(1).gt.1)) THEN
-  write(outfile,*) 'Sites Present: site present in call, site in file, id, name, host, host x'
+  write(debugfile,*) 'Sites Present: site present in call, site in file, id, name, host, host x'
   do i = 1,nsites
-   write(outfile,'(I3,2X,I4,2X,A20,2X,I3,2X,F10.5)') i, site(i)%id, site(i)%name, site(i)%host, site(i)%xhost
+   write(debugfile,'(I3,2X,I4,2X,A20,2X,I3,2X,F10.5)') i, site(i)%id, site(i)%name, site(i)%host, site(i)%xhost
   enddo !i
- write(outfile,*)'Site1, Site2, index1, index2, Keps, eps, kad'
+ write(debugfile,*)'Site1, Site2, index1, index2, Keps, eps, kad'
  do l = 1, nsites
     do k = 1, nsites
-        write(outfile,'(2A20, 2I4, 3G12.5)') site(l)%name,site(k)%name,k,l,kad(k,l)*(dexp(eps(k,l)/T)-1D0), eps(k,l), kad(k,l)
+        write(debugfile,'(2A20, 2I4, 3G12.5)') site(l)%name,site(k)%name,k,l,kad(k,l)*(dexp(eps(k,l)/T)-1D0), eps(k,l), kad(k,l)
     enddo !k
  enddo !l
 endif
@@ -257,7 +294,7 @@ endif
 
 ! ************** calculate the physical contribution *********************************************
 
-if ((kop(1).gt.1).and.(mod(kcalc,2).gt.0)) write(outfile,*) 'Component id, volume and covolume'
+if ((kop(1).gt.1).and.(mod(kcalc,2).gt.0)) write(debugfile,*) 'Component id, volume and covolume'
 
 ! KCALC=1, Calculate property only
 ! KCALC=2, Calculate temperature derivative of property only
@@ -281,15 +318,15 @@ endif
 if (kop(1).gt.1) then
 ! write components present in simulation, molar volume to be used, and user covolume.
     if (mod(kcalc,2).gt.0) then
-        write(outfile,*) ' volume and covolume'
+        write(debugfile,*) ' volume and covolume'
         do i = 1, nc
-            write(outfile,'(I4, 2G12.5)') i, V(i), bvol(i)
+            write(debugfile,'(I4, 2G12.5)') i, V(i), bvol(i)
         enddo
     endif
     if (kcalc.gt.1) then
-        write(outfile,*) ' vols at T+-deltT/2 for finite diff'
+        write(debugfile,*) ' vols at T+-deltT/2 for finite diff'
         do i = 1, nc
-            write(outfile,'(I4, 2G12.5)') i, VU(i), VD(i)
+            write(debugfile,'(I4, 2G12.5)') i, VU(i), VD(i)
         enddo
     endif
 endif
@@ -298,15 +335,15 @@ select case (kop(4))
     case (0)
 		if(kcalc .gt. 1) then
 		    ! calculate upper and lower values for T-derivative
-            call nrtl(dgammares, n, x, aparam+bparam/(T + delT/2D0), alpha)
-            call nrtl(dgammaresd, n, x, aparam+bparam/(T - delT/2D0), alpha)
+            call nrtl(dgammares, nc, x, aparam+bparam/(T + delT/2D0), alpha)
+            call nrtl(dgammaresd, nc, x, aparam+bparam/(T - delT/2D0), alpha)
             dgammares = (dgammares-dgammaresd)/delT
 		endif ! kcalc > 1
 		if(MOD(kcalc,2) .gt. 0) then ! kcalc is odd
             tau = aparam+bparam/T
             if(kop(1).gt.1) then
-                write(outfile,*) ' *** GMNRTL Physical tau'
-                write(outfile,'(6G12.5)') tau
+                write(debugfile,*) ' *** GMNRTL Physical tau'
+                write(debugfile,'(6G12.5)') tau
             endif
             call nrtl(gammares, nc, x, tau, alpha)
         endif ! kcalc is odd
@@ -335,8 +372,8 @@ select case (kop(4))
         if( MOD(kcalc,2) .gt. 0) then ! kcalc is odd
             Lambda = Vratio*dexp(aparam+bparam/T)
             if(kop(1).gt.1) then
-                write(outfile,*) ' *** GMUwilson Physical Lambda'
-                write(outfile,'(6G12.5)') Lambda
+                write(debugfile,*) ' *** GMUwilson Physical Lambda'
+                write(debugfile,'(6G12.5)') Lambda
             endif
             ! call wilson(gammares, n, x, Lambda)
         endif ! kcalc is odd
@@ -351,8 +388,8 @@ select case (kop(4))
         if (MOD(kcalc,2) .gt. 0) then !kcalc is odd
             Aij = aparam*T+bparam
             if(kop(1).gt.1) then
-                write(outfile,*) ' *** GMUscathild Physical AIJ'
-                write(outfile,'(6G12.5)') AIJ
+                write(debugfile,*) ' *** GMUscathild Physical AIJ'
+                write(debugfile,'(6G12.5)') AIJ
             endif
             ! call scathild(gammares, x, V, nc, Aij, R, T)
         endif ! kcalc is odd
@@ -363,12 +400,12 @@ select case (kop(4))
             ! call nagata1(dgammares, nc, x, VU, aparam + bparam/(T + delT/2D0))
             ! call nagata1(dgammaresd, nc, x, VD, aparam + bparam/(T - delT/2D0))
             dgammares = (dgammares - dgammaresd)/delT
-			WRITE(outfile,*) 'Calculating temperature derivative of residual'
+			WRITE(debugfile,*) 'Calculating temperature derivative of residual'
         endif
         if (MOD(kcalc,2).gt.0) then !kcalc is odd
             if(kop(1).gt.1) then
-                write(outfile,*) ' *** GMUnagata Physical aij + bij/T'
-                write(outfile,'(6G12.5)') aparam + bparam/T
+                write(debugfile,*) ' *** GMUnagata Physical aij + bij/T'
+                write(debugfile,'(6G12.5)') aparam + bparam/T
             endif
             ! call nagata1(gammares, n, x, r_uniquac, aparam)
             ! call nagata1(gammares, n, x, V, aparam + bparam/T)
@@ -426,10 +463,10 @@ if (kop(4) .ne. 1) then  ! if not Wilson
     if(mod(kcalc,2).gt.0) then
 	if (kop(6) .eq. 0) then
 		call flory(gammacomb, x, V, nc)
-        if (kop(1).gt. 1) WRITE(outfile,*) '*** Combinatorial Method: Flory using molar volume'
+        if (kop(1).gt. 1) WRITE(debugfile,*) '*** Combinatorial Method: Flory using molar volume'
 	elseif (kop(6) .eq. 1) then
 		call flory(gammacomb, x, V**(2D0/3D0), nc)
-        if (kop(1).gt. 1) WRITE(outfile,*) '*** Combinatorial Method: Flory using molar volume^(2/3)'
+        if (kop(1).gt. 1) WRITE(debugfile,*) '*** Combinatorial Method: Flory using molar volume^(2/3)'
 	endif
 	endif
 endif
@@ -438,7 +475,8 @@ endif
 if ((kop(4) .eq. 1) .or. (kop(6) .eq. 2)) then
     kop(5) = 1; ! force combinatorial correction off if using Wilson, or if combinatorial term is off
     ! note the gammacombcorr is set to zero at the beginning of the routine
-    if(kop(1).gt.1) WRITE(outfile,*) '*** Combinatorial Correction Method: None'
+    if(kop(1).gt.1) WRITE(debugfile,*) '*** Your selection of Comb Correction May Be Inconsistent with Other Settings'
+    if(kop(1).gt.1) WRITE(debugfile,*) '*** Combinatorial Correction Method: None'
 endif
 if (kop(5) .ne. 1) then
     if(kcalc.gt.1) then
@@ -459,13 +497,13 @@ if (kop(5) .ne. 1) then
         select case(kop(5))
         case (0)
             call correqn1262(gammacombcorr, x, V, nc, bvdw)
-            if (kop(1).gt. 1) WRITE(outfile,*) '*** Combinatorial Correction Method: vdW using bvdw'
+            if (kop(1).gt. 1) WRITE(debugfile,*) '*** Combinatorial Correction Method: vdW using bvdw'
         case (2)
             call stavgugg(gammacombcorr, x, r_uniquac,q_uniquac, nc)
-            if (kop(1) .gt. 1) WRITE(outfile,*) '*** Combinatorial Correction Method: Staverman-Guggenheim usig r and q'
+            if (kop(1) .gt. 1) WRITE(debugfile,*) '*** Combinatorial Correction Method: Staverman-Guggenheim usig r and q'
         case (3)
 	        call correqn1262(gammacombcorr, x, V, nc, bvol)
-            if (kop(1) .gt. 1) WRITE(outfile,*) '*** Combinatorial Correction Method: vdW using COVOL'
+            if (kop(1) .gt. 1) WRITE(debugfile,*) '*** Combinatorial Correction Method: vdW using COVOL'
         end select
     endif
 end if
@@ -475,13 +513,13 @@ gamma = gammares + gammaw + gammacomb + gammacombcorr
 dgamma = dgammares + dgammaw + dgammacomb + dgammacombcorr
 
 if(kop(1) .gt. 0) then ! write to history and/or .csv files
-	  WRITE(outfile,*) '*** GAMMA RESULTS'
-	  WRITE(outfile,900) KCALC, nc, T, P
+	  WRITE(debugfile,*) '*** GAMMA RESULTS'
+	  WRITE(debugfile,900) KCALC, nc, T, P
  900  FORMAT(' KCALC, N, T, P =', I3, 1X, I3, F10.3, 2X, E13.6)
 	  if(mod(kcalc,2).gt.0) then !kcalc is odd, write gammas to history
-		WRITE(outfile,1010)
+		WRITE(debugfile,1010)
 		DO 400 I = 1, nc! write gamma contributions to history
-		 WRITE(outfile,1000) i, comp(i)%name, x(i), gammares(i),gammacomb(i),gammacombcorr(i), gammaw(i), GAMMA(I), dgamma(i)
+		 WRITE(debugfile,1000) i, comp(i)%name, x(i), gammares(i),gammacomb(i),gammacombcorr(i), gammaw(i), GAMMA(I), dgamma(i)
  400   CONTINUE
 	! frequent opening/writing/closing file actions --> potential optimization: save in mem buffer, write at once?
 	   if(kop(1) .gt. 2) then
@@ -496,21 +534,21 @@ if(kop(1) .gt. 0) then ! write to history and/or .csv files
 	   endif !kop(1).gt.2
 	  endif !mod(kcalc,2)
 	  if(kcalc.gt.1) then !write derivative
-		WRITE(outfile,1011)
+		WRITE(debugfile,1011)
 		DO 410 I = 1, nc
-		 WRITE(outfile,1000) i, comp(i)%name, X(I), dgammares(i),dgammacomb(i),dgammacombcorr(i), dgammaw(i), GAMMA(I), dgamma(i)
+		 WRITE(debugfile,1000) i, comp(i)%name, X(I), dgammares(i),dgammacomb(i),dgammacombcorr(i), dgammaw(i), GAMMA(I), dgamma(i)
  410    CONTINUE
 	! frequent opening/writing/closing file actions --> potential optimization: save in mem buffer, write at once?
 		if(kop(1).gt.2) then
 		! write to HXS.csv
 		open(unit=66, file="HXS.csv", status='unknown', action='write', position='append')
-		WRITE(66,1001) T, ",", P, (', ', i, comp(i)%name, ",", X(I), ",", -dgammares(i)*R*(T**2), ",", -dgammacomb(i)*R*(T**2), ",", -dgammacombcorr(i)*R*(T**2), ",", -dgammaw(i)*R*(T**2), ",", -dgamma(i)*R*(T**2), ',', dgamma(i), i=1,N)
+		WRITE(66,1001) T, ",", P, (', ', i, comp(i)%name, ",", X(I), ",", -dgammares(i)*R*(T**2), ",", -dgammacomb(i)*R*(T**2), ",", -dgammacombcorr(i)*R*(T**2), ",", -dgammaw(i)*R*(T**2), ",", -dgamma(i)*R*(T**2), ',', dgamma(i), i=1,nc)
 		close(66)
 		endif !if kcalc.gt.1
 		endif !kop(1).gt.2
 
-		WRITE(outfile,*) 'End of function call'
-	  WRITE(outfile,"(120('*'))")
+		WRITE(debugfile,*) 'End of function call'
+	  WRITE(debugfile,"(120('*'))")
 endif !kop(1).gt.0
 
 !

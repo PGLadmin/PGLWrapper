@@ -1,6 +1,6 @@
 subroutine VLU(V,IDI,VEQN,DNLDIP,T)
 
-use CONSTANTS, only: outfile
+use CONSTANTS, only: debugfile
 
 implicit none
 
@@ -33,9 +33,9 @@ Select Case (VEQN)
 	Case (100)
 		V = 1D3/(DNLDIP(1) + DNLDIP(2)*T1 + DNLDIP(3)*T1**2 + DNLDIP(4)*T1**3 + DNLDIP(5)*T1**5)
 	Case DEFAULT
-		WRITE(outfile,99) IDI
+		WRITE(debugfile,99) IDI
  99		FORMAT('Density is not programmed for component',I4)
-		WRITE(outfile,100) VEQN
+		WRITE(debugfile,100) VEQN
  100	FORMAT ('Equation ',I4, ' is not programmed. Contact the .dll authors,')
 End Select
 end subroutine vlu

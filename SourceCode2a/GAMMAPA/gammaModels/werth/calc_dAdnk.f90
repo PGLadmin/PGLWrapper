@@ -28,21 +28,21 @@ CALL calcX(Y, ns, rho_mix, site%xhost, site%noccur, del)
 
 if((kcalc.eq.1).and.(kop1.gt.1)) then
     if(n.eq.1) then
-        write(outfile,*)'Pure component-------------'
+        write(debugfile,*)'Pure component-------------'
     else
-        write(outfile,*)'Site hosts (for function call)-----------------'
+        write(debugfile,*)'Site hosts (for function call)-----------------'
         write(FMT,'("(",I0,"(I5))")') ns ! make format string for ns columns
-        write(outfile,FMT) site(:)%host
+        write(debugfile,FMT) site(:)%host
     endif
-	write(outfile,*) 'Site name'
+	write(debugfile,*) 'Site name'
 	write(FMT,'("(",I0,"(A,2X))")') ns ! make format string for ns columns
-    write(outfile,FMT) site(:)%name
-    write(outfile,*)'Site fractions, in order of sites'
+    write(debugfile,FMT) site(:)%name
+    write(debugfile,*)'Site fractions, in order of sites'
 	write(FMT,'("(",I0,"(F12.5))")') ns ! make format string for ns columns
-    write(outfile,FMT) Y
-    write(outfile,*)'del matrix by row'
+    write(debugfile,FMT) Y
+    write(debugfile,*)'del matrix by row'
 	write(FMT,'("(",I0,"(G12.5))")') ns ! make format string for ns columns
-    write(outfile,FMT) ((del(i,j), j=1,ns), i=1,ns)
+    write(debugfile,FMT) ((del(i,j), j=1,ns), i=1,ns)
 endif
 
 CALL debug_print_start
