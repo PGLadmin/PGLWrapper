@@ -8,6 +8,7 @@
 
 SUBROUTINE LOADNRTL()
 
+use CONSTANTS, only: outfile
 use sitenspecies, only: comp, nc
 USE PHYS_PARMS, ONLY: aparam, bparam, alpha
 
@@ -18,13 +19,19 @@ integer :: i, j, id1, id2
 character*500 :: data_line
 character*100 :: data_field
 character*100 :: filenrtl
+LOGICAL :: file_exists = .FALSE.
 
-print *, 'Enter a the name of the NRTL parameter file (tab-delimited):'
-read(*,'(A)') filenrtl
-print *, 'You entered:', trim(filenrtl)
-filenrtl = '..\..\Input\GAMMAPA\'//filenrtl
-print *, ' '
+DO WHILE (.NOT. file_exists)
+	print *, 'Enter a the name of the tab-delimited NRTL parameter file:'
+	read(*,'(A)') filenrtl
+	print *, 'You entered:', trim(filenrtl)
+	filenrtl = '..\..\Input\GAMMAPA\'//filenrtl
+	INQUIRE(FILE=trim(filenrtl), EXIST=file_exists)
+	IF(.NOT. file_exists) print *, 'That file is not found. Check folder and spelling.'
+	print *, ' '
+END DO
 
+WRITE(outfile,*) 'NRTL file: '//trim(filenrtl)
 OPEN(UNIT=1001, FILE=trim(filenrtl))
 start_index = 1
 READ(UNIT=1001, END=106, FMT='(A)') data_line

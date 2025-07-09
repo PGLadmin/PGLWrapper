@@ -1,5 +1,5 @@
 "IOPT run options, 10 elements"																	
-1	2	1	0	2	0	0	0	0	0								
+3	2	1	0	2	0	0	0	0	0								
 2	nc - number of components																
 id	name	vstd	b	r-uniquac	q-uniquac	m	sigma	eps/k	source	rho eq	A	B	C	D	E	TL	TU
 5350	METHANOL	30.9	30.9	1.43111	1.432	1.5255	3.23	188.9	16	105	2.3267	0.27073	512.5	0.24713	0	175.47	512.5
@@ -8,6 +8,6 @@ id	name	vstd	b	r-uniquac	q-uniquac	m	sigma	eps/k	source	rho eq	A	B	C	D	E	TL	TU
 id	name	hostid	hostname	noccur													
 2	hydroxyl O	5350	METHANOL	1													
 502	hydroxyl H	5350	METHANOL	1													
-1	n bonding parameters																
+1	n bonding pairs																
 siteId1	host1	siteId2	host2	kappa	epsAD/K	source											
 2	METHANOL	502	METHANOL	0.49749	2957.6	16											

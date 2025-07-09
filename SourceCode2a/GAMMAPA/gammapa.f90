@@ -68,6 +68,9 @@ print *, 'You will be prompted for the case-insensitive file names of the two in
 print *, 'The files should reside in the folder <project>/Input/GAMMAPA.'
 print *, ' '
 
+! Prepare for output
+OPEN(outfile, file="..\..\Output\GAMMAPAout.txt")
+OPEN(debugfile, file="..\..\Output\GAMMAPAdebug.txt")
 
 call loadsites(KOP)
 
@@ -88,11 +91,6 @@ DO i = 1, nc
         Aij(i,j) = 0D0
     END DO
 END DO
-
-! Prepare for output
-OPEN(outfile, file="..\..\Output\GAMMAPAout.txt")
-OPEN(debugfile, file="..\..\Output\GAMMAPAdebug.txt")
-
 
 if(kop(1).gt.0) then
     WRITE(debugfile,"(120('-'))")
@@ -166,20 +164,43 @@ ENDIF
 ! 3 - calculate both gamma and gamma derivative
 
 Kcalc = 3
-T = 298.15D0 ! K
+T = 343.358D0 ! K
 P = 1D0 ! bar
 write(outfile,'(A, I3 )') 'Kcalc ', Kcalc
-write(outfile, '(A, 2F10.2)') 'T(K) P(bar) ', T, P
+write(outfile, '(A, 2F10.3)') 'T(K) P(bar) ', T, P
 ! set composition of interest
 ! example loop for a binary.
 ! recall x is shared in sitenspecies
-write(outfile,'(A)') 'x, lngamma, gamma, hex'
-do i = 1, 11
-    x(1) = dble(i-1)/10D0
-    x(2) = 1-x(1)
-    call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
-    write(outfile, '(8F15.6)') X(:), gamma(:), dexp(gamma(:)), -R*T**2*(dot_product(x,dgamma))
-enddo
+
+!******for meoh-cyclhex-assoc.txt and meoh-cyclhex-nrtl.txt ******
+! set T = 298.15D0 and P = 1D0
+!write(outfile,'(A)') 'x, lngamma, gamma, hex'
+!do i = 1, 11
+!    x(1) = dble(i-1)/10D0
+!    x(2) = 1D0-x(1)
+!    call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
+!    write(outfile, '(8F15.6)') X(:), gamma(:), dexp(gamma(:)), -R*T**2*(dot_product(x,dgamma))
+!enddo
+! ****** end meoh-cyclhex ******************
+
+!****** for casestudy1-assoc.txt and casestudy1-nrtl.txt *****
+! set T = 298.15K for this composition
+! x = (/ 0.33D0, 0.33D0, 0.34D0 /)
+! set T = 347.125 (nrtl) T = 343.358 (nrtla) for this composition
+x = (/ 0.165D0, 0.165D0, 0.67D0 /)
+ call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
+ write(outfile, '(10F15.6)') X(:), gamma(:), dexp(gamma(:)), -R*T**2*(dot_product(x,dgamma))
+! set T = 298.15K for these loops
+!write(outfile,'(A)') 'x, lngamma, gamma, hex'
+!do i = 1, 11
+! use one line or the other
+!    x = (/ 0D0, dble(i-1)/10D0, 1D0-dble(i-1)/10D0 /)
+!   x = (/ dble(i-1)/10D0, 0D0, 1D0-dble(i-1)/10D0 /)
+!   call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
+!   write(outfile, '(8F15.6)') X(:), gamma(:), dexp(gamma(:)), -R*T**2*(dot_product(x,dgamma))
+!enddo
+!************ end casestudy1 ******************
+
 
 close(outfile)
 close(debugfile)
@@ -524,11 +545,11 @@ if(kop(1) .gt. 0) then ! write to history and/or .csv files
 	! frequent opening/writing/closing file actions --> potential optimization: save in mem buffer, write at once?
 	   if(kop(1) .gt. 2) then
 		! write to vol.csv
-		open(unit=12, file="vol.csv", status='unknown', action='write', position='append')
+		open(unit=12, file="..\..\Output\vol.csv", status='unknown', action='write', position='append')
 		WRITE(12,1002) T, ',', 1D0/rhomix, (', ', i, ',  ', comp(i)%name, ",", X(I), ",", V(i), i=1,nc)
 		close(12)
 		! write to gammas.csv
-		open(unit=10, file="gammas.csv", status='unknown', action='write', position='append')
+		open(unit=10, file="..\..\Output\gammas.csv", status='unknown', action='write', position='append')
 		WRITE(10,1001) T, ',', P, (', ', i, ',  ', comp(i)%name, ",", X(I), ",", gammares(i),",",gammacomb(i),",",gammacombcorr(i), ",",gammaw(i), ",",GAMMA(I), ",",dgamma(i), i=1,nc)
 		close(10)
 	   endif !kop(1).gt.2
@@ -541,9 +562,9 @@ if(kop(1) .gt. 0) then ! write to history and/or .csv files
 	! frequent opening/writing/closing file actions --> potential optimization: save in mem buffer, write at once?
 		if(kop(1).gt.2) then
 		! write to HXS.csv
-		open(unit=66, file="HXS.csv", status='unknown', action='write', position='append')
-		WRITE(66,1001) T, ",", P, (', ', i, comp(i)%name, ",", X(I), ",", -dgammares(i)*R*(T**2), ",", -dgammacomb(i)*R*(T**2), ",", -dgammacombcorr(i)*R*(T**2), ",", -dgammaw(i)*R*(T**2), ",", -dgamma(i)*R*(T**2), ',', dgamma(i), i=1,nc)
-		close(66)
+		open(unit=11, file="..\..\Output\HXS.csv", status='unknown', action='write', position='append')
+		WRITE(11,1001) T, ",", P, (', ', i, ',  ', comp(i)%name, ",", X(I), ",", -dgammares(i)*R*(T**2), ",", -dgammacomb(i)*R*(T**2), ",", -dgammacombcorr(i)*R*(T**2), ",", -dgammaw(i)*R*(T**2), ",", -dgamma(i)*R*(T**2), ',', dgamma(i), i=1,nc)
+		close(11)
 		endif !if kcalc.gt.1
 		endif !kop(1).gt.2
 

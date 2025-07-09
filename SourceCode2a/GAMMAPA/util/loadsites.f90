@@ -10,6 +10,7 @@
 
 SUBROUTINE LOADSITES(KOP)
 
+use CONSTANTS, only: outfile
 use sitenspecies
 use VOLUMES
 
@@ -21,14 +22,19 @@ integer :: start_index, KOP(10)
 integer ::  i, j, k, hostid, nsiteparm, id1, id2, dnrflagmx, acptflagmx
 character*500 :: data_line
 character*100 :: data_field, filesites
+LOGICAL :: file_exists = .FALSE.
 
-print *, 'Enter a the name of the sites input file (tab-delimited):'
-read(*,'(A)') filesites
-print *, 'You entered:', trim(filesites)
-filesites = '..\..\Input\GAMMAPA\'//filesites
-print *, ' '
+DO WHILE (.NOT. file_exists)
+    print *, 'Enter a the name of the tab-delimited sites input file:'
+	read(*,'(A)') filesites
+	print *, 'You entered:', trim(filesites)
+	filesites = '..\..\Input\GAMMAPA\'//filesites
+	INQUIRE(FILE=trim(filesites), EXIST=file_exists)
+	IF(.NOT. file_exists) print *, 'That file is not found. Check folder and spelling.'
+	print *, ' '
+END DO
 
-
+WRITE(outfile,*) 'Pure/Assoc file: '//trim(filesites)
 OPEN(UNIT=1001, FILE=trim(filesites))
 READ(UNIT=1001, END=106, FMT='(A)') data_line ! title
 READ(UNIT=1001, END=106, FMT='(A)') data_line ! KOP
