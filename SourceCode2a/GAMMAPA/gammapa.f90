@@ -156,23 +156,28 @@ IF (kop(2) .EQ. 3) THEN
 	endif
 ENDIF
 
+print *, 'Enter the Temperature(K) and Pressure (bar)'
+print *, 'Use D0 on the end to read as double precision, e.g. 298.15D0'
+read(*,*) T, P
 
+print *, 'Enter the level of debugging output desired.'
+print *, '0 - no debugging file genererated'
+print *, '1 - tabulate only gammas'
+print *, '2 - tabulate only gamma derivative, d(ln gamma)/dT'
+print *, '3 - tabulate both gamma and gamma derivative'
+print *, 'Note that Kcalc > 1 does a lot of calcs with T derivatives,'
+print *, 'so some debugging output is supressed relative to Kcalc = 1.'
+read(*,*) Kcalc
+print *, 'You entered:', Kcalc
 
-! Kcalc
-! 1 - calculate only gammas
-! 2 - calculate only gamma derivative, d(ln gamma)/dT
-! 3 - calculate both gamma and gamma derivative
-
-Kcalc = 3
-T = 343.358D0 ! K
-P = 1D0 ! bar
 write(outfile,'(A, I3 )') 'Kcalc ', Kcalc
 write(outfile, '(A, 2F10.3)') 'T(K) P(bar) ', T, P
+
 ! set composition of interest
-! example loop for a binary.
 ! recall x is shared in sitenspecies
 
 !******for meoh-cyclhex-assoc.txt and meoh-cyclhex-nrtl.txt ******
+! example loop for a binary.
 ! set T = 298.15D0 and P = 1D0
 !write(outfile,'(A)') 'x, lngamma, gamma, hex'
 !do i = 1, 11
@@ -187,9 +192,9 @@ write(outfile, '(A, 2F10.3)') 'T(K) P(bar) ', T, P
 ! set T = 298.15K for this composition
 ! x = (/ 0.33D0, 0.33D0, 0.34D0 /)
 ! set T = 347.125 (nrtl) T = 343.358 (nrtla) for this composition
-x = (/ 0.165D0, 0.165D0, 0.67D0 /)
- call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
- write(outfile, '(10F15.6)') X(:), gamma(:), dexp(gamma(:)), -R*T**2*(dot_product(x,dgamma))
+!x = (/ 0.165D0, 0.165D0, 0.67D0 /)
+! call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
+! write(outfile, '(10F15.6)') X(:), gamma(:), dexp(gamma(:)), -R*T**2*(dot_product(x,dgamma))
 ! set T = 298.15K for these loops
 !write(outfile,'(A)') 'x, lngamma, gamma, hex'
 !do i = 1, 11
@@ -201,6 +206,18 @@ x = (/ 0.165D0, 0.165D0, 0.67D0 /)
 !enddo
 !************ end casestudy1 ******************
 
+!***********CaseStudy2i,v,ix***************
+!*****CaseStudy2iCPA-assoc.txt, CaseStudy2iCPA-nrtl.txt*****
+!*****CaseStudy2iPCS-assoc.txt, CaseStudy2iPCS-nrtl.txt*****
+ x = (/ 0.05D0, 0.075D0, 0.3D0, 0.2D0, 0.1D0, 0.01D0, 0.265D0 /) ! Case 2i
+ x = (/ 0.05D0, 0.0D0, 0.25D0, 0.2D0, 0.05D0, 0.019D0, 0.431D0 /) ! Case 2v
+ x = (/ 0.25D0, 0.1D0, 0.05D0, 0.1D0, 0.15D0, 0.2D0, 0.15D0 /) ! Case 2ix
+ call gammacalc(kop, Kcalc, T, P, gamma, dgamma)
+ write(outfile,'(A)') 'Gammas are not calculated when Kcalc = 2'
+ write(outfile, '(A5,7F15.6,/,A5,7F15.6,/,A5,7F15.6,/))') 'x', X(:), 'ln(g)', gamma(:), 'g', dexp(gamma(:))
+ write(outfile,'(A)') 'Hxs is not calculated if Kcalc = 1'
+ write(outfile,'(A10, F15.6)') 'Hxs(J/mol)', -R*T**2*(dot_product(x,dgamma))
+!*********** end CaseStudy2i,v,ix***************
 
 close(outfile)
 close(debugfile)
@@ -307,7 +324,7 @@ if((kop(1).gt.1)) THEN
  write(debugfile,*)'Site1, Site2, index1, index2, Keps, eps, kad'
  do l = 1, nsites
     do k = 1, nsites
-        write(debugfile,'(2A20, 2I4, 3G12.5)') site(l)%name,site(k)%name,k,l,kad(k,l)*(dexp(eps(k,l)/T)-1D0), eps(k,l), kad(k,l)
+        write(debugfile,'(2A20, 2I4, 3G12.5)') site(l)%name,site(k)%name,l,k,kad(l,k)*(dexp(eps(l,k)/T)-1D0), eps(l,k), kad(l,k)
     enddo !k
  enddo !l
 endif

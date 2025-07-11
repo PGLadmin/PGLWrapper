@@ -17,10 +17,10 @@ The TRC id numbers are used to identify and lookup species. Always update the co
 
 ## Preparing Main Input
 The main input file includes
-- The run options for the 'KOP' vector that specify how the parameters are to be applied. The explanation of KOP is in gammapa.f90.
+- The run options for the 'KOP' vector that specify how the parameters are to be applied. The explanation of KOP is in gammapa_main.f90.
 - The component names and TRC id numbers the pure components for the run
 - The standard API volumes (60 F) that can be used instead of temperature-dependent volumes
-- The selected EOS covolume that is used for the rdf for the CPA, VDW, and ESD models. Enter a zero if you want to use a constant rdf. The covolume is a required parameter.
+- The selected EOS covolume that is used for the rdf for the CPA, VDW, and ESD models. Enter a zero and select CPA or ESD if you want to use a constant rdf. The covolume is a required parameter.
 - The pure species PCSAFT parameters used for the rdf for that model. If the values are left blank and the correct KOP value is set, then the CPA, VDW, and ESD or constant rdf run options can still be used.
 - The literature 'source' from the database for cross referencing of the input parameters.
 - The liquid density parameters include the equation number to be used for the temperature-dependent volume parameters. These can be omitted if the API values are used with the correct KOP values.

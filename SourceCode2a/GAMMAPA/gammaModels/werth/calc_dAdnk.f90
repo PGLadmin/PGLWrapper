@@ -33,6 +33,9 @@ if((kcalc.eq.1).and.(kop1.gt.1)) then
         write(debugfile,*)'Site hosts (for function call)-----------------'
         write(FMT,'("(",I0,"(I5))")') ns ! make format string for ns columns
         write(debugfile,FMT) site(:)%host
+        write(debugfile,*)'Site mole fraction (for function call)-----------------'
+        write(FMT,'("(",I0,"(F12.5))")') ns ! make format string for ns columns
+        write(debugfile,FMT) site(:)%xhost
     endif
 	write(debugfile,*) 'Site name'
 	write(FMT,'("(",I0,"(A,2X))")') ns ! make format string for ns columns
