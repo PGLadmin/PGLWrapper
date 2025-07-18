@@ -1,0 +1,5 @@
+3	npairs	id1 should be < id2 to facilitate searching. See the 'Instruction' sheet for maintaining links to the database.										
+pairId	id1		id2		a12	b12	a21	b21	c	comment	source	
+3	5245	ETHANOL	5350	METHANOL	0	0	0	0	0.3	vdw	17	"Benchmark2 - internal test document, random (unrealistic) parameter values to test code"
+4	715	CYCLOHEXANE	5350	METHANOL	0	0	0	0	0.3	vdw	17	"Benchmark2 - internal test document, random (unrealistic) parameter values to test code"
+5	715	CYCLOHEXANE	5245	ETHANOL	0	0	0	0	0.3	vdw	17	"Benchmark2 - internal test document, random (unrealistic) parameter values to test code"
