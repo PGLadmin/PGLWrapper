@@ -10,7 +10,7 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
 	!	Echoes user IO to Output.txt, and reports error checks. 
 	!Terms:
 	!   idOpt=2 if idCas is USEd, idOpt=1 if ID(dippr) is USEd.
-	USE GlobConst, only:ID,idCas,idTrc,NMX,LOUD
+	USE GlobConst, only:ID,idCas,idTrc,NMX,LOUD,dumpUnit
 	USE CritParmsDb, only:idCasDb,CrIndex
 	!USE BIPs
 	!USE EsdParms
