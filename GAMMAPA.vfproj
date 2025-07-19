@@ -48,23 +48,5 @@
 		<Filter Name="Header Files" Filter="fi;fd;h;inc"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
-		<File RelativePath=".\gammaModels\werth\calc_dAdnk.f90"/>
-		<File RelativePath=".\gammaModels\werth\calc_gammaw.f90"/>
-		<File RelativePath=".\commoncalc\calc_gterms_PCSAFT.f90"/>
-		<File RelativePath=".\commoncalc\calcX.f90"/>
-		<File RelativePath=".\util\constants.f90"/>
-		<File RelativePath=".\gammaModels\comb\correqn1262.f90"/>
-		<File RelativePath=".\util\findindex.f90"/>
-		<File RelativePath=".\gammaModels\comb\flory.f90"/>
-		<File RelativePath=".\gammaModels\gammapa.f90"/>
-		<File RelativePath=".\gammapa_main.f90"/>
-		<File RelativePath=".\commoncalc\gcalc.f90"/>
-		<File RelativePath=".\util\loadnrtl.f90"/>
-		<File RelativePath=".\util\loadsites.f90"/>
-		<File RelativePath=".\gammaModels\phys\nrtl.f90"/>
-		<File RelativePath=".\util\phys_parms.f90"/>
-		<File RelativePath=".\util\sitenspecies.f90"/>
-		<File RelativePath=".\gammaModels\comb\stavgugg.f90"/>
-		<File RelativePath=".\util\vlu.f90"/>
-		<File RelativePath=".\util\volumes.f90"/></Filter></Files>
+		<File RelativePath=".\SourceCode2a\gamma_pa.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>
