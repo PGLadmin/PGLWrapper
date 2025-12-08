@@ -1,0 +1,32 @@
+31	KadNm3	epsD_kB	epsA_kB	Name	Training
+assol	0.001	1280	3960	4+alcohol	acetone+n-butanol(HE)
+asSol	0.001	540	1660	Phenol	benzaldehyde+phenol(HE)
+asad1	0.001	400	6200	Amide	acetone+formamide(HE)
+asad2	0.0004	400	6200	Amide	nEthylFormamide
+asAd1	0.001	400	6200	Amide	acetone+formamide(HE)
+asAd2	0.0004	400	6200	Amide	nEthylFormamide
+asam1	0.001	730	1470	1° amine	TCM,acetone,MeOH+aniline(HE)
+asam2	0.0004	1010	1010	2° amine	ACN+diethylamine(HE)
+asAm1	0.001	730	1470	1° amine	TCM,acetone,MeOH+aniline(HE)
+asAm2	0.0004	1010	1010	2° amine	ACN+diethylamine(HE)
+poam3	0.0001	1940	0	3° amine	TCM+triethylamine(HE)
+poAm3	0.0001	740	0	Imine	TCM+pyridine(HE)
+poad3	0.0008	1750	0	3° amide	NN-dimethylacetamide(CH2CL2)
+poAd3	0.0008	1750	0	3° amide	NN-dimethylacetamide(CH2CL2)
+polal	0.001	730	0	aldehyde	MeOH+propanal
+poLal	0.001	730	0	aldehyde	Tolualdehyde+NA
+poles	0.001	900	0	Ester	TCM+methylacetate(HE)
+poLes	0.001	600	0	phthalate	MeOH+diethylphthalate
+polet	0.0004	1120	0	Ether	TCM+ethylether(HE)
+poLet	0.0004	1120	0	Ether	TCM+ethylether(HE)
+polat	0.001	360	0	Formate	TCM+ethylformate(HE)
+polon	0.001	910	0	Ketone	acetone+TCM (HE)
+pocyn	0.001	990	0	Nitrile	TCM+ACN(HE)
+ponox	0.001	0	90	Nitro	Acetone+nitromethane(HE)
+posox	0.001	900	0	Sulfoxy	Sulfolane+Pyridine(HE)
+poPhe	0.001	30	0	Phenyl	TCM,DCM,12DCE,MeOH+toluene (HE)
+polsh	0.001	0	2680	Thiol	toluene+n-butanethiol(HE)
+ascid	0.00002	707	1507	Acid	AceticAcid
+asCid	0.00002	707	1507	Acid	SalicylicAcid
+aspro	0.001	427	1320	hyPerox	Hydrogen peroxide
+asPro	0.001	427	1320	hyPerox	phenylHydroPeroxide

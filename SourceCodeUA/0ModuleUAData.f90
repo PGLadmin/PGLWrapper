@@ -34,7 +34,7 @@ MODULE GlobConst
 	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)
 	          !avoNum[=]cm3/(nm3*mol), kB[=]MPa.nm3/K. cf. PGL6ed, Table 6.1
 	!          https://www.nist.gov/si-redefinition 
-	PARAMETER (nCritSet=1761,tabChar=char(9)) ! This is the number of compounds that should be found in LoadCritParmsDb. 
+	PARAMETER (nCritSet=1880,tabChar=char(9)) ! This is the number of compounds that should be found in LoadCritParmsDb. 
 	!          Change this parameter if you add more compounds.	It must be consistent or you will get a LOAD error.
     !nmx is the max allowed number of Compounds
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
@@ -79,6 +79,20 @@ contains
 	iEosOpt=newEosOpt
 	return
 	end function SetNewEos
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	FUNCTION ToUpper(str) RESULT(upperStr)
+	  !Purpose: convert 
+	  IMPLICIT NONE
+	  CHARACTER(LEN=*), INTENT(IN) :: str
+	  CHARACTER(LEN=LEN(str)) :: upperStr
+	  INTEGER :: i
+	  upperStr = str
+	  DO i = 1, LEN_TRIM(str)
+		 IF (ICHAR(str(i:i)) >= ICHAR('a') .AND. ICHAR(str(i:i)) <= ICHAR('z')) THEN
+			upperStr(i:i) = CHAR(ICHAR(str(i:i)) - 32)
+		 END IF
+	  END DO
+	END FUNCTION ToUpper	
 END MODULE GlobConst
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). 1st Sums sites per molecule then  molecules.

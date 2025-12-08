@@ -186,10 +186,11 @@ end
 	!CHARACTER*4 tCode,pCode,vCode
 	!character*132 readText,dumText
 	!character*12  form
-	character*251 inFile,dumString
+	character*251 inFile,dumString,errMsgPas,errMsg(22)
 	LOGICAL LOUDER
     LOUDER=LOUD
     !LOUDER=.TRUE.
+	errMsg(11)='LoadCritParmsDb: error reading line1 of '//TRIM(inFile)
 	iErrCode=0
     ndbLocal=3000
     !print*,'LoadCritParmsDb: entered. iErrCode=',iErrCode
@@ -229,6 +230,7 @@ end
             if(LOUDER)write(dumpUnit,*)'LoadCritDB: ioErr=/=0 i,NDECK1,ioErr=',i,NDECK1,ioErr
             iErrCode=12
             return
+			errMsg(12)='LoadCritDb: error reading line in ParmsCrit'
         endif
 !1	190.56	4.599	0.0115	0.1473	0.9075	1.8243	-3.5604	0.2894	85	 74828	11.62	0.4224	16.04
 		PCD(I)=PcTemp !/10
@@ -242,7 +244,9 @@ end
 		endif
 		!	,rMwD(i),solParmD(i),vLiqD(i),tBoil,tMelt,hFor,gFor,iCas,tCode,pCode,vCode,form,NAMED(I)
 	enddo
+	errMsgPas=errMsg(iErrCode)
 	if(NDECK1 /= nCritSet)then
+		if(LOUDER)print*,'nDeckJaubert,nCritSet=',NDECK1,nCritSet
 		iErrCode=12
         return
     endif
@@ -298,6 +302,7 @@ end
 	USE GlobConst
 	USE CritParmsDb
 	Implicit DoublePrecision(A-H,O-Z)
+	character*251 errMsg
 	LOGICAL LOUDER
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
@@ -310,7 +315,10 @@ end
     endif
     if(iErrLoadCrit > 0)then
         iErrCode=8686
-		if(LOUDER)write(dumpUnit,*)'GetCrit: error from LoadCritParmsDb. Thats all folks!'
+		if(LOUDER)then
+			write(dumpUnit,*)'GetCrit: '//TRIM(errMsg)
+			write(dumpUnit,*)'GetCrit: error from LoadCritParmsDb. Thats all folks!'
+		endif
 		return
 	endif
 	iErrCode=0
@@ -521,8 +529,10 @@ end
 	return                      
 	end
 
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	subroutine IdTrcLookup(NC,IdTrc,ier,errMsgPas)
+subroutine IdTrcLookup(NC,IdTrc,ier,errMsgPas)
+	!Purpose: lookup dippr and CAS IDs given IdTrc
     USE GlobConst, only:ID,idCas,PGLinputDir,DumpUnit,LOUD
 	parameter(maxDb=3000)
 	character*77 errMsg(0:22),errMsgPas
@@ -575,7 +585,7 @@ end
 	enddo
 	close(50)
 	return
-	end
+end subroutine IdTrcLookup
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine IdCasLookup(NC,idCasPas,ier,errMsgPas)	!ID USEd from GlobConst

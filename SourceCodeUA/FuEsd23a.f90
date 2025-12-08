@@ -1,11 +1,11 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in MemScedOpt calcs.
-	USE CritParmsDb		! ndb,..
+	USE CritParmsDb, only:ndb		! ndb,..
 	Parameter(nMemSced=118,nTau=nMemSced-12,nBeta=37,nAlpha=12,nAssoc=18)	!for MemSced
 	!NOTE: ndb(ESD)=ndb(CritParms) because we must first compute "Exact" values so all possible values will be tabulated. .
 	DoublePrecision eokPdb(ndb),vxDb(ndb),mShapeDb(ndb),KadNm3Db(ndb),epsA_kBdb(ndb),epsD_kBdb(ndb),ZcEsdDb(ndb),tauDb(ndb)
 	DoublePrecision eTotAssoc(nAssoc) ,tau(nTau) 													
-	Integer, SAVE::         IndexEsd(99999),NDdb(ndb),NDSdb(ndb),NASdb(ndb) 
+	Integer, SAVE::         IndexEsd(99999),NDdb(ndb),NDSdb(ndb),NASdb(ndb)   ! e.g. eokP(i)=eokPdb( IndexEsd(ID(i)) )
 	LOGICAL, SAVE::         isReadEsd	
 	Integer idTau(nTau),idBeta(nBeta),idAlpha(nAlpha),idAssoc(nAssoc)	! for MemSced.
 !	data idBeta/ 501, 502, 504, 507, 510, 518, 840, 1071, 1080, 1090, 1093, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1114,& 
