@@ -189,7 +189,7 @@ end
 	character*251 inFile,dumString,errMsgPas,errMsg(22)
 	LOGICAL LOUDER
     LOUDER=LOUD
-    !LOUDER=.TRUE.
+    LOUDER=.TRUE.
 	errMsg(11)='LoadCritParmsDb: error reading line1 of '//TRIM(inFile)
 	iErrCode=0
     ndbLocal=3000
@@ -207,7 +207,7 @@ end
     if(ioErr /= 0)iErrCode=11
 	!if(ioErr==0)READ(dumString,*,ioStat=ioErr)NDECK1
     !if(ioErr /=0)
-    NDECK1=nCritSet+123 !if header omits the number of records(e.g. for python benefit), we recover...
+    NDECK1=nCritSet+1234 !if header omits the number of records(e.g. for python benefit), we recover...
 	DO I=1,NDECK1 !Loading the entire CritDB into RAM
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
 		!if(i.eq.691)write(dumpUnit,*)
@@ -246,7 +246,7 @@ end
 	enddo
 	errMsgPas=errMsg(iErrCode)
 	if(NDECK1 /= nCritSet)then
-		if(LOUDER)print*,'nDeckJaubert,nCritSet=',NDECK1,nCritSet
+		if(LOUDER)print*,'LoadCritParmsDb:nDeckJaubert,nCritSet=',NDECK1,nCritSet
 		iErrCode=12
         return
     endif

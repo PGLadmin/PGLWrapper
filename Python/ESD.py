@@ -69,7 +69,7 @@ class CritProps: # Analogous to Car class in Python Crash Course Book.
                         f = formula_to_composition(self.FORM)
                         self.atomCounts = f #dictionary where atomic number gives number count.
                         self.CHBCFINOSS=np.array([f.get(6,0),f.get(1,0),f.get(35,0),f.get(17,0),f.get(9,0),f.get(53,0),f.get(7,0),f.get(8,0),f.get(16,0),f.get(14,0)] )
-                        nCarb=self.CHBCFINOSS[0]
+                        #nCarb=self.CHBCFINOSS[0]
                     except:
                         print("ESD.CritProps: FORM=",self.FORM)
                         self.atomCounts={}
@@ -80,8 +80,9 @@ class CritProps: # Analogous to Car class in Python Crash Course Book.
                     #Rgas=kB*avoNum
                     self.Name=(part[17]) 
                     self.bAssoc=False # Initialize assuming the compound is not associating.
-                    if self.JREClass=="assoc" or self.JREClass=="Asso+"or self.JREClass=="polar": self.bAssoc=True # Need to include polar for mixes like acetone+chloroform or MEM2 returns immediately.
-                    print(f"Compound {idDippr}, {self.Name} found in ParmsPrTcJaubert.txt! bAssoc={self.bAssoc}")
+                    abbClass=self.JREClass[:2]
+                    if abbClass=="as" or abbClass=="As"or abbClass=="po": self.bAssoc=True # Need to include polar for mixes like acetone+chloroform or MEM2 returns immediately.
+                    print(f"Compound {idDippr}, {self.Name} found in PGLInput. bAssoc={self.bAssoc} Class={self.JREClass}")
                     break
         return bThere
     def PvpSc(self,tKelvin): #JRE: ShortCut Vapor Pressure Equation. See also PvpEar which uses Equal Area Rule (aka. Maxwell Construction) to solve for Pvp of EOS.
@@ -124,6 +125,8 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         self.EOS='ESD'
         self.critical=False
         if self.TcK==190.8686: bThere=self.LookupCritParms(idDippr) # Default Tc means you need to lookup.
+        if not bThere:
+            raise ValueError(f"EsdComp failed to find {idDippr} in {PGLInputDir+'ParmsPrTcJaubert.txt'}. Check file.")
         self.assoc=Assoc() #bondVolNm3,epsD_kB,epsA_kB,nTypes,nDsites,nAsites # Example of invoking a subclass
         # if bThere==False:
         # print(f"Compound {self.Name} not found in ParmsEsdMEM2.txt! Estimating parms from Tc,Pc,acen.")
@@ -138,10 +141,10 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         RootQinv=1/math.sqrt(qShape)
         #ZcEsd=1/3+RooTCinv*(.0384+RooTCinv*(-.062+RooTCinv*(0.0723-.0577*RooTCinv)))
         ZcEsd=( 1+RootQinv*(.1451+RootQinv*(-.2046+RootQinv*(0.0323-0*RootQinv))) )/3
-        atemp=9.5*qShape*1.9+4*cShape*k1-k1*1.9
+        atemp=qShape*( 9.5*1.9+2.1*k1 )
         quadB=k1*1.9*ZcEsd+3*atemp
-        sqArg=quadB*quadB+4*atemp*(4*cShape-1.9)*(9.5*qShape-k1)/ZcEsd
-        Bc=ZcEsd*ZcEsd*( -quadB+math.sqrt(sqArg) )/( 2*atemp*(4*cShape-1.9) )
+        sqArg=quadB*quadB+8.4*atemp*qShape*(9.5*qShape-k1)/ZcEsd
+        Bc=ZcEsd*ZcEsd*( -quadB+math.sqrt(sqArg) )/( 4.2*atemp*qShape )
         Yc=ZcEsd*ZcEsd*ZcEsd/(atemp*Bc*Bc)
         rLnY1=math.log(Yc+1.0617)
         self.cShape=cShape
@@ -154,7 +157,7 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         self.etacEos=Bc/ZcEsd # bP/RT = eta*Z
         self.etaMax=1/1.9
         bThere=self.LookupEsdParms(self.idDippr) # Replace "exact" values if there, but always compute etac and ZcEsd for PvpEar.
-        if(bThere):print(f'{self.Name} found in EsdParms! qShape={qShape}')
+        if(bThere):print(f'{self.Name} found in ParmsEsdMEM2.txt.' ) #qShape={qShape}')
         # For SGT Computations
         cii=self.cii_correlation() # this could be an array of polynomial(T) coefficients(?), but assume const for now.
         self.cii = np.array(cii, ndmin=1)
@@ -163,8 +166,9 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
     def cii_correlation(self, overwrite=False):
         """
         cii_corelation()
-        Method that computes the influence parameter of coarsed-grained
-        molecules
+        Method that computes the influence parameter of coarsed-grained molecules
+        JM Garrido, A Mejía, MM Pineiro, FJ Blas, EA Müller
+        Interfacial tensions of industrial fluids from a molecular‐based square gradient theory
         AIChE Journal, 62, 5, 1781-1794 (2016)
         Eq. (23)
         Parameters
@@ -176,31 +180,6 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         cii : float
             correlated influence parameter [J m^5 / mol^2]
         """
-        compClass=self.JREClass
-        nCarb=(self.CHBCFINOSS[0])
-        nSilox=int(  np.sqrt( self.CHBCFINOSS[9]*self.CHBCFINOSS[7] )  ) #if nOxy< 3*nSi, the int() should bring it down to nSi
-        nSilox_C1=nSilox/(nCarb+1)
-        nSilane=self.CHBCFINOSS[9]-nSilox
-        if(nSilane<0):nSilane=0
-        nIodo=self.CHBCFINOSS[5]
-        nFluoro=(self.CHBCFINOSS[4])
-        nChloro=(self.CHBCFINOSS[3])
-        nNitro=self.CHBCFINOSS[6]
-        nOxy=self.CHBCFINOSS[7]
-        nOx_C1=nOxy/(nCarb+1)
-        nF_C1=nFluoro/(nCarb+.1)
-        #nHy=(self.CHBCFINOSS[1])
-        #nSulf=(self.CHBCFINOSS[8])
-        #nHalo=self.CHBCFINOSS[2]+self.CHBCFINOSS[3]+self.CHBCFINOSS[4]+self.CHBCFINOSS[5] #BrClFI
-        #nHetero_C1=(nHalo+nSilox+nNitro+nOxy)/(nCarb+.1) #Sulfur ~carb, but keep separate
-        #nHalo_C1=(nHalo)/(nCarb+.1) 
-        #H_C1=nHy/(nCarb+nSilane+.1) #Assume silanes behave like their HC hmomorph.
-        SNOCfactor=0
-        if(nChloro>.95 or nSilox_C1>.95 or nNitro>.95 or nOx_C1 > 0.45 or nIodo>.95):SNOCfactor=1
-        if(nChloro>1.95 or nSilox_C1>1.95 or nNitro>1.95 or nOx_C1 > 0.85):SNOCfactor=2
-        if(nSilane>0):SNOCfactor=0
-        if(nF_C1>0.4):SNOCfactor=0
-        if(compClass=='halom'):SNOCfactor=0
         alpha=1
         q = self.qShape
         eps=self.eps_kB*kB/1E21
@@ -218,21 +197,29 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
 #         cii = np.array([cii], ndmin=1)
 # =============================================================================
         
-        cii0=np.sqrt(ciiCorr) #JRE: residual correlation summed to 0 at Tr=0, so use this element to store reference value.
-        cii1= -21.521 #JRE: start with norml class as default
-        cii2= 112.771
-        if(compClass=='heavy'):
-            cii1=16.904
-            cii2= 2.533
-        if(compClass=='assoc' or compClass=='Asso+'):
-            cii1=113.595
-            cii2=-60.637
-        elif(compClass=='polar'):
-            cii1=19.134
-            cii2=25.046
-        cii3= -(cii1+cii2+37) #JRE: for some reason all values sum to 37 at Tr=1
-        #cii1=cii2=cii3=0.        
-        cii = np.array([cii0,cii1,cii2,cii3] )*(1+0.0412*SNOCfactor) #, ndmin=4)
+        cii0=np.sqrt(ciiCorr) #JRE: cii0=NA*q*2.34*sqrt(1.4*eps*sigma**5)
+        cii1= -0.6614 #JRE: general regression for all but assoc as default
+        cii2=  2.6475
+        cii3= -2.5373
+        #cii1=cii2=cii3=0.     #JRE: For starting over.   
+# NOTE: def ci() is:
+#        pctDevOrig=Tr*( cii[1]+Tr*(cii[2]+Tr*cii[3]) )
+#        ciiCorr=cii[0]/(  1+pctDevOrig/100  ) #**2
+#        return ciiCorr*ciiCorr #JRE: here we square it after correcting. 
+
+# =============================================================================
+#         if(compClass=='he'):
+#             cii1=16.904
+#             cii2= 2.533
+#         if(compClass=='as' or compClass=='As'):
+#             cii1=113.595
+#             cii2=-60.637
+#         elif(compClass=='po'):
+#             cii1=19.134
+#             cii2=25.046
+#         cii3= -(cii1+cii2+37) #JRE: for some reason all values sum to 37 at Tr=1
+# =============================================================================
+        cii = np.array([cii0,cii1,cii2,cii3] ) #*(1+0.0412*SNOCfactor) #, ndmin=4)
         #cii *= ciiCorr
         if overwrite:
             self.cii = cii
@@ -261,8 +248,8 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
             lines=f.readlines() # reads the entire file as lines.
             # q EOK(K)   b(cc/mo)   KadNm3  eDonEpsK    eAccEpsK    nDegree #eDs    #eAs    idCas   Name
             bThere=False
-            for line in lines:
-                part=line.split() # separates out the  
+            for line in lines[1:]: # starting from 1: skips the header. 
+                part=line.split() # parses the space or tab or comma dilimeted words in the line   
                 if int(part[0]) == idDippr:
                     bThere=True
                     print(f"Compound {self.Name} found in ParmsEsdMEM2.txt!")
@@ -823,26 +810,6 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         # on return da= RT*(Z-1)/(rhoMol_m3*beta) => RT in numerator????
         #a = a/(Rgas*tKelvin)
         return a, Xass0
-    def d2afcn_aux(self, rho, temp_aux, Xass0=None):
-        """
-        dafcn_aux(rho, temp_aux, Xass0)
-        Method that computes the total Helmholtz free energy of the fluid and
-        its second density derivative."""
-        delRho=rho*0.001
-        rhoPlus =rho+delRho
-        rhoMinus=rho-delRho
-        aPlus, XassPlus = self.dafcn_aux(rhoPlus , temp_aux, Xass0)
-        aMinus,XassMinus= self.dafcn_aux(rhoMinus, temp_aux, Xass0)
-        aResPlus ,daResPlus =aPlus
-        aResMinus,daResMinus=aMinus
-        aRes=0.5*(aResPlus+aResMinus)
-        daRes=0.5*(daResPlus+daResMinus)
-        d2aRes=(daResPlus-daResMinus)/(rhoPlus-rhoMinus)
-        a=[aRes,daRes,d2aRes]
-        # FYI:(avoNum*1E21/beta)=Rgas*tKelvin
-        # on return da= RT*(Z-1)/(rhoMol_m3*beta) => RT in numerator????
-        #a = a/(Rgas*tKelvin)
-        return a, Xass0
     def dares_drho(self, rho, T, Xass0=None):
         """
         returns         return a[aRes_RT,(Z-1)/rhoMolecular], Xass0
@@ -895,8 +862,99 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         Tr=T/self.TcK
         #ciiCorr=np.polyval(self.cii, Tr)
         cii=self.cii
-        pctDevOrig=Tr*( cii[1]+Tr*(cii[2]+Tr*cii[3]) )
-        ciiCorr=cii[0]/(  1+pctDevOrig/100  ) #**2
+        atomsTot=self.CHBCFINOSS.sum()
+        nCarb=(self.CHBCFINOSS[0])
+        nHy=(self.CHBCFINOSS[1])
+        nHetero=atomsTot-nCarb-nHy
+        nSilox=int(  np.sqrt( self.CHBCFINOSS[9]*self.CHBCFINOSS[7] )  ) #if nOxy< 3*nSi, the int() should bring it down to nSi
+        nSilox_C1=nSilox/(nCarb+1)
+        nSilane=self.CHBCFINOSS[9]-nSilox
+        nHetero_C1=nHetero/(nCarb+0.1)
+        if(nSilane<0):nSilane=0
+        nIodo=self.CHBCFINOSS[5]
+        nFluoro=(self.CHBCFINOSS[4])
+        nChloro=(self.CHBCFINOSS[3])
+        #nSulf=(self.CHBCFINOSS[8])
+        nNitro=self.CHBCFINOSS[6]
+        nOxy=self.CHBCFINOSS[7]
+        nOx_C1=nOxy/(nCarb+1)
+        nHalo=self.CHBCFINOSS[2]+self.CHBCFINOSS[3]+self.CHBCFINOSS[4]+self.CHBCFINOSS[5] #BrClFI
+        nHetero_C1=(nHalo+nSilox+nNitro+nOxy)/(nCarb+.1) #Sulfur ~carb, but keep separate
+        #nHalo_C1=(nHalo)/(nCarb+.1) 
+        fracH=nHy/atomsTot
+        nF_C1=nFluoro/(nCarb+.1)
+        H_C1=nHy/(nCarb+nSilane+.1) #Assume silanes behave like their HC hmomorph.
+        SNOCfactor=0
+        if(nChloro>.95 or nSilox_C1>.95 or nNitro>.95 or nOx_C1 > 0.45 or nIodo>.95):SNOCfactor=1
+        if(nChloro>1.95 or nSilox_C1>1.95 or nNitro>1.95 or nOx_C1 > 0.85):SNOCfactor=2
+        if(nSilane>0):SNOCfactor=0
+        if(nF_C1>0.4):SNOCfactor=0
+        UpperClass=self.JREClass.upper()
+        abbClass=self.JREClass[:2].upper()
+        suffix=UpperClass[-2:]
+        nrmHtClasses=['polet','poLet','siloa','poam3','poAm3','nrmht','nrmHt','nrmsu','inorg','ormet','gases','halom','multF','prflo','prFlo']
+        bNrmHt=False
+        if(nHalo > 0 or self.JREClass in nrmHtClasses):bNrmHt=True
+        if(UpperClass=='AS'):bNrmHt=False
+        polarSuffixes=['ES','ON','OX','YN','AL']
+        bPolar=False
+        if(suffix in polarSuffixes):bPolar=True
+        if(bNrmHt):bPolar=False
+        #fracH=nHy/atomsTot
+        bVol=self.bVolCC_mol
+        b_q=bVol/self.qShape
+        eps=self.eps_kB
+        solPrm=self.solp
+        qTmp=self.qShape
+        RootQinv=1/np.sqrt(self.qShape)
+        #assocE=(self.assoc.epsA_kB[0]+self.assoc.epsD_kB[0])/2 # npArray to be non-scalar in MEM2 requires nTypes > 1, but ESD has only 1 type
+# =============================================================================
+#         if(UpperClass =='NRMHC'):extraFactor *= (1-(-6.509-0.739*b_q*eps/1000-0.1825*b_q*H_C1+7.312/RootQinv)/100)
+#         if(abbClass=='HE'):extraFactor *= (1-(70.51-2.678*b_q-1.6079*solPrm)/100)
+#         if(bNrmHt):extraFactor *= (1-(5.414-20.98*(1-Tr)+0.01214*eps*qTmp-0.05294*b_q**2-nHetero_C1*(4.598*fracH+0.0737*SNOCfactor))/100)
+#         if(bPolar):extraFactor *= (1-(-10.58+13.64*(1-Tr)+solPrm*(0.7723-0.001474*eps)+0.0685*nHetero_C1*SNOCfactor)/100)
+# =============================================================================
+        #if(bNrmHt): use nrmHt as the default correlation because misclassified compounds are likely this.
+        #pctDevTr= ( cii[1]+Tr*(cii[2]+Tr*cii[3]) )
+        TrFactor=(5.443-8.673*Tr+8.312*Tr*Tr)/3.276  #quadratic correlation based on all but assoc
+        
+        #TrFactor=(1.213-1.053*Tr+1.174*Tr*Tr)  #quadratic correlation based on all but assoc
+        #TrFactor=1+Tr*(.086+Tr*(-0.81+1.127*Tr)) #cubic based on just nrmHc
+        bPart=True
+        extraFactor = 1.1557-.2098*Tr-0.0001214*eps*qTmp+0.0005294*b_q**2+nHetero_C1*(.04598*fracH+0.000737*SNOCfactor)
+        if(UpperClass =='NRMHC'):extraFactor = 1.0508+b_q*(0.000005922*eps+0.002004*H_C1)-.06806/RootQinv
+        if(abbClass=='HE'):
+            extraFactor = 0.7150+b_q*(.02086+.009064*Tr)-.0003408*eps*RootQinv-.1552*fracH
+        if(bPolar):extraFactor = 0.9238+b_q*(.005527+.000049076*b_q+.016605599*Tr)+0.000602872*bVol*SNOCfactor-0.000009180*eps*solPrm-.008619702*qTmp*H_C1
+        if(abbClass=='AS'):
+            epsD=self.assoc.epsD_kB[0]
+            epsA=self.assoc.epsA_kB[0]
+            #apart1=61.36-39.99*Tr+b_q*(-7.037+6.199*RootQinv)+qTmp*(-0.002507*epsA+0.003763*assocE)
+            #apart2=fracH*(0.02658*assocE-247.4/bVol)-0.2062*epsD/bVol
+            part1= 0.40475+b_q*(.03831-.001427*b_q)+bVol*(0.00005699*eps-0.0007650*solPrm)
+            part2= -0.000000349*(epsA*eps)+1.3148*fracH/bVol + solPrm*(0.01428*Tr+ 2.886E-06*epsA)
+            extraTrFactor= 1 #0.72-0.09*Tr+0.07*Tr*Tr
+            if(bPart):
+                part1= 0.3864+.4*Tr+b_q*(.07037-.06199*RootQinv)-qTmp*(-0.000006255*epsA+0.00001882*epsD)
+                part2= -fracH*( 0.0001329*(epsA+epsD)-2.474/bVol )+0.002062*epsD/bVol
+#RfeList=['Tr', 'b_q', 'b_q*qinv', 'qShape*epsA_kB','qShape*epsD_kB','fracH*assocE','fracH*binv','epsD_kB*binv' ] #,#Best 9
+            extraFactor = extraTrFactor *((part1+part2))
+        if(abbClass=='AS'):extraFactor=1    # For starting over with association part. Comment to ignore.
+        if(bPart): # This is just in case we want to test a change. bPart=False by default.
+            if(abbClass=='HE'):extraFactor = 0.2949+.02678*b_q+.016079*solPrm
+            if(bPolar):extraFactor = 0.9694+.1364*Tr-solPrm*(0.007723-0.00001474*eps)-0.000685*nHetero_C1*SNOCfactor
+        ciiCorr=cii[0] *TrFactor *extraFactor #**2 #FYI: cii[0]=NA*q*2.34*sqrt(1.4*eps*sigma**5)
+# =============================================================================
+#         if(abbClass=='As'):
+#             ci=np.zeros(4)
+#             ci[1]=  1.136
+#             ci[2]= -0.6064
+#             ci[3]= -(ci[1]+ci[2]+37)
+#             cFactor=(1+0.0412*SNOCfactor)
+#             ci*=cFactor
+#             denom=1+24+bVol*(0.225*epsD-1525*RootQinv)+H_C1*1.616*(epsA-1.34*epsD)
+#             ciiCorr=cii[0]/(  1+Tr*( ci[1]+Tr*(ci[2]+Tr*ci[3]) )  )*cFactor/denom
+# =============================================================================
         return ciiCorr*ciiCorr #JRE: here we square it after correcting. 
     def sgt_adim(self, T):
         '''
@@ -976,9 +1034,9 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         temp_aux : list
             temperature dependend parameters computed with temperature_aux(T)
         mu : float
-            adimentional chemical potential at equilibrium
+            adimensional chemical potential at equilibrium
         Psat : float
-            adimentional pressure [Pa]
+            adimensional pressure [Pa]
         Xass0: array, optional
             Initial guess for the calculation of fraction of non-bonded sites
 
@@ -1094,7 +1152,7 @@ class EsdFluid(object):
             self.KIJ1 = np.zeros([self.nc, self.nc])
             id1=component1.idDippr
             id2=component2.idDippr
-            inFile="c:/PGLWrapper/input/BipEsdMem2.txt"
+            inFile=PGLInputDir+"BipEsdMem2.txt"
             idMix=10000*id1+id2
             if(id1 < id2):idMix=10000*id2+id1
             with open(inFile,encoding='utf-8') as f:
