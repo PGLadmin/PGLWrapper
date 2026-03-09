@@ -72,9 +72,9 @@ END MODULE SpeadParms
 	character*77 errMsg(0:11)
     character*77 errMsgPas
 	logical LOUDER !,CheckDLL
-	data ks00ij/ -0.04d0 /
+	data ks00ij,ks10ij/ -0.04d0,0 /	 ! This sets the default values.
 	LOUDER=LOUD
-	!LOUDER=.TRUE. !COMMENT OUT FOR RELEASE
+	LOUDER=.TRUE. !COMMENT OUT FOR RELEASE
 	iErr=SetNewEos(iEosOpt) ! returns 0. Wipes out previous possible declarations of isESD or isPcSaft.
 	bTPT=.TRUE. ! in GlobConst simplifies calls in FUGI and FuVtot
     etaMax = 0.99D0 ! if eta > etaMax, errors will be declared

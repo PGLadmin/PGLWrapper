@@ -75,7 +75,7 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
     Integer  localCas(NMX) !,dummyCas(NMX)
     LOGICAL LOUDER
 	LOUDER=LOUD
-    !LOUDER=.TRUE.
+    LOUDER=.TRUE.
 	idCas(1:NC)=localCas(1:NC)
     if(LOUD)write(dumpUnit,*)'PGLWrapperStartup: starting.NC,iEosOpt,idCas=',NC,iEosOpt ,idCas(1:NC)
 	!dummyCas(1:NC)=idCas(1:NC)

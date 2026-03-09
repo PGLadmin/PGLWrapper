@@ -1,4 +1,4 @@
-      DOUBLEPRECISION FUNCTION ENORM(N,X)
+      DOUBLE PRECISION FUNCTION ENORM(N,X)
       INTEGER N
       DOUBLE PRECISION X(N)
 C     **********
@@ -57,13 +57,13 @@ C
 C              SUM FOR LARGE COMPONENTS.
 C
                IF (XABS .LE. X1MAX) GO TO 10
-				!if(XABS.EQ.0)PAUSE 'ENORM:XABS=0'
-                  S1 = ONE + S1*(X1MAX/XABS+1.D-14)**2	!JRE: added 1.D-14 to avoid zero divide.
+				if(XABS.EQ.0)PAUSE 'ENORM:XABS=0'
+                  S1 = ONE + S1*(X1MAX/XABS)**2
+				if(X1MAX.EQ.0)PAUSE 'ENORM:X1MAX=0'
                   X1MAX = XABS
                   GO TO 20
    10          CONTINUE
-				!if(X1MAX.EQ.0)PAUSE 'ENORM:X1MAX=0'
-                  S1 = S1 + (XABS/X1MAX+1.D-14)**2    	!JRE: added 1.D-14 to avoid zero divide.
+                  S1 = S1 + (XABS/X1MAX)**2
    20          CONTINUE
                GO TO 60
    30       CONTINUE
@@ -71,8 +71,8 @@ C
 C              SUM FOR SMALL COMPONENTS.
 C
                IF (XABS .LE. X3MAX) GO TO 40
-				!if(XABS.EQ.0)PAUSE 'ENORM:XABS=0'
-                  S3 = ONE + S3*(X3MAX/XABS+1.D-14)**2	!JRE: added 1.D-14 to avoid zero divide.)**2
+				if(XABS.EQ.0)PAUSE 'ENORM:XABS=0'
+                  S3 = ONE + S3*(X3MAX/XABS)**2
                   X3MAX = XABS
                   GO TO 50
    40          CONTINUE
@@ -99,17 +99,17 @@ C
       ELSE IF (S2 .NE. ZERO) THEN
             IF (S2 .GE. X3MAX)THEN
 			SQARG=S2*(ONE+(X3MAX/S2)*(X3MAX*S3))
-			IF(SQARG.LE.ZERO) SQARG=0 !PAUSE 'ENORM: S2ARG.LE.0'
+			IF(SQARG.LE.ZERO)PAUSE 'ENORM: S2ARG.LE.0'
 			ENORM = DSQRT(SQARG)
             ELSE
 			SQARG=X3MAX*((S2/X3MAX)+(X3MAX*S3))
-			IF(SQARG.LE.ZERO) SQARG=0 !'PAUSE 'ENORM: X3MAXARG.LE.0'
+			IF(SQARG.LE.ZERO)PAUSE 'ENORM: X3MAXARG.LE.0'
 			ENORM = DSQRT(SQARG)
             ENDIF
 		  !GO TO 120
   !110    CONTINUE
 	ELSE
-		IF(S3.LE.ZERO)SQARG=0 !PAUSE 'ENORM: S3.LE.0'
+		IF(S3.LE.ZERO)PAUSE 'ENORM: S3.LE.0'
             ENORM = X3MAX*DSQRT(S3)
 	ENDIF
   !120    CONTINUE
@@ -917,354 +917,3 @@ C     LAST CARD OF SUBROUTINE QRSOLV.
 C
       END
 
-
-C     NUMERICAL RECIPES routines.
-
-      SUBROUTINE eigsrt(d,v,n,np)
-      INTEGER n,np
-      DOUBLE PRECISION d(np),v(np,np)
-      INTEGER i,j,k
-      DOUBLE PRECISION p
-      do 13 i=1,n-1
-        k=i
-        p=d(i)
-        do 11 j=i+1,n
-          if(d(j).ge.p)then
-            k=j
-            p=d(j)
-          endif
-11      continue
-        if(k.ne.i)then
-          d(k)=d(i)
-          d(i)=p
-          do 12 j=1,n
-            p=v(j,i)
-            v(j,i)=v(j,k)
-            v(j,k)=p
-12        continue
-        endif
-13    continue
-      return
-      END
-
-      SUBROUTINE gaussj(a,n,np,b,m,mp)
-	USE GlobConst
-      INTEGER m,mp,n,np,NMAX
-      DOUBLE PRECISION a(np,np),b(np,mp)
-      PARAMETER (NMAX=50)
-      INTEGER i,icol,irow,j,k,l,ll,indxc(NMAX),indxr(NMAX),ipiv(NMAX)
-      DOUBLE PRECISION big,dum,pivinv
-      do 11 j=1,n
-        ipiv(j)=0
-11    continue
-      do 22 i=1,n
-        big=0.d0
-        do 13 j=1,n
-          if(ipiv(j).ne.1)then
-            do 12 k=1,n
-              if (ipiv(k)==0) then
-                if (abs(a(j,k)).ge.big)then
-                  big=abs(a(j,k))
-                  irow=j
-                  icol=k
-                endif
-              else if (ipiv(k) > 1) then
-                if(LOUD)pause 'singular matrix in gaussj'	 !todo: return error code
-              endif
-12          continue
-          endif
-13      continue
-        ipiv(icol)=ipiv(icol)+1
-        if (irow.ne.icol) then
-          do 14 l=1,n
-            dum=a(irow,l)
-            a(irow,l)=a(icol,l)
-            a(icol,l)=dum
-14        continue
-          do 15 l=1,m
-            dum=b(irow,l)
-            b(irow,l)=b(icol,l)
-            b(icol,l)=dum
-15        continue
-        endif
-        indxr(i)=irow
-        indxc(i)=icol
-        if (a(icol,icol)==0.d0 )then
-		if(LOUD)pause 'gaussj:singular'	!todo: return error code
-        end if
-        pivinv=1.d0/a(icol,icol)
-        a(icol,icol)=1.d0
-        do 16 l=1,n
-          a(icol,l)=a(icol,l)*pivinv
-16      continue
-        do 17 l=1,m
-          b(icol,l)=b(icol,l)*pivinv
-17      continue
-        do 21 ll=1,n
-          if(ll.ne.icol)then
-            dum=a(ll,icol)
-            a(ll,icol)=0.d0
-            do 18 l=1,n
-              a(ll,l)=a(ll,l)-a(icol,l)*dum
-18          continue
-            do 19 l=1,m
-              b(ll,l)=b(ll,l)-b(icol,l)*dum
-19          continue
-          endif
-21      continue
-22    continue
-      do 24 l=n,1,-1
-        if(indxr(l).ne.indxc(l))then
-          do 23 k=1,n
-            dum=a(k,indxr(l))
-            a(k,indxr(l))=a(k,indxc(l))
-            a(k,indxc(l))=dum
-23        continue
-        endif
-24    continue
-      return
-      END
-
-      FUNCTION pythag(a,b)
-      DOUBLE PRECISION a,b,pythag
-      DOUBLE PRECISION absa,absb
-      absa=abs(a)
-      absb=abs(b)
-      if(absa.gt.absb)then
-        pythag=absa*sqrt(1.d0+(absb/absa)**2)
-      else
-        if(absb.eq.0.d0)then
-          pythag=0.d0
-        else
-          pythag=absb*sqrt(1.d0+(absa/absb)**2)
-        endif
-      endif
-      return
-      END
-
-      SUBROUTINE tqli(d,e,n,np,z)
-	USE GlobConst
-      INTEGER n,np
-      DOUBLE PRECISION d(np),e(np),z(np,np)
-CU    USES pythag
-      INTEGER i,iter,k,l,m
-      DOUBLE PRECISION b,c,dd,f,g,p,r,s,pythag
-      do 11 i=2,n
-        e(i-1)=e(i)
-11    continue
-      e(n)=0.d0
-      do 15 l=1,n
-        iter=0
-1       do 12 m=l,n-1
-          dd=abs(d(m))+abs(d(m+1))
-          if (abs(e(m))+dd.eq.dd) goto 2
-12      continue
-        m=n
-2       if(m.ne.l)then
-            if(LOUD)then
-              if(iter==30)pause 'too many iterations in tqli'
-            end if
-          iter=iter+1
-          g=(d(l+1)-d(l))/(2.d0*e(l))
-          r=pythag(g,1.d0)
-          g=d(m)-d(l)+e(l)/(g+sign(r,g))
-          s=1.d0
-          c=1.d0
-          p=0.d0
-          do 14 i=m-1,l,-1
-            f=s*e(i)
-            b=c*e(i)
-            r=pythag(f,g)
-            e(i+1)=r
-            if(r.eq.0.d0)then
-              d(i+1)=d(i+1)-p
-              e(m)=0.d0
-              goto 1
-            endif
-            s=f/r
-            c=g/r
-            g=d(i+1)-p
-            r=(d(i)-g)*s+2.d0*c*b
-            p=s*r
-            d(i+1)=g+p
-            g=c*r-b
-C     Omit lines from here ...
-            do 13 k=1,n
-              f=z(k,i+1)
-              z(k,i+1)=s*z(k,i)+c*f
-              z(k,i)=c*z(k,i)-s*f
-13          continue
-C     ... to here when finding only eigenvalues.
-14        continue
-          d(l)=d(l)-p
-          e(l)=g
-          e(m)=0.d0
-          goto 1
-        endif
-15    continue
-      return
-      END
-
-      SUBROUTINE tred2(a,n,np,d,e)
-      INTEGER n,np
-      DOUBLE PRECISION a(np,np),d(np),e(np)
-      INTEGER i,j,k,l
-      DOUBLE PRECISION f,g,h,hh,scale
-      do 18 i=n,2,-1
-        l=i-1
-        h=0.d0
-        scale=0.d0
-        if(l.gt.1)then
-          do 11 k=1,l
-            scale=scale+abs(a(i,k))
-11        continue
-          if(scale.eq.0.d0)then
-            e(i)=a(i,l)
-          else
-            do 12 k=1,l
-              a(i,k)=a(i,k)/scale
-              h=h+a(i,k)**2
-12          continue
-            f=a(i,l)
-            g=-sign(sqrt(h),f)
-            e(i)=scale*g
-            h=h-f*g
-            a(i,l)=f-g
-            f=0.d0
-            do 15 j=1,l
-C     Omit following line if finding only eigenvalues
-              a(j,i)=a(i,j)/h
-              g=0.d0
-              do 13 k=1,j
-                g=g+a(j,k)*a(i,k)
-13            continue
-              do 14 k=j+1,l
-                g=g+a(k,j)*a(i,k)
-14            continue
-              e(j)=g/h
-              f=f+e(j)*a(i,j)
-15          continue
-            hh=f/(h+h)
-            do 17 j=1,l
-              f=a(i,j)
-              g=e(j)-hh*f
-              e(j)=g
-              do 16 k=1,j
-                a(j,k)=a(j,k)-f*e(k)-g*a(i,k)
-16            continue
-17          continue
-          endif
-        else
-          e(i)=a(i,l)
-        endif
-        d(i)=h
-18    continue
-C     Omit following line if finding only eigenvalues.
-      d(1)=0.d0
-      e(1)=1.d0
-      do 24 i=1,n
-C     Delete lines from here ...
-        l=i-1
-        if(d(i).ne.0.d0)then
-          do 22 j=1,l
-            g=0.d0
-            do 19 k=1,l
-              g=g+a(i,k)*a(k,j)
-19          continue
-            do 21 k=1,l
-              a(k,j)=a(k,j)-g*a(k,i)
-21          continue
-22        continue
-        endif
-C     ... to here when finding only eigenvalues.
-        d(i)=a(i,i)
-C     Also delete lines from here ...
-        a(i,i)=1.d0
-        do 23 j=1,l
-          a(i,j)=0.d0
-          a(j,i)=0.d0
-23      continue
-C     ... to here when finding only eigenvalues.
-24    continue
-      return
-      END
-
-      SUBROUTINE indexx(n,arr,indx)
-      INTEGER n,indx(n),M,NSTACK
-      REAL*8 arr(n)
-      PARAMETER (M=7,NSTACK=50)
-      INTEGER i,indxt,ir,itemp,j,jstack,k,l,istack(NSTACK)
-      REAL*8 a
-      do 11 j=1,n
-        indx(j)=j
-11    continue
-      jstack=0
-      l=1
-      ir=n
-1     if(ir-l.lt.M)then
-        do 13 j=l+1,ir
-          indxt=indx(j)
-          a=arr(indxt)
-          do 12 i=j-1,1,-1
-            if(arr(indx(i)).le.a)goto 2
-            indx(i+1)=indx(i)
-12        continue
-          i=0
-2         indx(i+1)=indxt
-13      continue
-        if(jstack.eq.0)return
-        ir=istack(jstack)
-        l=istack(jstack-1)
-        jstack=jstack-2
-      else
-        k=(l+ir)/2
-        itemp=indx(k)
-        indx(k)=indx(l+1)
-        indx(l+1)=itemp
-        if(arr(indx(l+1)).gt.arr(indx(ir)))then
-          itemp=indx(l+1)
-          indx(l+1)=indx(ir)
-          indx(ir)=itemp
-        endif
-        if(arr(indx(l)).gt.arr(indx(ir)))then
-          itemp=indx(l)
-          indx(l)=indx(ir)
-          indx(ir)=itemp
-        endif
-        if(arr(indx(l+1)).gt.arr(indx(l)))then
-          itemp=indx(l+1)
-          indx(l+1)=indx(l)
-          indx(l)=itemp
-        endif
-        i=l+1
-        j=ir
-        indxt=indx(l)
-        a=arr(indxt)
-3       continue
-          i=i+1
-        if(arr(indx(i)).lt.a)goto 3
-4       continue
-          j=j-1
-        if(arr(indx(j)).gt.a)goto 4
-        if(j.lt.i)goto 5
-        itemp=indx(i)
-        indx(i)=indx(j)
-        indx(j)=itemp
-        goto 3
-5       indx(l)=indx(j)
-        indx(j)=indxt
-        jstack=jstack+2
-        if(jstack.gt.NSTACK)pause 'NSTACK too small in indexx'
-        if(ir-i+1.ge.j-l)then
-          istack(jstack)=ir
-          istack(jstack-1)=i
-          ir=j-1
-        else
-          istack(jstack)=j-1
-          istack(jstack-1)=l
-          l=i
-        endif
-      endif
-      goto 1
-      END
-C  (C) Copr. 1986-92 Numerical Recipes Software *j.

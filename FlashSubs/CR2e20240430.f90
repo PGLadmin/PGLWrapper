@@ -1,82 +1,6 @@
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	subroutine RegDbEsd()!note:tc,pc,acen,id & esd parms USEd in GlobConst. 
-	! THIS ROUTINE minimizes vp error based on est'd rKadStar and dHkJ_mol (spec'd in main),  
-	! and constrained to match Tc.  Pc is ~matched implicitly by fitting vp near Tc.
-	! or matched explicitly when nParms=1.
-	! best setting is nParms=2 and iteropt=0, gives some flex to vx.   
-	! kcStar comes from kcStar~.025/cShape because Vseg~bmol/cShape.
-	! the calc of Tc is a bit crude: just
-	! do 100 weighted successive subst iterations whether you need it or not
-	! Routines Req'd: LmDifEz(MinPack),Fugi 
-	! Programmed by: JRE (9/96)
-	! Revised:  JRE (4/2020) to use CritPure for PGL package
-
-	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
-	USE CritParmsDB ! All the UL DB.
-	USE EsdParms  !,KadNm3(nmx),epsA_kB(nmx),epsD_kB(nmx)
-	USE EsdMem2ParmsDb ! e.g. eokP(i)=eokPdb( IndexEsd(ID(i)) )
-	IMPLICIT DoublePrecision( A-H, K,O-Z )
-	character(len=5) tmpClass,hbClass
-	character(len=2) abClass
-	character(len=3) suffix
-	LOGICAL LOUDER !,append
-	!CHARACTER*44 FNVP,FNLD
-	LOUDER=LOUD
-	LOUDER=.TRUE.
-	qFac=4/(4-1.9d0)
-	NC=1
-	! idNum(ndb),TCD(ndb),PCD(ndb),ACEND(ndb),TbD(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb)
-	!DoublePrecision eokP(nmx),KCSTAR(nmx),DH(nmx),c(nmx),q(nmx),vx(nmx)
-	!DoublePrecision mShape(nmx),KadNm3(nmx),epsA_kB(nmx),epsD_kB(nmx) !for ESD2
-	!Integer         ND(nmx),NDS(nmx),NAS(nmx)
-	open(51,file='c:\PGLWrapper\input\ParmsPrTcJaubert.txt')
-	read(51,*)tmpClass ! This is a dummy. Just reading 1st line.
-	do i=1,nDeckDb
-		read(51,*)idUL
-		tmpClass=classDb(CrIndex(idUL))
-		abClass=tmpClass(1:2)
-		if(abClass=='as' .or. abClass=='po'.or.abClass=='As')then
-			if(tmpClass(1:1)=='A')tmpClass(1:1)='a' ! apply single func rules for now.
-			ID(1)=idNum(CrIndex(idUL))
-			if(ID(1)==909)cycle ! CO2 does not have a proper boiling point. It forms dry ice.
-			suffix=ToUpper(tmpClass(3:5))
-			if(suffix=='CID')cycle ! Skip carboxylic acids.
-			if(ToUpper(tmpClass)=='POCHL')cycle ! Skip chlorine compds for now. .
-			idCas(1)=idCasDb(CrIndex(idUL))
-			Call GETCRIT(NC,iErrCrit)	! ID() from USEd GlobConst
-			Call GetEsdCas(NC,idCas(1),iErrEsd) !load the compound. If in ParmsEsdMEM2, but not ParmsHbEsd, the ParmsEsdMEM2 epsA, etc will be used.
-			if(Tb(1)<0)cycle ! e.g., Melamine Tb= -86 means it's unknown.
-			TcEos(1)=TCD(CrIndex(idUL))
-			PcEos(1)=PCD(CrIndex(idUL))
-			open(52,file='c:\PGLWrapper\input\ParmsHbEsd.txt')
-			read(52,*)nClasses
-			do j=1,nClasses
-				read(52,*)hbClass,Kad,epsD,epsA
-				if(tmpClass==hbClass)then
-					ND(1)=1
-					NDS(1)=1
-					if(epsD < zeroTol)NDS(1)=0
-					NAS(1)=1
-					if(epsA < zeroTol)NAS(1)=0
-					KadNm3(1)=Kad
-					epsA_kB(1)=epsA
-					epsD_kB(1)=epsD
-					exit !terminate the do loop.
-				endif
-			enddo
-			close(52)
-			call RegPureEsd2(-1)
-		endif
-	enddo
-	close(51)
-	pause 'Output appended to ParmsEsdMEM2.txt. Restart program.'
-	stop
-	end
-
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	subroutine RegPureEsd2(NC)!note:tc,pc,acen,id & esd parms USEd in GlobConst. 
+	subroutine RegPureEsd2(NC)!note:tc,pc,acen,id & esd parms passed in common. 
 	! THIS ROUTINE minimizes vp error based on est'd rKadStar and dHkJ_mol (spec'd in main),  
 	! and constrained to match Tc.  Pc is ~matched implicitly by fitting vp near Tc.
 	! or matched explicitly when nParms=1.
@@ -95,23 +19,18 @@
 	PARAMETER(NPMAX=5)	 ! max # of EOS parameters to estimate: c,eok,b,Kad,epsAD
 	DoublePrecision	parm(3),error(3),stderr(3)
 	integer iErr2(NC) ! iErrExactEsd list for each component.
-	LOGICAL LOUDER,append
+	LOGICAL LOUDER
 	!CHARACTER*44 FNVP,FNLD
 	EXTERNAL RegPureDev2
 	LOUDER=LOUD
 	LOUDER=.TRUE.
-	append=.FALSE.
 	if(NC > 1)then
 		pause 'RegpureEsd2 only works for Nc=1. Sorry.'
 		return
-	elseif(NC < 0)then ! This is the signal from RegDbEsd().
-		append=.TRUE.
-		NC=1
 	endif
-	!print*,'Initial guess from ParmsEsd? Enter 1 for yes or 0 to use MW guides as guess'
+	print*,'Initial guess from ParmsEsd? Enter 1 for yes or 0 to use MW guides as guess'
 	!read(*,*)iAns
 	iAns=1 !bypass MW guess.
-	qFac=4/(4-1.9d0)
 	if(iAns==0)then
 		c(1)=1+rmw(1)/150
 		eokP(1)=359+.66/rmw(1)
@@ -120,22 +39,22 @@
 		if(ND(1)==0)call ExactEsd(nC,VX,c,q,eokP,iErr,iErr2)
 		if(ND(1)==1)call RegPureDev3b(3,1,parm,error,iflag) !replaces eokP and Vx
 	endif
-	if(LOUDER)write(*,*)'RegPure2:  ID       c     q     E/k       Vx    Nd  kcStar    dH        '
-	if(LOUDER)write(*,'(i9,2f8.4,f9.3,f7.3,i3,e11.4,f9.2,2i3,2f8.2)')ID(1),C(1),q(1),eokP(1),VX(1),ND(1),kcStar(1),dH(1)*RgasCal*Tc(1)/1000,nAs(1),nDs(1)
+	if(LOUDER)write(*,*)'RegPure1:  ID       c     q     E/k       Vx    Nd  kcStar    dH        '
+	if(LOUDER)write(*,'(i9,2f8.4,f9.3,f7.3,i3,e11.4,f9.2,2i3,2f8.2)')ID(1),C(1),q(1),eokP(1),VX(1),ND(1),kcStar(1),dH(1)*1.987*Tc(1)/1000,nAs(1),nDs(1)
 	!  general ***********************************
-	q(1)=1+qFac*(c(1)-1)
+	q(1)=1+1.90476*(c(1)-1)
 	nParms=3
 	PARM(1)=c(1)
 	PARM(2)=eokP(1)
 	PARM(3)=Vx(1)
 	call RegPureDev2(nData,nParms,parm,error,iflag)
 	if(LOUDER)write(*,'(a,3f11.3,i3)')' C,Eok,vX',C(1),eokP(1),VX(1),Nd(1)
-	if(LOUDER)write(*,form610)'RegPureEsd2:initial devA,devT,devP=',(error(i),i=1,3)
-	TbCalc=Tb(1)+error(1)/100*(Tb(1)+0.00d0)
+	if(LOUDER)write(*,*)'RegPureEsd2:initial devA,devT,devP=',(error(i),i=1,3)
+	aceCalc=acen(1)+error(1)/100*(acen(1)+0.01d0)
 	TcCalc=Tc(1)+error(2)/100*Tc(1)
 	PcCalc=Pc(1)+error(3)/100*Pc(1)
-	if(LOUDER)write(*,'(a,1x,f7.2,2f9.4)')' Exptl Tc,Pc,w=',Tc(1),Pc(1),Tb(1)
-	if(LOUDER)write(*,'(a,1x,f7.2,2f9.4)')' Calcd Tc,Pc,w=',TcCalc,PcCalc,TbCalc
+	if(LOUDER)write(*,'(a,1x,f7.2,2f9.4)')' Exptl Tc,Pc,w=',Tc(1),Pc(1),acen(1)
+	if(LOUDER)write(*,'(a,1x,f7.2,2f9.4)')' Calcd Tc,Pc,w=',TcCalc,PcCalc,aceCalc
 	iflag=0
 	iterOpt=0
 	cGuess=1234
@@ -147,7 +66,7 @@
 			cGuess = -1 ! bypass manual guessing
 			if(cGuess > 0)then
 				parm(1)=cGuess
-				q(1)=1+qFac*(parm(1)-1)
+				q(1)=1+1.90476*(parm(1)-1)
 				if(ND(1)==1)then
 					call RegPureDev3b(3,1,parm,error,iflag) ! use old method as guess for eokP and Vx, given c
 					parm(2)=eokP(1)
@@ -165,7 +84,7 @@
 			endif
 		enddo
 	endif
-	q(1)=1+qFac*(c(1)-1)
+	q(1)=1+1.90476*(c(1)-1)
 	if(LOUDER)write(*,*)'  ID       c     q     E/k       Vx' !    Nd  kcStar    dH        '
 	!if(LOUDER)write(*,'(i9,2f8.4,f9.3,f7.3,i3,e11.4,f9.2,2i3,2f8.2)')ID(1),C(1),q(1),eokP(1),VX(1),ND(1),kcStar(1),dH(1)*1.987*Tc(1)/1000,nAs(1),nDs(1)
 	if(LOUDER)write(*,form601)ID(1),C(1),q(1),eokP(1),VX(1) !,ND(1),kcStar(1),dH(1)*1.987*Tc(1)/1000,nAs(1),nDs(1)
@@ -179,24 +98,15 @@
 	if(info > 4 .and. LOUD)write(*,*)'error in lmdif 2nd call'
 	iflag=1
 	call RegPureDev2(nData,nParms0,parm,error,iflag)
-	qShape=1+qFac*( c(1) -1 )
+	qShape=1+1.90476*( c(1) -1 )
 	rKadNm3=KcStar(1)
-	dHkCal_mol=dH(1)*RgasCal*Tc(1)/1000
-	epsA=epsA_kB(1)		!for debugging
-	epsD=epsD_kB(1)
+	dHkCal_mol=dH(1)*1.987*Tc(1)/1000
 	if(LOUDER)write(*,*)'  ID       c     q     E/k       Vx    ' !Nd  kadNm3    epsA/k    epsD/k   nAs   nDs        '
 	!if(LOUDER)write(*,'(i9,2f8.4,f9.3,f7.3,i3,e11.4,f9.2,2i3,2f8.2)')ID(1),C(1),q(1),eokP(1),VX(1),ND(1),KadNm3(1),epsA_kB(1),epsD_kB(1),nAs(1),nDs(1)
 	if(LOUDER)write(*,'(i9,2f8.4,f9.3,f9.3)')ID(1),C(1),q(1),eokP(1),VX(1) !,ND(1),KadNm3(1),epsA_kB(1),epsD_kB(1),nAs(1),nDs(1)
 	if(LOUDER)write(*,form610)' Final devA,devT,devP=',(error(i),i=1,3)
 	if(iEosOpt==4)write(*,form610)' eDon(K),eAcc(K)=',eDonorKcal_mol(1,1)/RgasCal*1000,eAcceptorKcal_mol(1,1)/RgasCal*1000 
-	if(append .and. info < 5)then
-		open(61,file='c:\PGLWrapper\input\ParmsEsdMEM2.txt',ACCESS='APPEND')
-!243	q	EOK(K)	 b(cc)	KadNm3	eDon	eAcc	nDegree	#eDs	#eAs	idCas	Name
-		write(61,'(i6,a,f7.4,a,f8.2,a,f8.3,a,f8.5,a,f8.0,a,f8.0,a,3(i3,a),i10,a,a)')ID(1),tabChar,q(1),tabChar,eokP(1),tabChar,VX(1),tabChar,KadNm3(1),tabChar,epsD_kB(1),tabChar,epsA_kB(1),tabChar,ND(1),tabChar,nDs(1),tabChar,nAs(1),tabChar,idCas(1),tabChar,NAME(1)
-		close(61)
-	else
-		pause 'check errors'
-	endif
+	pause 'check errors'
 	return
 	end
 	!******************************************************************************************************************************************
@@ -2216,7 +2126,7 @@
                 print*,'rhoHi,pHi',rhoHi,pHiJre
                 print*,'rho  ,pMi',rho,pBaseJre
                 print*,'rhoLo,pLo',rhoLo,pLoJre
-                if(LOUDER)print*, 'CritPure: (d2P_dRho2-d2Pold) ~0'
+                if(LOUDER)pause 'CritPure: (d2P_dRho2-d2Pold) ~0'
                 d2P_dRho2=d2Pold+0.1
                 stepV=stepV/2 !this error seems to be a problem with roundoff in estimating d2P
             end if
@@ -2231,7 +2141,7 @@
                 rmsBest=rms
             endif
 		    eta=bVolCC_mol(1)/vTotCc
-			if(LOUDER)write(*,form610)' CritPure:T,eta,P,rho,dP,d2P,rms=',tKelvin,eta,pBaseJre,rho,dP_dRho,d2P_dRho2,rms
+			if(LOUDER)write(*,form610)' CritPure:T,eta,P,rho,dP,d2P,rms=',tKelvin,eta,PMPa,rho,dP_dRho,d2P_dRho2,rms
 			d2Pold=d2P_dRho2
 			rhoOld=rho
 			rho=rho-Delta_Rho

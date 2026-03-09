@@ -189,7 +189,7 @@ end
 	character*251 inFile,dumString,errMsgPas,errMsg(22)
 	LOGICAL LOUDER
     LOUDER=LOUD
-    LOUDER=.TRUE.
+    !LOUDER=.TRUE.
 	errMsg(11)='LoadCritParmsDb: error reading line1 of '//TRIM(inFile)
 	iErrCode=0
     ndbLocal=3000
@@ -472,7 +472,7 @@ end
 		do jComp=iComp+1,NC
 			idBin=10000*idComp(iComp)+idComp(jComp)
 			switched=.FALSE.
-			if(idComp(iComp).lt.idComp(jComp))then
+			if(idComp(iComp) < idComp(jComp))then
 				switched=.TRUE.
 				idBin=10000*idComp(jComp)+idComp(iComp)
 			endif
@@ -1014,3 +1014,18 @@ DOUBLE PRECISION FUNCTION SumSq(N,X)
 !C
       END
 
+FUNCTION ToUpper(string) RESULT(upper)
+  IMPLICIT NONE
+  CHARACTER(LEN=5), INTENT(IN) :: string
+  CHARACTER(LEN=5) :: upper
+  INTEGER :: i, ich
+
+  upper = string
+  DO i = 1, LEN(string)
+     ich = ICHAR(string(i:i))
+     ! lowercase a–z are ASCII 97–122
+     IF (ich >= ICHAR('a') .AND. ich <= ICHAR('z')) THEN
+        upper(i:i) = CHAR(ich - 32)
+     END IF
+  END DO
+END FUNCTION ToUpper
