@@ -47,7 +47,7 @@
 														   
 	masterDir=TRIM(curDir)
 	outFile=TRIM(masterDir)//'\output\KijOut.txt'
-	IF(DEBUG)outFile='c:\spead\calceos\output\KijOut.txt'
+	!IF(DEBUG)outFile='c:\PGLWrapper\output\KijOut.txt'
     !print*,'KijOutFile=',TRIM(outFile)
 	open(655,file=outFile)
 	write(655,*)' ' ! clear out old contents.
@@ -55,9 +55,9 @@
 	outFile=TRIM(masterDir)//'\output\output.txt' ! // is the concatenation operator
     !print*,'outFile=',TRIM(outFile)
 	LOUD =.FALSE.
-	!LOUD = .TRUE.
+	LOUD = .TRUE.
     RELEASE=.FALSE.
-    RELEASE=.TRUE.
+    !RELEASE=.TRUE.
 	PGLInputDir='c:\PGLWrapper\input'
     IF(RELEASE)PGLInputDir=TRIM(masterDir)//'\input'
 	dumpUnit=6

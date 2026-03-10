@@ -25,7 +25,7 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
     if(LOUD)write(dumpUnit,*)'PGLStartup:NC,iEosLocal,idOpt',NC,iEosLocal,idOpt
 	if(idOpt==2)then
 		localCas(1:NC)=idCas(1:NC)	! idCas USEd from GlobConst
-		!if(LOUDER)print*,'PGLStartup: from GlobConst...localCas=',localCas(1:NC)
+		if(LOUDER)print*,'PGLStartup: from GlobConst...localCas=',localCas(1:NC)
 	elseif(idOpt==1)then ! idOpt==1 means idDippr takes the lead.
 		do i=1,NC
 			localCas(i)=idCasDb( CrIndex(ID(i)) )
