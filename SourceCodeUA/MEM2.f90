@@ -56,7 +56,7 @@
 		return
 	endif 
 601	format(1x,a,8E12.4)
-	LOUDER=LOUD	! from GlobConst
+	!LOUDER=LOUD	! from GlobConst
 	!LOUDER=LOUDERWert
 	!LOUDER= .TRUE. ! for local debugging.
 	FC=0 !initialize
