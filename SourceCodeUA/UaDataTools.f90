@@ -363,7 +363,7 @@ end
 	!NC - NUMBER OF COMPONENTS
 	!	   ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!OUTPUT:
-	!VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
+	!VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE: VpCoeffsSd(nVpDb,5).
     USE GlobConst, only: PGLinputDir,LOUD,dumpUnit
     USE VpDb ! Stores all the coefficients.
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
@@ -398,21 +398,30 @@ end
     return
     end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	SUBROUTINE GetVp(NC,ID,iErrCode) !returns VpCoeffs(NC,5) in USEd VpDb
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	SUBROUTINE GetVp(NC,ID,iErrCode) !posts VpCoeffs(NC,5) to USEd VpDb
 	!	PROGRAMMED BY: AV 06/22/06
 	!THIS SUBROUTINE GIVES VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
 	!INPUT:
 	!NC - NUMBER OF COMPONENTS
 	!	   ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!OUTPUT:
-	!VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
+	!VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE posted to USEd VpDb
 	USE GlobConst, only:DEBUG,nmx,dumpUnit
 	USE VpDb
 	LOGICAL notFound
 	!DoublePrecision vpCoeffs(nmx,5)
-	Integer ID(nmx)   
+	Integer ID(nmx)
+	Data initCall/1/  
 	iErrCode=0
+	if(initCall==1)then
+		call GetVpDb(iErrCode)
+		if(iErrCode/=0)then
+			write(dumpUnit,*)'GetVp:Error from GetVpDb=',iErrCode
+			return
+		endif
+		initCall=0 
+	endif
 
 	DO iComp=1,NC
 		notFound=.TRUE.
@@ -433,8 +442,38 @@ end
 
 	RETURN
 	END
-
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	DoublePrecision Function PvpMPa(nComps,iComp,Tkelvin,iErrCode) !posts VpCoeffs(NC,5) to USEd VpDb
+	!	PROGRAMMED BY: AV 06/22/06
+	!THIS SUBROUTINE GIVES VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE
+	!INPUT:
+	!NC - NUMBER OF COMPONENTS
+	!	   ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
+	!OUTPUT:
+	!VAPOR PRESSURE COEFFICIENTS FROM DIPPR DATABASE posted to USEd VpDb
+	USE GlobConst, only:DEBUG,nmx,dumpUnit,ID !,nComps
+	USE VpDb
+	Implicit NONE
+	DoublePrecision Tkelvin
+	Integer iErrCode,iComp,nComps
+	LOGICAL firstCall
+	iErrCode=0
+	firstCall=.TRUE.
+	if(firstCall)then
+		firstCall=.FALSE.
+		Call GetVp(nComps,ID,iErrCode)
+		if(iErrCode>0)then
+			write(dumpUnit,*)'PvpMPa: GetVp failed with error=',iErrCode
+			pause
+			return
+		endif
+	endif
+	PvpMPa=VpCoeffs(iComp,1)-vpCoeffs(iComp,2)/Tkelvin+vpCoeffs(iComp,3)*DLOG(Tkelvin)+vpCoeffs(iComp,4)*Tkelvin**vpCoeffs(iComp,5)
+	PvpMPa=PvpMPa/1E6
+	RETURN
+	END
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	integer function GetBIPs(bipFile,idComp,NC)
 	USE GlobConst

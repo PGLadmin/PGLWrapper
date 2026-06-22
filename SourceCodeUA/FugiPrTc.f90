@@ -7,7 +7,7 @@ MODULE PrTcParms
 	DoublePrecision Tcj(nmx),Pcj(nmx),acenj(nmx)
 END MODULE PrTcParms
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-subroutine GetPrTc(nComps,iErrCode)
+subroutine GetPrTc(NC,iErrCode)
 	!  
 	!  PURPOSE:  LOOKS UP THE PrTc PARAMETERS AND STORES THEM IN USEd PREosParms
 	!  Reference:  Jaubert et al., JCED,63, 3980-3988 (2018)
@@ -26,7 +26,7 @@ subroutine GetPrTc(nComps,iErrCode)
 	LOGICAL LOUDER
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
-	NC=nComps
+	nComps=NC
     iErrCode=0
 	etaMax=1-zeroTol
 	! note:  bips are passed back through module /BIPs/

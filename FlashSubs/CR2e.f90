@@ -34,6 +34,7 @@
 	read(51,*)tmpClass ! This is a dummy. Just reading 1st line.
 	do i=1,nDeckDb
 		read(51,*)idUL
+		if(idUL>898)cycle	!JRE:temporary bypass for optimizing ESD2coeffs
 		tmpClass=classDb(CrIndex(idUL))
 		abClass=tmpClass(1:2)
 		if(abClass=='as' .or. abClass=='po'.or.abClass=='As')then
@@ -110,8 +111,9 @@
 	endif
 	!print*,'Initial guess from ParmsEsd? Enter 1 for yes or 0 to use MW guides as guess'
 	!read(*,*)iAns
-	iAns=1 !bypass MW guess.
 	qFac=4/(4-1.9d0)
+	if(iEosOpt==23)qFac=esd2B0/(esd2B0-esd2k0)
+	iAns=1 !bypass MW guess.
 	if(iAns==0)then
 		c(1)=1+rmw(1)/150
 		eokP(1)=359+.66/rmw(1)
@@ -212,7 +214,9 @@
 	NC=1
 	x(1)=1
 	C(1)=  PARM(1)
-	q(1)=1+1.90476*(c(1)-1)
+	qFac=4/(4-1.9d0)
+	if(iEosOpt==23)qFac=esd2B0/(esd2B0-esd2k0)
+	q(1)=1+qFac*(c(1)-1)
 	eokp(1)=Parm(2)
 	VX(1)=parm(3)
 	bVolCc_mol(1)=VX(1)

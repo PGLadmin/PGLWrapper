@@ -55,7 +55,7 @@
 	outFile=TRIM(masterDir)//'\output\output.txt' ! // is the concatenation operator
     !print*,'outFile=',TRIM(outFile)
 	LOUD =.FALSE.
-	LOUD = .TRUE.
+	!LOUD = .TRUE.
     RELEASE=.FALSE.
     !RELEASE=.TRUE.
 	PGLInputDir='c:\PGLWrapper\input'

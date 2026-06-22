@@ -5,25 +5,25 @@
 	SUBROUTINE MEM2(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,rLnPhiAssoc,iErr )
 	USE GlobConst
 	USE Assoc ! XA,XD,XC,NAcceptors(nmx),NDonors(nmx),NDegree(nmx),...
-	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (FA,FD) AND properties (zAssoc, lnPhiAssoc,...) given T,rho,x
-	!  References: 
-    !		Elliott, IECR, 61(42):15724 (2022). doi.org/10.1021/acs.iecr.2c02723
-    !       Elliott, JCED, 69:458–471 (2024). doi.org/10.1021/acs.jced.3c00394
-	!  INPUT:
-	!  isZiter = 1 if only zAssoc,aAssoc are required (for zFactor iterations), 0 for lnPhiAssoc,uAssoc, -1 if Cv etc are required.
-	!  tKelvin = T(K), real*8
-	!  xFrac   = component mole fractions, real*8
-	!  nComps  = # of components, integer
-	!  rhoMol_cc = molar density in gmol/cm3, real*8
-	!  OUTPUT:
-	!  zAssoc  = association effect on compressibility factor, real*8 
-	!  aAssoc  = association effect on residual Helmholtz energy, real*8 
-	!  uAssoc  = association effect on residual internal energy, real*8 
-	!  rLnPhiAssoc  = association effect on log of fugacity coefficient, real*8
-	!  iErr    = error code, integer (see errMsg vector below for code definitions).
-	!  Incidentals that may be of interest: 
-	!  FA,FD   = THE CHARACTERISTIC ASSOCIATION = (1/XAi-1)/RALPHi, Eqs.7-8
-	!  RALPHi  = ROOT OF ALPHA WHERE ALPHAi=rho*bVoli*KADi*Ei*rdfContact, Eq. 5
+!	PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (FA,FD) AND properties (zAssoc, lnPhiAssoc,...) given T,rho,x
+!	References: 
+!		Elliott, IECR, 61(42):15724 (2022). doi.org/10.1021/acs.iecr.2c02723
+!       Elliott, JCED, 69:458–471 (2024). doi.org/10.1021/acs.jced.3c00394
+!	INPUT:
+!		isZiter = 1 if only zAssoc,aAssoc are required (for zFactor iterations), 0 for lnPhiAssoc,uAssoc, -1 if Cv etc are required.
+!		tKelvin = T(K), real*8
+!		xFrac   = component mole fractions, real*8
+!		nComps  = # of components, integer
+!		rhoMol_cc = molar density in gmol/cm3, real*8
+!	OUTPUT:
+!		zAssoc  = association effect on compressibility factor, real*8 
+!		aAssoc  = association effect on residual Helmholtz energy, real*8 
+!		uAssoc  = association effect on residual internal energy, real*8 
+!		rLnPhiAssoc  = association effect on log of fugacity coefficient, real*8
+!		iErr    = error code, integer (see errMsg vector below for code definitions).
+!  Incidentals that may be of interest: 
+!		FA,FD   = THE CHARACTERISTIC ASSOCIATION = (1/XAi-1)/RALPHi, Eqs.7-8
+!		RALPHi  = ROOT OF ALPHA WHERE ALPHAi=rho*bVoli*KADi*Ei*rdfContact, Eq. 5
 	!  
 	Implicit NONE !DoublePrecision(A-H,K,O-Z)
 	DoublePrecision xFrac(nmx),ralphA(nmx,maxTypes),ralphD(nmx,maxTypes),rLnPhiAssoc(nmx) !,KVE(nmx)
@@ -56,7 +56,7 @@
 		return
 	endif 
 601	format(1x,a,8E12.4)
-	!LOUDER=LOUD	! from GlobConst
+	LOUDER=LOUD	! from GlobConst
 	!LOUDER=LOUDERWert
 	!LOUDER= .TRUE. ! for local debugging.
 	FC=0 !initialize
