@@ -1,0 +1,35 @@
+{
+    "fortran.fortls.path": "${env:USERPROFILE}/Miniconda3/envs/fortran-tools/Scripts/fortls.exe",
+    "fortran.linter.compiler": "ifx",
+    "fortran.linter.includePaths": [
+    "${workspaceFolder}/out/build/debug/mod",
+    "${workspaceFolder}/out/build/release/mod",
+    "${workspaceFolder}/out/build/relwithdebinfo/mod",
+    "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/opt/compiler/include"
+    ],
+
+    "fortran.linter.extraArgs": [
+        "/nologo",
+        "/c",
+        "/warn:declarations",
+        "/warn:unused"
+    ],
+
+    "fortran.fortls.extraArgs": [
+        "--include_dirs", "./out/build/debug",
+        "--excl_paths", "out", "build", "x64", "x86", "Debug", "Release", ".vs", "python", "input", "output", ".git"
+    ],
+
+    "C_Cpp.default.compilerPath": "cl.exe",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+
+    "terminal.integrated.cwd": "${workspaceFolder}",
+
+    "files.exclude": {
+      "**/*_genmod.f90": true,
+      "**/*_genmod.mod": true,
+      "**/*.mod": true
+    }
+}

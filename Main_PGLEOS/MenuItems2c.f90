@@ -23,9 +23,9 @@
 	if(iflag.ne.0)ier(1)=1
 	RETURN
 	END
-	    
+
     !***********************************************************************
-      
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	subroutine FlashOut(nComps,xFrac,yFrac,tKelvin,pMpa,itmax,vof)
 	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
@@ -70,9 +70,9 @@
 			if(LOUDER)write(* ,605)xFrac(I),yFrac(I),VLKI,wFrLiq,wFrVap
 			WRITE(641,605)xFrac(I),yFrac(I),VLKI,wFrLiq,wFrVap
 		endif
-		if(LOUDER)write(* ,*)' '					   
+		if(LOUDER)write(* ,*)' '
 		WRITE(641,603)
-		WRITE(641,*)' '					   
+		WRITE(641,*)' '
 	enddo
 	if(LOUDER)write(* ,182)VOF
 	WRITE(641,182)VOF
@@ -111,7 +111,7 @@
 	character answer*1
 	LOGICAL isNRTL
 	isNRTL=.FALSE.
-	if(iEosOpt==3 .or. iEosOpt==7)isNRTL=.TRUE. 
+	if(iEosOpt==3 .or. iEosOpt==7)isNRTL=.TRUE.
 	DO J=2,NC
 		DO I=1,J-1
 			if(isNRTL .or. iEosOpt==19)then
@@ -171,7 +171,7 @@
 		aBipDA(j,i)=aBipDA(i,j)
 	elseif(iEosOpt==10)then
 		print*,'BIPio: setting pcSaft. Kij=',KIJ(1,2)
-		Call SetParMixPcSaft(1,KIJ(1,2),iErrBip)	
+		Call SetParMixPcSaft(1,KIJ(1,2),iErrBip)
     endif
 601 FORMAT(I3,I5,9(1X,F7.4))
 602	format(' ENTER xsTau(',i2,',',i2,'),xsTau(',i2,',',i2,') OR ZEROES TO NULLIFY XS EFFECT')
@@ -237,7 +237,7 @@
 	vOld1=0
 	vOld2=0
 	LIQ=3
-	do it=1,130 
+	do it=1,130
 		iBifurcate=0
 		tKelvin=it*TC(1)/100
 		Call FugiTP( tKelvin,PMPa,X,NC,LIQ,rhoMol_cc,zFactor,aRes,fugc,uRes,iErrF )
@@ -271,7 +271,7 @@
 	end
 
 !***********************************************************************
-      
+
 	SUBROUTINE Binodal(NC)
 	!C
 	!C  PURPOSE:  COMPUTE TX1-x2 for LLE GIVEN P.
@@ -300,11 +300,11 @@
 600	format('   T(K)',4x,'  P(MPA)',5x,'x1Alpha',4x,'x1Beta',2x,'etaAlpha',3x, 'etaBeta')
 601	FORMAT(1X,1(F7.2,2X,F10.6,1X),6(F9.5,1X))
 602	FORMAT(' COMPONENT IS',2X,A20,2X,'ID NO. IS  ',i5)
-603	FORMAT(4X,'LIQUID X',4X,'VAPOR Y',3X,'fugcL(MPa)',4X,'fugcV(MPa)')           
+603	FORMAT(4X,'LIQUID X',4X,'VAPOR Y',3X,'fugcL(MPa)',4X,'fugcV(MPa)')
 604	FORMAT(4X,2(F7.4,4X),2(F7.4,8X))
 605 format(1X,F7.2,'	',F10.6,'	',4(f13.11,'	'))
 606	FORMAT(F12.5,3X,F7.2,1X,F7.4,1X,4(F6.4,3X))
-610	FORMAT(21X,4(F10.4,4X))      
+610	FORMAT(21X,4(F10.4,4X))
 	WRITE(6,*)'ENTER PRESSURE(MPa) and starting Temperature (K)'
 	READ(5,*)P,T
 	if(LOUD)write(*,600)
@@ -352,7 +352,7 @@
 86	continue
 	write(*,*)'These results are tabulated in',TRIM(outFile)
 	if(LOUDER)pause 'Success! Check your results.'
-	CLOSE(633)   
+	CLOSE(633)
 	RETURN
 	END
 
@@ -417,7 +417,7 @@
 		write(* ,606)tKelvin,pCalc,(xFrac(iComp),iComp=1,nComps-1)
 		write(66,606)tKelvin,pCalc,(xFrac(iComp),iComp=1,nComps-1)
 	enddo
-606   FORMAT(1X,F8.2,1X,F10.7,8(e11.4,1x))      
+606   FORMAT(1X,F8.2,1X,F10.7,8(e11.4,1x))
       close(51)
 	close(66)
 	if(LOUD)pause 'These results are tabulated in BpFromFile.txt.'
@@ -425,11 +425,11 @@
 861	continue
 	if(LOUD)write(*,*)' Error reading first line of ',TRIM(fn)
 	if(LOUD)pause
-	return 
+	return
 862	continue
 	if(LOUD)write(*,'(a,i3,a)')' Error reading pt=',i,TRIM(fn)
 	if(LOUD)pause
-	return 
+	return
 	END
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -560,7 +560,7 @@
 
 		!C  NOTE:  FOR REPEAT BT CALCULATIONS IT IS ASSUMED THAT BOOTSTRAPPING
 		!C         IS DESIRED.  OTHERWISE, THE USER SHOULD ANSWER 'N' TO
-		!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN 
+		!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN
 		!C         PROGRAM BEFORE PROCEEDING.
 
 		INIT=2
@@ -689,7 +689,7 @@ end	SUBROUTINE DifCoDb
 
 		!C  NOTE:  FOR REPEAT DT CALCULATIONS IT IS ASSUMED THAT BOOTSTRAPPING
 		!C         IS DESIRED.  OTHERWISE, THE USER SHOULD ANSWER 'N' TO
-		!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN 
+		!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN
 		!C         PROGRAM BEFORE PROCEEDING.
 		INIT=1
 		T=1.1*T
@@ -748,7 +748,7 @@ end	SUBROUTINE DifCoDb
 	IF (IFLAG > 10)then
 		WRITE(*,'(a,22I4)')'iErrFugi=',iFlag
 		WRITE(*,*)'error in lower phase calculation'
-		goto 81 
+		goto 81
 	endif
 	etaLo=rhoLo*bMix
 	rhoLo=rhoLo*rMwAvg ! Output as g/cc.
@@ -781,7 +781,7 @@ end	SUBROUTINE DifCoDb
 	IF (IFLAG > 10 )then
 		WRITE(*,'(a,22I4)')'iErrFugi=',iFlag
 		WRITE(*,*)'error in upper phase calculation'
-		goto 81 
+		goto 81
 	endif
 	!for Fugi:
 	!C  ier = 1 - AT LEAST ONE ERROR
@@ -832,12 +832,12 @@ end	SUBROUTINE DifCoDb
 		!if(LOUDER)PAUSE
 	enddo
 606	FORMAT(e12.5,3X,F7.2,1X,F7.4,1X,2(E11.4,1X),2(F11.8,1X))
-	write(*,*)'DEPARTURE FUNCTIONS:'    
+	write(*,*)'DEPARTURE FUNCTIONS:'
 	write(*,*)' (HLo-Hig)/RT SresLo/R CvResLo/R  CpResLo/R  dP/dRho/RT    '
 	write(*,610)DHL,DSL,CvL,CpL,cmL
 	write(*,*)' (HUp-Hig)/RT SresUp/R CvResUp/R CpResUp/R dP/dRho/RT  '
 	write(*,610)hRes_RT,sRes_R,CvRes_R,CpRes_R,cmprsblty  !vapor is latest call, so just print from GlobConst
-	!write(6123,*)'DEPARTURE FUNCTIONS:'    
+	!write(6123,*)'DEPARTURE FUNCTIONS:'
 	write(6123,*)'    (H-Hig)/RT   Sres/R   CvRes/R CpRes/Rb dP/dRho/RT    '
 	write(6123,'(a,4x,10(F9.4,1X))')' L: ',DHL,DSL,CvL,CpL,cmL
 	!write(6123,*)' (HUp-Hig)/RT SresUp/R CvResUp/R  CpResUp/R  cmpUp/R  '
@@ -847,7 +847,7 @@ end	SUBROUTINE DifCoDb
 605 FORMAT(3X,'K-RATIO',7X,'T(K)',3X,'P(MPa)',2X,'rhoLo',4X,'rhoUp',6X,'ZLo  ',6X,'ZUp')
 604	FORMAT(2(3x,F7.4),2(3x,e11.4),2(3x,f12.7))
 610	FORMAT(4x,10(F9.4,1X))
-	initCall=0      
+	initCall=0
 81 WRITE(6,*)'REPEAT FUGACITY CALCULATIONS? Y/N?'
 	READ(*,'(A1)')ANSWER
 	WRITE(52,*)'REPEAT FUGACITY CALCULATIONS? Y/N?'
@@ -926,7 +926,7 @@ end	SUBROUTINE DifCoDb
 	IF (iErr > 10 )then		! Ignore warnings (ie. iErr < 10)
 		WRITE(*,'(a,22I4)')'iErr=',iErr
 		WRITE(*,*)'error in calculation'
-		goto 81 
+		goto 81
 	endif
 	DHL=hRes_RT  !these are passed through GlobConst
 	DSL=sRes_R
@@ -960,12 +960,12 @@ end	SUBROUTINE DifCoDb
 		!write(6123,604)X(I),Y(I),fugLi,fugVi,fugcL(I),fugcV(I)
 		!if(LOUDER)PAUSE
 	enddo
-	!write(*,*)'DEPARTURE FUNCTIONS:'    
+	!write(*,*)'DEPARTURE FUNCTIONS:'
 	write(*,*)' (HLo-Hig)/RT SresLo/R CvResLo/R  CpResLo/R  dP/dRho/RT    Z       rho(mol/cc)'
 	write(*,610)DHL,DSL,CvL,CpL,cmL,ZL,1/vTotCc
 	!write(*,*)' (HUp-Hig)/RT SresUp/R CvResUp/R CpResUp/R dP/dRho/RT  '
 	!write(*,610)hRes_RT,sRes_R,CvRes_R,CpRes_R,cmprsblty  !vapor is latest call, so just print from GlobConst
-	!write(6123,*)'DEPARTURE FUNCTIONS:'    
+	!write(6123,*)'DEPARTURE FUNCTIONS:'
 	write(6123,*)'    (H-Hig)/RT   Sres/R   CvRes/R CpRes/R dP/dRho/RT    Z       rho(mol/cc)'
 	write(6123,'(a,4x,10(F9.4,1X))')' ',DHL,DSL,CvL,CpL,cmL,ZL,1/vTotCc
 	!write(6123,*)' (HUp-Hig)/RT SresUp/R CvResUp/R  CpResUp/R  cmpUp/R  '
@@ -976,7 +976,7 @@ end	SUBROUTINE DifCoDb
 604	FORMAT(2(3x,F7.4),2(3x,e11.4),2(3x,f12.7))
 606	FORMAT(e12.5,3X,F7.2,1X,F7.4,1X,2(F6.4,3X),2(F11.8,1X))
 610	FORMAT(4x,10(F9.4,1X))
-	initCall=0      
+	initCall=0
 81 WRITE(6,*)'REPEAT FUGACITY CALCULATIONS? Y/N?'
 	READ(*,'(A1)')ANSWER
 	WRITE(52,*)'REPEAT FUGACITY CALCULATIONS? Y/N?'
@@ -995,7 +995,7 @@ end	SUBROUTINE DifCoDb
 !C  PROGRAMMED BY:  AFG 2011												   C
 !C																			   C
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	SUBROUTINE CRITER(NC)		   
+	SUBROUTINE CRITER(NC)
 	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	CHARACTER outfile*100
@@ -1003,16 +1003,16 @@ end	SUBROUTINE DifCoDb
 	COMMON/ETA2/ETA
 	COMMON/eta/etaL,etaV,zLiqDum,zVapDum
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
-	
+
 	WRITE(*,*)'ENTER MOLE FRACTIONS '
 	READ(*,*)(x(J),J=1,NC)
 	do i=1,nc
 		gmol(i)=x(i)
-		totMoles=totMoles+gmol(i)  
+		totMoles=totMoles+gmol(i)
 	enddo
 	isZiter=0
 	toll=1.d-10
-	CALL CP_Mixture(isZiter,toll,gmol,NC,TC_mix,VC_mix,PC_mix,ZC_mix,iErrCode)	  
+	CALL CP_Mixture(isZiter,toll,gmol,NC,TC_mix,VC_mix,PC_mix,ZC_mix,iErrCode)
 	if (iErrCode==0) then
 	    outFile=TRIM(masterDir)//'\output\CriticalPoint.txt'
 	    open(634,file=outFile)
@@ -1053,7 +1053,7 @@ end	SUBROUTINE DifCoDb
 	toll=1.d-4
 	!CALL CritPure(NC,isZiter,toll,TC_Pure,VC_Pure,PC_Pure,ZC_Pure,Acen_pure,iErrCode)
 	!SUBROUTINE CritPure(NC,isZiter,toll,TC_Pure,VC_Pure,PC_Pure,ZC_Pure,iErrCode)
-	CALL CritPure(NC,isZiter,toll,TC_Pure,VC_Pure,PC_Pure,ZC_Pure,Acen_pure,TbCalc,iErrCode)	   
+	CALL CritPure(NC,isZiter,toll,TC_Pure,VC_Pure,PC_Pure,ZC_Pure,Acen_pure,TbCalc,iErrCode)
 	if (iErrCode.eq.0) then
 	    outFile=TRIM(masterDir)//'\output\CriticalPoint.txt'
 	    open(635,file=outFile)
@@ -1084,7 +1084,7 @@ end	SUBROUTINE DifCoDb
 			ZC(1)=ZC_PURE
 		endif
 	endif
-		 	
+
 600	format(5x, 'Tc (K)', 5x, 'Pc (MPa)',4x, 'Zc', 6x, '    EtaC')
 601	format(5x, 'Tc (K)', 5x, 'Pc (MPa)',4x, 'Zc', 6x, 'VC (cc/mol)')
 602 format(2x,f8.3,5x,f6.4,5x,f5.4,5x,f12.5,5x,f12.5)
@@ -1119,13 +1119,13 @@ end	SUBROUTINE DifCoDb
 		endif
 		CALL CritPure(NC,isZiter,tol,TC_Pure,VC_Pure,PC_Pure,ZC_Pure,Acen_pure,TbCalc,iErrCode)
 		if(iErrCode > 0)cycle
-		write( * ,601)ID(1),TC_Pure,PC_Pure,ZC_Pure,Acen_pure	   
-		write(635,601)ID(1),TC_Pure,PC_Pure,ZC_Pure,Acen_pure	   
+		write( * ,601)ID(1),TC_Pure,PC_Pure,ZC_Pure,Acen_pure
+		write(635,601)ID(1),TC_Pure,PC_Pure,ZC_Pure,Acen_pure
 	enddo !iLine=1,nDeck
 601 format(1x,i6,1x,12E13.5)
 611 format(1x,a,i6,1x,12E13.5)
 	close(635)
-	write(*,*)'CritDB: Done. Output in ',TRIM(outFile)	 	
+	write(*,*)'CritDB: Done. Output in ',TRIM(outFile)
     RETURN
 	END
 
@@ -1162,7 +1162,7 @@ end	SUBROUTINE DifCoDb
 		open(70,file=outFile)
     	!open(70, file="Freezing_Results.txt")
 		WRITE(70,*)'T	P	Gamma	x(1)'
-	open(68, file=Input_File_Name)	
+	open(68, file=Input_File_Name)
 	read(68,*)nDataPoints, delHfus, Tmelting
 	DO Iter_File_Data=1,nDataPoints
 		ierScf=0
@@ -1170,7 +1170,7 @@ end	SUBROUTINE DifCoDb
 		XPure(1)=1
 		do i=2,NC
 			XPure(i)=0
-		enddo		
+		enddo
 		CALl Fugi(T,P,XPure,NC,1,fugcL,ZL,ier)
 		PhiPureSolid=exp(fugcL(1))
 		!     WRITE(6,*)'ENTER Guess for SCF COMPOSITIONS (comp1 = solid)'
@@ -1195,9 +1195,9 @@ end	SUBROUTINE DifCoDb
 			dev=x1Calc-x(1)
 			if(LOUD)write(*,*)'iter      x(1),       x1Calc         '
 			if(LOUD)write(*,'(i4,4e12.4)')iter,x(1),x1Calc,Gamma
-			!pause		
+			!pause
 			if(x1Calc.ge.0 .and. x1Calc .le. 1)then
-				x(1)=x1Calc			
+				x(1)=x1Calc
 			endif
 		enddo !while
 
@@ -1227,10 +1227,10 @@ end	SUBROUTINE DifCoDb
 				WRITE(*,*)'  '
 				WRITE(*,605)
 				WRITE(*,606)T,P,etaL,ZL
-				  
+
 				WRITE(*,*)' '
 				!PAUSE
-			enddo    
+			enddo
 			WRITE(*,*)'DEPARTURE FUNCTIONS: (Hscf-Hig)/NkT  (Sscf-Sig)/Nk'
 			WRITE(*,610)DHL,DSL
 		endif
@@ -1242,7 +1242,7 @@ end	SUBROUTINE DifCoDb
 605	FORMAT(3X,'T(K)   ',4X,'P(MPa)',3X,'eta',6X,'zFactor')
 606	FORMAT(f7.2,3X,F9.3,1X,F8.5,1X,2(F8.5,3X),2(F9.4,1X))
 607	FORMAT(f4.3,' ',f7.5,' ',2(f12.9,' '),4(f12.9,' '))
-610	FORMAT(21X,4(F10.4,4X))      
+610	FORMAT(21X,4(F10.4,4X))
 501	FORMAT(A1)
 	CLOSE(68)
 	CLOSE(70)
@@ -1258,7 +1258,7 @@ end	SUBROUTINE DifCoDb
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	PARAMETER (RGOLD=.61803399,CGOLD=.38196602)
 	DOUBLE PRECISION MinLocal, Next_to_Min
-	CHARACTER Input_File_Name*64,outFile*234 
+	CHARACTER Input_File_Name*64,outFile*234
 	common XCompErrorFO
 	COMMON/eta/etaL,etaV,ZL,ZV
 
@@ -1277,14 +1277,14 @@ end	SUBROUTINE DifCoDb
 	!OPEN(71,file="KIJOut.txt")
 	write(71,*)'Kij	Err'
 
-	!SUBROUTINE FREEZCURVEFromFile(NC, CHARACTER Name_of_File, Error)  
+	!SUBROUTINE FREEZCURVEFromFile(NC, CHARACTER Name_of_File, Error)
 	MinError=100000
 
-	iSteps=(KIJ3-KIJ0)/KIJStep	  
+	iSteps=(KIJ3-KIJ0)/KIJStep
 	KIJ_on_this_Loop=KIJ0
-	DO IKIJLoop=1,iSteps		
+	DO IKIJLoop=1,iSteps
 		DO J=2,NC
-			DO I=1,J-1			
+			DO I=1,J-1
 				KIJ(J,I)=KIJ_on_this_Loop
 				KIJ(I, J)=KIJ(J, I)
 				KTIJ(J,I)=0
@@ -1303,7 +1303,7 @@ end	SUBROUTINE DifCoDb
 		Error=0.0
 	ENDDO
 	close(71)
-  
+
 	RETURN
 	END	 ! FreezOptKij
 
@@ -1334,7 +1334,7 @@ end	SUBROUTINE DifCoDb
 	WRITE(70,*)'T	P	Gamma	x(1)'
 	open(68, file=Input_File_Name)
 	read(68,*)nDataPoints, delHfus, Tmelting
-	DO Iter_File_Data=1,nDataPoints	
+	DO Iter_File_Data=1,nDataPoints
 		ierScf=0
 		READ(68,*)T,P,(XExpt(J),J=1,NC)
 		DO J=1,NC
@@ -1343,7 +1343,7 @@ end	SUBROUTINE DifCoDb
 		XPure(1)=1
 		do i=2,NC
 			XPure(i)=0
-		enddo		
+		enddo
 		CALl Fugi(T,P,XPure,NC,1,fugcL,ZL,ier)
 		PhiPureSolid=exp(fugcL(1))
 		dev=1111
@@ -1366,9 +1366,9 @@ end	SUBROUTINE DifCoDb
 			dev=x1Calc-x(1)
 			if(LOUD)write(*,*)'iter      x(1),       x1Calc         '
 			if(LOUD)write(*,'(i4,4e12.4)')iter,x(1),x1Calc,Gamma
-			!pause		
+			!pause
 			if(x1Calc.ge.0 .and. x1Calc .le. 1)then
-				x(1)=x1Calc			
+				x(1)=x1Calc
 			endif
 		enddo !while
 
@@ -1412,7 +1412,7 @@ end	SUBROUTINE DifCoDb
 
 	nComps=NC
 
-	if(nc > 3)then 
+	if(nc > 3)then
 		if(LOUDER)pause 'error - this option is only for 2 or 3 compos'
 		return
 	endif
@@ -1461,8 +1461,8 @@ end	SUBROUTINE DifCoDb
 			goto 1000
 		endif
 
-		fugcPure(iPure)=FUGC(iPure)-Zfactor-LOG(vTotCc)        ! For the total part, we should also subtract lnZ, but that can give ln(-ve). We really want ln(Vi/V), so we initiate with ln(Vi).. 
-		fugRepPure(iPure)=FUGRep(iPure)-Zrep       ! Vk/V = Vk/Vk for pure.	   
+		fugcPure(iPure)=FUGC(iPure)-Zfactor-LOG(vTotCc)        ! For the total part, we should also subtract lnZ, but that can give ln(-ve). We really want ln(Vi/V), so we initiate with ln(Vi)..
+		fugRepPure(iPure)=FUGRep(iPure)-Zrep       ! Vk/V = Vk/Vk for pure.
 		fugAttPure(iPure)=FUGAtt(iPure)-Zatt
 		fugAssocPure(iPure)=FUGAssoc(iPure)-Zassoc
 		hPure(iPure)=Hres_RT
@@ -1520,7 +1520,7 @@ end	SUBROUTINE DifCoDb
 				! rLnGam(iComp)=rLnGamRep(iComp)+rLnGamAtt(iComp)+rLnGamAssoc(iComp) + (1-bi/b) -ln(V/Vi) ! gives the same result
 			enddo
 			hE=uRes-hIs
-			aE=aRes-aIs	
+			aE=aRes-aIs
 			call FuVtot(isZiter,tKelvin,vTotCc,x,NC,FUGC,zFactor,aRes,uRes,iErr)
 			!call FuTptVtot(isZiter,zFactor,aDep,uDep,vTotCc,tKelvin,gmol,nComps,iErr)
 			sDep=aRes-DLOG(zFactor)-uRes
@@ -1534,7 +1534,7 @@ end	SUBROUTINE DifCoDb
 
 	CLOSE(642)
 	write(*,*)'OutFile=',TRIM(outfile)
-	pause 'Check results in OutFile.'   
+	pause 'Check results in OutFile.'
 	RETURN
 600	format('   x1  ',3x,'rLnGam1',4x,'rLnGam2',4x,'gE/RT',4x,'hE/RT',6x, 'dGIS/RT' ,6x, 'etaL',6x,'gMix/RT')
 601	FORMAT(1X,1(F7.4,1X,F10.3,1X),7(F10.4))
@@ -1543,9 +1543,9 @@ end	SUBROUTINE DifCoDb
 604	FORMAT(4X,2(F7.4,4X),2(F7.4,8X))
 605	FORMAT(3X,'K-RATIO',7X,'T(K)',4X,'P(MPa)',2X,'etaL',5X,'etaV',5X,'ZL  ',5X,'ZV')
 606	FORMAT(F12.5,3X,F7.2,1X,F7.4,1X,4(F6.4,3X))
-610	FORMAT(21X,4(F10.4,4X))  
-611	format(3(f7.4,1x),9(f10.3,1x))    
-612	format(f7.4,1x,2(f7.2,1x),12(f7.3,1x))    
+610	FORMAT(21X,4(F10.4,4X))
+611	format(3(f7.4,1x),9(f10.3,1x))
+612	format(f7.4,1x,2(f7.2,1x),12(f7.3,1x))
 	END
 
 !***********************************************************************
@@ -1601,7 +1601,7 @@ SUBROUTINE IDACsTP(tKelvin,pMPa,NC,rLnGam,iErr,errMsgPas)
 	!write(*,*)'OutFile=',TRIM(outfile)
 	!pause 'Check results in OutFile.'
 861	continue
-	errMsgPas=TRIM( errMsg(iErr) )   
+	errMsgPas=TRIM( errMsg(iErr) )
 	!CLOSE(643)
 	RETURN
 END !Subroutine IDACsTP()
@@ -1712,7 +1712,7 @@ END !Subroutine IDACsTP()
 					rLnGamAtt(iComp)=fugAtt(iComp)-Zatt*bVolCC_mol(iComp)/bMix-fugAttPure(iComp)
 					rLnGamAssoc(iComp)=fugAssoc(iComp)-Zassoc*bVolCC_mol(iComp)/bMix-fugAssocPure(iComp)
 				endif
-				rLnGam(iComp)=fugcL(iComp)-fugcPure(iComp) 
+				rLnGam(iComp)=fugcL(iComp)-fugcPure(iComp)
 				!rLnGam(iComp)=fugc(iComp)-Zfactor*bVolCc_mol(iComp)/bVolMix - LOG(vTotCc)-fugcPure(iComp)
 			enddo
 			hIs  =SUM( x(1:NC)*hPure(1:NC) ) !SumProduct(NC,x,hPure )
@@ -1736,7 +1736,7 @@ END !Subroutine IDACsTP()
 
 	CLOSE(643)
 	write(*,*)'OutFile=',TRIM(outfile)
-	pause 'Check results in OutFile.'   
+	pause 'Check results in OutFile.'
 	RETURN
 600	format('   x1  ',3x,'rLnGam1',4x,'rLnGam2',4x,'gE/RT',4x,'hE/RT',6x, 'dGIS/RT' ,6x, 'etaL',6x,'gMix/RT')
 601	FORMAT(1X,1(F7.4,1X,F10.3,1X),7(F10.4))
@@ -1745,9 +1745,9 @@ END !Subroutine IDACsTP()
 604	FORMAT(4X,2(F7.4,4X),2(F7.4,8X))
 605	FORMAT(3X,'K-RATIO',7X,'T(K)',4X,'P(MPa)',2X,'etaL',5X,'etaV',5X,'ZL  ',5X,'ZV')
 606	FORMAT(F12.5,3X,F7.2,1X,F7.4,1X,4(F6.4,3X))
-610	FORMAT(21X,4(F10.4,4X))  
-611	format(3(f7.4,1x),5(f10.3,1x),f12.9)    
-612	format(2(f7.4,1x),2(f8.3),12(f8.3))    
+610	FORMAT(21X,4(F10.4,4X))
+611	format(3(f7.4,1x),5(f10.3,1x),f12.9)
+612	format(2(f7.4,1x),2(f8.3),12(f8.3))
 	END
 
 !***********************************************************************
@@ -1867,7 +1867,7 @@ END !Subroutine IDACsTP()
 				rLnGamRep(iComp)=fugRep(iComp)-Zrep*bVolCC_mol(iComp)/bMix-fugRepPure(iComp)
 				rLnGamAtt(iComp)=fugAtt(iComp)-Zatt*bVolCC_mol(iComp)/bMix-fugAttPure(iComp)
 				rLnGamAssoc(iComp)=fugAssoc(iComp)-Zassoc*bVolCC_mol(iComp)/bMix-fugAssocPure(iComp)
-				rLnGam(iComp)=fugcL(iComp)-fugcPure(iComp) 
+				rLnGam(iComp)=fugcL(iComp)-fugcPure(iComp)
 				!rLnGam(iComp)=fugc(iComp)-Zfactor*bVolCc_mol(iComp)/bVolMix - LOG(vTotCc)-fugcPure(iComp)
 			enddo
 			hIs  =SumProduct(NC,x,hPure )
@@ -1888,7 +1888,7 @@ END !Subroutine IDACsTP()
 
 	CLOSE(643)
 	write(*,*)'OutFile=',TRIM(outfile)
-	pause 'Check results in OutFile.'   
+	pause 'Check results in OutFile.'
 	RETURN
 600	format('   x1  ',3x,'rLnGam1',4x,'rLnGam2',4x,'gE/RT',4x,'hE/RT',6x, 'dGIS/RT' ,6x, 'etaL',6x,'gMix/RT')
 601	FORMAT(1X,1(F7.4,1X,F10.3,1X),7(F10.4))
@@ -1897,13 +1897,13 @@ END !Subroutine IDACsTP()
 604	FORMAT(4X,2(F7.4,4X),2(F7.4,8X))
 605	FORMAT(3X,'K-RATIO',7X,'T(K)',4X,'P(MPa)',2X,'etaL',5X,'etaV',5X,'ZL  ',5X,'ZV')
 606	FORMAT(F12.5,3X,F7.2,1X,F7.4,1X,4(F6.4,3X))
-610	FORMAT(21X,4(F10.4,4X))  
-611	format(3(f7.3,1x),5(f10.3,1x),f12.9)    
-612	format(3(f10.6,1x),12(f9.4))    
+610	FORMAT(21X,4(F10.4,4X))
+611	format(3(f7.3,1x),5(f10.3,1x),f12.9)
+612	format(3(f10.6,1x),12(f9.4))
 	END
 
 !***********************************************************************
-      
+
 	SUBROUTINE Isochore(NC,iErrCode,errMsgPas)
 	!C
 	!C  PURPOSE:  COMPUTE phase envelope GIVEN x,y.
@@ -1952,8 +1952,8 @@ END !Subroutine IDACsTP()
 	write(644,*)'rho(g/cc) =',rhoLiqG_cc,' V(cc/mol) = ',vTotCc
 	!if(LOUDER)write(* ,*)'  T(K),      pMpa,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT,    CvRes/R,     (dP/dRho)/RT'
 	!write(644,*)'  T(K),      pMpa,     zFactor,  (U-Uig)/RTc,   (A-Aig)/RT,    CvRes/R,     (dP/dRho)/RT'
-	if(LOUDER)write(*,*)'  T(K)    PMPa      Z     Ures/RTc   Ares/RT  (dP/dRho)/RT  CvRes/R  CpRes/R' !   Sdep'    
-	write(644,'(a)')'  T(K)    PMPa      Z     Ures/RTc   Ares/RT  (dP/dRho)/RT  CvRes/R  CpRes/R    HRes/RT'    
+	if(LOUDER)write(*,*)'  T(K)    PMPa      Z     Ures/RTc   Ares/RT  (dP/dRho)/RT  CvRes/R  CpRes/R' !   Sdep'
+	write(644,'(a)')'  T(K)    PMPa      Z     Ures/RTc   Ares/RT  (dP/dRho)/RT  CvRes/R  CpRes/R    HRes/RT'
 	iTemp=0
 	!do while(iErr.eq.0)
 	do iTemp=1,nList
@@ -1965,7 +1965,7 @@ END !Subroutine IDACsTP()
 			trInv=tList(iTemp)
 		endif
 		if(trInv.le.0)exit
-		tKelvin=TC(1)/trInv	
+		tKelvin=TC(1)/trInv
 		isZiter=0  ! ln(-ve Z) should not happen for FuVtot.
 		call FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,zFactor,aRes,uRes,iErrFu)
 		if(iErrFu)exit
@@ -1976,8 +1976,8 @@ END !Subroutine IDACsTP()
 	enddo !new temperatures
 	print*,'Enter Tstart,Tstop,increment'
 	read*,tStart,tStop,tInc
-	if(LOUDER)write(*,*)'  T(K)    PMPa      Z     Ures/RTc   Ares/RT  (dP/dRho)/RT  CvRes/R  CpRes/R' !   Sdep'    
-	write(644,'(a)')'  T(K)    PMPa      Z     Ures/RTc   Ares/RT  (dP/dRho)/RT  CvRes/R  CpRes/R    HRes/RT'    
+	if(LOUDER)write(*,*)'  T(K)    PMPa      Z     Ures/RTc   Ares/RT  (dP/dRho)/RT  CvRes/R  CpRes/R' !   Sdep'
+	write(644,'(a)')'  T(K)    PMPa      Z     Ures/RTc   Ares/RT  (dP/dRho)/RT  CvRes/R  CpRes/R    HRes/RT'
 	tKelvin=tStart-tInc
 	do while(tKelvin <= tStop)
 		tKelvin=tKelvin+tInc
@@ -1990,7 +1990,7 @@ END !Subroutine IDACsTP()
 		write(644,602)tKelvin,pNew,zFactor,uRes*tKelvin/TC(1),aRes,cmprsblty,cvRes_R,CpRes_R,uRes+zFactor-1  !cmprsblty=(dP/dRho)T*(1/RT)
 	enddo
 601	format(f11.4,8(' ',f11.4),3(1x,E11.4))
-602	FORMAT(2F9.3,1x,1(F7.4),8(f11.4,1X))      
+602	FORMAT(2F9.3,1x,1(F7.4),8(f11.4,1X))
 86	continue
 	if(LOUDER)pause 'Your results are stored in Isochore.txt'
 	close(644)
@@ -2046,7 +2046,7 @@ END !Subroutine IDACsTP()
 10	WRITE(6,*)'ENTER Pressure (MPa)   '
 	READ(5,*)pMPa
 	if(LOUDER)write(* ,*)'  T(K),      rhog/cc,     zFactor,   (A-Aig)/RT,  (U-Uig)/RTc,    eta' !   CvRes/R,     (dP/dRho)/RT'
-	write(645,'(a155)')'  T(K),     rhog/cc,     zFactor,   (A-Aig)/RT,  (U-Uig)/RTc,      eta'	     
+	write(645,'(a155)')'  T(K),     rhog/cc,     zFactor,   (A-Aig)/RT,  (U-Uig)/RTc,      eta'
 	iTemp=0
 	!do while(iErr.eq.0)
 	do iTemp=1,nList
@@ -2058,7 +2058,7 @@ END !Subroutine IDACsTP()
 			trInv=tList(iTemp)
 		endif
 		if(trInv.le.0)exit
-		tKelvin=TC(1)/trInv	
+		tKelvin=TC(1)/trInv
 		isZiter=1  !avoid ln(-ve Z) during first call.
 		LIQ=0
 		if( trInv > 1)then
@@ -2071,8 +2071,8 @@ END !Subroutine IDACsTP()
 		if(LOUDER)write(* ,601)tKelvin,rhoNew,zFactor,aRes,uRes*tKelvin/TC(1),etaPass
 		write(645,601)tKelvin,rhoNew,zFactor,aRes,etaPass,uRes*tKelvin/TC(1),etaPass
 	enddo !new temperatures
-	if(LOUDER)write(*,*)'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R' !   Sdep'    
-	write(645,'(a)')'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes/R    HRes/RT     eta'    
+	if(LOUDER)write(*,*)'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R' !   Sdep'
+	write(645,'(a)')'  T(K)    rhog/cc    Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes/R    HRes/RT     eta'
 	print*,'Enter Tlo,Thi,increment'
 	read*,Tlo,Thi,tInc
 	tKelvin=Thi+tInc
@@ -2104,7 +2104,7 @@ END !Subroutine IDACsTP()
 		initCall=0
 	enddo
 601	format(f11.4,6(',',f11.4))
-602	FORMAT(F9.3,f9.6,1x,1(F7.4),9(F9.4,1X))      
+602	FORMAT(F9.3,f9.6,1x,1(F7.4),9(F9.4,1X))
 86	continue
 	close(645)
 	!close(666)
@@ -2129,9 +2129,9 @@ END !Subroutine IDACsTP()
 	USE BIPs
 	USE EsdParms
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	PARAMETER (nEta=99)   
+	PARAMETER (nEta=99)
 	CHARACTER*234 outFile*251
-	DIMENSION fugc(NMX),etaList(nEta),gmol(NMX)	  
+	DIMENSION fugc(NMX),etaList(nEta),gmol(NMX)
 	CHARACTER*77 errMsg(0:11),errMsgPas
 	COMMON/eta/etaL,etaV,ZL,ZV
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
@@ -2139,7 +2139,7 @@ END !Subroutine IDACsTP()
 	COMMON/fugCR/PMpa,dFUG_dN(NMX,NMX),dP_dN(NMX)
 	COMMON/ETA2/ETA
 	COMMON/A/a0Mix,a1Mix,a2Mix,aAtt,a_d,zRep
-	COMMON/DervMix2/dz0Mix_deta,da0Mix_deta,dz1Mix_deta,da1Mix_deta,dz2Mix_deta,da2Mix_deta,d2z0Mix_deta2,d2z1Mix_deta2,d2z2Mix_deta2 
+	COMMON/DervMix2/dz0Mix_deta,da0Mix_deta,dz1Mix_deta,da1Mix_deta,dz2Mix_deta,da2Mix_deta,d2z0Mix_deta2,d2z1Mix_deta2,d2z2Mix_deta2
 	COMMON/DervMix3/d2a1Mix_deta2,d3a1Mix_deta3,d2a2Mix_deta2
 	common/VCoeff/B2,B3
 	common/TptSaft/A0saft,A1saft,A2saft
@@ -2175,7 +2175,7 @@ END !Subroutine IDACsTP()
 	write(651,600)
 	if(bVolCC_mol(1) < 1 .and. LOUD)print*,'Isotherm: 0~bVol=',bVolCc_mol(1)
 	if(initCall)print*,'Isotherm: bVol=',bVolCc_mol(1)
-	do i=1,nEta   
+	do i=1,nEta
 		if (I==1) write(651,600)
 		eta=etaList(i)
 		rhoMol_cc=eta/bVolCC_mol(1)
@@ -2198,9 +2198,9 @@ END !Subroutine IDACsTP()
 	endif
 	write(*,*) 'Your results are stored in ',TRIM(outFile)
 	pause 'Isotherm done!'
-600 format(4x,'eta',7x,'PMPa',9x,'Z',9X,'uRes_RT',8x,'aRes_RT',8x,'rho(mol/cc)',9x,'cmprsblty')			
-601 format(1x,f6.4,6(1x,F11.5),f12.4)			
-602 format(1x,f6.4,6(2x,E11.4),e12.4)			
+600 format(4x,'eta',7x,'PMPa',9x,'Z',9X,'uRes_RT',8x,'aRes_RT',8x,'rho(mol/cc)',9x,'cmprsblty')
+601 format(1x,f6.4,6(1x,F11.5),f12.4)
+602 format(1x,f6.4,6(2x,E11.4),e12.4)
 	initCall=0
 	return
 	end
@@ -2217,9 +2217,9 @@ END !Subroutine IDACsTP()
 	USE BIPs
 	USE EsdParms
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	PARAMETER (nEta=3,nT=100,etaGrid=1.d-6)   
+	PARAMETER (nEta=3,nT=100,etaGrid=1.d-6)
 	CHARACTER*234 outFile*251
-	DIMENSION fugc(NMX),etaList(nEta),B2grid(nT),B3grid(nT),deltaEta(nEta),gmol(NMX)!,ierFugi(20)	  
+	DIMENSION fugc(NMX),etaList(nEta),B2grid(nT),B3grid(nT),deltaEta(nEta),gmol(NMX)!,ierFugi(20)
 	CHARACTER*150 ErrMsg(4)
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
 	!COMMON/TptParms/zRefCoeff(NMX,5),a1Coeff(NMX,5),a2Coeff(NMX,5),vMolecNm3(NMX),tKmin(NMX),rMw(NMX),nTptCoeffs
@@ -2237,9 +2237,9 @@ END !Subroutine IDACsTP()
 	!READ(5,*)tr
 	Tr = 0.4
 	betaRed = 1 / Tr
-	etaList(1)=1.d-8	   !There is not a significant difference between 10-6 and 10-7 
+	etaList(1)=1.d-8	   !There is not a significant difference between 10-6 and 10-7
 	DO I=2,nEta	 ! etaGrid = 1D-6, so we go from ~ 0 to 3E-6 in eta.
-		etaList(I)=etaList(I-1)+etaGrid	    
+		etaList(I)=etaList(I-1)+etaGrid
 	ENDDO
 	gmol(1)=1
 	isZiter=1
@@ -2250,8 +2250,8 @@ END !Subroutine IDACsTP()
 		if( betaRed < 0.02D0 ) deltaBetaRed = 0.001D0
 		if( betaRed < 0.002D0 ) deltaBetaRed = 0.0001D0
 		if( betaRed < 0.0001D0 ) exit
-		betaRed = betaRed - deltaBetaRed 
-		do I=1,nEta   
+		betaRed = betaRed - deltaBetaRed
+		do I=1,nEta
 			eta=etaList(I)
 			if (iEosOpt.EQ.4) then
 				vTotCc=VX(1)/eta
@@ -2264,8 +2264,8 @@ END !Subroutine IDACsTP()
 			CALL FuVtot(isZiter,tKelvin,vTotCc,gmol,NC,FUGC,Z,aRes,uRes,iErr)
 			B2grid(I)=(Z-1.d0)/eta
 		enddo
-		if (J.EQ.1) WRITE(6 ,600)		
-		if (J.EQ.1) WRITE(652,600)		
+		if (J.EQ.1) WRITE(6 ,600)
+		if (J.EQ.1) WRITE(652,600)
 		do k=1,(nEta-1)
 			deltaEta(k)=etaList(k+1)-etaList(k)
 			B3grid(k)=(B2grid(k+1)-B2grid(k))/deltaEta(k)
@@ -2273,20 +2273,20 @@ END !Subroutine IDACsTP()
 	!Since Virial Coefficient are defined as eta goes to zero:
 		B2=B2grid(1) *bVolCC_mol(1)
 		B3=B3grid(1) *bVolCC_mol(1)**2
-		WRITE(6  ,601)tKelvin,betaRed,B2,B3	
-		WRITE(652,601)tKelvin,betaRed,B2,B3	
+		WRITE(6  ,601)tKelvin,betaRed,B2,B3
+		WRITE(652,601)tKelvin,betaRed,B2,B3
 	enddo
 	close(652)
 	if(LOUD)pause 'Your results are stored in VCoeff.txt'
 
-600 format(1x,'T(K)',6x,'1/Tr',4x,'B2(cc/mol)',2x,'B3(cc/mol)^2')			 
-!600 format(1x,'1/kT',10x,'B2',10x,'B3')			 
+600 format(1x,'T(K)',6x,'1/Tr',4x,'B2(cc/mol)',2x,'B3(cc/mol)^2')
+!600 format(1x,'1/kT',10x,'B2',10x,'B3')
 601 format(1x,f8.2,2x,f6.4,4x,f8.2,4x,f10.1)
 
 	return
 	end
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      
+
 	SUBROUTINE Isotherm_old(NC,ier,errMsgPas)
 	!C
 	!C  PURPOSE:  COMPUTE phase envelope GIVEN x,y.
@@ -2380,7 +2380,7 @@ END !Subroutine IDACsTP()
 	SUBROUTINE KIJITR(NC)
 	!C
 	!C  PURPOSE:  ITERATIVE BP CALCULATIONS TO DETERMINE THE OPTIMAL
-	!C    VALUE FOR THE BINARY INTERACTION COEFFICIENT (KIJ) AT ONE 
+	!C    VALUE FOR THE BINARY INTERACTION COEFFICIENT (KIJ) AT ONE
 	!C    DATA POINT.
 	!C  PROGRAMMED BY:  JRE 2/95
 	!C
@@ -2430,7 +2430,7 @@ END !Subroutine IDACsTP()
 
 		!C  NOTE:  FOR REPEAT KIJ CALCULATIONS IT IS ASSUMED THAT BOOTSTRAPPING
 		!C         IS DESIRED.  OTHERWISE, THE USER SHOULD ANSWER 'N' TO
-		!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN 
+		!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN
 		!C         PROGRAM BEFORE PROCEEDING.
 
 		INIT=1
@@ -2496,7 +2496,7 @@ END !Subroutine IDACsTP()
 	WRITE(*,*)'FIRST LINE =NPTS,id1,id2 2ND LINE = TK, PMPA, X,Y, ...'
     FN="\HEMEM2b.txt"
 	if(iAns==2)FN="\VLEJaubertAq.txt"
-	if(iAns==3)FN="\VLEDannerGess.txt"															
+	if(iAns==3)FN="\VLEDannerGess.txt"
 	if(iAns==4)FN="\SolvationSystems.txt"
 	if(iAns < 1)then
 		write(*,*)'Enter FN.FT (path is assumed to be PGLInputDir.'
@@ -2514,7 +2514,7 @@ END !Subroutine IDACsTP()
 	IF(DEBUG)outFile='c:\spead\calceos\output\HEDb.txt'
 	open(661,file=outFile)
 	write(661,*)' ' ! purge old contents of KijOut. KijVal uses APPEND
-	if(LOUDER)print*,'HEDB: outFile=',TRIM(outFile) 
+	if(LOUDER)print*,'HEDB: outFile=',TRIM(outFile)
 	if(LOUDER)write(6,*)'    ID1	  ID2  nConv      Kij       stdErr   %PAADP    rmsErrP    dStdErr'
 
 	ier=0
@@ -2556,7 +2556,7 @@ END !Subroutine IDACsTP()
         if(LOUDER)pause 'Starting new binary mixture'
 		if( iErrLookup > 0 )then
 			write(*,*)'HEDb: failed to get required pure props.'
-			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)								 
+			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)
 			write(661,'(2i10,3f11.4)')id(1),id(2),0,zero,eightySix
 			DO I=1,nPtsBipDat	!read the points but do nothing so we can cycle to next
 				READ(51,*)tDat(I),PDAT(I),XDAT(I),YDAT(I)
@@ -2608,7 +2608,7 @@ END !Subroutine IDACsTP()
 		if(LOUDER)write(*,form600)zero,hPure(2),Vcc_mol(2),gPure(2)
 		if(LOUDER)write(*,form600)one ,hPure(1),Vcc_mol(1),gPure(1)
 
-		
+
 		nXstep=21
 		dX=1.d0/(nXstep-1)
 		LIQ=1
@@ -2629,7 +2629,7 @@ END !Subroutine IDACsTP()
 			vIs  =SUM( x(1:NC)*Vcc_mol(1:NC) ) !SumProduct(NC,x,hPure )
 			gMix=aRes+zL-1-LOG(zL)
 			gEmix=gMix - gIs
-			hRes=uRes+zL-1 
+			hRes=uRes+zL-1
 			hE=hRes-hIs
 			hEkJ_mol=hE*Rgas*T/1000
 			vE=1/rhoMol_cc-vIs
@@ -2641,7 +2641,7 @@ END !Subroutine IDACsTP()
 		write(661,'( 3i5,7(1x,f8.3),1x,a )')iSystem,id(1),id(2),T,P,kij(1,2),HeCalcMin,HeCalcMax,HeDatMin,HeDatMax,TRIM(refid)
 	enddo !while(ier.eq.0) loop over all data sets in db
 
-	print*,'HEDb: outFile=',TRIM(outFile) 
+	print*,'HEDb: outFile=',TRIM(outFile)
 	pause 'These results are tabulated in HEDb.txt.'
 	!restore stored nc,id
 	NC=ncStore
@@ -2654,7 +2654,7 @@ END !Subroutine IDACsTP()
 		if(LOUDER)write(*,*)'Error in Main: ErrorCode from GetCrit = ',iErrCrit
 		if(LOUDER)pause
 		stop
-	endif 
+	endif
 	if(iEosOpt.eq.1)CALL GetPR(NC,iErrGet)
 	if(iEosOpt==2)CALL GetEsdCas(NC,idCas,iErrGet)
 	if(bESD)CALL GetEsdCas(NC,idCas,iErrGet)
@@ -2668,9 +2668,9 @@ END !Subroutine IDACsTP()
 		if(LOUDER)pause
 	endif
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x )
-606	FORMAT(1X,F8.4,1X,F10.2)      
+606	FORMAT(1X,F8.4,1X,F10.2)
 608	FORMAT(1X,3i6,1X,E11.4,1X,E11.4,f10.2,f10.2,f10.4,1x,a20,1x,a20)
-      
+
 	RETURN
 	END	   ! HEDB
 
@@ -2726,7 +2726,7 @@ SUBROUTINE MemScedOpt(NC)
 	close(501)
 	if(.NOT.isReadEsd)call LoadEsdDb(iErrLoad)	! use ESDMEM2 estimates for initial guesses.
 	if(iErrLoad > 0)pause 'MemScedOpt: error loading ESD DB.'
-	nParms=nBeta+nAlpha+nTau +1 
+	nParms=nBeta+nAlpha+nTau +1
 	!if(nTau > 0)parm(1:nTau)=0	! vector init.
 	do i=1,nBeta
 		parm(i)=epsD_kBdb( indexEsd(idBeta(i)) ) ! this will take initial guess from ESDMEM2 database
@@ -2782,7 +2782,7 @@ SUBROUTINE MemScedOpt(NC)
 	print*, 'MemScedOpt: Calling LmDifEz'
 	CALL LMDifEZ(MemScedEval,nPts,nParms,parm,factor,deviate,TOL,iErrCode,stdErr)
 	print*, 'MemScedOpt: Back from LmDifEz'
-	iFlag=86	! get the deviations for converged points. Print everything. 
+	iFlag=86	! get the deviations for converged points. Print everything.
 	call MemScedEval(nPts,nParms,parm,deviate,iFlag)	!nConverged passed by BIPs module.
 	do i=1,nParms
 		idi=idBeta(i)
@@ -2798,7 +2798,7 @@ SUBROUTINE MemScedOpt(NC)
 	pause 'MemScedOpt: Success! Check KijOut.txt'
 	!restore stored nc,id
 	NC=ncStore
-	ID(1:NC)=idStore(1:NC)						  
+	ID(1:NC)=idStore(1:NC)
 	idOpt=1
 	call PGLStartup(NC,iEosOpt,idOpt,iErrStart)	! sets idCas, GetCrit(), Get_Eos_
 	if(iErrStart >0)then
@@ -2807,7 +2807,7 @@ SUBROUTINE MemScedOpt(NC)
 		if(LOUDER)pause
 	endif
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x )
-606	FORMAT(1X,F8.4,1X,F10.2)      
+606	FORMAT(1X,F8.4,1X,F10.2)
 607	FORMAT(1X,3i6,1X,<nParms>E11.4,1X,<nParms>E11.4,f10.2,f10.2,f10.4,1x,a20,1x,a20)
 608	FORMAT(1X,3i6,1X,E11.4,1X,E11.4,f10.2,f10.2,f10.4,1x,a20,1x,a20)
 	RETURN
@@ -2819,7 +2819,7 @@ SUBROUTINE MemScedEval(nPts,nParms,parm,deviate,iFlag)
 	USE BIPs ! includes nConverged,Kij(),KTij(), ...
 	USE VpDb ! for VpCoeffs
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	parameter(MAXDAT=4444,MAXPARMS=221)	! From LmDifEzCov2. 
+	parameter(MAXDAT=4444,MAXPARMS=221)	! From LmDifEzCov2.
 	CHARACTER*77 outfile
 	DOUBLEPRECISION, SAVE:: rLnGam(NMX),temParm(maxParms) ! X(NMX),Y(NMX) !,yy(nmx),xx(nmx),
 	integer idOld(2) !ier(20),
@@ -2827,7 +2827,7 @@ SUBROUTINE MemScedEval(nPts,nParms,parm,deviate,iFlag)
 	character*77 errMsg(0:22),errMsgPas !,outFile
 	LOGICAL LOUDER
 	data nCalls,rmsErr0/1,1E11/
-	errMsg(0) =' MemScedEval: no problem.' 
+	errMsg(0) =' MemScedEval: no problem.'
 	errMsg(11)=' MemScedEval: experimental gamma < 0???'
 	iErr=0
 	iPrint=0
@@ -2851,13 +2851,13 @@ SUBROUTINE MemScedEval(nPts,nParms,parm,deviate,iFlag)
 	enddo
 	do i=1,nBeta
 		epsD_kBdb(  indexEsd( idBeta(i) )  )=parm(i)
-	enddo           
+	enddo
 	do i=1,nAlpha
 		epsA_kBdb(  indexEsd( idAlpha(i) )  )=parm(nBeta+i)
-	enddo           
+	enddo
 	do i=1,nAssoc
 		epsA_kBdb(  indexEsd( idAssoc(i) )  )=2*eTotAssoc(i)-epsD_kBdb(  indexEsd( idAssoc(i) )  )
-	enddo           
+	enddo
 	NC=2
 	KTIJ(1,2)=0								! setting kij=0 means we get gamPhys from ESD defaults.
 	HIJ(1,2)=0
@@ -2936,7 +2936,7 @@ SUBROUTINE MemScedEval(nPts,nParms,parm,deviate,iFlag)
 		open(661,file=outFile,access='append')
 		write(661,'(a,2i5,2f10.3,7f12.4)')' nCalls,nConverged,rmsErr=',nCalls,nConverged,rmsErr0
 		write(661,form600)temParm(1:nParms)
-		if(LOUDER)print*,'KijDB: outFile=',TRIM(outFile) 
+		if(LOUDER)print*,'KijDB: outFile=',TRIM(outFile)
 		if(LOUDER)print*,'These results are tabulated in outFile.'
 		close(661)
 	endif
@@ -3001,7 +3001,7 @@ SUBROUTINE KIJDB(NC)
 	endif
     FN="\VLEJaubert.txt"
 	if(iAns==2)FN="\VLEJaubertAq.txt"
-	if(iAns==3)FN="\VLEDannerGess.txt"															
+	if(iAns==3)FN="\VLEDannerGess.txt"
 	if(iAns==4)FN="\SolvationSystems.txt"
 	if(iAns < 1)then
 		write(*,*)'Enter FN.FT (path is assumed to be PGLInputDir.'
@@ -3028,7 +3028,7 @@ SUBROUTINE KIJDB(NC)
     else
         open(674,file=outFile,ACCESS='APPEND') ! e.g. JaubertAq is appended to Jaubert if during the same run.
     endif
-	if(LOUDER)print*,'KijDB: outFile=',TRIM(outFile) 
+	if(LOUDER)print*,'KijDB: outFile=',TRIM(outFile)
 	if(LOUDER)write(6,*)'    ID1	  ID2  nConv      Kij       stdErr   %PAADP    rmsErrP    dStdErr'
 	write(674,*)'    ID1	  ID2  nConv      Kij       stdErr   %PAADP    rmsErrP    dStdErr'
 
@@ -3070,7 +3070,7 @@ SUBROUTINE KIJDB(NC)
 		endif
         iSystem=iSystem+1
 		if(iOptimize < 0)then
-			!write(661,'(i4,2i5,2i6,a)')nPtsBipDat,id(1),id(2),idTrc(1),idTrc(2),' ! Line0:nPts,idDip1,idDip2,idTrc1,idTrc2; Line1-nPts:T(K),P(MPa),x1,y1' 	
+			!write(661,'(i4,2i5,2i6,a)')nPtsBipDat,id(1),id(2),idTrc(1),idTrc(2),' ! Line0:nPts,idDip1,idDip2,idTrc1,idTrc2; Line1-nPts:T(K),P(MPa),x1,y1'
 		endif !iOptimize < 0
 
 		if(idOpt.eq.2)then
@@ -3097,7 +3097,7 @@ SUBROUTINE KIJDB(NC)
 		call PGLStartup(NC,iEosOpt,idOpt,iErrStart)	! sets idCas, GetCrit(), Get_Eos_
 		if(iErrStart > 0 .or. iOptimize < 0)then
 			write(*,*)'KijDB Error: failed to get required pure props.'
-			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)								 
+			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)
 			write(674,607)id(1),id(2),0,zero,eightySix
 			DO I=1,nPtsBipDat	!read the points but do nothing so we can cycle to next
 				!READ(51,'(a77)')dumString
@@ -3124,7 +3124,7 @@ SUBROUTINE KIJDB(NC)
 		parm(2)=0
 		temParm=0
 		do i=1,nParms
-			call QueryParMix(i,temParm(i),iErrParMix)  
+			call QueryParMix(i,temParm(i),iErrParMix)
 			parm(i)=temParm(i) ! this will take initial guess from database
 		enddo
 		if(iErrParMix)pause 'KijDb: error returning stored mix parms'
@@ -3180,7 +3180,7 @@ SUBROUTINE KIJDB(NC)
 		if(nParms==2)then
 			temParm(1)=parm(2)	! parameter storage is order sensitive for xsTau(i,j). Storage applies ID(1) > ID(2) such that IdBinary=10000*ID(1)+ID(2).
 			temParm(2)=parm(1)
-			if(ID(1) > ID(2) )temParm(1:2)=parm(1:2)  
+			if(ID(1) > ID(2) )temParm(1:2)=parm(1:2)
 			write(674,608)ID(1),ID(2),nConverged,(temParm(i),i=1,2),PAADP,rmsErr,DstdErr,name(1),name(2)
 			write(6  ,608)ID(1),ID(2),nConverged,(temParm(i),i=1,2),PAADP,rmsErr,DstdErr,name(1),name(2)
 		endif
@@ -3191,7 +3191,7 @@ SUBROUTINE KIJDB(NC)
 
 	close(51)
 	!close(61)
-	if(LOUDER)print*,'KijDB: outFile=',TRIM(outFile) 
+	if(LOUDER)print*,'KijDB: outFile=',TRIM(outFile)
 	if(LOUDER)pause 'These results are tabulated in KijDb.txt.'
 	!restore stored nc,id
 	NC=ncStore
@@ -3203,10 +3203,10 @@ SUBROUTINE KIJDB(NC)
 		if(LOUDER)pause
 	endif
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x )
-606	FORMAT(1X,F8.4,1X,F10.2)      
+606	FORMAT(1X,F8.4,1X,F10.2)
 607	FORMAT(1X,3i6,1X,<nParms>E11.4,1X,<nParms>E11.4,f10.2,f10.2,f10.4,1x,a20,1x,a20)
 608	FORMAT(1X,3i6,1X,E11.4,1X,E11.4,f10.2,f10.2,f10.4,1x,a20,1x,a20)
-      
+
 	RETURN
 	END	   ! KijDb
 
@@ -3220,7 +3220,7 @@ SUBROUTINE KIJDB(NC)
 	!C    OF EXPERIMENTAL DATA SPECIFIED BY USER THROUGH PROMPT.
 	!C  NOTE:  OPTIMAL KIJ IS PASSED USEing BIPs
 	!C  PROGRAMMED BY:  JRE 12/21
-	!C  METHOD:   Levenberg-Marquardt 
+	!C  METHOD:   Levenberg-Marquardt
 	!C  REFERENCE:NUMERICAL RECIPES, MinPack
 	!C
 	USE GlobConst
@@ -3332,7 +3332,7 @@ SUBROUTINE KIJDB(NC)
 			cycle
 		endif
 		!print*,'ID=',ID(1),ID(2)
-		!call IdCasLookup(NC,idCas,ierLookup,errMsgLookup)	
+		!call IdCasLookup(NC,idCas,ierLookup,errMsgLookup)
 		!if(LOUDER)pause 'Starting new binary mixture'
 		CALL GETCRIT(NC,iErrCrit)
 		write(*,'(a,i4,4a)')' KijDbLLE: after GetCrit, iEosOpt,Names=',iEosOpt,' ',TRIM(name(1)),' ',TRIM(name(2))
@@ -3358,7 +3358,7 @@ SUBROUTINE KIJDB(NC)
 		print*,'KijDbLLE: after Get_EOS_, iEosOpt,bESD,bTPT,bPcSAFT=',iEosOpt,bESD,bTPT,bPcSAFT
 		if(iErrGet > 0 .or. iErrCrit > 0 .or. ierLookup > 0)then
 			write(*,*)'KijDB Error: failed to get required pure props.'
-			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)								 
+			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)
 			write(654,607)id(1),id(2),0,zero,eightySix
 			cycle
 		endif
@@ -3408,7 +3408,7 @@ SUBROUTINE KIJDB(NC)
 				write(dumpUnit,'(f8.2,f8.4,2e12.4)')TDAT(i),PDAT(i),XDAT(i),YDAT(i)
 			enddo
 		endif
-					
+
 		write(dumpUnit,*)'New mixture. iSystem,id(),nPts=',nSystems,id(1),id(2),nPtsBipDat
 !		if(nPtsBipDat.le.0)then
 !			ier=1 !indicates end of database
@@ -3429,7 +3429,7 @@ SUBROUTINE KIJDB(NC)
 		temParm=0	!array initialization.
 		!xsTau=0		!array initialization.
 		do i=1,nParms
-			call QueryParMix(i,temParm(i),iErrParMix)  
+			call QueryParMix(i,temParm(i),iErrParMix)
 			parm(i)=temParm(i) ! this will take initial guess from database, if available.
 			if(iErrParMix>0)pause 'KijDbLLE: error from QueryParMix.'
 		enddo
@@ -3475,7 +3475,7 @@ SUBROUTINE KIJDB(NC)
 							bestKij=parm(1)
 							if(nParms>1)bestP2=parm(2)
 							bestAAD=PAALDK
-						elseif(PAALDK < bestAAD)then		!This "else" condition occurs only when nConverged==mostConverged. 
+						elseif(PAALDK < bestAAD)then		!This "else" condition occurs only when nConverged==mostConverged.
 							bestKij=parm(1)					!Only replace best if new PAAD is better.
 							if(nParms>1)bestP2=parm(2)
 							bestAAD=PAALDK
@@ -3541,18 +3541,18 @@ SUBROUTINE KIJDB(NC)
 		if(LOUDER)write(*,*)'Error in Main: ErrorCode from GetCrit = ',iErrCrit
 		if(LOUDER)pause
 		stop
-	endif 
+	endif
 	if(iErrGet.gt.0)then
 		if(LOUDER)write(*,*)'KijDB Error: failed to restore required pure props.'
 		if(LOUDER)write(*,*)'id1,id2',id(1),id(2)
 		if(LOUDER)pause
 	endif
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x )
-606	FORMAT(1X,F8.4,1X,F10.2)      
+606	FORMAT(1X,F8.4,1X,F10.2)
 607	FORMAT(1X,3i6,1X,<nParms>E11.4,1X,<nParms>E11.4,f10.2,f10.2,f10.4,1x,a20,1x,a20)
 608	FORMAT(1X,3i6,1X,f10.5,1X,f10.5,f10.2,f10.2,f10.4,1x,a20,1x,a20)
 609	FORMAT(1X,3i6,1X,f10.1,1X,f10.1,f10.2,f10.2,f10.4,1x,a20,1x,a20)
-      
+
 	RETURN
 	END	   ! KijDbLLE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3565,7 +3565,7 @@ SUBROUTINE KIJDB(NC)
 	!C    OF EXPERIMENTAL DATA SPECIFIED BY USER THROUGH PROMPT.
 	!C  NOTE:  OPTIMAL KIJ IS PASSED USEing BIPs
 	!C  PROGRAMMED BY:  JRE 12/21
-	!C  METHOD:   Levenberg-Marquardt 
+	!C  METHOD:   Levenberg-Marquardt
 	!C  REFERENCE:NUMERICAL RECIPES, MinPack
 	!C
 	USE GlobConst
@@ -3674,7 +3674,7 @@ SUBROUTINE KIJDB(NC)
 		print*,'Header= ',TRIM(dumString)
 		if(ierRead == -2)exit ! end of file	before reading any lines. ierRead= -1 for end of file at end of dataset.
 		read(dumString,*,ioStat=ioErr)i99,i13,idCas(1),idCas(2)
-		iColTK=1 ! sort by iDat component instead of temperature 
+		iColTK=1 ! sort by iDat component instead of temperature
 		Call SortTable(var,maxPts,nLines,nVars,iColTK,1) ! 1=yes for LoToHi
 		if(ioErr)pause 'KijDbSLE: error reading header of dataset?'
 		tMin=1234
@@ -3686,7 +3686,7 @@ SUBROUTINE KIJDB(NC)
 			cycle
 		endif
 		!print*,'ID=',ID(1),ID(2)
-		!call IdCasLookup(NC,idCas,ierLookup,errMsgLookup)	
+		!call IdCasLookup(NC,idCas,ierLookup,errMsgLookup)
 		!if(LOUDER)pause 'Starting new binary mixture'
 		CALL GETCRIT(NC,iErrCrit)
 		if(iErrCrit.ne.0)then
@@ -3707,7 +3707,7 @@ SUBROUTINE KIJDB(NC)
 		if(iEosOpt==17)CALL GetPrLorraine(NC,iErrGet)
 		if(iErrGet > 0 .or. iErrCrit > 0 .or. ierLookup > 0)then
 			write(*,*)'KijDB Error: failed to get required pure props.'
-			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)								 
+			write(*,*)'id1,id2',id(1),id(2),name(1),name(2)
 			write(iSumUnit,'(2i6,3x,2i15,f12.2)')id(1),id(2),idCas(1),idCas(2),eightySix
 			cycle
 		endif
@@ -3722,8 +3722,8 @@ SUBROUTINE KIJDB(NC)
 			XDAT(iPt)=var(i,4)
 			!YDAT(iPt)=var(i,5)	! the solid phase is assumed pure.
 			TDAT(iPt)=var(i,1)
-			PDAT(iPt)=var(i,2)/1000  !convert from kPa to MPa. 
-			id1Dat(iPt)=NINT(var(i,3))!easier for general read as real, but we need integer for indexing.  
+			PDAT(iPt)=var(i,2)/1000  !convert from kPa to MPa.
+			id1Dat(iPt)=NINT(var(i,3))!easier for general read as real, but we need integer for indexing.
 			if(TDAT(iPt) > tMax)tMax=TDAT(iPt)
 			if(TDAT(iPt) < tMin)tMin=TDAT(iPt)
 			CALL GetTmHfus(id(id1Dat(iPt)),TmKelvin,HfusJ_mol,iErrHfus)
@@ -3745,7 +3745,7 @@ SUBROUTINE KIJDB(NC)
 		! All DAT read in for this dataset. Time to regress.
 		!write(*,*)'KijDbLLE: New mix, NPTS,ID(),TLast=',nPtsBipDat,id(1),id(2),TDAT(nPtsBipDat)
 		nSystems=nSystems+1
-					
+
 !		write(*,*)'New mixture. iSystem,id(),nPts=',nSystems,id(1),id(2),nPtsBipDat
 !		if(nPtsBipDat.le.0)then
 !			ier=1 !indicates end of database
@@ -3764,7 +3764,7 @@ SUBROUTINE KIJDB(NC)
 		parm(2)=0
 		temParm=0
 		do i=1,nParms
-			call QueryParMix(i,temParm(i),iErrParMix)  
+			call QueryParMix(i,temParm(i),iErrParMix)
 			parm(i)=temParm(i) ! this will take initial guess from database, if available.
 		enddo
 		if(nParms < 2 .and. iOptimize > 2)then
@@ -3806,7 +3806,7 @@ SUBROUTINE KIJDB(NC)
 			TOL=0.0001	 !c      TOL=SQRT(DPMPAR(1))
 			factor= 2 !c  factor=100 enables large first step from the initial guess.
 			if(nParms > 1)factor=0.2
-			if(iOptimize > 2)nParms=2 ! for wilson and NRTL models 
+			if(iOptimize > 2)nParms=2 ! for wilson and NRTL models
 			if(LOUDER)write(*,*)'KIJ,paaLDK,rmserr'
 			if(ABS(temParm(1)) < zeroTol .or. iOptimize > 2)then	! signal that parameters do not exist for this compound
 				bestKij= 0.1
@@ -3881,18 +3881,18 @@ SUBROUTINE KIJDB(NC)
 		if(LOUDER)write(*,*)'Error in Main: ErrorCode from GetCrit = ',iErrCrit
 		if(LOUDER)pause
 		stop
-	endif 
+	endif
 	if(iErrGet.gt.0)then
 		if(LOUDER)write(*,*)'KijDB Error: failed to restore required pure props.'
 		if(LOUDER)write(*,*)'id1,id2',id(1),id(2)
 		if(LOUDER)pause
 	endif
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x )
-606	FORMAT(1X,F8.4,1X,F10.2)      
+606	FORMAT(1X,F8.4,1X,F10.2)
 607	FORMAT(1X,3i6,1X,<nParms>E11.4,1X,<nParms>E11.4,f10.2,f10.2,f10.4,1x,a20,1x,a20)
 608	FORMAT(1X,3i6,1X,f10.5,1X,f10.5,f10.2,f10.2,f10.4,1x,a20,1x,a20)
 609	FORMAT(1X,3i6,1X,f10.1,1X,f10.1,f10.2,f10.2,f10.4,1x,a20,1x,a20)
-      
+
 	RETURN
 	END	   ! KijDbLLE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3942,15 +3942,15 @@ SUBROUTINE KIJDB(NC)
 	WRITE(6,*)'ENTER RANGE TO OPTIMIZE, (LO, HI)  '
 	kij0= -0.15
 	kij3=  0.15
-	!READ(5,*)KIJ0,KIJ3                                          
+	!READ(5,*)KIJ0,KIJ3
 	!WRITE(52,*)'ENTER RANGE TO OPTIMIZE, (KIJLO KIJHI)  '
-	!write(52,*)KIJ0,KIJ3                                          
+	!write(52,*)KIJ0,KIJ3
 	KIJ1=KIJ0+CGOLD*(KIJ3-KIJ0)
 	KIJ2=KIJ0+RGOLD*(KIJ3-KIJ0)
 	nParms=1
 	parm(1)=KIJ0
 	LastCall= -1 ! -1 means that this is the initial call so we can specially initialize if necessary
-	
+
 
 	call KIJVAL(nc,nParms,parm,deviate,PAAD0,DstdErr,LastCall)
 	rms0=RmsJre(nptsBipDat,deviate)
@@ -3969,7 +3969,7 @@ SUBROUTINE KIJDB(NC)
 	rms3=RmsJre(nptsBipDat,deviate)
 	write(*,'(a,2f10.2,7f10.5)')' KijOpt: PAAD,rms,parm()=',PAAD3,rms3,(parm(i),i=1,nParms)
 	TOL=0.0001 ! 4 DECIMAL PLACES ON KIJ IS ENOUGH.
-	iter=0      
+	iter=0
 	DO WHILE( ABS(KIJ3-KIJ0) > TOL ) !*(ABS(KIJ1)+ABS(KIJ2)))
 		iter=iter+1
 		if(iter > maxit)exit
@@ -4009,9 +4009,9 @@ SUBROUTINE KIJDB(NC)
 		PAADP=PAAD2
 		rmse=rms2
 		KIJB=KIJ2
-	ENDIF    
+	ENDIF
 	!open(67,file=outFile) ! KijVal writes KijOut using append.
-	!write(67,*)' ' !clear out old contents. Don't do this if you want to run ko after kd, but retain KijOut of big database. 
+	!write(67,*)' ' !clear out old contents. Don't do this if you want to run ko after kd, but retain KijOut of big database.
 	!close(67)
 	!WRITE(52,*)'KIJOPT, PAADP'
 	!WRITE(52,606)KIJB,PAADP
@@ -4035,7 +4035,7 @@ SUBROUTINE KIJDB(NC)
 		iErrDev=0
 		if(ABS(deviate(i)) < 1.D-8)iErrDev=1
 		PAAD = ( pCalc-pdat(i) )/pdat(i)*100
-		!write(67,'(1x,f10.3,3f10.5,i5,f10.2)')tdat(i),pcalc,xdat(i),ydat(i),iErrDev,PAAD	
+		!write(67,'(1x,f10.3,3f10.5,i5,f10.2)')tdat(i),pcalc,xdat(i),ydat(i),iErrDev,PAAD
 	enddo
 	write(*,'(a,2f10.2,7f10.5)')' KijOpt: PAAD,rmsLnDev,parm()=',PAADP,rmse,(parm(i),i=1,nParms)
 
@@ -4047,7 +4047,7 @@ SUBROUTINE KIJDB(NC)
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x )
 606	FORMAT(1X,F8.4,1X,F10.2)
 861	if(LOUD)write(*,*)'Error reading line=',i,' from data file. Check format.'
-	return      
+	return
 	END
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4073,8 +4073,8 @@ SUBROUTINE KIJDB(NC)
 		ier=1
 		return
 	endif
-                
-607	FORMAT(1X,F8.4,1X,F10.4,1X,F10.8,1X,F10.8,1X,F10.4,1X,i5)      
+
+607	FORMAT(1X,F8.4,1X,F10.4,1X,F10.8,1X,F10.8,1X,F10.4,1X,i5)
 
 	hijTmp=HIJ(1,2)
 	KIJ(1,2)=0
@@ -4110,7 +4110,7 @@ SUBROUTINE KIJDB(NC)
 	open(661,file=outFile,ACCESS='APPEND')
 	if(LAST==1)write(661,'(3I7, 2F9.4)')nPtsBipDat,ID(1),ID(2),Kij(1,2),KTij(1,2)
 	pMax=5.1d0 !for most systems, anything higher than this just causes more crashes and skews the importance toward scf region
-	if(pDatMin > pMax)pMax=pDatMin+0.1 ! for some systems (e.g. nC2+water) the lowest pressure is large. if nConverged=0, LmDif crashes.           
+	if(pDatMin > pMax)pMax=pDatMin+0.1 ! for some systems (e.g. nC2+water) the lowest pressure is large. if nConverged=0, LmDif crashes.
 	DO iData=1,nPtsBipDat !	data in module BIPs
 		X(1)=XDAT(iData)
 		X(2)=1-X(1)
@@ -4123,7 +4123,7 @@ SUBROUTINE KIJDB(NC)
 		deviate(iData)=0
         if(P > pMax)then
 			if(LOUD)print*,'KijVal: Skipping P > Pmax.',P,Pmax
-			!No error indicator & no penalty, but nConverged is not incremented and deviate=0 can be "interpreted." 
+			!No error indicator & no penalty, but nConverged is not incremented and deviate=0 can be "interpreted."
 			cycle  ! Higher pressures led to too many crashes.
 		endif
         tMax=0
@@ -4132,13 +4132,13 @@ SUBROUTINE KIJDB(NC)
         enddo
         if(T > tMax)then ! Near critical or scf temperatures cause crashes and other bad behavior.
 			if(LOUD)print*,'KijVal: Skipping T > Tmax.',T,Tmax
-			!No error indicator & no penalty, but nConverged is not incremented and deviate=0 can be "interpreted." 
+			!No error indicator & no penalty, but nConverged is not incremented and deviate=0 can be "interpreted."
 			cycle  ! Higher pressures led to too many crashes.
 		endif
 		!P1=PDAT(iData)
 		IFLAG=0
 		ITMAX=MAXIT
-		INIT=1    
+		INIT=1
 		if(NC==1)then
 	        call PsatEar( T,P,chemPo,rhoLiq,rhoVap,uSatL,uSatV,ierCode)  !using y() as dummy for chemPo()
         else
@@ -4181,7 +4181,7 @@ SUBROUTINE KIJDB(NC)
 			!IFLAG=0
 			ITMAX=MAXIT
 			INIT=0
-			if(iEosOpt > 1 )then 
+			if(iEosOpt > 1 )then
 				x(1)=1e-11
 				x(2)=1-x(1)
 				ITMAX=MAXIT
@@ -4201,9 +4201,9 @@ SUBROUTINE KIJDB(NC)
 					endif
 					GammaCalc(iComp)=y(iComp)*P/(x(iComp)*pSatCalc)
 					!GexCalc=GexCalc+X(iComp)*DLOG(GammaCalc(iComp))
-				
+
 					CALL GetVp(NC,ID,iErrCode)
-				
+
 					pSatExp(iComp)=exp(vpCoeffs(iComp,1)+vpCoeffs(iComp,2)/T+vpCoeffs(iComp,3)*DLOG(T)+vpCoeffs(iComp,4)*T**vpCoeffs(iComp,5))/1000000
 					if(LOUD)print*,' KijVal(afterGetVp): iComp,T(K),PsatExp',iComp,T,pSatExp(iComp)
 					if(iData.eq.1.AND.XDAT(nPtsBipDat).eq.1)pSatExp(1)=PDAT(nPtsBipDat)
@@ -4212,8 +4212,8 @@ SUBROUTINE KIJDB(NC)
 					if(tDat(1).eq.tDat(2).AND.XDAT(1).eq.0)pSatExp(2)=PDAT(1)
 					gammaExp(iComp)= -86.86D0
 					if(y(iComp) < 0)cycle
-					if( ABS( x(iComp) ) < zeroTol .and. LOUD)pause 'KijVal: xi=0? ' 
-					if( ABS( pSatExp(iComp) ) < zeroTol .and. LOUD)pause 'KijVal: PSatExp=0? ' 
+					if( ABS( x(iComp) ) < zeroTol .and. LOUD)pause 'KijVal: xi=0? '
+					if( ABS( pSatExp(iComp) ) < zeroTol .and. LOUD)pause 'KijVal: PSatExp=0? '
 					GammaExp(iComp)=Y(iComp)*PDAT(iData)/(X(iComp)*pSatExp(iComp))
 					!GexExp=GexExp+X(iComp)*DLOG(GammaExp(iComp))
 				enddo ! iComp=1,NC
@@ -4278,7 +4278,7 @@ SUBROUTINE KIJDB(NC)
 
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
-                
+
 	hijTmp=HIJ(1,2)
 	KIJ(1,2)=0
 	KTIJ(1,2)=0
@@ -4340,11 +4340,11 @@ SUBROUTINE KIJDB(NC)
 	if(LAST==1)write(661,'(3I5,2i11, 2F9.4)')nPtsBipDat,ID(1),ID(2),idCas(1),idCas(2),Kij(1,2),KTij(1,2)
 	if(LOUDER)write( 6 ,'(3I7, 2F9.4)')nPtsBipDat,ID(1),ID(2),Kij(1,2),KTij(1,2)
 	if(LAST==1.or.LOUDER)then
-		if(iOptimize==1)print*,'tDat(i),LOG(CalcK1),LOG(exptK1),LOG(CalcK2),LOG(exptK2),dev1,dev2' 
+		if(iOptimize==1)print*,'tDat(i),LOG(CalcK1),LOG(exptK1),LOG(CalcK2),LOG(exptK2),dev1,dev2'
 		if(iOptimize==0)print*,'tDat(),x(1),xDat(),y(1),yDat(),dev1,dev2,itMax'
-	endif 
+	endif
 	pMax=5.1d0 !for most systems, anything higher than this just causes more crashes and skews the importance toward scf region
-	if(pDatMin > pMax)pMax=pDatMin+0.1 ! for some systems (e.g. nC2+water) the lowest pressure is large. if nConverged=0, LmDif crashes.           
+	if(pDatMin > pMax)pMax=pDatMin+0.1 ! for some systems (e.g. nC2+water) the lowest pressure is large. if nConverged=0, LmDif crashes.
 	rmsErr=0
 	DO iData=1,nPtsBipDat !	data in module BIPs
 		!This needs to be inside the data loop because the temperature may change.
@@ -4361,16 +4361,16 @@ SUBROUTINE KIJDB(NC)
 		if( ABS(XDAT(iData)-YDAT(iData)) < zeroTol)cycle ! That can't be for LLE.
 		LIQ=1
 		MAXIT=333
-		if(iOptimize==2)then !  
+		if(iOptimize==2)then !
 			initialize=1	! Prefer to use input calcK as initial guess. e.g., previous converged point.
 			if(iErrCode > 0 .or. iData==1)then !if there's a problem with previous point then...
-				initialize=2 ! use spinodals as initial guess 
+				initialize=2 ! use spinodals as initial guess
 				if(xDat(iData) > 0 .and. yDat(iData) > 0 )then	 ! but if the current point represents coexistence, use expt to initialize
-					calcK(1)=yDat(iData)/xDat(iData) ! use experimental value if coexistence available. 
+					calcK(1)=yDat(iData)/xDat(iData) ! use experimental value if coexistence available.
 					calcK(2)=(1-yDat(iData))/(1-xDat(iData)) ! for soluble compounds, use experimental value if possible.
 					initialize=1
 				endif
-			endif 
+			endif
 			itMax=MAXIT
 			Call LLEFL(T,P,NC,initialize,CALCK,ITMAX,zFeed,X,Y,UOF,iErrCode)
 			if( ABS(x(1)-y(1)) < 0.06d0)iErrCode=86 ! sometimes convergence is indicated when it got too close to consolute.
@@ -4379,12 +4379,12 @@ SUBROUTINE KIJDB(NC)
 			if( ABS(x(1)-y(1)) < 0.06d0)iErrCode=86 ! sometimes convergence is indicated when it got too close to consolute.
 			if(ITMAX > MAXIT-1)iErrCode=21
 			dev1=0
-			dev2=0 
+			dev2=0
 			if(iErrCode==0)then
 				if(xDat(iData) > 0)then
 					x1Expt=0.5d0-ABS(0.5d0-xDat(iData))	!automatically takes the smaller
 					x1Calc=0.5d0-ABS(0.5d0-x(1))
-					dev1=DLOG( x1Calc/x1Expt )*100  
+					dev1=DLOG( x1Calc/x1Expt )*100
 					deviate(iData) = dev1 ! use log deviate to minimize bias for bad fits.
 					nValues=nValues+1
 					nConverged=nConverged+1 ! Two dev's in above deviate. Consistent with one-sided evaluations when coexistence unavailable.
@@ -4392,7 +4392,7 @@ SUBROUTINE KIJDB(NC)
 				if(yDat(iData) > 0)then
 					y1Expt=0.5d0-ABS(0.5d0-yDat(iData))	!automatically takes the smaller
 					y1Calc=0.5d0-ABS(0.5d0-y(1))
-					dev2=DLOG( y1Calc/y1Expt )*100  
+					dev2=DLOG( y1Calc/y1Expt )*100
 					deviate(iData+nPtsBipDat) = dev2 ! use log deviate to minimize bias for bad fits.
 					nValues=nValues+1
 					nConverged=nConverged+1 ! Two dev's in above deviate. Consistent with one-sided evaluations when coexistence unavailable.
@@ -4424,7 +4424,7 @@ SUBROUTINE KIJDB(NC)
 			IF(ierCalc.ne.0 .and. LOUDER)WRITE(*,*) 'KijDevLLE: Error in POINT NUMBER = ', iData,ier(1)
 			if(ierCalc==0)calcK(1:NC)=exp( fugcL(1:NC)-fugcU(1:NC) ) !FUGC=ln(phi),
 			deltaK=calcK(1)-calcK(2)
-			if(ABS(deltaK) > zeroTol)then	 
+			if(ABS(deltaK) > zeroTol)then
 				x1Lo=(1-calcK(2))/deltaK
 				if(x1Lo < zeroTol .or. x1Lo > (1-zeroTol) )ierCalc=2
 				x1Up=x1Lo*calcK(1)
@@ -4459,13 +4459,13 @@ SUBROUTINE KIJDB(NC)
 			!WRITE(6 ,607)tDat(iData),P,X(1),Y(1),deviate(iData),ier(1)
 		else ! iOptimize = 0 => compute LLE @ T if not optimizing.
 			initialize=1  ! use the value of CALCK from expt to initialize flash iteration..
-			if(iData==1)then !If the first point in dataset, we need to start fresh. Dataset should be sorted from LoT to HiT. 
+			if(iData==1)then !If the first point in dataset, we need to start fresh. Dataset should be sorted from LoT to HiT.
 				!initialize=3 !use tangent line
 				calcK(1)=0.001	 ! x1=(1-K2)/(K1-K2) => x1=small if K1=large.
 
 				if(xDat(iData) > 0 .and. yDat(iData) > 0)then
-					calcK(1)=yDat(iData)/xDat(iData) ! use experimental value if coexistence available. 
-					calcK(2)=(1-yDat(iData))/(1-xDat(iData)) ! for soluble compounds, use experimental value if possible. 
+					calcK(1)=yDat(iData)/xDat(iData) ! use experimental value if coexistence available.
+					calcK(2)=(1-yDat(iData))/(1-xDat(iData)) ! for soluble compounds, use experimental value if possible.
 				else ! then yDat must be valid
 					initialize=2
 				endif
@@ -4506,8 +4506,8 @@ SUBROUTINE KIJDB(NC)
 		endif  !iOptimze
 	enddo
 	close(661)
-607	FORMAT( 1X,F8.2,4(1X,F9.6),2(1x,f8.2),i4 )      
-617	FORMAT( 1X,F8.2,4(1X,F9.4),2(1x,f8.2),i4 )      
+607	FORMAT( 1X,F8.2,4(1X,F9.6),2(1x,f8.2),i4 )
+617	FORMAT( 1X,F8.2,4(1X,F9.4),2(1x,f8.2),i4 )
 
 	if(nPtsBipDat < 1)pause 'KijVal: nPtsBipDat < 1??? '
 	DstdErr=SQRT(DstdErr/(nPtsBipDat))
@@ -4556,7 +4556,7 @@ SUBROUTINE KIJDB(NC)
 
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
-                
+
 	hijTmp=HIJ(1,2)
 	KIJ(1,2)=0
 	KTIJ(1,2)=0
@@ -4617,11 +4617,11 @@ SUBROUTINE KIJDB(NC)
 	if(LAST==1)write(661,'(3I5,2i11, 2F9.4)')nPtsBipDat,ID(1),ID(2),idCas(1),idCas(2),Kij(1,2),KTij(1,2)
 	if(LOUDER)write( 6 ,'(3I7, 2F9.4)')nPtsBipDat,ID(1),ID(2),Kij(1,2),KTij(1,2)
 	if(LAST==1.or.LOUDER)then
-		if(iOptimize >0)print*,'tDat(i),LOG(CalcK1),LOG(exptK1),LOG(CalcK2),LOG(exptK2),dev1,dev2' 
+		if(iOptimize >0)print*,'tDat(i),LOG(CalcK1),LOG(exptK1),LOG(CalcK2),LOG(exptK2),dev1,dev2'
 		if(iOptimize==0)print*,'tDat(),x(1),xDat(),y(1),yDat(),dev1,dev2,itMax'
-	endif 
+	endif
 	pMax=5.1d0 !for most systems, anything higher than this just causes more crashes and skews the importance toward scf region
-	if(pDatMin > pMax)pMax=pDatMin+0.1 ! e.g. nC2+water the lowest pressure is large. if nConverged=0, LmDif crashes.           
+	if(pDatMin > pMax)pMax=pDatMin+0.1 ! e.g. nC2+water the lowest pressure is large. if nConverged=0, LmDif crashes.
 	rmsErr=0
 	LIQ=1 ! only liquids.
 	if(LOUDER)print*,'KijDevSLE: Kij=',(parm(i),i=1,nParms)
@@ -4633,7 +4633,7 @@ SUBROUTINE KIJDB(NC)
 		if(iSolute==1)iSolvent=2
 		X( iSolute ) = XDAT(iData)
 		X( iSolvent)=1-X(iSolute)
-		exptXsolute=X( iSolute ) 
+		exptXsolute=X( iSolute )
 		XidSoln( iSolute )=yDat(iData)
 		XidSoln( iSolvent)=1-XidSoln(iSolute)
 		P=PDAT(iData)
@@ -4645,7 +4645,7 @@ SUBROUTINE KIJDB(NC)
 			Psat1=Pc(1)*10**( 7*(1+acen(1))/3*(1-Tc(1)/T) )
 			Psat2=Pc(2)*10**( 7*(1+acen(2))/3*(1-Tc(2)/T) )
 			P = ( x(1)*actCo(1)*Psat1+x(2)*actCo(2)*Psat2 )  ! Double to suppress vapor root.
-			if(P < 0.1d0)P=0.1d0  
+			if(P < 0.1d0)P=0.1d0
 		endif
 		if(P <= 0)print*, 'KijDevSLE: PDAT(iData)=P <= 0???'
 		do iComp=1,NC
@@ -4656,7 +4656,7 @@ SUBROUTINE KIJDB(NC)
 			fugcPure(iComp)=FUGCL(iComp)
 		enddo
 		!if(ID(1)==1921 .or. ID(2)==1921)P=pMax ! using a normal guess for P causes BubPL to get stuck in local minimum.
-		if(iOptimize>0)then ! 
+		if(iOptimize>0)then !
 			if(exptXsolute < zeroTol .or. exptXsolute > 1-zeroTol)then
 				ierCalc=3
 				print*,'exptX<0? = ',exptXsolute
@@ -4664,9 +4664,9 @@ SUBROUTINE KIJDB(NC)
 			endif
 			initialize=0  ! send the experimental value of x or previous solution if initialize=0.
 			if(iData==1.or.iErrCode>0)then
-				X( iSolute )=xDat(iData) 
+				X( iSolute )=xDat(iData)
 			else
-				X( iSolute )=xOld(iSolute) 
+				X( iSolute )=xOld(iSolute)
 			endif
 			X(iSolvent)=1-X(iSolute)
 			deviate(iData)=0
@@ -4721,7 +4721,7 @@ SUBROUTINE KIJDB(NC)
 				if(iOptimize >2)itMax=1
 				dev1=DLOG(calcXsolute/exptXsolute)
 				xOld(iSolute)=calcXsolute ! bootstrap previous temperature.
-				!dev1= DLOG( calcXsolute/(1-calcXsolute) )-DLOG( exptXsolute/(1-exptXsolute) ) ! Vladimir's metric, 
+				!dev1= DLOG( calcXsolute/(1-calcXsolute) )-DLOG( exptXsolute/(1-exptXsolute) ) ! Vladimir's metric,
 				dev1=dev1*100 ! convert to %
 				deviate(iData) = dev1 ! use log deviate to minimize bias for bad fits.
 				nConverged=nConverged+1 ! Two dev's in above deviate. Consistent with one-sided when coexistence unavailable.
@@ -4743,7 +4743,7 @@ SUBROUTINE KIJDB(NC)
 					!deviate(iData+nPtsBipDat)=0 ! no penalty for last evaluation. just compute the deviations for converged.
 				endif
 			endif !last=1 .and. compute activities
-			if(LAST==1)WRITE(661,617)iSolute,T,P,log(YDAT(iData)),LOG(calcXsolute),LOG(exptXsolute),dev1,actCo(iSolute),itMax ! 
+			if(LAST==1)WRITE(661,617)iSolute,T,P,log(YDAT(iData)),LOG(calcXsolute),LOG(exptXsolute),dev1,actCo(iSolute),itMax !
 			if(LAST==1.and.LOUDER)WRITE( 6 ,617)iSolute,T,P,log(YDAT(iData)),LOG(calcXsolute),LOG(exptXsolute),dev1 !LastCall=>writ
 			!WRITE(6 ,607)tDat(iData),P,X(1),Y(1),deviate(iData),ier(1)
 		else ! compute LLE @ T if not optimizing.
@@ -4765,13 +4765,13 @@ SUBROUTINE KIJDB(NC)
 			PAALDK = PAALDK+deviate(iData)
 			PBIASK = PBIASK+(dev1)
 			ssqErr= ssqErr+deviate(iData)*deviate(iData)
-			if(LAST==1)WRITE(661,617)iSolute,T,P,log(YDAT(iData)),LOG(calcXsolute),LOG(exptXsolute),dev1,actCo(iSolute),itMax 
+			if(LAST==1)WRITE(661,617)iSolute,T,P,log(YDAT(iData)),LOG(calcXsolute),LOG(exptXsolute),dev1,actCo(iSolute),itMax
 			if(LOUDER )WRITE( 6 ,608)T,P,x(1),xDat(iData),yDat(iData),dev1,itMax ! write deviations on LastCall
 		endif
 	enddo
 	close(661)
-608	FORMAT( 1X,F8.2,4(1X,F9.6),2(1x,f8.2),i4 )      
-617	FORMAT( 1X,i2,F8.2,5(1X,F9.4),(1x,E12.4),i4 )      
+608	FORMAT( 1X,F8.2,4(1X,F9.6),2(1x,f8.2),i4 )
+617	FORMAT( 1X,i2,F8.2,5(1X,F9.4),(1x,E12.4),i4 )
 
 	if(nPtsBipDat < 1)pause 'KijVal: nPtsBipDat < 1??? '
 	DstdErr=SQRT(DstdErr/(nPtsBipDat))
@@ -4813,7 +4813,7 @@ SUBROUTINE KIJDB(NC)
 	endif
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
-            
+
 
 	KIJ(1,1)=0
 	KTIJ(1,1)=0
@@ -4838,7 +4838,7 @@ SUBROUTINE KIJDB(NC)
 		IF(LOUDER)WRITE(*,*)T,P
 		IFLAG=0
 		ITMAX=MAXIT
-		INIT=1    
+		INIT=1
 	    call PsatEar(T,P,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCode)
 		!CALL BUBPL(T,X,NC,INIT,P,ITMAX,Y,ier)
 
@@ -4866,7 +4866,7 @@ SUBROUTINE KIJDB(NC)
 	PAADP=PAADP/nPtsBipDat
 	pBias=pBias/nPtsBipDat
 	write(*,'(7f10.3)')(parm(i),i=1,nparms),rmsErr,PAADP,pBias
-607	FORMAT(1X,F8.4,1X,F10.5,1X,F10.4,1X,i5)      
+607	FORMAT(1X,F8.4,1X,F10.5,1X,F10.4,1X,i5)
 	RETURN
 	END
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4949,7 +4949,7 @@ SUBROUTINE KIJDB(NC)
 	pause 'IDACs: Success! Read/copy results from screen.'
 	return
 	end
-	
+
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	SUBROUTINE LLITER(NC)
@@ -5022,7 +5022,7 @@ SUBROUTINE KIJDB(NC)
 
 		!do 6 i=1,1000
 		IFLAG=0
-		ITMAX=MAXIT	! must reinitialize 
+		ITMAX=MAXIT	! must reinitialize
         kPas(1:NC)=kInit(1:NC)
 
 		!    LLEFL(T,P,NC,Initialize,CALCK,ITMAX,zFeed,X,XU,UOF,iErrCode)
@@ -5031,20 +5031,20 @@ SUBROUTINE KIJDB(NC)
 			call PrintErrFlash(iErrCode)
 			write(dumpUnit,611)'LLIter: iErrFL=',iErrCode
 			INIT=3
-		else 
+		else
 			etaLo=etaPasLo
 			etaUp=etaPasUp
 			zUp=zPasUp
 			zLo=zPasLo
 			call FlashOut(NC,X,xU,T,P,itmax,Uof) !takes z,eta from common eta
 			write(601,'(F8.2,2f8.4,9E12.5)')T,P,Uof,x(1),xU(1),x(2),xU(2)
-			INIT=1 
+			INIT=1
 			kInit(1:NC)=kPas(1:NC) !Store these for bootstrapping (init=1). Be careful to stay below Tcon.
 		endif
 
 		!  NOTE:  FOR REPEAT LL CALCULATIONS IT IS ASSUMED THAT BOOTSTRAPPING
 		!         IS DESIRED.  OTHERWISE, THE USER SHOULD ANSWER 'N' TO
-		!         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN 
+		!         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN
 		!         PROGRAM BEFORE PROCEEDING.
 
 
@@ -5187,12 +5187,12 @@ SUBROUTINE KIJDB(NC)
 	READ(5,*)iRegOpt
 	nParms=iRegOpt
 	WRITE(6,*)'ENTER INITIAL GUESSES'
-	READ(5,*)(parm(I),I=1,nParms)                                          
+	READ(5,*)(parm(I),I=1,nParms)
 	!C	LWA>5*nParms+NPTS ~ 275
 	LWA=275
 	!C
 	!C  SET TOL TO THE SQUARE ROOT OF THE MACHINE PRECISION.
-	!C  UNLESS HIGH PRECISION SOLUTIONS ARE REQUIRED, 
+	!C  UNLESS HIGH PRECISION SOLUTIONS ARE REQUIRED,
 	!C  THIS IS THE RECOMMENDED SETTING.
 	!C
 	!c      TOL=SQRT(DPMPAR(1))
@@ -5230,7 +5230,7 @@ SUBROUTINE KIJDB(NC)
 
 	LAST=1 !cause KijVal to print results
 	call KIJVAL(nc,nParms,parm,deviate,PAAD1,DstdErr,Last)
-607 FORMAT(1X,F8.4,1X,F10.4,1X,F10.8,1X,F10.8,1X,F10.4,1X,i5)      
+607 FORMAT(1X,F8.4,1X,F10.4,1X,F10.8,1X,F10.8,1X,F10.4,1X,i5)
 	DO iPt=1,NPTS
 		X(1)=XDAT(iPt)
 		X(2)=1-X(1)
@@ -5238,7 +5238,7 @@ SUBROUTINE KIJDB(NC)
 		T=tDat(iPt)
 		IFLAG=0
 		ITMAX=MAXIT
-		INIT=1    
+		INIT=1
 		CALL BUBTL(T,X,NC,INIT,P,ITMAX,Y,ier)
 		IF(PDAT(iPt).GT.2.0)IER(1)=1
 		if(ier(1).ne.0)then
@@ -5271,7 +5271,7 @@ SUBROUTINE KIJDB(NC)
 	END	 ! OptiBIPs
 
 !***********************************************************************
-      
+
 	SUBROUTINE PhasEnv(NC)
 	!C
 	!C  PURPOSE:  COMPUTE phase envelope GIVEN x,y.
@@ -5281,7 +5281,7 @@ SUBROUTINE KIJDB(NC)
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	character outFile*251
-	!DIMENSION 
+	!DIMENSION
 	DIMENSION X(NMX),Y(NMX),ier(20)
 	COMMON/eta/etaL,etaV,ZL,ZV
 	COMMON/DEPFUN/DUONKT,DAONKT,DSONK,DHONKT
@@ -5324,7 +5324,7 @@ SUBROUTINE KIJDB(NC)
 
 86	continue
 	if(LOUD)pause 'These results are tabulated in TPXY.txt.'
-	CLOSE(617)   
+	CLOSE(617)
 	RETURN
 	END
 
@@ -5332,7 +5332,7 @@ SUBROUTINE KIJDB(NC)
 
 	SUBROUTINE PropTable(NC,iErrF)
 	!C
-	!C  PURPOSE:  Compile an isobaric property table in increments of T. 
+	!C  PURPOSE:  Compile an isobaric property table in increments of T.
 	!C  PROGRAMMED BY:  JRE 2/93
 	!C
 	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
@@ -5363,15 +5363,15 @@ SUBROUTINE KIJDB(NC)
 	print*,' Enter Tstart, Tstop, and Tincrement'
 	read*,tStart,tMax,tInc
 	tKelvin=tStart-tInc
-	print*,     '   T(K)  rho(g/cc)   Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R   '  
-	write(601,'(A)')'   T(K)   rho(g/cc)  Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R   SRes_R'    
+	print*,     '   T(K)  rho(g/cc)   Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R   '
+	write(601,'(A)')'   T(K)   rho(g/cc)  Z     Ares/RT   Ures/RT  (dP/dRho)/RT  CvRes/R  CpRes_R/R   SRes_R'
 1000  CONTINUE
 
 		tKelvin=tKelvin+tInc
 		!pSatEst = PC(1)*10**(  7*(1+ACEN(1))/3*( 1-TC(1)/tKelvin )  )
 		tSatEst=Tc(1)/(   1-(  LOG10(P/Pc(1))*3/( 1+acen(1) )/7  )   )
 		LIQ=1
-		if(tKelvin > tSatEst)LIQ=0 
+		if(tKelvin > tSatEst)LIQ=0
 
 		IFLAG=0
 		!CALL Fugi(tKelvin,P,X,NC,LIQ,fugcL,zFactor,ier)
@@ -5403,9 +5403,9 @@ SUBROUTINE KIJDB(NC)
 		pNew = zFactor*rGas*tKelvin/vTotCc
 		if(LOUDER)write(* ,612)tKelvin,pNew,zFactor,aRes,uRes,cmprsblty,cvRes_R,CpRes_R
 		!write(61,612)tKelvin,pNew,zFactor,aRes_RT,uRes_RT,cmprsblty,cvRes_R,CpRes_R,hRes_RT
-612	FORMAT(2F9.3,1x,1(F7.4),8(F9.4,1X))      
+612	FORMAT(2F9.3,1x,1(F7.4),8(F9.4,1X))
 	if(tKelvin < tMax)GOTO 1000
-610	FORMAT(F9.2,1x,2(F8.5),8(F9.4,1X))      
+610	FORMAT(F9.2,1x,2(F8.5),8(F9.4,1X))
 602	FORMAT(' COMPONENT IS',2X,A20,2X,'ID NO. IS  ',i5)
 603	FORMAT(2X,'LIQUID X',2X,'Upper Y',1X,'fugacityLo(MPa)',1X,'fugacityUp(MPa)    lnPhiLo',3X,'lnPhiUp')
 605 FORMAT(3X,'K-RATIO',7X,'T(K)',3X,'P(MPa)',2X,'etaLo',4X,'etaUp',6X,'ZLo  ',6X,'ZUp')
@@ -5414,7 +5414,7 @@ SUBROUTINE KIJDB(NC)
 	if(LOUDER)WRITE(*,*)'Output is in:',TRIM(OutFile)
 	if(LOUDER)pause 'Success! cf. PropTable.txt'
 	close(601)
-	RETURN		
+	RETURN
 	END
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5424,7 +5424,7 @@ SUBROUTINE KIJDB(NC)
 	!C  PURPOSE:  ITERATIVE CALCULATION OF SOLUBILITY OF SOLVENT IN
 	!C    A LIQUID POLYMER BASED ON ASSUMPTION OF ZERO POLYMER IN UPPER PHASE
 	! Method:
-	! wt fractions are used as the basis for computation. Molar K-Values are converted 
+	! wt fractions are used as the basis for computation. Molar K-Values are converted
 	! to wt fraction for flash computation then converted back for FUGI calculations.
 	! Based on vlKwt, we estimate the wFrac of solvents in the polymer. Then we call
 	! FUGI to get new vlKwt and compare ther new wFrac's. Iterate until self-consistent.
@@ -5524,13 +5524,13 @@ SUBROUTINE KIJDB(NC)
 	if(ABS(sumz-1).gt.1e-8)then
 		if(LOUD)pause 'psiter: sumz .ne. 1'
 	endif
-            
+
 	!C  GET FUGACITY OF SOLVENT IN THE SOLVENT-RICH PHASE
     CALl Fugi(T,P,yMol,NC,LIQSOL,FUGC,ZV,ierFug)
 	do i=1,NC
 		chemPoVap(i)=fugc(i)
 	enddo
-      
+
 	IF(INIT.EQ.0)THEN
 		write(*,*)'Enter Picard factor (e.g. 0.5)'
 		read(*,*)alpha
@@ -5560,7 +5560,7 @@ SUBROUTINE KIJDB(NC)
 
 	!C SET BLENDING FACTOR FOR PICARD ITERATION
 	!ALPHA=+0.4 !This value (-0.1) or zero is necessary for convergence criteria of C3. Octane works well
-	!FYI: for TriEtCitrate+PLA50K, alpha=+0.5. Dunno other examples. 
+	!FYI: for TriEtCitrate+PLA50K, alpha=+0.5. Dunno other examples.
     !Iterate until ABS(chngMax) < 1E-5 where chngMax is the max%dev in wFrac for any component.
 	ITER=0
 20	ITER=ITER+1
@@ -5587,7 +5587,7 @@ SUBROUTINE KIJDB(NC)
 	DO I=iPolyComp,NC
 		X(I)=Z(I)*XPOLY
 	enddo
-	call WtFracToMolFrac(X,xMol,avgMwLiq,NC) 
+	call WtFracToMolFrac(X,xMol,avgMwLiq,NC)
 
 	LIQ=1
 	CALl Fugi(T,P,xMol,NC,LIQ,FUGC,zLo,ierFug)
@@ -5617,10 +5617,10 @@ SUBROUTINE KIJDB(NC)
 		iErrCode=3
 		GOTO 86
 	ENDIF
-            
+
 	if(LOUD)write(*,*)'REQUIRED NUMBER OF ITERATIONS WAS:',ITER
 
-	! NOW PERFORM SINGLE ITERATION TO ESTIMATE POLYMER IN VAPOR      
+	! NOW PERFORM SINGLE ITERATION TO ESTIMATE POLYMER IN VAPOR
 	SUMY=0
 	DO I=iPolyComp,NC
 		VLK(I)=EXP(FUGC(I))	  !this is later divided by exp(fugcVap)
@@ -5631,7 +5631,7 @@ SUBROUTINE KIJDB(NC)
 	if(sumy.lt.1)then
 		do i=1,nSolvComps
 			Y(i)=y(i)*(1-SUMY)
-		enddo        
+		enddo
 	else
 		errMsg(5)='ERROR IN PS, ALL VAP, TRY LOWER P?'
 		iErrCode=5
@@ -5641,7 +5641,7 @@ SUBROUTINE KIJDB(NC)
 		GOTO 86
 	ENDIF
 
-	call WtFracToMolFrac(Y,yMol,avgMwVap,NC) 
+	call WtFracToMolFrac(Y,yMol,avgMwVap,NC)
 
 	CALl Fugi(T,P,yMol,NC,LIQSOL,chemPoVap,zUp,ierFug)
 	SUMY=0
@@ -5652,7 +5652,7 @@ SUBROUTINE KIJDB(NC)
 		Y(I)=X(I)*VLK(I)
 		SUMY=SUMY+Y(I)
 	enddo
-	if(SUMY > 1)SUMY=1 
+	if(SUMY > 1)SUMY=1
 	do i=1,nSolvComps
 		rLnVlk(i)=LOG(vlk(i))
 		Y(i)=Y(I)*(1-SUMY)
@@ -5673,7 +5673,7 @@ SUBROUTINE KIJDB(NC)
 
 	!C  NOTE:  FOR REPEAT PS CALCULATIONS IT IS ASSUMED THAT BOOTSTRAPPING
 	!C         IS DESIRED.  OTHERWISE, THE USER SHOULD ANSWER 'N' TO
-	!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN 
+	!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN
 	!C         PROGRAM BEFORE PROCEEDING.
 
 	INIT=1
@@ -5775,15 +5775,15 @@ SUBROUTINE KIJDB(NC)
 86	continue
 	print*,'OutFile=',TRIM(outFile)
 	pause 'Check results in OutFile.'
-	CLOSE(618)   
+	CLOSE(618)
 	close(62)
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x, 'etaL',6x, 'etaV')
 601	FORMAT(1X,1(F7.2,2X,F10.6,1X),4(F9.5,1X),i5)
 602	FORMAT(' COMPONENT IS',2X,A20,2X,'ID NO. IS  ',i5)
-603	FORMAT(4X,'LIQUID X',4X,'VAPOR Y',3X,'fugcL(MPa)',4X,'fugcV(MPa)')           
+603	FORMAT(4X,'LIQUID X',4X,'VAPOR Y',3X,'fugcL(MPa)',4X,'fugcV(MPa)')
 604	FORMAT(4X,2(F7.4,4X),2(F7.4,8X))
 606	FORMAT(F12.5,3X,F7.2,1X,F7.4,1X,4(F6.4,3X))
-610	FORMAT(21X,4(F10.4,4X))      
+610	FORMAT(21X,4(F10.4,4X))
 	RETURN
 	END
 
@@ -5807,7 +5807,7 @@ SUBROUTINE KIJDB(NC)
 	write(*,*)'Enter filename for T(k),xAi,(xFrac(I),I=1,nComps)'
 	read(*,*)fileNameXa
 	write(*,*)'Enter guess for hIJ'
-	read(*,*)bipHij 
+	read(*,*)bipHij
 	open(55,file=fileNameXa)
 	!open(55,file=fileNameXa,ACCESS='READ',ERR=86)
 	read(55,*,END=86,ERR=86)nDbaseXa !error here means no file so skip cc search.
@@ -5981,10 +5981,10 @@ SUBROUTINE KIJDB(NC)
 	pause 'These results are tabulated in the output file.'
 	!restore stored nc,id
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x )
-606	FORMAT(1X,F8.4,1X,F10.2)      
+606	FORMAT(1X,F8.4,1X,F10.2)
 607	FORMAT(1X,i6,1X,<nParms>F10.7,1X,<nParms>F10.7,f10.2,f10.6,f10.2,f10.2,1x,a20)
 608 FORMAT(1X,I6,1X,<nParms>F10.4,1X,A20)
-  
+
 	RETURN
 	END
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -6012,7 +6012,7 @@ SUBROUTINE KIJDB(NC)
 	WRITE(52,*)'ENTER A,B FOR SOLID SUB PRESSURE:ln(Pmpa)=A-B/TK'
 	write(52,*)vpaSolid, vpbSolid
 	y1CalcOld=0
-		
+
 	WRITE(*,*)'What is the file name >:(?'
 	WRITE(*,*)'The format of the file is thusly:'
 	WRITE(*,*)'First Line:	# of data pointes <tab> # of components'
@@ -6022,20 +6022,20 @@ SUBROUTINE KIJDB(NC)
 	WRITE(52,*)'What is the file name >:(?'
 	write(52,*)Input_File_Name
 	open(69, file="SC_Results.txt")
-	!WRITE(79,607)etaL,ZL,fugLi,fugcL,(X(J),J=1,NC),&			fugcL(J),J=1,NC)	
+	!WRITE(79,607)etaL,ZL,fugLi,fugcL,(X(J),J=1,NC),&			fugcL(J),J=1,NC)
 	WRITE(69,*)'T	P	etaL	zL	x(1)'
-	open(68, file=Input_File_Name)	
+	open(68, file=Input_File_Name)
 	read(68,*)nMaxIter
 !1000  CONTINUE	Disabled when I started reading data from the file
 	DO Iter_File_Data=1,nMaxIter
-	
+
 	ierScf=0
 	!      WRITE(6,*)'ENTER TEMPERATURE(KELVIN) AND PRESSURE(MPa)   '
 	!      READ(5,*)T,P	Disabled when I started reading data from the file
 	READ(68,*)T,P,(X(J),J=1,NC)
 	pSatSolid=exp(vpaSolid-vpbSolid/T)
 	poynting=exp( (P-pSatSolid)*vSolidCc_mol/rGas/T)
- 
+
 	!     WRITE(6,*)'ENTER Guess for SCF COMPOSITIONS (comp1 = solid)'
 	!     READ(5,*)(X(J),J=1,NC)	Disabled when I started reading data from the file
 	dev=1111
@@ -6095,7 +6095,7 @@ SUBROUTINE KIJDB(NC)
 			WRITE(*,606)T,P,etaL,ZL
 			write(*,*)' '
 			!if(LOUD)PAUSE
-		enddo    
+		enddo
 		WRITE(*,*)'DEPARTURE FUNCTIONS: (Hscf-Hig)/NkT  (Sscf-Sig)/Nk'
 		WRITE(*,610)DHL,DSL
 	endif
@@ -6107,7 +6107,7 @@ SUBROUTINE KIJDB(NC)
 605   FORMAT(3X,'T(K)   ',4X,'P(MPa)',3X,'eta',6X,'zFactor')
 606   FORMAT(f7.2,3X,F9.3,1X,F8.5,1X,2(F8.5,3X),2(F9.4,1X))
 607	FORMAT(f4.3,' ',f7.5,' ',2(f12.9,' '),4(f12.9,' '))
-610   FORMAT(21X,4(F10.4,4X))      
+610   FORMAT(21X,4(F10.4,4X))
 !	Disabled when I started reading data from the file
 !     WRITE(6,*)'REPEAT SCF CALCULATIONS? Y/N?'
 !     READ(*,'(A1)')ANSWER
@@ -6150,7 +6150,7 @@ SUBROUTINE KIJDB(NC)
 	READ(*,*)(KI(I),I=1,NC)
 	do J=1,nc
 		S(J)=KI(J)
-	ENDDO        
+	ENDDO
 
 1000 CONTINUE
 	WRITE(*,*)'ENTER TEMPERATURE(KELVIN) '
@@ -6161,7 +6161,7 @@ SUBROUTINE KIJDB(NC)
 
 	IFLAG=0
 	ITMAX=MAXIT
-	CALL LLVE(T,zFeed,NC,INIT,P,ITMAX,Y,X,X2,ier,UOF,S)      
+	CALL LLVE(T,zFeed,NC,INIT,P,ITMAX,Y,X,X2,ier,UOF,S)
 
 	DO I=1,6
 		IF (ier(I).NE.0)IFLAG=1
@@ -6185,7 +6185,7 @@ SUBROUTINE KIJDB(NC)
 
 	!  NOTE:  FOR REPEAT TP CALCULATIONS IT IS ASSUMED THAT BOOTSTRAPPING
 	!         IS DESIRED.  OTHERWISE, THE USER SHOULD ANSWER 'N' TO
-	!         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN 
+	!         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN
 	!         PROGRAM BEFORE PROCEEDING.
 
 	INIT=1
@@ -6208,7 +6208,7 @@ SUBROUTINE KIJDB(NC)
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	!CHARACTER*12 FN
 	DIMENSION xFrac(NMX),FUGC(NMX) !,yFrac(NMX),yy(nmx),xx(nmx),
-	integer LIQ						   
+	integer LIQ
 	!DOUBLE PRECISION parm(nParms),deviate(maxPts) !,temParm(nParms)
 	character*77 errMsg(12) !,outFile
 	!DIMENSION GammaCalc(nmx),GammaExp(nmx),pSatExp(nmx)
@@ -6254,7 +6254,7 @@ SUBROUTINE KIJDB(NC)
 			goto 10
 		endif
 		write(*,*)' ThermoCheck: rho,aRes_RT',rhoMol_cc,aRes_RT
-		!Check that Gdep = SUM(xi*lnPhi_i) 
+		!Check that Gdep = SUM(xi*lnPhi_i)
 		Gdep_RT=aRes_RT+zFactor-1 -LOG(zFactor)
 		Gcalc=SUM( xFrac(1:nComps)*FUGC(1:nComps) )
 		gDev=(Gcalc-Gdep_RT)/Gdep_RT*100
@@ -6269,7 +6269,7 @@ SUBROUTINE KIJDB(NC)
 		CALL FuVtot(isZiter,tKelvin,1/rhoMinus,xFrac,nComps,FUGC,Z,aMinus,uRes,iErrMinus)
 		write(*,*)' ThermoCheck: rhoMinus,aMinus',rhoMinus,aMinus
 		Zcalc=1+rhoMol_cc*(aPlus-aMinus)/(rhoPlus-rhoMinus)
-		zDev=(Zcalc-zFactor)   ! don't divide by zFactor here because 
+		zDev=(Zcalc-zFactor)   ! don't divide by zFactor here because
 		!write(*,form610)' ThermoCheck: aRes_RT,aPlus,aMinus',aRes_RT,aPlus,aMinus
 		write(*,form610)' ThermoCheck: Z,Zcalc,zDev%',zFactor,zCalc,zDev			! Setting tol=5.D-5 makes Z+/- 0.00005.
 		if( ABS(zDev) > 5.D-5 )pause 'ThermoCheck: OOPS! zFactor is inconsistent!'	! Imprecision due to iterative nature of MEM2.
@@ -6361,7 +6361,7 @@ SUBROUTINE KIJDB(NC)
 		write(621,601)T,P,X(1),Y(1),etaL,etaV,ier(1)
 		if(iSpead)write(62,'(6(f11.4,a1),i5)')T,tabChar,P,tabChar,X(1),tabChar,Y(1),tabChar,etaL,tabChar,etaV,tabChar,ier(1)
 		if(ier(1).eq.0)init=1
-	enddo 
+	enddo
 	X(1)=x1(nx)
 	X(2)=1-x1(nx)
 	ITMAX=MAXIT
@@ -6378,15 +6378,15 @@ SUBROUTINE KIJDB(NC)
 86	continue
 	print*,'OutFile=',TRIM(outFile)
 	pause 'Check results in OutFile.'
-	CLOSE(621)   
+	CLOSE(621)
 	close(62)
 600	format('   T(K)', 4x, '  P(MPA)', 7x, 'x', 9x, 'y', 7x, 'etaL',6x, 'etaV')
 601	FORMAT(1X,1(F7.2,2X,F10.6,1X),4(F9.5,1X),i5)
 602	FORMAT(' COMPONENT IS',2X,A20,2X,'ID NO. IS  ',i5)
-603	FORMAT(4X,'LIQUID X',4X,'VAPOR Y',3X,'fugcL(MPa)',4X,'fugcV(MPa)')           
+603	FORMAT(4X,'LIQUID X',4X,'VAPOR Y',3X,'fugcL(MPa)',4X,'fugcV(MPa)')
 604	FORMAT(4X,2(F7.4,4X),2(F7.4,8X))
 606	FORMAT(F12.5,3X,F7.2,1X,F7.4,1X,4(F6.4,3X))
-610	FORMAT(21X,4(F10.4,4X))      
+610	FORMAT(21X,4(F10.4,4X))
 	RETURN
 	END
 
@@ -6443,7 +6443,7 @@ SUBROUTINE KIJDB(NC)
 
 		!C  NOTE:  FOR REPEAT VL CALCULATIONS IT IS ASSUMED THAT BOOTSTRAPPING
 		!C         IS DESIRED.  OTHERWISE, THE USER SHOULD ANSWER 'N' TO
-		!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN 
+		!C         THE REPEAT QUESTION BELOW AND GO BACK THROUGH THE MAIN
 		!C         PROGRAM BEFORE PROCEEDING.
 
 		INIT=1
@@ -6481,7 +6481,7 @@ SUBROUTINE KIJDB(NC)
 	write(*,*)'First tabulate general curve, then point by point input.'
 	write(*,*)' Enter 0 for default (from TrMin-Tr=0.95) or 1 for hi,lo,inc'
 	read(*,*)iAns
-	if(iAns==0)then 
+	if(iAns==0)then
 		write(*,'(a,f7.2,a)')' Tc=',TC(1),'K. Enter TrMin (e.g. 0.45)'
 		read(*,*) TrMin
 		nSteps=10
@@ -6530,17 +6530,17 @@ SUBROUTINE KIJDB(NC)
 	write(631,*)'Tc(K)',tabChar,'PcMPa',tabChar,'rhoc(g/cc)',tabChar,'Zc',tabChar,'etac'
 	write( * ,'(F8.2,a1,5(F9.6,a1))')tc(1),tabChar,pc(1),tabChar,rhoc,tabChar,Zc(1),tabChar,etac
 	write(631,'(F8.2,a1,5(F9.6,a1))')tc(1),tabChar,pc(1),tabChar,rhoc,tabChar,Zc(1),tabChar,etac
-	close(631) 
+	close(631)
 	if(LOUDER)write(*,*) 'Your results are in ',TRIM(outFile)
 	if(LOUDER)pause
-86	return 
+86	return
 	end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine SortTable(table,maxRows,nRows,nCols,keyCol,LoToHi)
 	! Purpose: Sort according to keyCol using NumRecp program indexx().
     ! LoToHi=1 if you want to sort from smallest(least positive) to largest.
-	! 
+	!
 	Implicit DoublePrecision(a-h,o-z)
 	DoublePrecision	table(maxRows,nCols),table2(maxRows,nCols),sortVector(maxRows)
     Integer sortIndex(maxRows)
@@ -6562,7 +6562,7 @@ SUBROUTINE KIJDB(NC)
 			table2(i,j)=table(sortIndex(i),j)
         enddo
     enddo
-    table=table2	! copy back to original input.	 
+    table=table2	! copy back to original input.
     return
 	end
 ! CALL SROWR (NROW, NCOL, X, LDX, ICOMP, IORDR, IRET, NKEY,INDKEY, IPERM, NGROUP, NI, NRMISS)
@@ -6571,7 +6571,7 @@ SUBROUTINE KIJDB(NC)
 ! X — NROW by NCOL matrix.   (Input, if IRET = 1; input/output if IRET = 0)
 ! On input, X contains the matrix to be sorted. If IRET = 0, the output X contains the sorted matrix.
 ! LDX — Leading dimension of X exactly as specified in the dimension statement of the calling program.   (Input)
-! ICOMP — Option giving the method of comparison of the row vectors.   (Input) 
+! ICOMP — Option giving the method of comparison of the row vectors.   (Input)
 ! ICOMP	Action
 ! 0	Elementwise, by algebraic values
 ! 1	Elementwise, by absolute values
@@ -6590,13 +6590,13 @@ SUBROUTINE KIJDB(NC)
 ! IPERM — Permutation vector of length NROW specifying the rearrangement of the rows.   (Output)
 ! IPERM(I) = J means row I of the sorted X is row J of the unsorted X.
 ! NGROUP — Number of groups.   (Output, if IRET £ 1)
-! The rows of the sorted X are partitioned into groups. A group contains rows that are equal 
+! The rows of the sorted X are partitioned into groups. A group contains rows that are equal
 !	with respect to the method of comparison. NGROUP is the number of groups of different rows.
 ! NI — Vector of length NGROUP containing the number of rows in each group.   (Output, if IRET £ 1)
-! The first NI(1) rows of the sorted X are group number 1. The next NI(2) rows of the sorted X are group number 2. ... 
-!	The last NI(NGROUP) rows of the sorted X are group number NGROUP. 
-!	If NGROUP is not known prior to the invocation of this routine, NROW(an upper bound for NGROUP) can be used as the 
+! The first NI(1) rows of the sorted X are group number 1. The next NI(2) rows of the sorted X are group number 2. ...
+!	The last NI(NGROUP) rows of the sorted X are group number NGROUP.
+!	If NGROUP is not known prior to the invocation of this routine, NROW(an upper bound for NGROUP) can be used as the
 !	dimension of NI. If IRET ³ 2, NI is not referenced and can be a vector of length one.
 ! NRMISS — Number of rows that contained NaN in the columns of X used in the sort.   (Output)
 ! These rows are considered as a separate group from the other NGROUP groups and are put as the last NRMISS rows of the sorted X.
-! 
+!

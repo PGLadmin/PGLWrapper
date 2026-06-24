@@ -1,18 +1,18 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE ModelSettings ! Keep everything in one place so adding a model is easier. See also QUERYMODEL(PGLDLL.f90).
 	parameter(nModels=23)
-	integer nParInert(nModels),nParAssoc(nModels),nParPolar(nModels),nParMix(nModels) ! 
+	integer nParInert(nModels),nParAssoc(nModels),nParPolar(nModels),nParMix(nModels) !
 	Character*15 EosName(nModels)
-	!              1     2       3       4          5          6         7           8              9        10       
+	!              1     2       3       4          5          6         7           8              9        10
 	data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','FloryMEM2',' NRTL','SpeadGamMEM2','SPEAD11','PcSaft',&
 			'tcPRq','EgcESD','EgcEsdTb','TffSPEAD','EgcPcSaft','EgcPcSafTb','tcPR-GE(W)','MEMSCED','LsgMem2','SptPcSaft',&
-	!             11    12      13         14          15          16             17        18       19        20       
+	!             11    12      13         14          15          16             17        18       19        20
 			'tcPPR78','NRTLPA','ESD2'/
-	!             21    22      23         24          25          26             27        28       29        30       
+	!             21    22      23         24          25          26             27        28       29        30
 	!               1 2 3 4 5  6 7 8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
 	data nParInert /0,3,0,3,11,0,0,11,0, 3, 4, 3,11, 0, 3, 3, 3, 3, 3, 3, 3, 0,3/	! e.g. m, sigma, eps/kB. for PcSaft & ESD
-	data nParAssoc /0,2,0,2, 0,0,0, 0,0, 2, 0, 2, 0, 0, 2, 2, 2, 2, 2, 2, 2, 6,2/	! GC&Tff EOS's have zero adj par's 
-	data nParPolar /0,0,0,0, 0,0,0, 0,0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,0/	! GC&Tff EOS's have zero adj par's 
+	data nParAssoc /0,2,0,2, 0,0,0, 0,0, 2, 0, 2, 0, 0, 2, 2, 2, 2, 2, 2, 2, 6,2/	! GC&Tff EOS's have zero adj par's
+	data nParPolar /0,0,0,0, 0,0,0, 0,0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,0/	! GC&Tff EOS's have zero adj par's
 	data nParMix   /1,1,3,1, 1,1,1, 1,1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 3,1/	! Mostly kij.
 	! nParMix:
     !    PcSaft(10): lij(Tang-Gross,2010) and kij_assoc are also defined but we don't use them in PGLDLL for now. JRE 20230822
@@ -34,15 +34,15 @@ MODULE GlobConst
 	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0,third=1.d0/3,SQRT2=1.414213562373095d0)
 	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)
 	          !avoNum[=]cm3/(nm3*mol), kB[=]MPa.nm3/K. cf. PGL6ed, Table 6.1
-	!          https://www.nist.gov/si-redefinition 
-	PARAMETER (nCritSet=1881,tabChar=char(9)) ! This is the number of compounds that should be found in LoadCritParmsDb. 
+	!          https://www.nist.gov/si-redefinition
+	PARAMETER (nCritSet=1881,tabChar=char(9)) ! This is the number of compounds that should be found in LoadCritParmsDb.
 	!          Change this parameter if you add more compounds.	It must be consistent or you will get a LOAD error.
     !nmx is the max allowed number of Compounds
 	!integer :: idComp(nmx),nsTypes(nmx),IDs(nsx),IDsBase(nmx,nsx),siteNum(nmx,maxTypes)
 	!integer :: nComps !, nsTypesTot,iTPT,iFlagFF,nNormGrid
 
 	DoublePrecision :: Tc(nmx),Tb(nmx), Pc(nmx), ACEN(nmx), Zc(nmx),TcEos(nmx), PcEos(nmx), ACENEos(nmx), ZcEos(nmx), rMw(nmx)
-	DoublePrecision bVolCc_mol(nmx)	!vdW molar volume of molecule. 
+	DoublePrecision bVolCc_mol(nmx)	!vdW molar volume of molecule.
 	DoublePrecision solParm(nmx)    !solubility parameter in (J/cm3)^0.5=MPa^0.5
 	DoublePrecision vLiq(nmx)		!liquid molar volume in cm3/mol
 	DoublePrecision tKmin(nmx)		!model's minimum recommended temperature, especially for P^vp. Only warning. e.g., SLE OK.
@@ -51,22 +51,24 @@ MODULE GlobConst
 	character*30 NAME(nmx)
 	character*5 class(nmx) ! Allowed: norml,heavy,polar,assoc,Asso+,gases,siloa,salty,ormet,metal,inorg (cf. PGL6edClasses.xls)
     Logical, SAVE :: LOUD,CheckDLL,isTDE   !LOUD=.TRUE. means writing debug info. CheckDLL=.TRUE. means direct debug info to DebugDLL.txt; isTDE means the call is coming from TDE
-	LOGICAL DEBUG, bESD, bTPT, bPcSaft 
-	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit 
-	DoublePrecision etaPass 
+	LOGICAL DEBUG, bESD, bTPT, bPcSaft
+	integer ID(nmx), idCas(nmx), idTrc(nmx), iEosOpt, initEos, dumpUnit
+	DoublePrecision etaPass
     DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. Set in the Get_ function for the EOS
-	DoublePrecision etaPure(nmx) !store eta for each compound at P=0.1MPa and tKmin(K). 
-	Character*9  form600 
-	Character*12 form601 
-	Character*13 form602 
-	Character*11 form610 
-	Character*14 form611 
-	Character*15 form612 
-	Character*15 form613 
+	DoublePrecision etaPure(nmx) !store eta for each compound at P=0.1MPa and tKmin(K).
+	Character*9  form600
+	Character*12 form601
+	Character*13 form602
+	Character*11 form610
+	Character*14 form611
+	Character*15 form612
+	Character*15 form613
 	data form600,form601,form602/'(10E12.4)','(i8,10E12.4)','(2i8,9E12.4)'/
-	data form610,form611,form612,form613/'(a,9E12.4)','(a,i8,9E12.4)','(a,2i8,9E12.4)','(a,3i8,9E12.4)'/ 
+	data form610,form611,form612,form613/'(a,9E12.4)','(a,i8,9E12.4)','(a,2i8,9E12.4)','(a,3i8,9E12.4)'/
 	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS AND DATA !!!!!!!!!!!!!
 	!LOUD = .FALSE.
+    !Need to expose for linking in PGLDLLTest.exe. Edit line to disable (e.g. add space before $) to compile in VS Code for PGLEOS.exe
+    !DEC $ ATTRIBUTES DLLEXPORT :: masterDir,PGLinputDir
 contains
 	integer function SetNewEos(newEosOpt)
 	!returns 0 if no error.
@@ -82,7 +84,7 @@ contains
 	end function SetNewEos
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	FUNCTION ToUpper(str) RESULT(upperStr)
-	  !Purpose: convert 
+	  !Purpose: convert
 	  IMPLICIT NONE
 	  CHARACTER(LEN=*), INTENT(IN) :: str
 	  CHARACTER(LEN=LEN(str)) :: upperStr
@@ -93,17 +95,17 @@ contains
 			upperStr(i:i) = CHAR(ICHAR(str(i:i)) - 32)
 		 END IF
 	  END DO
-	END FUNCTION ToUpper	
+	END FUNCTION ToUpper
 END MODULE GlobConst
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) basis). 1st Sums sites per molecule then  molecules.
-	USE GlobConst, only:nmx,bTPT,bESD,iEosOpt,LOUD,dumpUnit,dumpFile ! nmx is the maximum number of compounds, typically 55. 
+	USE GlobConst, only:nmx,bTPT,bESD,iEosOpt,LOUD,dumpUnit,dumpFile ! nmx is the maximum number of compounds, typically 55.
 	implicit NONE
-	integer maxTypes,nsx,maxTypesGlobal,localPool	
-	PARAMETER (maxTypes=44,nsx=maxTypes,maxTypesGlobal=999) 
+	integer maxTypes,nsx,maxTypesGlobal,localPool
+	PARAMETER (maxTypes=44,nsx=maxTypes,maxTypesGlobal=999)
     parameter(localPool=9999) !this must be long enough to cover all SpeadMd site types (e.g. 1401=methanol hydroxy)
-	!maxTypes is the max # of site types for all molecules. maxTypes > sum^NC(count(Types))	
-	!nsx = maxTypes (dunno why redundant), nbx=Max Bonds, 
+	!maxTypes is the max # of site types for all molecules. maxTypes > sum^NC(count(Types))
+	!nsx = maxTypes (dunno why redundant), nbx=Max Bonds,
 	DoublePrecision eDonorKcal_mol(nmx,maxTypes),eAcceptorKcal_mol(nmx,maxTypes)
 	DoublePrecision eHbKcal_mol(nmx,maxTypes) ! eHbKcal_mol=(eDonorKcal_mol+eAcceptorKcal_mol)/2
 	DoublePrecision bondVolNm3(nmx,maxTypes),bondRate(nmx,maxTypes)
@@ -113,8 +115,8 @@ MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) ba
 	DoublePrecision aBipAD(maxTypes,maxTypes),aBipDA(maxTypes,maxTypes) !association bips
 	DoublePrecision XA(nmx,maxTypes),XD(nmx,maxTypes),XC(nmx,maxTypes),cvAssoc
 	LOGICAL LOUDERWert,bNeedFullWertheim
-	 
-	!localType is an index of just the types occuring in the current mixture.  
+
+	!localType is an index of just the types occuring in the current mixture.
 	!e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
 	!idLocalType points back to localType for double-linking. E.g. idLocalType(1)=101.
 contains
@@ -131,8 +133,8 @@ contains
 	! dAlpha=dLn(alpha)/dLn(rho)
 	! Miscellaneous:
 	! alpha=eta*rdf*kAD*yHB => (eta/alpha)*(dAlpha/deta) = 1+(eta/rdf)*(dRdf/deta)
-	! dLng = (eta/rdf)*(dRdf/deta)     
-	! iRdfOpt	- option for characterizing the radial distribution funciton at contact.	
+	! dLng = (eta/rdf)*(dRdf/deta)
+	! iRdfOpt	- option for characterizing the radial distribution funciton at contact.
 	!			= 0, not specified => error
 	!			= 1, ESD form
 	!			= 2, Carnahan-Starling form
@@ -159,12 +161,11 @@ contains
 	!dLng = (eta/rdf)*(dRdf/deta) = dLng/dLneta
 	k0=1.9d0
 	if(iEosOpt==23)k0=esd2k0
-	denom=1-k0*eta 
+	denom=1-k0*eta
 	denom2=denom*denom
 	void=1-eta
 	void2=void*void
-	void4=void2*void2    
-
+	void4=void2*void2
 	dLng=k0*eta/denom
 	if(iRdfOpt==2)dLng=eta*( 3.d0/void-1.d0/(2.d0-eta) )
 	if(iRdfOpt==3)dLng= -1.d0
@@ -192,18 +193,18 @@ MODULE CritParmsDb
 	Integer ndb
 	Parameter (ndb=3000)
 	character*30, SAVE:: NAMED(ndb)	!LoadCrit() loads ParmsCrit database.
-	character*5, SAVE:: classDb(ndb) 
-	character*11, SAVE:: formDb(ndb) 
-	Integer, SAVE:: IDnum(ndb),CrIndex(99999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane. 
+	character*5, SAVE:: classDb(ndb)
+	character*11, SAVE:: formDb(ndb)
+	Integer, SAVE:: IDnum(ndb),CrIndex(99999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane.
 	DoublePrecision, SAVE:: TCD(ndb),PCD(ndb),ACEND(ndb),TbD(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb)
-	LOGICAL isReadCrit 
+	LOGICAL isReadCrit
 	! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
 	! CrIndex(idDippr)=line in ParmsCrit where idDippr was found. line=[1,nCritSet]
 END MODULE CritParmsDb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE BIPs	 ! For molecular level binary interaction parameters.
-	USE GlobConst, only: nmx 
+	USE GlobConst, only: nmx
 	integer nConverged,maxPts,nPtsBipDat
 	parameter(maxPts=4999) ! this defines the max allowed # of experimental data points in a single binary system.
 	DoublePrecision KIJ(nmx,nmx),KTIJ(nmx,nmx),kETAij(nmx,nmx) !usual dispersive BIPs & k^eta_ij(for speadmd)
@@ -211,7 +212,7 @@ MODULE BIPs	 ! For molecular level binary interaction parameters.
 	DoublePrecision HIJ(nmx,nmx),HTIJ(nmx,nmx) !molecular hBonding BIPs for ESD. (Spead aBipAd,aBipDa are site based.)
 	DoublePrecision Lij(nmx,nmx) !covolume adjustment.  bVolMix=sum(sum(xi*xj*bij)); bij=(1-Lij)*(bi+bj)/2
 	DoublePrecision xsTau(nmx,nmx),xsTauT(nmx,nmx),xsAlpha(nmx,nmx)	!this is for the PRWS/xsNRTL mixing rule.
-	DoublePrecision TDAT(maxPts),PDAT(maxPts),XDAT(maxPts),YDAT(maxPts),gamDat(maxPts) !,deviate(maxPts) 
+	DoublePrecision TDAT(maxPts),PDAT(maxPts),XDAT(maxPts),YDAT(maxPts),gamDat(maxPts) !,deviate(maxPts)
 	!can't include Deviate() cuz it's an argument for LmDif.
 	DoublePrecision pDatMin,pDatMax
 	Integer id1Dat(maxPts),id2Dat(maxPts)  ! sometimes need to indicate whether the data are for comp1 or comp2. e.g. SLE.

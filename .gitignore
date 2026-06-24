@@ -1,7 +1,15 @@
 *Debug/
 *Release/
+/Output/
+*.i90
 *.obj
 *.suo
 *.u2d
 *.user
+*.mod
+*_genmod.f90
+*_genmod.smod
+scan-output*
 PGLDll.dll
+out/
+.vs/

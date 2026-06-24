@@ -48,7 +48,7 @@ end
 	! Notes:   inFile for inUnit must be opened before calling.
 	!	       var(maxLines,maxVars) must be declared in calling routine with exactly these dimensions.
 	!		   datasets may be read with or without header per dataset.
-	! 
+	!
 	Implicit DoublePrecision(a-h,o-z)
 	DoublePrecision	var(maxLines,maxVars)
 	Character*77 header77,dumString !,inFile77
@@ -80,7 +80,7 @@ end
 	end
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	Subroutine GetTmHfus(id,Tm,Hfus,iErr)
-	USE GlobConst, Only:PGLinputDir,LOUD,dumpUnit 
+	USE GlobConst, Only:PGLinputDir,LOUD,dumpUnit
 	! Purpose: Read Tm(K) and Hfus(J/mol) from input file.
 	Implicit DoublePrecision(a-h,o-z)
 	Character*77 HfusFile,FN !,inFile77
@@ -164,9 +164,9 @@ end
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	SUBROUTINE LoadCritParmsDb(iErrCode)
-	!C  
+	!C
 	!C  PROGRAMMED BY:  JRE 12/21
-	!C  Loads THE CRITICAL PROPERTIES (Mw, etc) into GlobConst. 
+	!C  Loads THE CRITICAL PROPERTIES (Mw, etc) into GlobConst.
     !C      Includes CrIndex(idDippr)=line where idDippr was found (linked list)
 	!C      This should be a faster way of loading properties, e.g. when running VLE evaluations for a large db.
 	!C  INPUT
@@ -180,13 +180,13 @@ end
 	!C    Class		COMPONENT class {norml,polar,gases,assoc,Asso+...}
 	!C    CrIndex	e.g., Tc(icomp)=TcD(CrIndex(ID(iComp)))
 	USE GlobConst, ONLY:LOUD,dumpUnit,zeroTol,PGLinputDir,nCritSet
-	USE CritParmsDb 
+	USE CritParmsDb
 	IMPLICIT DoublePrecision(A-H,O-Z)
     Integer ndbLocal
 	!CHARACTER*4 tCode,pCode,vCode
 	!character*132 readText,dumText
 	!character*12  form
-	character*251 inFile,dumString,errMsgPas,errMsg(22)
+	character*251 inFile,dumString,errMsgPas,errMsg(0:21)
 	LOGICAL LOUDER
     LOUDER=LOUD
     !LOUDER=.TRUE.
@@ -256,7 +256,7 @@ end
 602	format(i5,i11,11f10.3,i10,3a4,1x,a12,a33)
 599	FORMAT(3(1X,i5,1X,A20))
 	!Tc          PcMpa     Zc       acen      MW      solParm     vL        NBP        MP  hfor(kJ/mol)  gfor      &
-	                                                                                          ! Cas#  tC  pC  vC  FORM        Name 
+	                                                                                          ! Cas#  tC  pC  vC  FORM        Name
 	CLOSE(40)
 	!if((nDeck1).gt.ndb)write(dumpUnit,*) 'GetCrit: too much data in file'
 	if(LOUDER)write(dumpUnit,*)'LoadCritParmsDb: So far so good! ParmsCrit.txt is loaded. Skipping ParmsCrAdd.'
@@ -273,23 +273,23 @@ end
 	iErrCode=11
 	!write(dumpUnit,*)
 	close(40)
-	return                      
+	return
 862	continue
 	!write(dumpUnit,*)'GetCrit error - error reading ParmsCrAdd.txt. Path?'
 	!write(dumpUnit,*)'nDeckCrit,nDeckCrAdd,iCompo',NDECK1,NDECK2,I
 	iErrCode=12
 	close(40)
 	!write(dumpUnit,*)
-	return                      
+	return
 	END
 
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	SUBROUTINE GETCRIT(NC,iErrCode)	! ID() from USEd GlobConst
-	!C  
+	!C
 	!C  PROGRAMMED BY:  A.S. PUHALA - AUG 93
 	!C  REVISION DATE:  2/93 - FOR ESD COMPATIBILITY JRE
 	!C  REVISION DATE:  2/02 - FOR binary data file
-	!C 
+	!C
 	!C  LOOKS UP THE CRITICAL PROPERTIES AND RETURNS JUST TC,PC,ACEN,NAME
 	!C
 	!C  INPUT
@@ -381,13 +381,13 @@ end
 	READ(662,*,ioStat=ioErr)NDECK1 ! ioStat= -1,endofFile; -2,endOfLine
     if(ioErr/=0)write(dumpUnit,*)'ioErr,nDeck1,inFile',ioErr,nDeck1,TRIM(inFile)
     if(ioErr/=0)write(dumpUnit,*) 'GetVpDb: Error reading NDECK1'
-    
+
 	!if(ndeck1.gt.ndb)write(dumpUnit,*) 'GetVp: more data in file than allocated'
 	DO I=1,NDECK1
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
 		!if(i.eq.691)write(dumpUnit,*)
 		READ(662,*,ioStat=ioErr)IDnum(I),rMINTD(I) ,VALMIND(I) ,rMAXTD(I),VALMAXD(I),AVGDEVD(I),NUMCOEFFD(I), &
-		                                                                                      (vpCoeffsd(i,iCoeff),iCoeff=1,5)  
+		                                                                                      (vpCoeffsd(i,iCoeff),iCoeff=1,5)
 	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'inFile=',TRIM(inFile)
 	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'ioErr,line,id,vpCoeffs=',ioErr,I,IDnum(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
 	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'GetVp: error reading CoeffsVp2a.txt'
@@ -412,7 +412,7 @@ end
 	LOGICAL notFound
 	!DoublePrecision vpCoeffs(nmx,5)
 	Integer ID(nmx)
-	Data initCall/1/  
+	Data initCall/1/
 	iErrCode=0
 	if(initCall==1)then
 		call GetVpDb(iErrCode)
@@ -420,7 +420,7 @@ end
 			write(dumpUnit,*)'GetVp:Error from GetVpDb=',iErrCode
 			return
 		endif
-		initCall=0 
+		initCall=0
 	endif
 
 	DO iComp=1,NC
@@ -489,7 +489,7 @@ end
 	!data initial/0/
 	initial=0 !just assume that the database needs to be reloaded if being called
 
-	GetBIPs=0	
+	GetBIPs=0
 	if(initial.eq.0)then
 		initial=1
 		open(55,file=bipFile,ERR=861)
@@ -565,7 +565,7 @@ end
 	if(LOUD)write(dumpUnit,'(i4,7F8.4)')idBinarY(item),KIJDB(item),KTIJDB(item),wsTAUij(item),wsTAUji(item), &
 	                                                                                  wsTauTij(item),wsTauTji(item),alphaDB(item)
 	GetBIPs= -1
-	return                      
+	return
 	end
 
 
@@ -615,7 +615,7 @@ subroutine IdTrcLookup(NC,IdTrc,ier,errMsgPas)
 				iGotit=1
 			endif
 		enddo
-		if(id(iComp)==0)then		
+		if(id(iComp)==0)then
 			ier=11
 			if(LOUD)write(dumpUnit,*)'Did not find IdTrc(i).i,IdTrc=',iComp,IdTrc(1)
 			errMsgPas=errMsg(ier)
@@ -665,7 +665,7 @@ end
 	!write(dumpUnit,*)'IdLookup: nDeck=',nDeck
 	do i=1,nDeck
 		read(50,'(a77)')dumString
-		read(dumString,'(2i6,i12,1x,a28,a5)',ioStat=ioErr)idTrcDb(i),idDb(i),idCasDb(i),NameDb(i) !,classdb(i)  
+		read(dumString,'(2i6,i12,1x,a28,a5)',ioStat=ioErr)idTrcDb(i),idDb(i),idCasDb(i),NameDb(i) !,classdb(i)
 		if(ioErr/=0.and.LOUD)write(dumpUnit,*)'idCas ioErr. i,idDippr=',i,idDb(i)
 		if( id(1)==idDb(i) )then
 			iGotIt=1
@@ -696,8 +696,8 @@ end
 				exit
 			endif
 		enddo
-		if(iGotIt==0)then 
-			ier=1 
+		if(iGotIt==0)then
+			ier=1
 			if(LOUD)write(dumpUnit,*)'IdCasLookup:Did not find idCas(i).i,id=',iComp,id(i)
 			goto 861
 		endif
@@ -735,12 +735,12 @@ SUBROUTINE GetCritCas(NC,idCas,iErrCode)	!GetCritCas assumes ID(GlobConst)=IdCas
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!C      AARON'S SUBROUTINE
 	!C      $GETCRIT.FOR   VERSION 1.4
-	!C  
+	!C
 	!C  PROGRAMMED BY:  A.S. PUHALA - AUG 93
 	!C  REVISION DATE:  2/93 - FOR ESD COMPATIBILITY JRE
 	!C  REVISION DATE:  2/02 - FOR binary data file
 	!C                  1/23 - To use CritParmsDb and GetCrit()
-	!C 
+	!C
 	!C  LOOKS UP THE CRITICAL PROPERTIES AND RETURNS JUST TC,PC,ACEN,NAME
 	!C
 	!C  INPUT
@@ -750,24 +750,24 @@ SUBROUTINE GetCritCas(NC,idCas,iErrCode)	!GetCritCas assumes ID(GlobConst)=IdCas
 	!C    PC - CRITICAL PRESSURE
 	!C    ACEN - ACENTRIC FACTOR
 	!C    NAME - COMPONENT NAME
-	USE GlobConst, ONLY:LOUD,dumpUnit,nmx 
+	USE GlobConst, ONLY:LOUD,dumpUnit,nmx
 	USE CritParmsDb
 	IMPLICIT DoublePrecision(A-H,O-Z)
 	character*77 errMsgPas
 	integer idCas(nmx),NC,iErrCode,iErrCrit
 	iErrCode=0
 	Call IdDipprLookup(NC,idCas,iErrCode,errMsgPas) ! ID passed through USEd GlobConst
-	if(iErrCode.ne.0)then 
+	if(iErrCode.ne.0)then
 		if(LOUD)write(dumpUnit,*)'GetCritCas: iErr(IdDipprLookup)=',iErrCode,TRIM(errMsgPas)
 		return
 	endif
 	Call GetCrit(NC,iErrCrit)
-	if(iErrCrit.ne.0)then 
+	if(iErrCrit.ne.0)then
 		if(LOUD)write(dumpUnit,*)'GetCritCas: iErr(GetCrit)=',iErrCrit
 		iErrCode=iErrCrit
 		return
 	endif
-	return                      
+	return
 END ! subroutine GetCritCas()
 
       DOUBLE PRECISION FUNCTION AvgAbsRelDev(N,X,Y)
@@ -793,7 +793,7 @@ END ! subroutine GetCritCas()
       AvgAbsRelDev=AvgAbsRelDev/N
       RETURN
       END
-      
+
       DOUBLE PRECISION FUNCTION BiasRelDev(N,X,Y)
       INTEGER N
       DOUBLE PRECISION X(N),Y(N)
@@ -817,8 +817,8 @@ END ! subroutine GetCritCas()
       BiasRelDev=BiasRelDev/N
       RETURN
       END
-      
-     
+
+
       DOUBLE PRECISION FUNCTION AvgAbsDev(N,X,Y)
       INTEGER N
       DOUBLE PRECISION X(N),Y(N)
@@ -837,7 +837,7 @@ END ! subroutine GetCritCas()
       AvgAbsDev=AvgAbsDev/N
       RETURN
       END
-      
+
       DOUBLE PRECISION FUNCTION SumProduct(N,X,Y)
 	USE GlobConst !for LOUD
       INTEGER N
@@ -852,7 +852,7 @@ END ! subroutine GetCritCas()
 	endif
       return
       end
-      
+
       FUNCTION ENORMua(N,X)
       INTEGER N
       DOUBLE PRECISION X(N),SqrtArg,SumSq,ENORMua
@@ -872,7 +872,7 @@ END ! subroutine GetCritCas()
       endif
       RETURN
       END
-      
+
       DOUBLE PRECISION FUNCTION RmsJre(N,X)
       INTEGER N
       DOUBLE PRECISION X(N),SqrtArg,SumSq
@@ -890,10 +890,10 @@ END ! subroutine GetCritCas()
       else
           RmsJre=DSQRT(SqrtArg/N)
       endif
-      
+
       RETURN
       END
-      
+
       DOUBLE PRECISION FUNCTION SumXmY2(N,X,Y)
       INTEGER N
       DOUBLE PRECISION X(N),Y(N),DIF(N),SumSq
@@ -911,7 +911,7 @@ END ! subroutine GetCritCas()
       SumXmY2=SumSq(N,DIF)
       RETURN
       END
-      
+
 DOUBLE PRECISION FUNCTION RmsDev(N,X,Y)
       INTEGER N
       DOUBLE PRECISION X(N),Y(N),SqrtArg,SumSq
@@ -934,7 +934,7 @@ DOUBLE PRECISION FUNCTION RmsDev(N,X,Y)
       endif
       RETURN
 END
-      
+
 DOUBLE PRECISION FUNCTION SumSq(N,X)
 	  USE GlobConst !LOUD
       IMPLICIT NONE

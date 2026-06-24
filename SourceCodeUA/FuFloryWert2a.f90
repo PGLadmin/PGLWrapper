@@ -1,7 +1,7 @@
-	!  
+	!
 	!  PROGRAMMED BY:  JRE 2/02
-	!  REVISION DATE:  
-	! 
+	!  REVISION DATE:
+	!
 	!  LOOKS UP THE TPT PROPERTIES AND RETURNS them in commons
 	!
 	!  INPUT
@@ -21,7 +21,7 @@
 	!common/FloryWert/solParm(nmx),vLiq(nmx),eHbKcalMol(NMX),bondVolNm3FH(NMX),ND(NMX),NDS(NMX),NAS(NMX)
 	!solParmD(ndb),vLiqD(ndb),eHbKcalMol(NMX),bondVolNm3(NMX),ND(NMX),NDS(NMX),NAS(NMX) from ParmsFloryWert.txt
 
-!	COMMON/BIPs/KIJ,KTIJ,aBipAD,aBipDA,xsTau,xsTauT,xsAlpha	
+!	COMMON/BIPs/KIJ,KTIJ,aBipAD,aBipDA,xsTau,xsTauT,xsAlpha
 !		COMMON/BIPs/KIJ(NMX,NMX),KTIJ(NMX,NMX),HIJ(NMX,NMX),HTIJ(NMX,NMX),xsTau(NMX,NMX),xsTauT(NMX,NMX),xsAlpha(NMX,NMX)
 
 
@@ -30,20 +30,20 @@
 	nC=nComps
 
 	! NOTE: ParmsCrit is read elsewhere, including solParm and vLiq.
-	IF(DEBUG)then 
+	IF(DEBUG)then
 	  OPEN(50,FILE='c:\SPEAD\CalcEos\input\ParmsFloryWert.TXT')
-    ELSE 
+    ELSE
 		inFile=TRIM(masterDir)//'\input\ParmsFloryWert.txt' ! // is the concatenation operator
 		OPEN(50,FILE=inFile)
 	ENDIF
 
-	READ(50,*,ERR=862)NdeckFloryWert 
+	READ(50,*,ERR=862)NdeckFloryWert
 	DO I=1,NdeckFloryWert
 		!nDegree(i,1)=1
 		READ(50,*,ERR=862)IDA(I),bondVolA(I),nDegreeA(I),NASA(I),NDSA(I),DHA(I),DHD(i)
 		nTypes(i)=1	! only one type per molecule in this model.
 		idType(i,1)=IDA(i)
-	enddo   
+	enddo
 	CLOSE(50)
 
 	DO J=1,nComps
@@ -92,7 +92,7 @@
 	write(*,*)'GetFlory error - error reading ParmsFloryWert.txt. Path?'
 	write(*,*)'nDeck,iCompo',NdeckFloryWert
 	if(LOUD)pause
-	return                      
+	return
 	END
 
 	SUBROUTINE FuFloryWert(tKelvin,pMpa,xFrac,nComps,LIQ,FUGC,zFactor,iErr)
@@ -172,15 +172,15 @@
 	!   REFERENCES:
 	!		      J.R. Elliott, C.T. Lira, Introductory Chemical Engineering Thermodynamics, p 334 (1999).
 	!             Franzen, Elliott, and Kyu, Macro 28:5147(95).
-	!		
+	!
 	!Example1.  oPvp+pvb at 406K,0.1MPa	Franzen, Elliott, and Kyu, Macro 28:5147(95).
-	! id	  xi	  mw	 solp	   vL	eHb(kcal)	KcStar	Nd	NAS	NDS	XA	XD	lnPhiAssoc	lnPhiPhys	gamma   
+	! id	  xi	  mw	 solp	   vL	eHb(kcal)	KcStar	Nd	NAS	NDS	XA	XD	lnPhiAssoc	lnPhiPhys	gamma
 	!23041	0.3255	39953	10.35	37500	7.948	1.64E-6	377	1	0	0.87	1.00  -40.517	41.615	2.998	oPvPyridineFEK40
 	!24089	0.6745	87991	 9.14	64900	7.948	3.31E-6	473	0	1	1.00	0.95   -5.587	 5.600	1.013	pvButyralFEK  88	!
 	!dXA1/dN1=0.087; dXA1/dN2=-0.042;  dXD2/dN1=-0.115; dXD2/dN2=0.0558;  aAssoc=-16.96
 	!FYI: LCST at ~404.3, xLo=0.87, xUp=0.92
 	!Example2.  pPvp+pEVOH at 333K,0.1MPa	Keskin, Elliott, IECR 42:6334(03).
-	!id		x	  mw	solp	vL	KcStar	eHb(kcal)	Nd	NAS	NDS	XA  	XD  	const	sumdxn	lnPhiAssoc	gamma   
+	!id		x	  mw	solp	vL	KcStar	eHb(kcal)	Nd	NAS	NDS	XA  	XD  	const	sumdxn	lnPhiAssoc	gamma
 	!26068	0.5	67879	8.6	66637	2.76E-05	4.00	474	1	0	0.9598	1.0000	-9.918	17.552	7.634	pBuMeAcry068
 	!27064	0.5	63310	12	60296	2.33E-05	4.00	878	1	1	0.9630	0.9413	-44.247	-17.552	-61.799	pEt56VOh44_063
 	!dXAdN	 0.039885405	 0.036887261	dXDdN	0.00000	 0.01502
@@ -212,7 +212,7 @@
 
 	!for wertheim1c: common/Assoc/eHbKcal_mol(nmx,maxTypes),bondVolNm3(nmx,maxTypes),nDegree(nmx,maxTypes),nDonors(nmx,maxTypes),nAcceptors(nmx,maxTypes),idType(nmx,maxTypes),localType(maxTypesGlobal),idLocalType(maxTypes),nTypes(NMX),nTypesTot
 	Bip(iComp,jComp)=kij(iComp,jComp)+kTij(iComp,jComp)/tKelvin
-	
+
 	!  COMPUTE THE MOLECULAR PARAMETERS A AND B AND THEIR CROSS COEFFS
 	vLiqMix=0
 	do iComp = 1,nComps
@@ -220,9 +220,9 @@
 	enddo
 
 	!  note:  bips are passed back through common/BIPs/
-	IF(DEBUG)then 
+	IF(DEBUG)then
 		bipFile='c:\spead\CalcEos\input\BipSpead.txt'
-	ELSE 
+	ELSE
 		bipFile=TRIM(masterDir)//'\input\BipSpead.txt' ! // is the concatenation operator
     ENDIF
 	!iErrCode=GetBIPs(bipFile,ID,nC)
@@ -232,23 +232,23 @@
     end if
 
 	!load aBipAD matrix
-	IF(DEBUG)then 
+	IF(DEBUG)then
 		bipHbFile='c:\Spead\CalcEos\Input\BipAD.txt'
-	ELSE 
+	ELSE
 		bipHbFile=TRIM(masterDir)//'\input\BipAD.txt' ! // is the concatenation operator
 	ENDIF
-	call GetAssocBips(bipHbFile,aBipAD,ierABip) !in WertheimVv.f90. idLocalType,nTypesTot in common/assoc 
+	call GetAssocBips(bipHbFile,aBipAD,ierABip) !in WertheimVv.f90. idLocalType,nTypesTot in common/assoc
 
 	!load aBipDA matrix
-	IF(DEBUG)then 
+	IF(DEBUG)then
 		BipHbFile='c:\Spead\CalcEos\Input\BipDA.txt'
-	ELSE 
+	ELSE
 		BipHbFile=TRIM(masterDir)//'\input\BipDA.txt' ! // is the concatenation operator
 	ENDIF
 	call GetAssocBips(bipHbFile,aBipDA,ierABip) !in WertheimVv.f90
 
-	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp)	
- 
+	if(iEosOpt.eq.8)CALL GetVp(nComps,ID,iErrVp)
+
   	solParmAvg=0
 	bipAvg=0
 	DO iComp = 1,nComps
@@ -256,11 +256,11 @@
 		solParmAvg = solParmAvg + solParm(iComp)*volFrac(iComp)
 		do jComp=1,nComps
 			!bip=kij(iComp,jComp)+kTij(iComp,jComp)/tKelvin
-			vFracJ=xFrac(jComp)*vLiq(jComp)/vLiqMix 
+			vFracJ=xFrac(jComp)*vLiq(jComp)/vLiqMix
 			bipAvg=bipAvg+volFrac(iComp)*solparm(iComp)*vFracJ*solParm(jComp)*Bip(iComp,jComp)
 		enddo
 	enddo
-			
+
 	iErr=0
 
 	zFactor=1
@@ -277,7 +277,7 @@
 				bipPart=bipPart+volFrac(iComp)*solParm(iComp)*bipTmp
 			enddo
 			actCoeff=vLiq(kComp)*( delDelta*delDelta+2*solParm(kComp)*bipPart-bipAvg )/(RgasCal*tKelvin)
-			fugc(kComp)= actCoeff !actCoeff is really LnGam  
+			fugc(kComp)= actCoeff !actCoeff is really LnGam
 			!vMolecNm3(kComp)=vLiq(kComp)*etaL/602.22
 		enddo
 		rhoMol_cc=1/vLiqMix
@@ -299,7 +299,7 @@
 			if(rLnGamma.gt.709)rLnGamma=709 !exp overflow for larger
 			gamma=exp(rLnGamma)
 			write(*,'(i3,1x,2(f10.7),f13.7,f13.7,e11.4)')kComp,xFrac(kComp),volFrac(kComp),fugc(kComp),fugAssoc(kComp),gamma
-			fugc(kComp)=LOG(pSat/pMPa) + fugc(kComp) + fugAssoc(kComp)	!log of product is sum of logs 
+			fugc(kComp)=LOG(pSat/pMPa) + fugc(kComp) + fugAssoc(kComp)	!log of product is sum of logs
 		enddo
 	endif
 

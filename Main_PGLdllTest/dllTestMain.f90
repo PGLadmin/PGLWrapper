@@ -1,10 +1,14 @@
-!MAIN PROGRAM FOR CALLING PGLDLL.DLL. This is untested code using iso_c_binding
+PROGRAM DLLTestMain
+! MAIN PROGRAM FOR CALLING PGLDLL.DLL. This is untested code using iso_c_binding
     USE GlobConst
     use iso_c_binding
-    character(255) errMsg 
+    character(255) errMsg
     character*255 tag, value,hello !, local
     integer i1, cnt, clen, status, nbsl
     character arg*100,cmd*100
+! For path debugging
+! character(2048) :: path
+! integer :: len
 
 interface
     integer function INITPGLDLL(errMsg)
@@ -12,7 +16,7 @@ interface
         character(255) errMsg
     end function INITPGLDLL
 	integer function SetLoudTrue(hello)
-    !DEC$ ATTRIBUTES, ALIAS:"SETLOUDTRUE" :: SetLoudTrue
+    !DEC$ ATTRIBUTES ALIAS:"SETLOUDTRUE" :: SetLoudTrue
 		character(255) hello
 	end function SetLoudTrue
     integer function iSetDumpUnit(aPlace)
@@ -24,25 +28,31 @@ interface
         character(kind=c_char), dimension(*) :: input
     end function ISETMASTERDIR
 	integer function INITIALIZE_MODEL(iEosLocal, Rn1, Rn2, Rn3)
-		!DEC$ATTRIBUTES :: INITIALIZE_MODEL
+		!DEC $ATTRIBUTES :: INITIALIZE_MODEL
 		integer iEosLocal, Rn1, Rn2, Rn3
 	end function INITIALIZE_MODEL
 	integer function Calculate1(casrn1, modelid, propertyid, t, p, res, uncert)
-		!DEC$ATTRIBUTES :: Calculate1 
+		!DEC $ATTRIBUTES :: Calculate1
 		integer modelid, casrn1, propertyid, localprpid, ierr
 		double Precision t, p, res, uncert
 	end function Calculate1
 	DoublePrecision function CalculateProperty(ieos, casrn, prp_id, var1, var2, ierr)
-		!DEC$ATTRIBUTES :: CalculateProperty 
+		!DEC $ATTRIBUTES :: CalculateProperty
 		integer ieos, casrn, prp_id, ierr
 		double Precision var1, var2
 	end function CalculateProperty
 	DoublePrecision function CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3, ierr)
-		!!!DEC$ATTRIBUTES :: CalculateProperty2 
+		!!!DEC$ATTRIBUTES :: CalculateProperty2
 		integer ieos, casrn1, casrn2, prp_id, ierr
 		double Precision var1, var2, var3
 	end function CalculateProperty2
 END INTERFACE
+! For path debugging
+! call get_environment_variable("MY_MARKER", path, length=len)
+! print *, "MY_MARKER=", trim(path)
+! call get_environment_variable("PATH", path, length=len)
+! print *, "PATH=", trim(path)
+
     call get_command (cmd, clen, status)
     call get_command_argument (0, cmd, clen, status)
     cnt = command_argument_count ()
@@ -60,14 +70,15 @@ END INTERFACE
             end if
         end if
     enddo
-    ! Above code is for running from command line. For debugging&testing in VS Studio:
-    MasterDir='c:\PGLWrapper'
+! Above code is for running from command line. For debugging&testing in VS Studio:
+!    MasterDir='c:\PGLWrapper'
+    MasterDir='.'
     PGLInputDir=trim(MasterDir)//'\input'
-    iErr=iSetMasterDir(MasterDir) !Copy the location of MasterDir into the DLL GlobConst.       
+    iErr=iSetMasterDir(MasterDir) !Copy the location of MasterDir into the DLL GlobConst.
     !tag='LOCATION'
     !value='c:\PGLWrapper|'
     !iErr=SetString(tag,value)
-    iErr=iSetLoudTrue(errMsg) ! LOUD=.TRUE. => debug info 
+    iErr=iSetLoudTrue(errMsg) ! LOUD=.TRUE. => debug info
     iDumpUnit=iSetDumpUnit('FILE')
     !if (LOUD)iDumpUnit=iSetDumpUnit('FILE')
 	iErr=INITPGLDLL(errMsg)
@@ -78,13 +89,14 @@ END INTERFACE
 		write(*,*)'DLLTestMain: InitPGLDLL returned iErr=0. Woohoo!'
         !write(*,*)'DLLTestMain: PGLInputDir=',TRIM(PGLInputDir)
     endif
-    
+
 	call Test1
 	call Test2
 	call Test3
-    pause 'Check the output. It should say: 34.47, 0.762,0.0095,0.762,5.75'
+    pause 'Check the output. It should say: 34.47, 0.762,0.0095,0.762,0.0575'
     stop
-END !main Program
+
+CONTAINS
 
 subroutine Test1
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
@@ -127,7 +139,7 @@ subroutine Test2
     var1 = 298.136
     var2 = 1000
     var3 = 0.0013779105351375952
-    prp_id = 201        !vapor chemical potential of component 1. 
+    prp_id = 201        !vapor chemical potential of component 1.
     prp=CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3,  ierr)
     write(*,*) 'Test2: iErr,  T(K)   P(kPa)   x1    prp'
     write(*,'(i4,1x,2f9.2,1x,f8.5,1x,E11.4)') iErr,var1,var2,var3,prp
@@ -194,4 +206,5 @@ subroutine Test3	!testing dll calls
     prp=CalculateProperty2(ieos, casrn1, casrn2, prp_id, var1, var2, var3,  ierr)
     write(*,*) 'Test3: P,x1,prp=',var2,var3,prp
 end subroutine
-	
+
+END PROGRAM DLLTestMain !main Program
