@@ -109,14 +109,10 @@
 		append=.TRUE.
 		NC=1
 	endif
-	if(iEosOpt==23)then
-		Call BuildEsd2corr(q0,q1,q2,iErr)
-		return
-	endif
 	!print*,'Initial guess from ParmsEsd? Enter 1 for yes or 0 to use MW guides as guess'
 	!read(*,*)iAns
 	qFac=4/(4-1.9d0)
-	if(iEosOpt==23)qFac=esd2_B0/(esd2_B0-esd2_k0)
+	if(iEosOpt==23)qFac=esd2B0/(esd2B0-esd2k0)
 	iAns=1 !bypass MW guess.
 	if(iAns==0)then
 		c(1)=1+rmw(1)/150
@@ -219,7 +215,7 @@
 	x(1)=1
 	C(1)=  PARM(1)
 	qFac=4/(4-1.9d0)
-	if(iEosOpt==23)qFac=esd2_B0/(esd2_B0-esd2_k0)
+	if(iEosOpt==23)qFac=esd2B0/(esd2B0-esd2k0)
 	q(1)=1+qFac*(c(1)-1)
 	eokp(1)=Parm(2)
 	VX(1)=parm(3)
