@@ -16,9 +16,9 @@
 			<Tool Name="VFPostBuildEventTool"/>
 			<Tool Name="VFManifestTool" SuppressStartupBanner="true"/>
 		</Configuration>
-		<Configuration Name="Debug|x64" UseCompiler="ifxCompiler">
+		<Configuration Name="Debug|x64" UseCompiler="ifxCompiler" BuildLogFile="$(IntDir)\BuildLogPGLEOS.htm">
 			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
-			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
+			<Tool Name="VFLinkerTool" AdditionalOptions="/ignore:4217" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
 			<Tool Name="VFResourceCompilerTool"/>
 			<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
 			<Tool Name="VFCustomBuildTool"/>
@@ -38,9 +38,9 @@
 			<Tool Name="VFPostBuildEventTool"/>
 			<Tool Name="VFManifestTool" SuppressStartupBanner="true"/>
 		</Configuration>
-		<Configuration Name="Release|x64" UseCompiler="ifxCompiler">
+		<Configuration Name="Release|x64" UseCompiler="ifxCompiler" BuildLogFile="$(IntDir)\BuildLogPGLEOS.htm">
 			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL"/>
-			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole"/>
+			<Tool Name="VFLinkerTool" AdditionalOptions="/ignore:4217" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole"/>
 			<Tool Name="VFResourceCompilerTool"/>
 			<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
 			<Tool Name="VFCustomBuildTool"/>
@@ -54,37 +54,30 @@
 		<Filter Name="Header Files" Filter="fi;fd;h;inc"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\0ModuleUAData.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\FlashSubs\CR2e.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\MINPACK\DEIGSRT.FOR"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\MINPACK\DGAUSSJ.FOR"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\MINPACK\DPYTHAG.FOR"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\MINPACK\DTQLI.FOR"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\MINPACK\DTRED2.FOR"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\FlashSubs\Flashsubs1b.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FuEsd23a.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\Main&amp;Menu\FuFloryWert2a.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FugiLSG-MEM2.F90">
+			<File RelativePath="FlashSubs\CR2e.f90"/>
+			<File RelativePath="FlashSubs\Flashsubs1b.f90"/>
+			<File RelativePath="SourceCodeUA\FuEsd23a.f90"/>
+			<File RelativePath="SourceCodeUA\\FuFloryWert2a.f90"/>
+			<File RelativePath="SourceCodeUA\FugiLSG-MEM2.F90"/>
+			<File RelativePath="SourceCodeUA\FugiNRTL.F90"/>
+			<File RelativePath="SourceCodeUA\FugiPr2a.F90"/>
+			<File RelativePath="SourceCodeUA\FugiPrTc.F90"/>
+			<File RelativePath="SourceCodeUA\fugiPRtcWS.F90"/>
+			<File RelativePath="SourceCodeUA\fugiPRWS1a.for"/>
+			<File RelativePath="SourceCodeUA\FuSpeadmd23a.f90"/>
+			<File RelativePath="MINPACK\LmdifEzCov2.for"/>
+			<File RelativePath="Main_PGLEOS\MainMenu2d.f90"/>
+			<File RelativePath="SourceCodeUA\MEM2.f90"/>
+			<File RelativePath="Main_PGLEOS\MenuItems2c.f90"/>
+			<File RelativePath="MINPACK\MinTools.for"/>
+			<File RelativePath="SourceCodeUA\0ModuleUAData.f90">
 			</File>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FugiNRTL.F90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FugiPr2a.F90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FugiPrTc.F90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\fugiPRtcWS.F90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\fugiPRWS1a.for"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\FuSpeadmd23a.f90">
-			</File>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\MINPACK\INDEXX.FOR"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\MINPACK\LmdifEzCov2.for"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\Main&amp;Menu\MainMenu2d.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\MEM2.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\Main&amp;Menu\MenuItems2c.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\MINPACK\MinTools.for"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCode2a\PcSaftEosGross.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\PGLFugiDefs.F90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCode2a\PrLorraine.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\UaDataTools.F90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\UaEosTools.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\Wertheim23a.f90"/>
+			<File RelativePath="SourceCode2a\PcSaftEosGross.f90"/>
+			<File RelativePath="SourceCodeUA\PGLFugiDefs.F90"/>
+			<File RelativePath="SourceCode2a\PrLorraine.f90"/>
+			<File RelativePath="SourceCodeUA\UaDataTools.F90"/>
+			<File RelativePath="SourceCodeUA\UaEosTools.f90"/>
+			<File RelativePath="SourceCodeUA\Wertheim23a.f90"/>
 		</Filter>
 	</Files>
 	<Globals/>

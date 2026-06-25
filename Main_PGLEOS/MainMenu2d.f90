@@ -1,6 +1,7 @@
+	PROGRAM PGLEOS
 	!MAIN PROGRAM FOR CALLING EOS SUBROUTINES. Includes GetCrit, GetBips, BipIo.
 	!	SETS UP THE CRITS, EOSPARMS, bips, DEBUG status, FUGI(iEosOpt)
-	!	Echoes user IO to Output.txt, and reports error checks. 
+	!	Echoes user IO to Output.txt, and reports error checks.
 	!	INITIALIZATION AND CALLING SEQUENCE FOR VLE, LLE, VLLE SUBROUTINES.
 	!reqd routines:
 	!	bubpl.for, bubtl.for, dewtv.for, flashsub.for, FuEsdMy.for FuEsdXs2.for, FugiPr.f90, FugiPrws.for, RegPure.f90
@@ -24,7 +25,7 @@
 	DIMENSION BIPTMP(NMX)
 	DIMENSION ZFEED(NMX),S(NMX)
     !INTEGER ier(12) !,idCas(NMX)
-	Integer QueryNparMix	
+	Integer QueryNparMix
 	COMMON/CrOpt/calcType
 	COMMON/eta/etaL,etaV,ZL,ZV
 	COMMON/FEED/ZFEED
@@ -32,7 +33,7 @@
 	!common/FloryWert/vLiq(nmx)
 	!cf. GlobConst  1     2       3       4          5          6         7           8              9        10       11      12       13          14         15           16            17        18		19       20
 	!data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft','tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
-	
+
 	!  Get current directory
 	CURDIR = FILE$CURDRIVE
 	iStat = GETDRIVEDIRQQ(CURDIR)
@@ -44,7 +45,7 @@
 	DEBUG=.FALSE.   !setting to true mostly directs input from c:\spead...	 Logic above automatically updates to TRUE if CURDIR=c:\msdev\Projects\calceos
 	!DEBUG=.TRUE.    ! Logic not working JRE 20200407
     !print*,'DEBUG=',DEBUG
-														   
+
 	masterDir=TRIM(curDir)
 	outFile=TRIM(masterDir)//'\output\KijOut.txt'
 	!IF(DEBUG)outFile='c:\PGLWrapper\output\KijOut.txt'
@@ -57,7 +58,7 @@
 	LOUD =.FALSE.
 	!LOUD = .TRUE.
     RELEASE=.FALSE.
-    !RELEASE=.TRUE.
+    RELEASE=.TRUE.
 	PGLInputDir='c:\PGLWrapper\input'
     IF(RELEASE)PGLInputDir=TRIM(masterDir)//'\input'
 	dumpUnit=6
@@ -82,7 +83,7 @@
     if(iErr/=0)pause 'Main: LoadCritParmsDb failed'
     call GetVpDb(iErr)
     if(iErr/=0)pause 'Main: GetVpDb failed'
-	
+
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 	! AFG 2011: Option 9 is added
 	write(*,*)'Enter EOS option: '
@@ -142,8 +143,8 @@
 			write(*,form601)ID(i),q(i),eokP(i),bVolCc_mol(i)
 		enddo
 	endif !display hb parms
-622 format(1x,3i6,f8.5,i3,f8.4,i3,f8.4) 
-	pause 'Main: Check basic info.'   
+622 format(1x,3i6,f8.5,i3,f8.4,i3,f8.4)
+	pause 'Main: Check basic info.'
 	IF(DEBUG)write(*,*)'Main: Kij(1,2) = ',Bip12
 	if(DEBUG)WRITE(*,*)'THE KIJ MATRIX AT 298K IS ESTIMATED AS'
 	if(DEBUG)WRITE(*,'(8X,9I8)')(ID(I),I=1,NC)
@@ -179,7 +180,7 @@
 	IF(ANSWER.EQ.'Y'.OR.ANSWER.EQ.'y')call BIPIO(NC) !note: results passed through common/bips
 
 	iQuit=0
-	do while(iQuit.ne.1) 
+	do while(iQuit.ne.1)
 		WRITE(6,*)'ENTER TYPE OF PHASE EQUILIBRIUM CALCULATION'
 		WRITE(6,*)'AC FOR INFINITE DILUTION ACTIVITY COEFFICIENTS   '
 		WRITE(6,*)'BD FOR 1-comp Bifurcation (Multiroot) Diagram   '
@@ -223,8 +224,8 @@
 		WRITE(6,*)'TX FOR T,X,Y given P'
 		WRITE(6,*)'VL FOR VLE FLASH   '
 		WRITE(6,*)'VP FOR vapor pressure   '
-		WRITE(6,*)'FC FOR FREEZING CURVE CALC 4 CRYSTAL solid' 
-		WRITE(6,*)'FO FREEZCURVE KIJ optimization'	
+		WRITE(6,*)'FC FOR FREEZING CURVE CALC 4 CRYSTAL solid'
+		WRITE(6,*)'FO FREEZCURVE KIJ optimization'
 		!WRITE(6,*)'EA FOR Equal Area rule calculation (vapor pressure)'
 		!WRITE(6,*)'FW FOR FOR FITTING THE WHITE RG METHOD PARAMETER'
 		WRITE(6,*)'VC FOR VIRIAL COEFFICIENTS FOR PURE COMPONENTS, EOS OPTIONS: 4 & 5'  !AFG 2011
@@ -244,7 +245,7 @@
 			isZiter=4		   !Will calculate first derivatives of desired variables in respect to T,RHO and P
 		ELSE
 			isZiter=0
-		ENDIF 
+		ENDIF
 		!---------------------------------
 
 		IF(calcType.ne.'QT'.and.calcType.ne.'qt')then
@@ -308,6 +309,4 @@
 86	continue
 	close(52)
 	stop
-	END
-
-
+END PROGRAM PGLEOS

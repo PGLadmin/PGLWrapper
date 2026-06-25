@@ -1,0 +1,71 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 30
+  },
+
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "description": "Add or Modify /stand:f90 to evaluate code for f90, f95, f03, f08, f18, f23. Flags can be overriden by setting them in the project CMakeLists.txt target_compile_options",
+      "cacheVariables": {
+        "CMAKE_Fortran_FLAGS": "/warn:general /Qdiag-error-limit:5"
+      },
+      "environment": {
+        "FC": "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin/ifx.exe",
+        "LIB": "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/lib;$penv{LIB}",
+        "PATH": "${sourceDir}/out/build/${presetName}/Main_PGLdll;C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin/compiler;C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin;$penv{PATH}"
+      }
+    },
+
+    {
+      "name": "debug",
+      "inherits": "base",
+      "displayName": "Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_Fortran_FLAGS_DEBUG": "/debug:full /dbglibs /check:bounds /Od"
+      }
+    },
+
+    {
+      "name": "relwithdebinfo",
+      "inherits": "base",
+      "displayName": "Release with Debug Info",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_Fortran_FLAGS_RELWITHDEBINFO": "/debug:full /O2"
+      }
+    },
+
+    {
+      "name": "release",
+      "inherits": "base",
+      "displayName": "Release",
+      "description": "Code compiled at /O3 vectorizes Do loops and may change order of algebra calcs. Changing order of algebra may affect legacy implicit assignment of float to int. Validate using benchmarks. Also, sometimes /O2 runs faster.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_Fortran_FLAGS_RELEASE": "/O3"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "relwithdebinfo",
+      "configurePreset": "relwithdebinfo"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    }
+  ]
+}

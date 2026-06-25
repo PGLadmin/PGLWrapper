@@ -16,9 +16,9 @@
 			<Tool Name="VFPostBuildEventTool"/>
 			<Tool Name="VFManifestTool" SuppressStartupBanner="true"/>
 		</Configuration>
-		<Configuration Name="Debug|x64" UseCompiler="ifxCompiler">
+		<Configuration Name="Debug|x64" UseCompiler="ifxCompiler" BuildLogFile="$(IntDir)\BuildLogDllTest.htm">
 			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL"/>
-			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="C:\Users\ellio\source\repos\PGLDLL\x64\Debug\" GenerateDebugInformation="true" SubSystem="subSystemConsole" AdditionalDependencies="PGLDLL.lib"/>
+			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="C:\Users\ctlir\Documents\repos\MDNAproject\x64\Debug" GenerateDebugInformation="true" SubSystem="subSystemConsole" AdditionalDependencies="PGLDll.lib"/>
 			<Tool Name="VFResourceCompilerTool"/>
 			<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
 			<Tool Name="VFCustomBuildTool"/>
@@ -38,9 +38,9 @@
 			<Tool Name="VFPostBuildEventTool"/>
 			<Tool Name="VFManifestTool" SuppressStartupBanner="true"/>
 		</Configuration>
-		<Configuration Name="Release|x64" UseCompiler="ifxCompiler">
+		<Configuration Name="Release|x64" UseCompiler="ifxCompiler" BuildLogFile="$(IntDir)\BuildLogDllTest.htm">
 			<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL"/>
-			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="C:\Users\ellio\source\repos\PGLDLL\x64\Debug\" SubSystem="subSystemConsole" AdditionalDependencies="PGLDLL.lib"/>
+			<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="C:\Users\ctlir\Documents\repos\MDNAproject\x64\Debug" SubSystem="subSystemConsole" AdditionalDependencies="PGLDll.lib"/>
 			<Tool Name="VFResourceCompilerTool"/>
 			<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
 			<Tool Name="VFCustomBuildTool"/>
@@ -54,9 +54,7 @@
 		<Filter Name="Header Files" Filter="fi;fd;h;inc"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\0ModuleUAData.f90"/>
-			<File RelativePath="..\..\..\..\..\PGLWrapper\SourceCodeUA\dllTestMain.f90">
-			</File>
+			<File RelativePath="Main_PGLdllTest\dllTestMain.f90"/>
 		</Filter>
 	</Files>
 	<Globals/>

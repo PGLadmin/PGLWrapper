@@ -1,4 +1,5 @@
 	!USE MSFLIB !For FILE$CURDRIVE AND GETDRIVEDIRQQ
+	!DEC$ ATTRIBUTES DLLEXPORT :: MyRoutine
 	USE PORTLIB
 	USE GlobConst
 	USE CritParmsDb
@@ -74,8 +75,8 @@
 			tKelvin=var1		!This appears to be universally true.
 			if(ioErr < 0)then   !this means we reached the end of the file
 				notDone=0
-				exit            !break the loop and return to remaining execution 
-			elseif(ioErr > 0)then  
+				exit            !break the loop and return to remaining execution
+			elseif(ioErr > 0)then
 				write(52,*)'Unexpected ioErr (e.g. type mismatch?) reading input line,T=',line,tKelvin
 				cycle
 			endif
@@ -95,4 +96,3 @@
 	close(51)
 	stop
 	END
-
