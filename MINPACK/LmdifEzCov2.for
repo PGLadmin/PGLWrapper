@@ -150,10 +150,10 @@ C     **********
       EXTERNAL FCN
       INTEGER MAXFEV,MODE,NFEV,NPRINT
       DOUBLE PRECISION FACTOR,FTOL,GTOL,XTOL,ZERO
-      CHARACTER*255 errMsg(0:11)
+      CHARACTER*255 errMsg(0:22)
 c      DATA FACTOR,ZERO /.1,0.0D0/
       DATA ZERO /0.0D0/
-        errMsg(0)='IMPROPER INPUT PARAMETERS.'
+        errMsg(12)='IMPROPER INPUT PARAMETERS.'
         errMsg(1)='OK. RELATIVE ERROR IN SSQ < TOL.'
         errMsg(2)='OK. RELATIVE ERROR IN X vs. SOLUTION < TOL.'
         errMsg(3)='OK. SSQ < TOL and PARM ~ SOLUTION'
@@ -168,9 +168,10 @@ C     CHECK THE INPUT PARAMETERS FOR ERRORS.
 C
       IF (N .LE. 0 .OR. M < N .OR. LDFJAC < M .OR. TOL < ZERO
      *    .OR. LWA < 5*N + M .OR. nParms > MAXPARMS) then
-		iErrCode=2
-          errMsgPass=errMsg(0)
-		pause 'LmDifEZ error:inParms nonsense.Check nParms,nData.'
+		iErrCode=12
+          errMsgPass=errMsg(iErrCode)
+		write(*,*)'nParms,nData,tol=',N,M,tol
+		pause 'LmDifEZ:inParms nonsense.Check nParms,nData.'
 		goto 86
 	endif
 C
@@ -211,18 +212,20 @@ c				covar(iParm,jParm)=covar(iParm,jParm)
 c	1                        +FJAC(mPt,iParm)*FJAC(mPt,jParm)
 		enddo
 	enddo
+	stdErr=86.86d0
       call MATINV(covar,MAXPARMS,N,IPVT2,WA,INFO)
-
-      fNorm=ENORM(nPts,FVEC)
-	do iParm=1,nParms
-		do jParm=iParm,nParms
-			covar(iParm,jParm)=sqrt( fnorm*ABS(covar(iParm,jParm)) )
-			covar(jParm,iParm)=covar(iParm,jParm)
+	if(INFO < 11)then	!abort stdErr if MATINV fails.
+		fNorm=ENORM(nPts,FVEC)
+		do iParm=1,nParms
+			do jParm=iParm,nParms
+				covar(iParm,jParm)=sqrt( fnorm*ABS(covar(iParm,jParm)) )
+				covar(jParm,iParm)=covar(iParm,jParm)
+			enddo
 		enddo
-	enddo
-	do iParm=1,nParms
-		stdErr(iParm)=covar(IPVT(iParm),IPVT(iParm))
-	enddo
+		do iParm=1,nParms
+			stdErr(iParm)=covar(IPVT(iParm),IPVT(iParm))
+		enddo
+	endif
 
    86 CONTINUE
       RETURN
@@ -318,12 +321,12 @@ C        ...EXIT
    10       IF (DABS(DET(1)) .GE. 1.0D0) GO TO 20
                DET(1) = TEN*DET(1)
                DET(2) = DET(2) - 1.0D0
-            GO TO 10
+            GOTO 10
    20       CONTINUE
    30       IF (DABS(DET(1)) .LT. TEN) GO TO 40
                DET(1) = DET(1)/TEN
                DET(2) = DET(2) + 1.0D0
-            GO TO 30
+            GOTO 30
    40       CONTINUE
    50    CONTINUE
    60    CONTINUE
@@ -331,13 +334,17 @@ C        ...EXIT
 C
 C     COMPUTE INVERSE(U)
 C
-      IF (MOD(JOB,10) .EQ. 0) GO TO 150
+      IF (MOD(JOB,10) .EQ. 0) GOTO 150
          DO 100 K = 1, N
+		  if( ABS( A(K,K) ) < 1.d-11)then
+			INFO=86
+			return
+		  endif
             A(K,K) = 1.0D0/A(K,K)
             T = -A(K,K)
             CALL DSCAL(K-1,T,A(1,K),1)
             KP1 = K + 1
-            IF (N .LT. KP1) GO TO 90
+            IF (N .LT. KP1) GOTO 90
             DO 80 J = KP1, N
                T = A(K,J)
                A(K,J) = 0.0D0

@@ -1,6 +1,6 @@
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	subroutine RegDbEsd()!note:tc,pc,acen,id & esd parms USEd in GlobConst. 
+	subroutine RegDbEsd(NC)!note:tc,pc,acen,id & esd parms USEd in GlobConst. 
 	! THIS ROUTINE minimizes vp error based on est'd rKadStar and dHkJ_mol (spec'd in main),  
 	! and constrained to match Tc.  Pc is ~matched implicitly by fitting vp near Tc.
 	! or matched explicitly when nParms=1.
@@ -17,56 +17,54 @@
 	USE EsdParms  !,KadNm3(nmx),epsA_kB(nmx),epsD_kB(nmx)
 	USE EsdMem2ParmsDb ! e.g. eokP(i)=eokPdb( IndexEsd(ID(i)) )
 	IMPLICIT DoublePrecision( A-H, K,O-Z )
-	character(len=5) tmpClass,hbClass
-	character(len=2) abClass
-	character(len=3) suffix
+	character(len=5) tmpClass,upperClass
+	!character(len=2) abClass
+	!character(len=3) suffix
 	LOGICAL LOUDER !,append
 	!CHARACTER*44 FNVP,FNLD
 	LOUDER=LOUD
 	LOUDER=.TRUE.
 	qFac=4/(4-1.9d0)
+	if(iEosOpt==23)qFac=ESD2_B0/(ESD2_B0-ESD2_K0)
 	NC=1
 	! idNum(ndb),TCD(ndb),PCD(ndb),ACEND(ndb),TbD(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb)
 	!DoublePrecision eokP(nmx),KCSTAR(nmx),DH(nmx),c(nmx),q(nmx),vx(nmx)
 	!DoublePrecision mShape(nmx),KadNm3(nmx),epsA_kB(nmx),epsD_kB(nmx) !for ESD2
 	!Integer         ND(nmx),NDS(nmx),NAS(nmx)
-	open(51,file='c:\PGLWrapper\input\ParmsPrTcJaubert.txt')
+	open(61,file='c:\temp\ESD2assoc.txt')
+	write(61,*)'EsdParms'
+	close(61) !Clear out old contents.
+	open(62,file='c:\temp\ESD2assocDevs.txt')
+	write(62,*)'AssocDevs'
+	close(62) !Clear out old contents.
+	!open(51,file='c:\PGLWrapper\input\ParmsPrTcJaubert.txt')
+	open(51,file='c:\PGLWrapper\input\CoeffsVp2a.txt')
 	read(51,*)tmpClass ! This is a dummy. Just reading 1st line.
 	do i=1,nDeckDb
 		read(51,*)idUL
-		if(idUL>898)cycle	!JRE:temporary bypass for optimizing ESD2coeffs
+		!if(idUL>898)cycle	!JRE:temporary bypass for optimizing ESD2coeffs
 		tmpClass=classDb(CrIndex(idUL))
-		abClass=tmpClass(1:2)
-		if(abClass=='as' .or. abClass=='po'.or.abClass=='As')then
-			if(tmpClass(1:1)=='A')tmpClass(1:1)='a' ! apply single func rules for now.
+		upperClass=ToUpper(tmpClass)
+		!abClass=tmpClass(1:2)
+		!if(abClass=='as' .or. abClass=='po'.or.abClass=='As')then
+		if(upperClass(1:2)=='AS')then
+			!if(tmpClass(1:1)=='A')tmpClass(1:1)='a' ! apply single func rules for now.
 			ID(1)=idNum(CrIndex(idUL))
-			if(ID(1)==909)cycle ! CO2 does not have a proper boiling point. It forms dry ice.
-			suffix=ToUpper(tmpClass(3:5))
-			if(suffix=='CID')cycle ! Skip carboxylic acids.
-			if(ToUpper(tmpClass)=='POCHL')cycle ! Skip chlorine compds for now. .
+			!if(ID(1)==909)cycle ! CO2 does not have a proper boiling point. It forms dry ice.
+			!suffix=ToUpper(tmpClass(3:5))
+			if(upperClass=='ASCID')cycle		!omit carboxylic acids.
+			if(upperClass=='ASPRO')cycle		!omit peroxides for now.
+			if(upperClass=='ASSOC')cycle		!skip miscellaneous for now.(e.g.,nitricOxide)
+			if(upperClass=='ASHAC')cycle		!skip halogen acids for now.(e.g.,HCl)
+			if(upperClass(1:4)=='ASAA')cycle	!skip amino acids for now.(e.g.,alanine)
+			if(upperClass(1:1)==tmpClass(1:1))cycle	!skip multifunctional compds for now.(e.g.,alanine)
 			idCas(1)=idCasDb(CrIndex(idUL))
 			Call GETCRIT(NC,iErrCrit)	! ID() from USEd GlobConst
 			Call GetEsdCas(NC,idCas(1),iErrEsd) !load the compound. If in ParmsEsdMEM2, but not ParmsHbEsd, the ParmsEsdMEM2 epsA, etc will be used.
 			if(Tb(1)<0)cycle ! e.g., Melamine Tb= -86 means it's unknown.
 			TcEos(1)=TCD(CrIndex(idUL))
 			PcEos(1)=PCD(CrIndex(idUL))
-			open(52,file='c:\PGLWrapper\input\ParmsHbEsd.txt')
-			read(52,*)nClasses
-			do j=1,nClasses
-				read(52,*)hbClass,Kad,epsD,epsA
-				if(tmpClass==hbClass)then
-					ND(1)=1
-					NDS(1)=1
-					if(epsD < zeroTol)NDS(1)=0
-					NAS(1)=1
-					if(epsA < zeroTol)NAS(1)=0
-					KadNm3(1)=Kad
-					epsA_kB(1)=epsA
-					epsD_kB(1)=epsD
-					exit !terminate the do loop.
-				endif
-			enddo
-			close(52)
+			Call LookupKAB( ID(1) )	!output parms USEd in Assoc
 			call RegPureEsd2(-1)
 		endif
 	enddo
@@ -92,15 +90,17 @@
 	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
 	USE EsdParms  !,KadNm3(nmx),epsA_kB(nmx),epsD_kB(nmx)
 	USE Assoc	  !eDon,eAcc
+	USE CritParmsDb
 	IMPLICIT DoublePrecision( A-H, K,O-Z )
 	PARAMETER(NPMAX=5)	 ! max # of EOS parameters to estimate: c,eok,b,Kad,epsAD
-	DoublePrecision	parm(3),error(3),stderr(3) !,qCorr(0:3),zCorr(0:3)
-	integer iErr2(NC) ! iErrExactEsd list for each component.
+	DoublePrecision	parm(NPMAX),error(22),stderr(3) !,qCorr(0:3),zCorr(0:3)
+	!integer iErr2(NC) ! iErrExactEsd list for each component.
 	LOGICAL LOUDER,append
+	Character*5 upperClass !,ToUpper
 	!CHARACTER*44 FNVP,FNLD
 	EXTERNAL RegPureDev2
 	LOUDER=LOUD
-	LOUDER=.TRUE.
+	!LOUDER=.TRUE.
 	append=.FALSE.
 	if(NC > 1)then
 		pause 'RegpureEsd2 only works for Nc=1. Sorry.'
@@ -109,35 +109,48 @@
 		append=.TRUE.
 		NC=1
 	endif
+	IDi=ID(1)
+	upperClass=ToUpper( classDb(CrIndex(IDi)) )
 	!print*,'Initial guess from ParmsEsd? Enter 1 for yes or 0 to use MW guides as guess'
 	!read(*,*)iAns
-	if(iEosOpt==23)then
-		!Call BuildEsd2corr(ESD2_qCorr,ESD2_zCorr,iErr)	!ESD2_qCorr,ESD2_zCorr USEd in EsdParms
+	if(iEosOpt==23.and.upperClass(1:2)/='AS')then	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		!Call BuildEsd2corr(iErr)	!ESD2_qCorr,ESD2_zCorr USEd in EsdParms
 		Call BuildEsd2db(iErr)	!ESD2_qCorr,ESD2_zCorr USEd in EsdParms
 		return
 	endif
 	qFac=4/(4-1.9d0)
 	if(iEosOpt==23)qFac=esd2_B0/(esd2_B0-esd2_k0)
-	iAns=1 !bypass MW guess.
-	if(iAns==0)then
+	!iAns=1 !bypass MW guess.
+	if(bVolCC_mol(1) < zeroTol)then	!signals zero prior info on this compd. 
 		c(1)=1+rmw(1)/150
 		eokP(1)=359+.66/rmw(1)
 		Vx(1)=17*rmw(1)/50
-		parm(1)=c(1)
-		if(ND(1)==0)call ExactEsd(nC,VX,c,q,eokP,iErr,iErr2)
-		if(ND(1)==1)call RegPureDev3b(3,1,parm,error,iflag) !replaces eokP and Vx
+		!if(ND(1)==0)call ExactEsd(nC,VX,c,q,eokP,iErr,iErr2)
+		!if(ND(1)==1)call RegPureDev3b(3,1,parm,error,iflag) !replaces eokP and Vx
+		q(1)=1+qFac*(c(1)-1)
 	endif
 	if(LOUDER)write(*,*)'RegPure2:  ID       c     q     E/k       Vx    Nd  kcStar    dH        '
 	if(LOUDER)write(*,'(i9,2f8.4,f9.3,f7.3,i3,e11.4,f9.2,2i3,2f8.2)')ID(1),C(1),q(1),eokP(1),VX(1),ND(1),kcStar(1),dH(1)*RgasCal*Tc(1)/1000,nAs(1),nDs(1)
 	!  general ***********************************
-	q(1)=1+qFac*(c(1)-1)
-	nParms=3
-	PARM(1)=c(1)
-	PARM(2)=eokP(1)
+	nParms=5
+	PARM(1)=q(1)
+	PARM(2)=eokP(1) !*0.75
 	PARM(3)=Vx(1)
+	if(nParms > 3)then
+		PARM(4)=ESD2_K11(1)
+		if(nParms > 4)PARM(5)=ESD2_K10(1)
+	endif
 	call RegPureDev2(nData,nParms,parm,error,iflag)
+	if(nData<5)then
+		if(nData>2)then
+			nParms=nData
+		else
+			nParms=3
+		endif
+	endif
 	if(LOUDER)write(*,'(a,3f11.3,i3)')' C,Eok,vX',C(1),eokP(1),VX(1),Nd(1)
-	if(LOUDER)write(*,form610)'RegPureEsd2:initial devA,devT,devP=',(error(i),i=1,3)
+	PAADp=SUM(  ABS( error(3:nData) )  )/(nData-2)
+	if(LOUDER)write(*,form610)' RegPureEsd2:initial devTc,devPc,devPvp=',error(1:2),PAADp
 	TbCalc=Tb(1)+error(1)/100*(Tb(1)+0.00d0)
 	TcCalc=Tc(1)+error(2)/100*Tc(1)
 	PcCalc=Pc(1)+error(3)/100*Pc(1)
@@ -148,7 +161,7 @@
 	cGuess=1234
 	if(iteropt==0)then
 		do while(cGuess > 0)
-			write(*,*)'Guess C,eps/kB,bVol (-1,1,1 to skip to regression using last guess)'
+			write(*,*)'Guess C,eps/kB,bVol (-1,1,1 to regress using last guess).ID=',ID(1)
 			!read(*,*)rguess,eokP(1),Vx(1)
 			!read(*,*)cGuess,eGuess,bGuess
 			cGuess = -1 ! bypass manual guessing
@@ -178,14 +191,13 @@
 	if(LOUDER)write(*,form601)ID(1),C(1),q(1),eokP(1),VX(1) !,ND(1),kcStar(1),dH(1)*1.987*Tc(1)/1000,nAs(1),nDs(1)
 	!	pause
 	factor=1.d-4
-	tol=1.d-4
-	nParms=3
-	nData=3
+	tol=1.d-0
 	if(LOUDER)print*, 'RegPureEsd: Calling LmDifEz.'
 	call LmDifEz(RegPureDev2,nData,nParms,PARM,factor,ERROR,TOL,INFO,stdErr)
-	if(info > 4 .and. LOUD)write(*,*)'error in lmdif 2nd call'
+	if(info > 5 .and. LOUD)write(*,*)'error in lmdif '
+	if(info>5)print*,'LmDifEz indicated problem. INFO=',info
 	iflag=1
-	call RegPureDev2(nData,nParms0,parm,error,iflag)
+	call RegPureDev2(nData,nParms,parm,error,iflag)
 	qShape=1+qFac*( c(1) -1 )
 	rKadNm3=KcStar(1)
 	dHkCal_mol=dH(1)*RgasCal*Tc(1)/1000
@@ -194,15 +206,19 @@
 	if(LOUDER)write(*,*)'  ID       c     q     E/k       Vx    ' !Nd  kadNm3    epsA/k    epsD/k   nAs   nDs        '
 	!if(LOUDER)write(*,'(i9,2f8.4,f9.3,f7.3,i3,e11.4,f9.2,2i3,2f8.2)')ID(1),C(1),q(1),eokP(1),VX(1),ND(1),KadNm3(1),epsA_kB(1),epsD_kB(1),nAs(1),nDs(1)
 	if(LOUDER)write(*,'(i9,2f8.4,f9.3,f9.3)')ID(1),C(1),q(1),eokP(1),VX(1) !,ND(1),KadNm3(1),epsA_kB(1),epsD_kB(1),nAs(1),nDs(1)
-	if(LOUDER)write(*,form610)' Final devA,devT,devP=',(error(i),i=1,3)
+	PAADp=SUM(  ABS( error(3:nData) )  )/(nData-2)
+	if(LOUDER)write(*,form610)' RegPureEsd2:initial devTc,devPc,devPvp=',error(1:2),PAADp
 	if(iEosOpt==4)write(*,form610)' eDon(K),eAcc(K)=',eDonorKcal_mol(1,1)/RgasCal*1000,eAcceptorKcal_mol(1,1)/RgasCal*1000 
-	if(append .and. info < 5)then
-		open(61,file='c:\PGLWrapper\input\ParmsEsdMEM2.txt',ACCESS='APPEND')
-!243	q	EOK(K)	 b(cc)	KadNm3	eDon	eAcc	nDegree	#eDs	#eAs	idCas	Name
-		write(61,'(i6,a,f7.4,a,f8.2,a,f8.3,a,f8.5,a,f8.0,a,f8.0,a,3(i3,a),i10,a,a)')ID(1),tabChar,q(1),tabChar,eokP(1),tabChar,VX(1),tabChar,KadNm3(1),tabChar,epsD_kB(1),tabChar,epsA_kB(1),tabChar,ND(1),tabChar,nDs(1),tabChar,nAs(1),tabChar,idCas(1),tabChar,NAME(1)
+	if(append .and. info < 6)then
+		open(61,file='c:\temp\ESD2assoc.txt',ACCESS='APPEND')
+!		q	EOK(K)	 b(cc)	K10	K11	KadNm3	eDon	eAcc	nDegree	#eDs	#eAs	idCas	Name
+		write(61,'(i6,a,f7.4,a,f8.2,a,f8.3,a,f8.3,a,f8.3,a,f8.5,a,f8.0,a,f8.0,a,3(i3,a),i10,a,a)')ID(1),tabChar,q(1),tabChar,eokP(1),tabChar,VX(1),tabChar,ESD2_K10(1),tabChar,ESD2_K11(1),tabChar,KadNm3(1),tabChar,eDonorKcal_mol(1,1)/RgasCal*1000,tabChar,eAcceptorKcal_mol(1,1)/RgasCal*1000,tabChar,nDegree(1,1),tabChar,nAcceptors(1,1),tabChar,nDonors(1,1),tabChar,idCas(1),tabChar,NAME(1)
 		close(61)
+		open(62,file='c:\temp\ESD2assocDevs.txt',ACCESS='APPEND')
+		write(62,'(i6,22f9.2)')ID(1),error(1:nData)
+		close(62)
 	else
-		pause 'check errors'
+		if(LOUDER)pause 'check errors'
 	endif
 	return
 	end
@@ -213,27 +229,60 @@
 	!nParms>2 => ignore critpt
 	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
 	USE EsdParms
+	USE Assoc
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	dimension PARM(nParms),ERROR(nData),x(NMX) !,fugc(NMX) !,y(NMX),ierBp(12)
+	DOUBLEPRECISION PARM(nParms),ERROR(22),x(NMX),Pvp(22),Tvp(22),chemPot(NMX) !,y(NMX),ierBp(12)
 	IF(IFLAG.NE.0)ABC=123	 !this is here so no warning for not using iflag
 	NC=1
 	x(1)=1
-	C(1)=  PARM(1)
+	q(1)=  PARM(1)
 	qFac=4/(4-1.9d0)
-	if(iEosOpt==23)qFac=esd2_B0/(esd2_B0-esd2_k0)
-	q(1)=1+qFac*(c(1)-1)
+	if(iEosOpt==23)qFac=ESD2_B0/(ESD2_B0-ESD2_k0)
+	c(1)=1+(q(1)-1)/qFac
 	eokp(1)=Parm(2)
 	VX(1)=parm(3)
 	bVolCc_mol(1)=VX(1)
+	if(nParms > 3)then
+		ESD2_K11(1)=parm(4)
+		if(nParms>4)ESD2_K10(1)=parm(5)
+	endif
+	if(parm(1) < 0.9)then
+		error(1:nData)=error(1:nData)*2
+		return
+	endif
 	isZiter=1 !use numerical derivatives
-	toll=1.d-4
+	toll=1.d-1
 	if(LOUD)write(*,*)'  ID       c     q     E/k       Vx    Nd  kcStar    dH        '
-	if(LOUD)write(*,'(i9,2f8.4,f9.3,f7.3,i3,e11.4,f9.2,2i3,2f8.2)')ID(1),C(1),q(1),eokP(1),VX(1),ND(1),kcStar(1),dH(1)*1.987*Tc(1)/1000,nAs(1),nDs(1)
+	if(LOUD)write(*,'(i9,2f8.4,f9.3,f7.3,i3,e11.4,2f9.2,2i3,2f8.2)')ID(1),C(1),q(1),eokP(1),VX(1),nDegree(1,1),bondVolNm3(1,1),eAcceptorKcal_mol(1,1),eDonorKcal_mol(1,1),nAcceptors(1,1),nDonors(1,1)
 	call CritPure(NC,isZiter,toll,TC_Pure,VC_Pure,PC_Pure,ZC_Pure,acen_pure,TbCalc,iErrCode)
-	error(1)=(acen_pure-acen(1))/(acen(1)+0.01d0) ! 0.01 offset in case acen ~ 0. 
-	error(1)=( TbCalc-Tb(1) )/Tb(1)
-	error(2)=( TC_Pure-Tc(1) )/Tc(1)
-	error(3)=( PC_Pure-Pc(1) )/Pc(1)
+	if(iErrCode > 9)then
+		error(1:nData)=error(1:nData)*2
+		return
+	endif
+	!error(3)=(acen_pure-acen(1))/(acen(1)+0.01d0) ! 0.01 offset in case acen ~ 0. 
+	error(1)=( TC_Pure-Tc(1) )/Tc(1)*1000
+	error(2)=( PC_Pure-Pc(1) )/Pc(1)*1000
+	error(3)=( TbCalc-Tb(1) )/Tb(1)*100
+	!error(1)=error(1)**3	!Strong penalty for Tc dev.
+	!error(2)=error(2)**3	!Strong penalty for Pc dev.
+	nData=3
+	if(nParms > 3)then
+		Call PureVpTable(ID(1),nPtsVp,Tvp,Pvp,TCi,PCi,iErrVp)
+		if(iErrVp < 11)then
+			do i=1,nPtsVp
+				iDev=2+i
+				call PsatEar(Tvp(i),pSatCalc,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
+				if(ierCodePsat > 10)cycle
+				error(iDev)=( pSatCalc-Pvp(i))/Pvp(i)*100
+			enddo
+			nData=iDev
+		endif
+		PAADp=SUM(  ABS( error(3:nData) )  )/(nData-2)
+		PMADp=MAXVAL(  ABS( error(3:nData) )  )
+		!if(ABS(ESD2_K11(1)) > 11)then	!Some iterations gave values like 8E8. 
+		!	error(1:nData)=error(1:nData) !*3	!penalize stupid values of K11.
+		!endif
+	endif
 	return
 	end
 !******************************************************************************************************************************************
@@ -307,8 +356,8 @@
 	!outFile=TRIM(masterDir)//'\output\RegPureOut.txt'
 	!open(66,file=outFile)
 	!66 should be open from RegPureIo.
-	write(66,*)'C,vX,Eok',C(1),VX(1),eokP(1)
-	write(66,*)'initial aaperr,sgerr',aaperr,rhoerr
+	write(*,*)'C,vX,Eok',C(1),VX(1),eokP(1)
+	write(*,*)'initial aaperr,sgerr',aaperr,rhoerr
 	objo=objfun
 	aaperro=aaperr
 	if(iteropt.eq.0)then
@@ -2064,7 +2113,7 @@
 	!DIMENSION GJ_Jac(2,2),B_GJ(2,1)
 	!DIMENSION KIJ(NMX,NMX),KTIJ(NMX,NMX),HIJ(NMX,NMX),HTIJ(NMX,NMX),xsTau(NMX,NMX),xsTauT(NMX,NMX),xsAlpha(NMX,NMX)
 	doubleprecision mShape(NMX),Acen_pure
-	character*200 ErrMsg(4) !,outfile*100
+	character*200 ErrMsg(22) !,outfile*100
 	LOGICAL LOUDER
 	!COMMON/ETA2/ETA
 	!COMMON/BIPs_SPEAD/aBipAD,aBipDA
@@ -2077,9 +2126,14 @@
 	data initCall/1/
 	LOUDER=LOUD
 	LOUDER=.TRUE. ! PROVIDES PROSPECT OF LOCAL CONTROL OF CONSOLE FEEDBACK.
+	LOUDER=.FALSE.
 	iErrCode=0
-	ErrMsg(1)='CritPure error - NC>1 , NC must be equal to 1'
-	ErrMsg(2)='CritPure error - Please use "CP" option with EOS # 4, 5 & 9'
+	ErrMsg(11)='CritPure error - NC>1 , NC must be equal to 1'
+	ErrMsg(12)='CritPure error - Please use "CP" option with EOS # 4, 5 & 9'
+	ErrMsg(13)='CritPure error - bVolCC_mol undefined. Check compd initialization.'
+	ErrMsg(14)='CritPure error - manual iteration failed to provide good guess..'
+	ErrMsg(15)='CritPure error - acentric factor, log failed.'
+	ErrMsg(16)='CritPure error - TbCalc, log failed.'
 	ErrMsg(3)='CritPure warning - Number of iterations exceeded 100 while typically it should be around 7'
 
 	if (NC.ne.1) then
@@ -2114,7 +2168,12 @@
 	vTotCc=VC(1)
 	etac=0.18
 	vTotCc=bVolCC_mol(1)/etac
-
+	if(vTotCc < zeroTol)then
+		pause 'CritPure: bVolCC_mol < 0?'
+		iErrCode=13
+		errMsgPass=errMsg(iErrCode)
+		return
+	endif
 	iErrFlag=1
 !	if (iEosOpt.EQ.9.or.iEosOpt.EQ.5.or.iEosOpt.Eq.4.or.iFlagAssoc.Eq.1) iErrFlag=0
 !	if(iErrFlag==1)then
@@ -2132,7 +2191,7 @@
     !tKelvin=5.2             !for debugging
     !eta=0.40469             !for debugging
 	!write(*,*)'CritPure: ID=',ID(1)
-    if(LOUDER)write(*,'(a,f7.2,a,f7.4,a)')' Default guess is: Tc=',tKelvin,' etac=',etac,' . Enter guess for Tc,etac'
+    if(LOUDER)write(*,'(a,I8,a,f7.2,a,f7.4,a)')' Default guess for ID=',ID(1),' is: Tc=',tKelvin,' etac=',etac,' . Enter guess for Tc,etac'
     !read*,tKelvin,eta      !for debugging
     !vTotCc=bVolCC_mol(1)/eta !for debugging
 	rho=1/vTotCc
@@ -2286,19 +2345,25 @@
 			write(*,*) 'If dT=',Delta_T,' and dRho=',Delta_Rho
 			write(*,*) 'are small enough for your particular application, you can accept the results'
 			write(*,*) 'Otherwise, ignore the CriticalPoint.txt file.' 
-			write(*,*) 'Best values so far: Tc= ',tBest,'        etac = ',rhoBest*bVolCC_mol(1),'rmsErr=',rmsBest 
+			write(*,*) 'Best values so far for ID=',ID(1),': Tc= ',tBest,'        etac = ',rhoBest*bVolCC_mol(1),'rmsErr=',rmsBest 
 			TC_Pure=tBest
 			print*,'Enter manual guess for Tc,etac (<0 to terminate)'
 			read*,tKelvin,etac
 			rho=etac/bVolCC_mol(1)
 			manual=1
+			if(iter >25)exit
 			if(tKelvin > 0)cycle
 			tKelvin=TC_Pure
             rho=rhoBest
 			exit
 		ENDIF
-		if(ABS(Delta_T/tKelvin) < toll)exit !terminate iteration
+		if(ABS(Delta_T) < toll)exit !terminate iteration
 	ENDDO
+	if(iter > 25)then
+		iErrCode=14
+		errMsgPass=errMsg(iErrCode)
+		return
+	endif
     TC_Pure=tBest
     vTotCc=1/rho
 	VC_PURE=vTotCc
@@ -2307,20 +2372,30 @@
 	PC_PURE=Z*(rhoBest*rGas*tBest)
 	etaC_PURE=rhoBest*bVolCC_Mol(1)
 	rhoc=rMw(1)*rhoBest
-	if(LOUDER)write(*,'(3(a,f7.3))')' Tc=',TC_PURE,'      Pc=',PC_PURE,'     etaC=',etaC_PURE
+	if(LOUDER)write(*,'(3(a,f7.3),a,I8)')' Tc=',TC_PURE,'      Pc=',PC_PURE,'     etaC=',etaC_PURE,' ID=',ID(1)
     if(LOUDER.and.initCall)print*,'CP done. Calling Psat for acen.'
 	T7=0.7D0*tBest
-	call PsatEar(T7,pSat7,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
-	aceFactor=86  !NOTE: acen() is a vector member of GlobConst
-    if(ierCodePsat==0)aceFactor= -log10(pSat7/Pc_Pure) - 1
-	acen_pure=aceFactor
-	call PsatEar(Tb(1),pTb,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
+	call PsatEar(T7,pSat7,FUGC,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
+	acen_pure=86  !NOTE: acen() is a vector member of GlobConst
+	TbCalc=8686
+	if(pSat7/Pc_Pure < zeroTol .or. ierCodePsat>9)then
+		iErrCode=14
+		errMsgPass=errMsg(iErrCode)
+		return
+	endif	
+	acen_pure= -log10(pSat7/Pc_Pure) - 1
+	call PsatEar(Tb(1),pTb,FUGC,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
 	! ln(Psat/pTb)=A*(1/T-1/Tb); A=ln(pSat7/pTb)/(1/T7-1/Tb); ln(pSat)=ln(pTb)+A*(1/T-1/Tb)=>ln(0.101325/pTb)/A+1/Tb=1/TbCalc
+	if(pSat7/pTb < zeroTol .or. pTb<zeroTol .or. ierCodePsat>9)then
+		iErrCode=15
+		errMsgPass=errMsg(iErrCode)
+		return
+	endif	
 	A=LOG(pSat7/pTb)/(1/T7-1/Tb(1))
 	TbCalc=1/( LOG(0.101325/pTb)/A+1/Tb(1) )
 
 
-	if(LOUDER)write(*,'(4(a,f7.4),a,f7.2,a,f7.2)')' Zc=',ZC_PURE,'    acen= ',aceFactor,'  rhoc(g/cc)=',rhoc,' Psat7=',pMPa,' T7=',T7,' Tb=',TbCalc
+	if(LOUDER)write(*,'(4(a,f7.4),a,f7.2,a,f7.2)')' Zc=',ZC_PURE,'    acen= ',acen_pure,'  rhoc(g/cc)=',rhoc,' Psat7=',pMPa,' T7=',T7,' Tb=',TbCalc
 	
 	initCall=0
 86	RETURN

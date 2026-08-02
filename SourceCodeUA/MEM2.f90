@@ -344,9 +344,7 @@
 	return
 	end	!subroutine MEM2()
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	!  ELLIOTT'S SUBROUTINE
-	!  20221202 Initial adaptation MEM2 paper: IECR,61(42):15725. Start as accelerator for initial guesses of SS method.
-	SUBROUTINE MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErr )
+SUBROUTINE MEM1(isZiter,tKelvin,xFrac,nComps,rhoMol_cc,zAssoc,aAssoc,uAssoc,fAssoc,rLnPhiAssoc,iErr )
 	USE GlobConst, only: avoNum,zeroTol,bVolCc_mol,ID,dumpUnit,RgasCal,form612
 	USE Assoc
 	!  PURPOSE:  COMPUTE THE EXTENT OF ASSOCIATION (fAssoc) AND zAssoc given rho,VM
@@ -544,5 +542,54 @@
 	rdfOld=rdfContact
 	if(LOUDER)write(dumpUnit,611)' MEM1:nIter,F1,fAssoc,zAssoc,rmsErr=',nIter,fAssoc1,fAssoc,zAssoc
 	return
-	end	!subroutine MEM1()
+end	SUBROUTINE MEM1
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+Subroutine LookupKAB(IDi)	!output parms USEd in Assoc
+	USE GlobConst, only:RgasCal
+	USE Assoc
+	USE CritParmsDb
+	USE EsdMEM2ParmsDb	!KadNm3db,epsA_kBdb,epsD_kBdb,
+	Implicit DoublePrecision(A-H,K,O-Z)
+	character*5 class,upperClass,ToUpper
+	TYPE(ClassKAB)::KAB
+	!nDonors(1,1)=0
+	!nAcceptors(1,1)=0
+	!nDegree(1,1)=0
+	!bondVolNm3(1,1)=0
+	upperClass=ToUpper(classDb( CrIndex(IDi) ))
+	if(upperClass=='ASCID')return	!skip carboxylic acids for now.
+	!if(upperClass(1:2)=='AS')return
+	nDonors(1,1)=1
+	nAcceptors(1,1)=1
+	nDegree(1,1)=1
+	write(class,'(I5)')IDi
+	KAB=GetKAB(class)
+	if(KAB%K > 0)then
+		bondVolNm3(1,1)=KAB%K
+		eDonorKcal_mol(1,1)=KAB%A*RgasCal/1000
+		eAcceptorKcal_mol(1,1)=KAB%B*RgasCal/1000 
+		return
+	endif
+	class=classDb( CrIndex(IDi) )
+	KAB=GetKAB(class)
+	if(KAB%K > 0)then
+		bondVolNm3(1,1)=KAB%K
+		eDonorKcal_mol(1,1)=KAB%A*RgasCal/1000
+		eAcceptorKcal_mol(1,1)=KAB%B*RgasCal/1000 
+	else
+		print*,'LookupKAB: undefined. ID, classDb=',IDi,class
+		pause  'Check error'
+	endif
+	!Last, check for association structure defined in ParmsEsd___.txt
+	indx=IndexEsd(IDi)
+	if(epsA_kBdb(indx)*epsD_kBdb(indx)>0)then	!indicates self-associating compds
+		bondVolNm3(1,1)=KadNm3db(indx)
+		eDonorKcal_mol(1,1)=epsD_kBdb(indx)*RgasCal/1000
+		eAcceptorKcal_mol(1,1)=epsA_kBdb(indx)*RgasCal/1000
+		nDonors(1,1)=NDSdb(indx)
+		nAcceptors(1,1)=NASdb(indx)
+		nDegree(1,1)=NDdb(indx)
+	endif
+
+end Subroutine LookupKAB

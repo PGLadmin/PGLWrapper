@@ -130,6 +130,7 @@ Subroutine PGLStartup(NC,iEosLocal,idOpt,ierCode) ! ID() or idCas() USEd from Gl
 	if(iEosOpt==19)CALL GetLsgMem2(NC,ID,iErrGet)
 	if(iEosOpt==20)CALL GetPcSaft(NC,localCas,iErrGet)		!JRE 2023 : Reads SptPcSaft parameters of Rehner et al.
 	if(iEosOpt==21)CALL GetPrLorraine(NC,iErrGet)			!JRE 20231010 : Reads Jaubert's tcPR parameters including BIPs for PPR78 mixing rule. 
+	if(iEosOpt==23)CALL GetEsdCas(NC,localCas,iErrGet)	 !Results placed in USE EsdParms, Assoc				!Diky model 24
 	!              1     2       3       4          5          6         7           8              9        10       
 	!data EosName/'PR','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PcSaft',&
 	!		'tcPRq','EgcESD','EgcEsdTb','TffSPEAD','EgcPcSaft','EgcPcSaft(Tb)','tcPR-GE(W)','MEMSCED','LsgMem2','SptPcSaft'/

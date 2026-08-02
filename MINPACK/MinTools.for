@@ -48,22 +48,22 @@ C     **********
       X1MAX = ZERO
       X3MAX = ZERO
       FLOATN = N
-      AGIANT = RGIANT/FLOATN
+      AGIANT = RGIANT/(FLOATN+epsmch)
       DO 90 I = 1, N
          XABS = DABS(X(I))
-         IF (XABS .GT. RDWARF .AND. XABS .LT. AGIANT) GO TO 70
+         IF (XABS .GT. RDWARF .AND. XABS .LT. AGIANT) GOTO 70
             IF (XABS .LE. RDWARF) GO TO 30
 C
 C              SUM FOR LARGE COMPONENTS.
 C
                IF (XABS .LE. X1MAX) GO TO 10
 				!if(XABS.EQ.0)PAUSE 'ENORM:XABS=0'
-                  S1 = ONE + S1*(X1MAX/XABS+1.D-14)**2	!JRE: added 1.D-14 to avoid zero divide.
+                  S1 = ONE + S1*(X1MAX/(XABS+1.D-14))**2	!JRE: added 1.D-14 to avoid zero divide.
                   X1MAX = XABS
                   GO TO 20
    10          CONTINUE
 				!if(X1MAX.EQ.0)PAUSE 'ENORM:X1MAX=0'
-                  S1 = S1 + (XABS/X1MAX+1.D-14)**2    	!JRE: added 1.D-14 to avoid zero divide.
+                  S1 = S1 + (XABS/(X1MAX+1.D-14))**2    	!JRE: added 1.D-14 to avoid zero divide.
    20          CONTINUE
                GO TO 60
    30       CONTINUE
@@ -74,13 +74,13 @@ C
 				!if(XABS.EQ.0)PAUSE 'ENORM:XABS=0'
                   S3 = ONE + S3*(X3MAX/XABS+1.D-14)**2	!JRE: added 1.D-14 to avoid zero divide.)**2
                   X3MAX = XABS
-                  GO TO 50
+                  GOTO 50
    40          CONTINUE
 				!if(X3MAX.EQ.0)PAUSE 'ENORM:X3MAX=0'
-                  IF ( X3MAX.NE. ZERO) S3 = S3 + (XABS/X3MAX)**2
+                  IF ( ABS(X3MAX)>epsmch) S3 = S3 + (XABS/X3MAX)**2
    50          CONTINUE
    60       CONTINUE
-            GO TO 80
+            GOTO 80
    70    CONTINUE
 C
 C           SUM FOR INTERMEDIATE COMPONENTS.
@@ -96,7 +96,7 @@ C
          ENORM = X1MAX*DSQRT(S1+(S2/X1MAX)/X1MAX)
 !         GO TO 130
 !  100 CONTINUE
-      ELSE IF (S2 .NE. ZERO) THEN
+      ELSE IF (ABS(S2) > EPSMCH) THEN
             IF (S2 .GE. X3MAX)THEN
 			SQARG=S2*(ONE+(X3MAX/S2)*(X3MAX*S3))
 			IF(SQARG.LE.ZERO) SQARG=0 !PAUSE 'ENORM: S2ARG.LE.0'
@@ -215,6 +215,7 @@ C     LAST CARD OF SUBROUTINE QFORM.
 C
       END
       SUBROUTINE QRFAC(M,N,A,LDA,PIVOT,IPVT,LIPVT,RDIAG,ACNORM,WA)
+      USE GlobConst, only:zeroTol
       INTEGER M,N,LDA,LIPVT
       INTEGER IPVT(LIPVT)
       LOGICAL PIVOT
@@ -294,7 +295,7 @@ C     ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
 C     BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE
 C
 C     **********
-      INTEGER I,J,JP1,K,KMAX,MINMN
+	INTEGER I,J,JP1,K,KMAX,MINMN
       DOUBLE PRECISION AJNORM,EPSMCH,ONE,P05,SUM,TEMP,ZERO
       DOUBLE PRECISION DPMPAR,ENORM
       DATA ONE,P05,ZERO /1.0D0,5.0D-2,0.0D0/
@@ -310,13 +311,13 @@ C
          RDIAG(J) = ACNORM(J)
          WA(J) = RDIAG(J)
          IF (PIVOT) IPVT(J) = J
-   10    CONTINUE
+   10 CONTINUE
 C
 C     REDUCE A TO R WITH HOUSEHOLDER TRANSFORMATIONS.
 C
       MINMN = MIN0(M,N)
       DO 110 J = 1, MINMN
-         IF (.NOT.PIVOT) GO TO 40
+         IF (.NOT.PIVOT) GOTO 40
 C
 C        BRING THE COLUMN OF LARGEST NORM INTO THE PIVOT POSITION.
 C
@@ -324,7 +325,7 @@ C
          DO 20 K = J, N
             IF (RDIAG(K) .GT. RDIAG(KMAX)) KMAX = K
    20       CONTINUE
-         IF (KMAX .EQ. J) GO TO 40
+         IF (KMAX .EQ. J) GOTO 40
          DO 30 I = 1, M
             TEMP = A(I,J)
             A(I,J) = A(I,KMAX)
@@ -341,18 +342,18 @@ C        COMPUTE THE HOUSEHOLDER TRANSFORMATION TO REDUCE THE
 C        J-TH COLUMN OF A TO A MULTIPLE OF THE J-TH UNIT VECTOR.
 C
          AJNORM = ENORM(M-J+1,A(J,J))
-         IF (AJNORM .EQ. ZERO) GO TO 100
+         IF (ABS(AJNORM) < zeroTol) GOTO 100
          IF (A(J,J) .LT. ZERO) AJNORM = -AJNORM
          DO 50 I = J, M
             A(I,J) = A(I,J)/AJNORM
-   50       CONTINUE
+   50    CONTINUE
          A(J,J) = A(J,J) + ONE
 C
 C        APPLY THE TRANSFORMATION TO THE REMAINING COLUMNS
 C        AND UPDATE THE NORMS.
 C
          JP1 = J + 1
-         IF (N .LT. JP1) GO TO 100
+         IF (N .LT. JP1) GOTO 100
          DO 90 K = JP1, N
             SUM = ZERO
             DO 60 I = J, M
@@ -362,10 +363,10 @@ C
             DO 70 I = J, M
                A(I,K) = A(I,K) - TEMP*A(I,J)
    70          CONTINUE
-            IF (.NOT.PIVOT .OR. RDIAG(K) .EQ. ZERO) GO TO 80
+            IF (.NOT.PIVOT .OR. ABS( RDIAG(K) ) < zeroTol) GOTO 80
             TEMP = A(J,K)/RDIAG(K)
             RDIAG(K) = RDIAG(K)*DSQRT(DMAX1(ZERO,ONE-TEMP**2))
-            IF (P05*(RDIAG(K)/WA(K))**2 .GT. EPSMCH) GO TO 80
+            IF (P05*(RDIAG(K)/WA(K))**2 .GT. EPSMCH) GOTO 80
             RDIAG(K) = ENORM(M-J,A(JP1,K))
             WA(K) = RDIAG(K)
    80       CONTINUE

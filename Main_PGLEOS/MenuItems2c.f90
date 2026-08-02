@@ -2603,7 +2603,6 @@ END !Subroutine IDACsTP()
 			x(iPure)=smallx
 		enddo ! iPure
 		zero=0
-		one=1
 		if(LOUDER)write(dumpUnit,*) ' x(1),hRes,V(cc/mol),gRes'
 		if(LOUDER)write(*,form600)zero,hPure(2),Vcc_mol(2),gPure(2)
 		if(LOUDER)write(*,form600)one ,hPure(1),Vcc_mol(1),gPure(1)

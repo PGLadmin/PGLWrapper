@@ -57,8 +57,8 @@
     !print*,'outFile=',TRIM(outFile)
 	LOUD =.FALSE.
 	!LOUD = .TRUE.
-    RELEASE=.FALSE.
-    RELEASE=.TRUE.
+    RELEASE=.FALSE.	!Use FALSE if you want to specify an absolute path to your input dir. 
+    !RELEASE=.TRUE.	!Use TRUE for relative path like when your project file is PGLWrapper.
 	PGLInputDir='c:\PGLWrapper\input'
     IF(RELEASE)PGLInputDir=TRIM(masterDir)//'\input'
 	dumpUnit=6
@@ -215,6 +215,7 @@
 		WRITE(6,*)'PS FOR POLYMER-SOLVENT PARTITIONING ESTIMATION '
 		WRITE(6,*)'PT FOR Pure component Property Table '
 		WRITE(6,*)'PX FOR P,X,Y given T'
+		WRITE(6,*)'RD FOR REGRESSION OF PURE COMPONENT ESD DataBase'
 		WRITE(6,*)'RP FOR REGRESSION OF PURE COMPONENT ESD PARAMETERS'
 		WRITE(6,*)'RS FOR Kii regression on temperature-vapor pressure Database for SPEAD EOS'
 		WRITE(6,*)'RX FOR REGRESSION OF XA,XD (e.g. from FTIR data)'
@@ -290,6 +291,7 @@
 		IF(calcType=='PS'.OR.calcType=='ps')CALL PSITER(NC,iErrCode)
 		IF(calcType=='PT'.OR.calcType=='pt')CALL PropTable(NC,iErrCode)
 		IF(calcType=='PX'.OR.calcType=='px')CALL PXYT(NC)
+		IF(calcType=='RD'.OR.calcType=='rd')CALL RegDbEsd(NC)
 		IF(calcType=='RP'.OR.calcType=='rp')CALL RegPureEsd2(NC)
 		IF(calcType=='RS'.OR.calcType=='rs')CALL RegSpeadIo(NC)
 		IF(calcType=='RX'.OR.calcType=='rx')CALL RegXaXdIo(NC)

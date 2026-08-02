@@ -28,10 +28,10 @@ MODULE GlobConst
 	!PUBLIC
 	USE ModelSettings, only: nModels, EosName ! defined in 0ModuleUAData.f90
 	Implicit NONE
-	DoublePrecision pi,twoPi,fourPi,avoNum,Rgas,RgasCal,kB,half,zeroTol,third,SQRT2
+	DoublePrecision pi,twoPi,fourPi,avoNum,Rgas,RgasCal,kB,half,zeroTol,third,SQRT2,ONE
 	Integer nmx,nCritSet
 	Character*1 tabChar
-	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0,third=1.d0/3,SQRT2=1.414213562373095d0)
+	PARAMETER (nmx=55,pi=3.14159265359796d0,twoPi=2.d0*pi, fourPi = 4.d0*pi, half=0.5d0,third=1.d0/3,SQRT2=1.414213562373095d0,ONE=1.d0)
 	PARAMETER (avoNum=602.214076d0,kB=0.01380649D0,Rgas=avoNum*kB,RgasCal=Rgas/4.184d0,zeroTol=1.D-12)
 	          !avoNum[=]cm3/(nm3*mol), kB[=]MPa.nm3/K. cf. PGL6ed, Table 6.1
 	!          https://www.nist.gov/si-redefinition
@@ -56,15 +56,18 @@ MODULE GlobConst
 	DoublePrecision etaPass
     DoublePrecision etaMax  !each EOS has a max value for eta, e.g. PR,TPT: etaMax=1-zeroTol. Set in the Get_ function for the EOS
 	DoublePrecision etaPure(nmx) !store eta for each compound at P=0.1MPa and tKmin(K).
+	Character*8  form7003
 	Character*9  form600
-	Character*12 form601
-	Character*13 form602
+	Character*13 form7103
 	Character*11 form610
-	Character*14 form611
-	Character*15 form612
-	Character*15 form613
+	Character*12 form601,form7013
+	Character*13 form602,form7023,form7113
+	Character*14 form611,form7123,form7133
+	Character*15 form612,form613
 	data form600,form601,form602/'(10E12.4)','(i8,10E12.4)','(2i8,9E12.4)'/
 	data form610,form611,form612,form613/'(a,9E12.4)','(a,i8,9E12.4)','(a,2i8,9E12.4)','(a,3i8,9E12.4)'/
+	data form7003,form7013,form7023/'(13f6.3)','(i8,12f6.3)','(2i8,11f6.3)'/
+	data form7103,form7113,form7123,form7133/'(a,10f10.4)','(a,i8,9f9.4)','(a,2i8,9f9.4)','(a,3i8,7f6.3)'/
 	!LOUD = .TRUE.		  !!!!!!!!!!!!!!! YOU CAN'T SET VARIABLES IN A MODULE, ONLY PARAMETERS AND DATA !!!!!!!!!!!!!
 	!LOUD = .FALSE.
     !Need to expose for linking in PGLDLLTest.exe. Edit line to disable (e.g. add space before $) to compile in VS Code for PGLEOS.exe
@@ -119,10 +122,87 @@ MODULE Assoc  ! This module is site-based (similar to Group Contribution (GC) ba
 	!localType is an index of just the types occuring in the current mixture.
 	!e.g. localType(101)=1 means that the 1st type encountered during reading the dbase was type 101.
 	!idLocalType points back to localType for double-linking. E.g. idLocalType(1)=101.
+TYPE ClassKAB
+   CHARACTER(LEN=5) :: class
+   DoublePrecision :: K, A, B
+END TYPE ClassKAB
+!JRE,doi.org/10.1021/acs.jced.3c00394
+!This works like a python dictionary.
+TYPE(ClassKAB), PARAMETER :: classTable(50) = (/ &
+   ClassKAB("assol", 0.001d0, 3960.d0,1280.d0), &
+   ClassKAB("Assol", 0.001d0, 3960.d0,1280.d0), &
+   ClassKAB("asSol", 0.001d0, 1660.d0, 540.d0), &	!phenol
+   ClassKAB("AsSol", 0.001d0, 3960.d0,1280.d0), &
+   ClassKAB("polal", 0.001d0,    0.d0, 730.d0), &
+   ClassKAB("poLal", 0.001d0,    0.d0, 730.d0), &
+   ClassKAB("Polal", 0.001d0,    0.d0, 730.d0), &
+   ClassKAB("PoLal", 0.001d0,    0.d0, 730.d0), &
+   ClassKAB("asad1", 0.001d0, 6200.d0, 400.d0), &
+   ClassKAB("asAd1", 0.001d0, 6200.d0, 400.d0), &
+   ClassKAB("asad2", 0.001d0, 6200.d0, 400.d0), &
+   ClassKAB("asAd2", 0.001d0, 6200.d0, 400.d0), &
+   ClassKAB("asam1", 0.001d0, 1470.d0, 730.d0), &
+   ClassKAB("Asam1", 0.001d0, 1470.d0, 730.d0), &
+   ClassKAB("AsAm1", 0.001d0, 1470.d0, 730.d0), &
+   ClassKAB("asAm1", 0.001d0, 1470.d0, 730.d0), &
+   ClassKAB("asam2", 0.001d0, 1010.d0,1010.d0), &
+   ClassKAB("Asam2", 0.001d0, 1010.d0,1010.d0), &
+   ClassKAB("asAm2", 0.001d0, 1010.d0,1010.d0), &
+   ClassKAB("AsAm2", 0.001d0, 1010.d0,1010.d0), &
+   ClassKAB("poam3", 0.001d0,    0.d0,1940.d0), &
+   ClassKAB("poAm3", 0.001d0,    0.d0, 740.d0), &
+   ClassKAB("poles", 0.001d0,    0.d0, 900.d0), &
+   ClassKAB("poLes", 0.001d0,    0.d0, 600.d0), &
+   ClassKAB("heves", 0.001d0,    0.d0, 900.d0), &
+   ClassKAB("heVes", 0.001d0,    0.d0, 600.d0), &
+   ClassKAB("polet", 0.001d0,    0.d0,1020.d0), &
+   ClassKAB("poLet", 0.001d0,    0.d0,1020.d0), &
+   ClassKAB("hevet", 0.001d0,    0.d0,1020.d0), &
+   ClassKAB("heVet", 0.001d0,    0.d0,1020.d0), &
+   ClassKAB("polon", 0.001d0,    0.d0, 910.d0), &
+   ClassKAB("poLon", 0.001d0,    0.d0, 910.d0), &
+   ClassKAB("hevon", 0.001d0,    0.d0, 910.d0), &
+   ClassKAB("heVon", 0.001d0,    0.d0, 910.d0), &
+   ClassKAB("pocyn", 0.001d0,    0.d0, 990.d0), &
+   ClassKAB("ponox", 0.001d0,   90.d0,   0.d0), &
+   ClassKAB("poNox", 0.001d0,   90.d0,   0.d0), &
+   ClassKAB("poAro", 0.001d0,    0.d0,  30.d0), &
+   ClassKAB("polsh", 0.001d0, 2680.d0,   0.d0), &
+   ClassKAB("posox", 0.001d0,    0.d0, 900.d0), &
+   ClassKAB("asH2O",0.00156d0,3100.d0,2070.d0), &
+   ClassKAB(" 1541", 0.001d0, 1650.d0,   0.d0), &
+   ClassKAB(" 1911", 0.001d0,  975.d0,1675.d0), &
+   ClassKAB(" 1922", 0.001d0,  400.d0, 400.d0), &
+   ClassKAB(" 1844", 0.001d0,    0.d0,1000.d0), &
+   ClassKAB(" 1876", 0.001d0,    0.d0,2250.d0), &
+   ClassKAB("  908", 0.001d0, 1030.d0,   0.d0), &
+   ClassKAB(" 1523", 0.001d0,  660.d0,   0.d0), &
+   ClassKAB(" 1527", 0.001d0, 1600.d0,   0.d0), &
+   ClassKAB(" 1521", 0.001d0, 1550.d0,   0.d0)  /)
 contains
-	Subroutine RdfCalc(rdfContact,dAlpha,eta)
+FUNCTION GetKAB(classIn) RESULT(props)
+   IMPLICIT NONE
+   CHARACTER(LEN=5), INTENT(IN) :: classIn
+   TYPE(ClassKAB) :: props
+   INTEGER :: i
+   CHARACTER(LEN=5) :: key
+   key=classIn
+   DO i = 1, SIZE(classTable)
+      IF ((classTable(i)%class) == key) THEN
+         props = classTable(i)
+         RETURN
+      END IF
+   END DO
+   ! If not found, set sentinel values
+   props%class = "NONE"
+   props%K = -86.8686d0
+   props%A = -86.8686d0
+   props%B = -86.8686d0
+END FUNCTION GetKAB
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Subroutine RdfCalc(rdfContact,dAlpha,eta)
 	USE GlobConst
-	USE EsdParms, only: esd2k0
+	!USE EsdParms, only: esd2_k0
 	DoublePrecision denom,eta,denom2,void,void2,void4,dLng,rdfContact,d2Lng,d2g,dAlpha,dg_deta,dAlph_deta,k0
 	Integer iRdfOpt,iErrCode
 	! Input:
@@ -160,7 +240,7 @@ contains
 	!alpha=eta*rdf*kAD*yHB => (eta/alpha)*(dAlpha/deta) = 1+(eta/rdf)*(dRdf/deta)
 	!dLng = (eta/rdf)*(dRdf/deta) = dLng/dLneta
 	k0=1.9d0
-	if(iEosOpt==23)k0=esd2k0
+	if(iEosOpt==23)k0=1.74
 	denom=1-k0*eta
 	denom2=denom*denom
 	void=1-eta
@@ -198,7 +278,7 @@ MODULE CritParmsDb
 	Integer, SAVE:: IDnum(ndb),CrIndex(99999),idCasDb(ndb),nDeckDb ! e.g. TCD(CrIndex(2)) returns Tc of ethane.
 	DoublePrecision, SAVE:: TCD(ndb),PCD(ndb),ACEND(ndb),TbD(ndb),ZCD(ndb),solParmD(ndb),rMwD(ndb),vLiqD(ndb)
 	LOGICAL isReadCrit
-	! LoadCrit uses CrIndex to facilitate lookup. TCD(ndb)=8686. CrIndex()=ndb initially.
+	! LoadCrit uses CrIndex to facilitate lookup. TcD(CrIndex(idDippr))=Tc. TCD(ndb)=8686. CrIndex()=ndb initially.
 	! CrIndex(idDippr)=line in ParmsCrit where idDippr was found. line=[1,nCritSet]
 END MODULE CritParmsDb
 
@@ -223,8 +303,8 @@ MODULE VpDb
 	USE GlobConst, only:nmx !,dumpUnit
 	IMPLICIT NONE !DoublePrecision(A-H,O-Z)
 	Integer nVpDb
-	PARAMETER(nVpDb=1974)
-	Integer, STATIC:: IDnum(nVpDb),NUMCOEFFD(nVpDb) ,indexVpDb(9999)
+	PARAMETER(nVpDb=1846)
+	Integer, STATIC:: IDvp(nVpDb),NUMCOEFFD(nVpDb) ,indexVpDb(9999)
 	DoublePrecision, STATIC:: rMINTD(nVpDb) ,VALMIND(nVpDb) ,rMAXTD(nVpDb),VALMAXD(nVpDb),AVGDEVD(nVpDb),vpCoeffsd(nVpDb,5)
 	DoublePrecision vpCoeffs(nmx,5)
 END MODULE VpDb

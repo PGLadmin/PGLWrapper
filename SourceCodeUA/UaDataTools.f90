@@ -386,12 +386,12 @@ end
 	DO I=1,NDECK1
 		!NOTE: Can NOT read dumString here b/c unformatted read from dumString is not allowed.
 		!if(i.eq.691)write(dumpUnit,*)
-		READ(662,*,ioStat=ioErr)IDnum(I),rMINTD(I) ,VALMIND(I) ,rMAXTD(I),VALMAXD(I),AVGDEVD(I),NUMCOEFFD(I), &
+		READ(662,*,ioStat=ioErr)IDvp(I),rMINTD(I) ,VALMIND(I) ,rMAXTD(I),VALMAXD(I),AVGDEVD(I),NUMCOEFFD(I), &
 		                                                                                      (vpCoeffsd(i,iCoeff),iCoeff=1,5)
 	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'inFile=',TRIM(inFile)
-	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'ioErr,line,id,vpCoeffs=',ioErr,I,IDnum(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
+	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'ioErr,line,id,vpCoeffs=',ioErr,I,IDvp(I),(vpCoeffsd(i,iCoeff),iCoeff=1,5)
 	    if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'GetVp: error reading CoeffsVp2a.txt'
-		indexVpDb(IDnum(I))=I ! vpCoeffs(iComp,iCoeff)=vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)
+		indexVpDb(IDvp(I))=I ! vpCoeffs(iComp,iCoeff)=vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)
     enddo
     if(LOUDER)write(dumpUnit,*)'GetVpDb: Success! USE VpDb for vpCoeffsd(indexVpDb(idDippr(iComp),iCoeff)'
 	CLOSE(662)
@@ -443,6 +443,38 @@ end
 	RETURN
 	END
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Subroutine PureVpTable(IDi,nPts,Tvp,Pvp,TCi,PCi,iErr)
+	USE VpDb
+	USE CritParmsDb
+	Implicit DoublePrecision(A-H,k,O-Z)
+	DoublePrecision Tvp(22),Pvp(22)
+	!Tabulate vapor pressure from highest to lowest at Tr increments of 0.05. e.g., 0.95,0.9,0.85...
+	iErr=0
+	indx=indexVpDb(IDi)
+	TminLocal=rMinTd(indx)
+	TmaxLocal=rMaxTd(indx)
+	if( CrIndex(IDi)==0 )then
+		iErr= 11
+		return	!Compd is not in Jaubert DB.
+	endif
+	nPts=0
+	Tci = TcD( CrIndex(IDi) )
+	Pci = PcD( CrIndex(IDi) )
+	do iTr=95,30,-5
+		Tkelvin=iTr*Tci/100
+		if(Tkelvin < TminLocal)exit
+		if(Tkelvin > TmaxLocal)cycle
+		PVPi=EXP(vpCoeffsd(indx,1)+vpCoeffsd(indx,2)/Tkelvin+vpCoeffsd(indx,3)*LOG(Tkelvin)+vpCoeffsd(indx,4)*Tkelvin**vpCoeffsd(indx,5))/1.D6
+		if(PVPi < 1.d-4)exit
+		nPts=nPts+1
+		Pvp(nPts)=PVPi
+		Tvp(nPts)=Tkelvin
+	enddo
+	if(nPts==0)then
+		iErr=12
+		return
+	endif
+End Subroutine PureVpTable !(IDi,nPts,Tvp,Pvp,TCi,PCi,iErr)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	DoublePrecision Function PvpMPa(nComps,iComp,Tkelvin,iErrCode) !posts VpCoeffs(NC,5) to USEd VpDb
 	!	PROGRAMMED BY: AV 06/22/06
@@ -914,7 +946,7 @@ END ! subroutine GetCritCas()
 
 DOUBLE PRECISION FUNCTION RmsDev(N,X,Y)
       INTEGER N
-      DOUBLE PRECISION X(N),Y(N),SqrtArg,SumSq
+      DOUBLE PRECISION X(N),Y(N),SqrtArg,SumSq,dif(N)
 !C     **********
 !C
 !C     FUNCTION ENORM
@@ -924,16 +956,16 @@ DOUBLE PRECISION FUNCTION RmsDev(N,X,Y)
 !C
 !C     THE EUCLIDEAN NORM IS COMPUTED BY ACCUMULATING THE SUM OF
       DO I=1,N
-          X(I)=X(I)-Y(I)
+          dif(I)=X(I)-Y(I)
       ENDDO
-      SqrtArg=SumSq(N,X)/N
+      SqrtArg=SumSq(N,dif)/N
       if(SqrtArg < 0)then
           RmsDev=86.8686
       else
           RmsDev=DSQRT(SqrtArg)
       endif
       RETURN
-END
+END	FUNCTION RmsDev
 
 DOUBLE PRECISION FUNCTION SumSq(N,X)
 	  USE GlobConst !LOUD
@@ -978,8 +1010,8 @@ DOUBLE PRECISION FUNCTION SumSq(N,X)
 !C
 !C     **********
       INTEGER I
-      DOUBLE PRECISION AGIANT,FLOATN,ONE,RDWARF,RGIANT,S1,S2,S3,XABS,X1MAX,X3MAX,ZERO !,SQARG
-      DATA ONE,ZERO,RDWARF,RGIANT /1.0D0,0.0D0,3.834D-20,1.304D19/
+      DOUBLE PRECISION AGIANT,FLOATN,RDWARF,RGIANT,S1,S2,S3,XABS,X1MAX,X3MAX,ZERO !,SQARG
+      DATA ZERO,RDWARF,RGIANT /0.0D0,3.834D-20,1.304D19/
       S1 = ZERO
       S2 = ZERO
       S3 = ZERO
@@ -1023,7 +1055,7 @@ DOUBLE PRECISION FUNCTION SumSq(N,X)
 !C
 !C           SUM FOR INTERMEDIATE COMPONENTS.
 !C
-            S2 = S2 + XABS**2
+            S2 = S2 + XABS*XABS
 80    CONTINUE
 90    CONTINUE
 !C
@@ -1031,34 +1063,34 @@ DOUBLE PRECISION FUNCTION SumSq(N,X)
 !C
 !      IF (S1 .EQ. ZERO) GO TO 100
 	IF (S1 .NE. ZERO)THEN
-         SumSq = X1MAX*X1MAX*(S1+(S2/X1MAX)/X1MAX)
-!         GO TO 130
-!  100 CONTINUE
-      ELSE IF (S2 .NE. ZERO) THEN
-            IF (S2 .GE. X3MAX)THEN
+		SumSq = X1MAX*X1MAX*(S1+(S2/X1MAX)/X1MAX)
+	!         GO TO 130
+	!  100 CONTINUE
+	ELSEIF (S2 .NE. ZERO) THEN
+		IF (S2 .GE. X3MAX)THEN
 			SumSq=S2*(ONE+(X3MAX/S2)*(X3MAX*S3))
-            ELSE
+		ELSE
 			SumSq=X3MAX*((S2/X3MAX)+(X3MAX*S3))
-            ENDIF
-		  !GO TO 120
-  !110    CONTINUE
+		ENDIF
+	!GO TO 120
+	!110    CONTINUE
 	ELSE
-            SumSq = X3MAX*X3MAX*S3
+		SumSq = X3MAX*X3MAX*S3
 	ENDIF
-  !120    CONTINUE
-  !130 CONTINUE
-      RETURN
+	!120    CONTINUE
+	!130 CONTINUE
+	RETURN
 !C
 !C     LAST CARD OF FUNCTION SumSq.
 !C
-      END
+END FUNCTION SumSq
 
 FUNCTION ToUpper(string) RESULT(upper)
+  !NOTE: character*5 ToUpper must be declared in the calling routine.
   IMPLICIT NONE
   CHARACTER(LEN=5), INTENT(IN) :: string
   CHARACTER(LEN=5) :: upper
   INTEGER :: i, ich
-
   upper = string
   DO i = 1, LEN(string)
      ich = ICHAR(string(i:i))
@@ -1068,3 +1100,4 @@ FUNCTION ToUpper(string) RESULT(upper)
      END IF
   END DO
 END FUNCTION ToUpper
+
