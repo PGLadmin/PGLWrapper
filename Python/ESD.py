@@ -1,12 +1,15 @@
-﻿import numpy as np
+﻿import sys
+import numpy as np
 import math # for sqrt, log, ... 
 from sgtpy.vrmie_pure.psat_saft import psat
-from sgtpy.vrmie_pure.ideal import  daideal_drho #, aideal,d2aideal_drho 
+print(f"ESD Starting. psat module={psat.__module__}")
+print(f"ESD Starting. sys.module={sys.modules[psat.__module__].__file__}")
+from sgtpy.vrmie_pure.ideal import  daideal_drho, d2aideal_drho #,aideal
 #import pandas as pd
 #import os
 #from ..constants import kb, Na
 #from scipy.optimize import root, minimize_scalar
-from GlobConst import avoNum,Rgas,RgasCal,zeroTol,kB,PGLInputDir #,pi,SQRT2,
+from GlobConst import avoNum,Rgas,RgasCal,zeroTol,kB,PGLInputDir,LOUD #,pi,SQRT2,
 from chempy.util.parsing import formula_to_composition #JRE: to convert chemical formulas to atomCounts in LookupCritParms
 #from chempy import Substance
 import keyboard
@@ -82,7 +85,7 @@ class CritProps: # Analogous to Car class in Python Crash Course Book.
                     self.bAssoc=False # Initialize assuming the compound is not associating.
                     abbClass=self.JREClass[:2]
                     if abbClass=="as" or abbClass=="As"or abbClass=="po": self.bAssoc=True # Need to include polar for mixes like acetone+chloroform or MEM2 returns immediately.
-                    print(f"Compound {idDippr}, {self.Name} found in PGLInput. bAssoc={self.bAssoc} Class={self.JREClass}")
+                    if(LOUD):print(f"Compound {idDippr}, {self.Name} found in PGLInput. bAssoc={self.bAssoc} Class={self.JREClass}")
                     break
         return bThere
     def PvpSc(self,tKelvin): #JRE: ShortCut Vapor Pressure Equation. See also PvpEar which uses Equal Area Rule (aka. Maxwell Construction) to solve for Pvp of EOS.
@@ -249,10 +252,14 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
             # q EOK(K)   b(cc/mo)   KadNm3  eDonEpsK    eAccEpsK    nDegree #eDs    #eAs    idCas   Name
             bThere=False
             for line in lines[1:]: # starting from 1: skips the header. 
-                part=line.split() # parses the space or tab or comma dilimeted words in the line   
+                part=line.split() # parses the space or tab or comma delimited words in the line
+                if len(part) < 12: 
+                    print(f"ESD.LookupEsdParms: line={line} has {len(part)} parts. Expected 12+. Skipping.")
+                    print(f"ESD.LookupEsdParms: part={part}")
+                    continue # skip any lines that don't have enough parts to avoid index error.   
                 if int(part[0]) == idDippr:
                     bThere=True
-                    print(f"Compound {self.Name} found in ParmsEsdMEM2.txt!")
+                    if(LOUD):print(f"Compound {self.Name} found in ParmsEsdMEM2.txt!")
                     self.qShape=float(part[1]) # All parts are read as strings. Must convert manually after split().
                     self.eps_kB=float(part[2])
                     self.bVolCC_mol=float(part[3])
@@ -424,7 +431,7 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         rho=eta/bMix
         #if(eta > 1/1.9 .and. LOUDER)write(dumpUnit,*)'FugiEsd:etaInit > etaMax. P,T=',pMPa,tKelvin 
         if(eta < 0):
-            print(f"ChemPoTP: initial eta={eta}< 0. Returning iErr=11.")
+            print(f"ChemPoTP: initial PMPa={PMPa}, T={tKelvin}, eta={eta}< 0. Returning iErr=11.")
             iErr=11
             return iErr, rhoMol_cc,zFactor,aRes,uRes,chemPo
         bZiter=True # chemPo calculations are skipped for isZiter=1
@@ -491,12 +498,10 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
              full_output=False):
         """
         psat(T, P0)
-
         Method that computes saturation pressure at fixed T
 
         Parameters
         ----------
-
         T : float
             absolute temperature [K]
         P0 : float, optional
@@ -521,8 +526,18 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         vVap=1/(rhoVap*1E6)
         out=PMPa*1E6,vLiq,vVap
         """
-        out = psat(self, T, P0, v0, Xass0, full_output)
+        if(P0 < zeroTol or T < zeroTol):
+            P0=1E-6 #JRE: This is a very low pressure guess for the first iteration.
+        iErr,PMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV=self.PvpEar(T)
+        vLiq=1/(rhoLiq*1E6)
+        vVap=1/(rhoVap*1E6)
+        P=PMPa*1E6
+        if(iErr > 10):P=8686 
+        out=P,vLiq,vVap 
+        # out = psat(self, T, P0, v0, Xass0, full_output) #This is the psat function in sgtpy.py. out = P, vl, vv
         return out
+        #    out = P, vl, vv    # for sgtpy interface
+        #return out             # for sgtpy interface
     def PvpEar(self,tKelvin):
         """ Returns iErr,PMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV
 	    !COMPUTE VAPOR PRESSURE GIVEN tKelvin using the equal area rule.  
@@ -656,6 +671,9 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         else:
             iErr=20
         return iErr,PMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV
+        #    out = P, vl, vv    # for sgtpy interface
+        #return out             # for sgtpy interface
+
 ##########################   END of PvpEar()   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     def temperature_aux(self, T):
@@ -704,7 +722,7 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         Parameters
         ----------
         temp_aux : list
-            temperature dependend parameters computed with temperature_aux(T)
+            temperature depenend parameters computed with temperature_aux(T)
         P : float
             pressure [Pa]
         state : string
@@ -727,6 +745,10 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         beta = temp_aux[0]
         #beta = 1 / (T*kB/1E21) #interface with sgtpy requires kB in SI.
         tKelvin=1/(beta*kB/1E21)
+        if(tKelvin < zeroTol or P <zeroTol):
+            vM3_mol=8686
+            lnphi=8686
+            return lnphi, vM3_mol, Xass0
         PMPa=P/1E6
         LIQ=0
         if(state=='L'):LIQ=1
@@ -772,7 +794,6 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
         da, Xass = self.dafcn_aux(rhomolecular, temp_aux, Xass0)
         afcn, dafcn = da
         mu = afcn + rhomolecular * dafcn
-
         return mu, Xass
     def dafcn_aux(self, rho, temp_aux, Xass0=None):
         """
@@ -845,6 +866,42 @@ class EsdComp(CritProps): # Note how citing CritProps as an argument generates "
             a=[8686,8686]
         #a*=(Rgas*T)  # dafcn requires a in Joules...
         return a, Xass0
+    def d2afcn_aux(self, rho, temp_aux, Xass0=None):
+        """
+        d2afcn_aux(rho, temp_aux, Xass0)
+        Method that computes the total Helmholtz free energy of the fluid and
+        its first ans second density derivative.
+
+        Parameters
+        ----------
+        rho: float
+            molecular density [molecules/m3]
+        temp_aux : list
+            temperature dependend parameters computed with temperature_aux(T)
+        Xass0: array, optional
+            Initial guess for the calculation of fraction of non-bonded sites
+
+        Returns
+        -------
+        a: array
+           Helmholtz free energy and its derivatives: a, da, d2a
+           [J/mol, J m^3/mol^2,  J m^6/mol^3]
+        Xass : array
+            computed fraction of nonbonded sites
+        """
+        beta = temp_aux[0]
+        tKelvin=1/(beta*kB/1E21)
+        #rhomolecular = rho * avoNum*1E21
+        #tKelvin=1/(beta*kB)
+        step=1E-4*rho
+        aMid, Xass = self.dares_drho(rho, tKelvin, Xass0)
+        aPlus, Xass = self.dares_drho(rho+step, tKelvin, Xass0)
+        aMinus, Xass = self.dares_drho(rho-step, tKelvin, Xass0)
+        d2a=(aPlus[1]-aMinus[1])/(2*step)
+        a=[aMid[0],aMid[1],d2a]  
+        a += d2aideal_drho(rho, beta) 
+        a *= (avoNum*1E21/beta) #daIg = 1/rhoMolecular
+        return a, Xass
     def ci(self, T):
         '''
         ci(T)

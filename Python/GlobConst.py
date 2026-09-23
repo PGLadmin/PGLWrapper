@@ -2,7 +2,10 @@
 #Integer nmx,nCritSet
 #Character*1 tabChar
 import math #for pi
-PGLInputDir='C:\\Users\\jarrell.elliot\\source\\repos\\PGLWrapper\\Input\\'
+#PGLInputDir='C:\\Users\\jarrell.elliot\\source\\repos\\PGLWrapper\\Input\\'
+PGLInputDir='C:\\PGLWrapper\\Input\\' # for Lenovo.
+DownloadDir='C:\\Users\\ellio\\OneDrive\\Downloads\\'
+LOUD=False
 nmx=55
 pi=math.pi
 twoPi=2.0*pi
@@ -15,3 +18,9 @@ kB=0.013806490
 Rgas=avoNum*kB
 RgasCal=Rgas/4.1840
 zeroTol=1.E-22
+def pauseCheck(force=None):
+    import keyboard
+    if(force==1):input("Press enter to continue.")
+    if keyboard.is_pressed('Esc'):
+        input("Press enter to continue.")
+
