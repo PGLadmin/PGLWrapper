@@ -227,8 +227,8 @@ end
             if(LOUDER)write(dumpUnit,*)'LoadCritDB: EOF reached. NDECK1=',NDECK1
             exit
         elseif(i > nCritSet)then
-            NDECK1=I-1 !here is how we recover the omitted NDECK1.
-            if(LOUDER)write(dumpUnit,*)'LoadCritDB: i>nCritSet?. i,NDECK1,ioErr=',i,NDECK1,ioErr
+            NDECK1=I !here is how we recover the omitted NDECK1.
+            if(LOUDER)write(dumpUnit,*)'LoadCritDB: i>nCritSet?. i,NDECK1,nCritSet,ioErr=',i,NDECK1,nCritSet,ioErr
             exit
         elseif(ioErr /= 0)then
             if(LOUDER)write(dumpUnit,*)'LoadCritDB: ioErr=/=0 i,NDECK1,ioErr=',i,NDECK1,ioErr
