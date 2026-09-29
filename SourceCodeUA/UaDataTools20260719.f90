@@ -158,7 +158,7 @@ end
 		if(LOUD.and.iErr>0)write(dumpUnit,*)'Did not find idCas(i).i,id=',iComp,id(i)
 		if(iErr > 0)goto 861
 	enddo
-861	errMsgPas=errMsg(iErr)
+861	errMsgPas=TRIM(errMsg(iErr))
 	return
 	end
 
@@ -190,17 +190,13 @@ end
 	LOGICAL LOUDER
     LOUDER=LOUD
     !LOUDER=.TRUE.
-	iDirLength=LEN_TRIM(PGLinputDir)
-	inFile=' '
-	inFile(1:iDirLength)=PGLinputDir(1:iDirLength)
-	inFile(iDirLength+1:iDirLength+21)='\ParmsPrTcJaubert.txt'
-	errMsg(11)='LoadCritParmsDb: error reading critical-parameter file'
+	errMsg(11)='LoadCritParmsDb: error reading line1 of '//TRIM(inFile)
 	iErrCode=0
     ndbLocal=3000
     !print*,'LoadCritParmsDb: entered. iErrCode=',iErrCode
     ndbUsed=ndb
 	!CrIndex=ndbUsed ! vector initialize to ndb. if CrIndex(idDippr)==ndb, compd was not found in ParmsCrit.txt.
-
+	inFile=TRIM(PGLinputDir)//'\ParmsPrTcJaubert.txt' ! // is the concatenation operator
 	if(LOUDER)write(dumpUnit,*)'LoadCrit: PGLinputDir/inFile=',TRIM(inFile)
 	if(LOUDER)write(dumpUnit,*)'LoadCritParmsDb: CritFile=',TRIM(inFile)
 !	OPEN(40,FILE=inFile,FORM='BINARY')
@@ -376,10 +372,7 @@ end
     LOUDER=LOUD
     !LOUDER=.TRUE.
 	iErrCode=0
-    iDirLength=LEN_TRIM(PGLinputDir)
-    inFile=' '
-    inFile(1:iDirLength)=PGLinputDir(1:iDirLength)
-    inFile(iDirLength+1:iDirLength+15)='\CoeffsVp2a.TXT'
+    inFile=TRIM(PGLinputDir)//'\CoeffsVp2a.TXT'
     OPEN(662,FILE=inFile,ioStat=ioErr)
     if(ioErr/=0.and.LOUDER)write(dumpUnit,*) 'GetVpDb: error opening CoeffsVp2a.txt'
     !open(662,file='junk.txt')
@@ -520,7 +513,7 @@ End Subroutine PureVpTable !(IDi,nPts,Tvp,Pvp,TCi,PCi,iErr)
 	IMPLICIT DOUBLEPRECISION (A-H,K,O-Z)
 	PARAMETER (listPool=1000)
 	logical switched
-	character bipFile*255, dumString*255
+	character bipFile*88, dumString*88
 	!integer GetBIPs
 	dimension idBinarY(listPool),idComp(NC),alphaDB(listPool),KIJDB(listPool),KTIJDB(listPool),&
 	wsTAUij (listPool),wsTAUji (listPool),wsTauTij(listPool),wsTauTji(listPool)
@@ -532,12 +525,7 @@ End Subroutine PureVpTable !(IDi,nPts,Tvp,Pvp,TCi,PCi,iErr)
 	if(initial.eq.0)then
 		initial=1
 		open(55,file=bipFile,ERR=861)
-		read(55,'(a255)',ioStat=ioErr)dumString
-		if(ioErr<0)then
-			close(55)
-			return
-		endif
-		if(ioErr>0)goto 861
+		read(55,'(a88)',ERR=861)dumString
 		item=1
 		do while(item.ge.0)
 			read(55,*,ERR=861,end=100) idBinarY(item),KIJDB(item),KTIJDB(item),wsTAUij(item),&

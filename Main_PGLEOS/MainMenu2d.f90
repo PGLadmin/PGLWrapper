@@ -56,7 +56,7 @@
 	outFile=TRIM(masterDir)//'\output\output.txt' ! // is the concatenation operator
     !print*,'outFile=',TRIM(outFile)
 	LOUD =.FALSE.
-	!LOUD = .TRUE.
+	LOUD = .TRUE.
     RELEASE=.FALSE.	!Use FALSE if you want to specify an absolute path to your input dir. 
     !RELEASE=.TRUE.	!Use TRUE for relative path like when your project file is PGLWrapper.
 	PGLInputDir='c:\PGLWrapper\input'
@@ -138,7 +138,7 @@
 		enddo
 	endif !display hb parms
 	if(bESD)then
-		write(*,*)' ID      q     eps/kB    bVol'
+		write(*,*)'     ID        q       eps/kB      bVol'
 		do i=1,NC
 			write(*,form601)ID(i),q(i),eokP(i),bVolCc_mol(i)
 		enddo
@@ -291,8 +291,8 @@
 		IF(calcType=='PS'.OR.calcType=='ps')CALL PSITER(NC,iErrCode)
 		IF(calcType=='PT'.OR.calcType=='pt')CALL PropTable(NC,iErrCode)
 		IF(calcType=='PX'.OR.calcType=='px')CALL PXYT(NC)
-		IF(calcType=='RD'.OR.calcType=='rd')CALL RegDbEsd(NC)
-		IF(calcType=='RP'.OR.calcType=='rp')CALL RegPureEsd2(NC)
+		!IF(calcType=='RD'.OR.calcType=='rd')CALL RegDbEsd(NC)
+		!IF(calcType=='RP'.OR.calcType=='rp')CALL RegPureEsd2(NC)
 		IF(calcType=='RS'.OR.calcType=='rs')CALL RegSpeadIo(NC)
 		IF(calcType=='RX'.OR.calcType=='rx')CALL RegXaXdIo(NC)
 		IF(calcType=='SC'.OR.calcType=='sc')CALL SCFITER(NC)

@@ -5,7 +5,7 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 	!NOTE: ndb(ESD)=ndb(CritParms) because we must first compute "Exact" values so all possible values will be tabulated. .
 	DoublePrecision eokPdb(ndb),vxDb(ndb),mShapeDb(ndb),KadNm3Db(ndb),epsA_kBdb(ndb),epsD_kBdb(ndb),ZcEsdDb(ndb),tauDb(ndb)
 	DoublePrecision eTotAssoc(nAssoc) ,tau(nTau)
-	DoublePrecision B_0,alpha_2,rK_10,rK_11		! ESD2 parameters
+	DoublePrecision ESD2B_0,alpha_2,ESD2K_10,ESD2K_11,ESD2		! ESD2 parameters
 	Integer, SAVE::         IndexEsd(99999),NDdb(ndb),NDSdb(ndb),NASdb(ndb)   ! e.g. eokP(i)=eokPdb( IndexEsd(ID(i)) )
 	LOGICAL, SAVE::         isReadEsd
 	Integer idTau(nTau),idBeta(nBeta),idAlpha(nAlpha),idAssoc(nAssoc)	! for MemSced.
@@ -80,10 +80,6 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 	OPEN(40,FILE=inFile)
 	READ(40,'(a251)',ERR=861)dumString
 	READ(dumString,*,ERR=861)NDECK1
-	if(NDECK1==0)then
-		CALL BuildEsd2Db(iErrCode)
-		return
-	end
 	DO iEsd=1,NDECK1
 		READ (40,'(a222)',ioStat=ioErr)dumString
 		READ (dumString,*,ioStat=ioErr)IdEsd
@@ -119,120 +115,14 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 	return
 	END SUBROUTINE LoadEsdDb
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	SUBROUTINE BuildEsd2Db(iErrCode)
-	!C  PROGRAMMED BY:  JRE 2026
-	!C  Builds THE ParmsEsd2Mem2.
-    !C      Includes IndexEsd(idDippr)= "line where idDippr was found" (linked list)
-	!C      This should be a faster way of loading properties, e.g. when running VLE evaluations for a large db.
-	!C  INPUT
-	!C    idOpt 1 if ID is set and need to lookup idCas, 2 if idCas is set and need to lookup ID.
-	!C    (ID	 VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS USEd from GlobConst if idOpt=1)
-	!C    (idCas VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS USEd from GlobConst if idOpt=2)
-	!C  OUTPUT
-	!C    mShapeDb
-	!C    eokPdb
-	!C    VxDb
-	!C    IndexEsd	e.g., mShape(icomp)=mShapeDb(IndexEsd(ID(iComp)))
-	USE GlobConst, ONLY:LOUD,dumpUnit,zeroTol,PGLinputDir,nCritSet,ID,iEosOpt,nmx
-	USE CritParmsDb
-	IMPLICIT DoublePrecision(A-H,O-Z)
-	Character*251 inFile,dumString
-	DoublePrecision	pDev(9999),chemPot(nmx)
-    LOGICAL LOUDER,bEsd1
-	EXTERNAL DevalPsatDb
-    LOUDER=LOUD
-	Integer idTemp(nmx)
-    !LOUDER=.TRUE.
-	inFile=TRIM(PGLinputDir)//'\ParmsTcPrJaubert.txt'	! replace Exact values when available.
-	open(51,file=inFile,ioStat=ioErr)
-	if(ioErr)pause 'BuildEsd2Db: error opening ParmsTcPrJaubert'
-	read(51,*)nDeck
-	nPtsTot=0
-	avgDev=0
-	do i=1,nDeck
-		read(51,*)idTemp(1),Tc,Pc,acenDb,TbDb,TwuL,TwuM,TwuN,cCC_mol,zRa,TminUL
-		if(idTemp(1) > 898)cycle
-		!read(51,*)idTemp,rMin_T,rMin_Val,rMax_T,rMax_Val,Avg_Dev,Num_Coeffs,vpA,vpB,vpC,vpD,vpE' !	Max_Dev	Max_Dev_T	Value
-		call MatchCritPt(Tc,Pc,acenDb)
-		do iTr=95,35,-5
-			Tkelvin=iTr*Tc/100
-			if(Tkelvin < TminUL)exit
-			Call PsatEar(Tkelvin,PsatMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCode)
-			nPtsTot=nPtsTot+1
-			PsatExpt=PvpMPa(1,Tkelvin,iErrVp)
-			Pdev(nPtsTot)=(PsatMPa-PsatExpt)/PsatExpt*100
-			avgDev=avgDev+Pdev(i)
-		enddo
-	enddo
-	avgDev=avgDev/nPtsTot
-	nParms=4
-
-	Call LmDifEz(DevalPsatDb,nPtsTot,nParms,ESD2parms,factor,Pdev,tol,iErrCode,stdErr)
-	SUBROUTINE LmDevFcn(nPts,nParms,parm,deviate,iFlag)
-	INTEGER M,N,LDFJAC,IFLAG
-	DOUBLE PRECISION X(N),FVEC(M),FJAC(LDFJAC,N)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	SUBROUTINE DevalPsatDb(nPts,nParms,ESD2parms,Pdev,iFlag)
-	!C  PROGRAMMED BY:  JRE 2026
-	!C  Builds THE ParmsEsd2Mem2.
-    !C      Includes IndexEsd(idDippr)= "line where idDippr was found" (linked list)
-	!C      This should be a faster way of loading properties, e.g. when running VLE evaluations for a large db.
-	!C  INPUT
-	!C    idOpt 1 if ID is set and need to lookup idCas, 2 if idCas is set and need to lookup ID.
-	!C    (ID	 VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS USEd from GlobConst if idOpt=1)
-	!C    (idCas VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS USEd from GlobConst if idOpt=2)
-	!C  OUTPUT
-	!C    mShapeDb
-	!C    eokPdb
-	!C    VxDb
-	!C    IndexEsd	e.g., mShape(icomp)=mShapeDb(IndexEsd(ID(iComp)))
-	USE GlobConst, ONLY:LOUD,dumpUnit,zeroTol,PGLinputDir,nCritSet,ID,iEosOpt,nmx
-	USE CritParmsDb
-	IMPLICIT DoublePrecision(A-H,O-Z)
-	Character*251 inFile,dumString
-	DoublePrecision	pDev(9999),chemPot(nmx)
-    LOGICAL LOUDER,bEsd1
-    LOUDER=LOUD
-	Integer idTemp(nmx)
-    !LOUDER=.TRUE.
-	inFile=TRIM(PGLinputDir)//'\ParmsTcPrJaubert.txt'	! replace Exact values when available.
-	open(51,file=inFile,ioStat=ioErr)
-	if(ioErr)pause 'BuildEsd2Db: error opening ParmsTcPrJaubert'
-	read(51,*)nDeck
-	nPtsTot=0
-	avgDev=0
-	do i=1,nDeck
-		read(51,*)idTemp(1),Tc,Pc,acenDb,TbDb,TwuL,TwuM,TwuN,cCC_mol,zRa,TminUL
-		if(idTemp(1) > 898)cycle
-		!read(51,*)idTemp,rMin_T,rMin_Val,rMax_T,rMax_Val,Avg_Dev,Num_Coeffs,vpA,vpB,vpC,vpD,vpE' !	Max_Dev	Max_Dev_T	Value
-		call MatchCritPt(Tc,Pc,acenDb)
-		do iTr=95,35,-5
-			Tkelvin=iTr*Tc/100
-			if(Tkelvin < TminUL)exit
-			Call PsatEar(Tkelvin,PsatMPa,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCode)
-			nPtsTot=nPtsTot+1
-			PsatExpt=PvpMPa(1,Tkelvin,iErrVp)
-			Pdev(nPtsTot)=(PsatMPa-PsatExpt)/PsatExpt*100
-			avgDev=avgDev+Pdev(i)
-		enddo
-	enddo
-	avgDev=avgDev/nPtsTot
-	return
-	end
-
-
-
-
-
-
-
 END MODULE EsdMem2ParmsDb
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE EsdParms
 	USE GlobConst
 	DoublePrecision eokP(nmx),KCSTAR(nmx),DH(nmx),c(nmx),q(nmx),vx(nmx)
 	DoublePrecision mShape(nmx),KadNm3(nmx),epsA_kB(nmx),epsD_kB(nmx) !for ESD2
+	DoublePrecision alphaPolarD2(nmx)
+	DoublePrecision ESD2_B0,ESD2_k0,ESD2_B1,ESD2_alpha2,ESD2_K10(nmx),ESD2_K11(nmx),ESD2_K12,ESD2_qCorr(0:2),ESD2_zCorr(0:2)!ESD2 coefficients
 	Integer         ND(nmx),NDS(nmx),NAS(nmx)
 	LOGICAL         isMEM2
 END MODULE EsdParms

@@ -1,10 +1,14 @@
 MODULE DLLConst
-	USE ModelSettings, only:nModels,EosName
 	!IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	!SAVE
 	!PUBLIC
 	Implicit NONE
 	Integer oldRN1,oldRN2,oldRN3,oldEOS
+	Character*15 EosName(20) 
+	!              1     2       3       4          5          6         7           8              9        10       
+	data EosName/'PR76','ESD96','PRWS','ESD-MEM2','SPEADMD','Flory-MEM2','NRTL','SpeadGamma-MEM2','SPEAD11','PC-SAFT',&
+			'tcPRq','GCESD','GcEsdTb','TransSPEAD','GcPcSaft','GcPcSaft(Tb)','tcPR-GE(W)','ESD2','LsgMem2','SptPcSaft'/
+	!          11     12       13         14          15          16             17         18      19         20       
 END MODULE DLLConst
 
 
@@ -794,7 +798,7 @@ integer function QUERYMODEL(no, model_type, level, modelname)
     !The meaning of its 4 items:
     !Method ID; Pure compound support; Binary mixtures; Ternary mixtures; Exposed in public version
     logical :: public_version=.false.
-    integer,DIMENSION(5,23) :: Methods = RESHAPE([1,1,1,1,1, &
+    integer,DIMENSION(5,22) :: Methods = RESHAPE([1,1,1,1,1, &
         2,1,2,0,1, &
         3,1,2,0,0, &
         4,1,2,0,1, &
@@ -815,11 +819,10 @@ integer function QUERYMODEL(no, model_type, level, modelname)
         19,1,4,0,0, &
         20,1,2,0,0, &  !20
         21,1,2,0,0, &
-        22,1,2,0,0, &
-        23,1,2,0,0  & ! ESD2, including corrected explicit-polar option
-        ], [5,23])
+        22,1,2,0,0  &
+        ], [5,22])
     QUERYMODEL=0
-    DO i=1,23
+    DO i=1,22
         index=Methods(1,i)
         if (index.eq.no) then
             DO j=1,3
@@ -976,38 +979,6 @@ integer function SETPAR(n, newvalue)
     SETPAR=res
     return
 end function SETPAR
-
-integer function GETESD2PUREPAR(iComp,n,retvalue)
-    ! Pure parameters must remain accessible after a binary model is loaded;
-    ! the legacy GETPAR switches entirely to mixture parameters for NC>1.
-    integer iComp,n,res
-    double precision retvalue
-    !DEC$ ATTRIBUTES DLLEXPORT::GETESD2PUREPAR
-    call QueryParPure(iComp,n,retvalue,res)
-    GETESD2PUREPAR=res
-    return
-end function GETESD2PUREPAR
-
-integer function SETESD2PUREPAR(iComp,n,newvalue)
-    integer iComp,n,res
-    double precision newvalue
-    !DEC$ ATTRIBUTES DLLEXPORT::SETESD2PUREPAR
-    call SetParPure(iComp,n,newvalue,res)
-    SETESD2PUREPAR=res
-    return
-end function SETESD2PUREPAR
-
-integer function SETESD2POLAROPTIONS(iPolar,alphaD2,iUseMem2)
-    USE Esd2PolarFit, only:SetEsd2PolarMode
-    integer iPolar,iUseMem2,res
-    double precision alphaD2
-    logical enableMem2
-    !DEC$ ATTRIBUTES DLLEXPORT::SETESD2POLAROPTIONS
-    enableMem2=iUseMem2/=0
-    call SetEsd2PolarMode(iPolar,alphaD2,enableMem2,res)
-    SETESD2POLAROPTIONS=res
-    return
-end function SETESD2POLAROPTIONS
     
 function SubstID(id_type, num_id, string_id)
     USE GlobConst, only:ID,idCas,PGLinputDir,DumpUnit,LOUD

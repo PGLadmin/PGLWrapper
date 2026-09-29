@@ -835,7 +835,7 @@ end
 	iErr=0
 	if(iParm > 1)then
 		if(bTpt)iErr=11
-		if(bEsd .and. iEosOpt/=23)iErr=11
+		if(bEsd)iErr=11
 		if(iErr/=0)return
 	endif
 	if(iEosOpt==10)then
@@ -857,7 +857,7 @@ end
 	elseif(iParm==2)then
 		if(iEosOpt==7.or.iEosOpt==19)then		!NRTL or LSG
 			value=xsTau(2,1)
-		elseif(iEosOpt==11 .or. iEosOpt==23)then	!tcPR/ESD2, kij and betaij
+		elseif(iEosOpt==11)then	!tcPR, kij and betaij
 			value=Lij(1,2)
 		elseif(iEosOpt== 3)then !PR76+WSmixing
 			value=xsTau(1,2)	! NOTE: tau12 =/= tau21
@@ -895,12 +895,11 @@ subroutine SetParMix(iParm,value,iErr)
 		xsTau=0
 		xsTauT=0
 		xsAlpha=0
-		Lij=0
 	endif
 	iErr=0
 	if(iParm > 1)then
 		if(bTpt)iErr=1
-		if(bEsd .and. iEosOpt/=23)iErr=1
+		if(bEsd)iErr=1
 		if(iErr/=0)return
 	endif
 	if(iEosOpt==10)then
@@ -923,7 +922,7 @@ subroutine SetParMix(iParm,value,iErr)
 	elseif(iParm==2)then
 		if(iEosOpt==7.or.iEosOpt==19)then	!NRTL and LSG
 			xsTau(2,1)=value
-		elseif(iEosOpt==11 .or. iEosOpt==23)then		!tcPR/ESD2, kij and betaij
+		elseif(iEosOpt==11)then				!tcPR, kij and betaij
 			Lij(1,2)=value
 			Lij(2,1)=value
 		elseif(iEosOpt== 3)then				!PR76+WSmixing

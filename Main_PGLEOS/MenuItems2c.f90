@@ -6497,7 +6497,8 @@ SUBROUTINE KIJDB(NC)
 	open(631,file=outFile)
 	if(bTPT)write(6 ,'(a,3F9.3)')' G0,G1,e0 ',G0,G1,eta0
 	if(bTPT)write(631,'(a,3F9.3)')'G0,G1,e0 ',G0,G1,eta0
-	write(*,*)'  T(K)',tabChar,'   PsatMPa',tabChar,'rhoVap',tabChar,'rhoLiq(g/cc)',tabChar,'etaVap',tabChar,'etaLiq'
+	!write(*,*)'  T(K)',tabChar,'   PsatMPa',tabChar,'rhoVap',tabChar,'rhoLiq(g/cc)',tabChar,'etaVap',tabChar,'etaLiq'
+	write(*,*)'  T(K)',tabChar,'   PsatMPa',tabChar,'rhoVap',tabChar,'rhoLiq(g/cc)',tabChar,'etaVap',tabChar,'etaLiq',tabChar,'UresVap',tabChar,'UresLiq'
 	write(631,*)'  T(K)',tabChar,'   PsatMPa',tabChar,'rhoVap',tabChar,'rhoLiq(g/cc)',tabChar,'etaVap',tabChar,'etaLiq'
 	do iStep=1,nSteps+1
 		tKelvin=TLo+delT*(iStep-1)
@@ -6507,14 +6508,14 @@ SUBROUTINE KIJDB(NC)
 			exit
 		endif
 		!call EqualArea(NC,gmol,tKelvin,Psat,vLCc,vVCc)
-		write(* ,'(F8.2,a1,5(F9.6,a1),i3)')tKelvin,tabChar,pMPa,tabChar,rhoV*rMw(1),tabChar,rhoL*rMw(1),tabChar,rhoV*bVolCC_mol(1),tabChar,rhoL*bVolCC_mol(1),tabChar,ierCode
-		write(631,'(F8.2,a1,5(F9.6,a1),i3)')tKelvin,tabChar,pMPa,tabChar,rhoV*rMw(1),tabChar,rhoL*rMw(1),tabChar,rhoV*bVolCC_mol(1),tabChar,rhoL*bVolCC_mol(1),tabChar,ierCode
+		write(631,'(F8.2,a1,5(F9.6,a1),2(F9.2,a1),i3)')tKelvin,tabChar,pMPa,tabChar,rhoV*rMw(1),tabChar,rhoL*rMw(1),tabChar,rhoV*bVolCC_mol(1),tabChar,rhoL*bVolCC_mol(1),tabChar,uSatV*Rgas*Tkelvin,tabChar,uSatL*Rgas*Tkelvin,tabChar,ierCode
+		write( * ,'(F8.2,a1,5(F9.6,a1),2(F9.2,a1),i3)')tKelvin,' ',pMPa,' ',rhoV*rMw(1),' ',rhoL*rMw(1),' ',rhoV*bVolCC_mol(1),' ',rhoL*bVolCC_mol(1),' ',uSatV,' ',uSatL,' ',ierCode
 	enddo
 	tKelvin=0.96*Tc(1)
-	do while(tKelvin.gt.0)
+	do while(tKelvin > 0)
 		call PsatEar(tKelvin,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode)
 		!call EqualArea(NC,gmol,tKelvin,Psat,vLCc,vVCc)
-		write(*,'(F8.2,1x,5F9.6,i3)')tKelvin,pMPa,rhoV*rMw(1),rhoL*rMw(1),rhoV*bVolCC_mol(1),rhoL*bVolCC_mol(1),ierCode
+		write( * ,'(F8.2,a1,5(F9.6,a1),2(F9.2,a1),i3)')tKelvin,' ',pMPa,' ',rhoV*rMw(1),' ',rhoL*rMw(1),' ',rhoV*bVolCC_mol(1),' ',rhoL*bVolCC_mol(1),' ',uSatV,' ',uSatL,' ',ierCode
 		if(pMPa > 1.D-3)then
 			write(631,'(F8.2,a1,5(F9.6,a1),i3)')tKelvin,tabChar,pMPa,tabChar,rhoV*rMw(1),tabChar,rhoL*rMw(1),tabChar,rhoV*bVolCC_mol(1),tabChar,rhoL*bVolCC_mol(1),tabChar,ierCode
 		else
