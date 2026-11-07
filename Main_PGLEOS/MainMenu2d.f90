@@ -262,15 +262,15 @@
 		IF(calcType=='BF'.OR.calcType=='bf')CALL BpFromFile(NC)
 		IF(calcType=='BP'.OR.calcType=='bp')CALL BPITER(NC)	   !In the future we can add isZiter to other options if it is necessary, AUG 10
 		IF(calcType=='BT'.OR.calcType=='bt')CALL BTITER(NC)
+		IF(calcType=='CD'.OR.calcType=='cd')CALL CritDB(iErrCode) 	            	!Added by AGF, Dec. 2009	AUG 10
+		IF(calcType=='CP'.OR.calcType=='cp')CALL CPITER(NC) 	            	!Added by AGF, Dec. 2009	AUG 10
+		IF(calcType=='CR'.OR.calcType=='cr')CALL CRITER(NC)	                !Added by AGF, Dec. 2009	AUG 10
 		IF(calcType=='DT'.OR.calcType=='dt')CALL DTITER(NC)
 		IF(calcType=='DF'.OR.calcType=='df')CALL DifCoDb
 		IF(calcType=='FC'.OR.calcType=='fc')CALL FREEZINGCURVECALC(NC)
 		IF(calcType=='FO'.OR.calcType=='fo')CALL FreezOptKij(NC)
 		IF(calcType=='FU'.OR.calcType=='fu')CALL FITER(NC)
 		IF(calcType=='FV'.OR.calcType=='fv')CALL FVITER(NC)
-		IF(calcType=='CR'.OR.calcType=='cr')CALL CRITER(NC)	                !Added by AGF, Dec. 2009	AUG 10
-		IF(calcType=='CP'.OR.calcType=='cp')CALL CPITER(NC) 	            	!Added by AGF, Dec. 2009	AUG 10
-		IF(calcType=='CD'.OR.calcType=='cd')CALL CritDB(iErrCode) 	            	!Added by AGF, Dec. 2009	AUG 10
    		IF(calcType=='GE'.OR.calcType=='ge')CALL GibbsXS(NC)
    		IF(calcType=='GV'.OR.calcType=='gv')CALL GibbsXsVtot(NC)
 		IF(calcType=='GX'.OR.calcType=='gx')CALL GibbsXsEta(NC)

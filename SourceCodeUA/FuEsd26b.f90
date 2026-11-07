@@ -3,7 +3,7 @@ MODULE EsdParms
 	USE GlobConst, only:nmx
 	DoublePrecision eokP(nmx),KCSTAR(nmx),DH(nmx),c(nmx),q(nmx),vx(nmx)
 	DoublePrecision mShape(nmx),KadNm3(nmx),epsA_kB(nmx),epsD_kB(nmx) 
-	DoublePrecision alphaPolarD2(nmx)
+	DoublePrecision alphaPolarD2(nmx),Vtrans(nmx)
 	DoublePrecision ESD2_B0,ESD2_k0,ESD2_B1,ESD2_alpha2,ESD2_K10(nmx),ESD2_K11(nmx),ESD2_K12,ESD2_qCorr(0:2),ESD2_zCorr(0:2)!ESD2 coefficients
 	Integer         ND(nmx),NDS(nmx),NAS(nmx)
 	LOGICAL         isMEM2,useEsd2Polar,usePolarMEM2,disableEsd2MEM2
@@ -157,7 +157,7 @@ MODULE EsdMEM2ParmsDb	! create a linked list for ESDMEM2 to expedite lookup in M
 	Parameter(nMemSced=118,nTau=nMemSced-12,nBeta=37,nAlpha=12,nAssoc=18)	!for MemSced
 	!NOTE: ndb(ESD)=ndb(CritParms) because we must first compute "Exact" values so all possible values will be tabulated. .
 	DoublePrecision eokPdb(ndb),vxDb(ndb),mShapeDb(ndb),KadNm3Db(ndb),epsA_kBdb(ndb),epsD_kBdb(ndb),ZcEsdDb(ndb),tauDb(ndb)
-	DoublePrecision eTotAssoc(nAssoc) ,tau(nTau),k11Db(ndb),k10Db(ndb) ! for ESD2 													
+	DoublePrecision eTotAssoc(nAssoc) ,tau(nTau),k11Db(ndb),k10Db(ndb),VtransDb(ndb) ! for ESD2 													
 	Integer, SAVE::         IndexEsd(99999),NDdb(ndb),NDSdb(ndb),NASdb(ndb)   ! e.g. eokP(i)=eokPdb( IndexEsd(ID(i)) )
 	LOGICAL, SAVE::         isReadEsd	
 	Integer idTau(nTau),idBeta(nBeta),idAlpha(nAlpha),idAssoc(nAssoc)	! for MemSced.
@@ -256,7 +256,7 @@ MODULE EsdMEM2ParmsDb	! create a linked list for ESDMEM2 to expedite lookup in M
 			READ (dumString,*,ioStat=ioErr)IdEsd,mShapeDb(I),eokPdb(i),VxDb(I),tauDb(i),KadNm3Db(i),&
 		                                                 epsD_kBdb(i),epsA_kBdb(i),NDdb(i),NDSdb(i),NASdb(i)
 		elseif(iEosOpt==23)then
-			READ (dumString,*,ioStat=ioErr)IdEsd,mShapeDb(I),eokPdb(i),VxDb(I),k10Db(i),k11Db(i),KadNm3Db(i),&
+			READ (dumString,*,ioStat=ioErr)IdEsd,mShapeDb(I),eokPdb(i),VxDb(I),k10Db(i),k11Db(i),VtransDb(I),KadNm3Db(i),&
 		                                                 epsD_kBdb(i),epsA_kBdb(i),NDdb(i),NDSdb(i),NASdb(i)
 		else
 			READ (dumString,*,ioStat=ioErr)IdEsd,mShapeDb(I),eokPdb(i),VxDb(I),KadNm3Db(i),&
@@ -695,6 +695,11 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is USEd in GlobConst
 			c(J)=1+(q(J)-1)/qFactor ! 4/(4-1.9)=1.90476
 			eokP(J)=eokPdb(I)
 			vx(J)=VxDb(I)
+			if(iEosOpt==23)then
+				Vtrans(J)=VtransDb(I)
+				ESD2_K10(j)=k10Db(i)
+				ESD2_K11(j)=k11Db(i)
+			endif
 			bVolCc_mol(J)=vx(J)		! need bVol generally for every EOS. Included in GlobConst
 			KadNm3(j)=KadNm3Db(i)	! KcStar[=] nm^3 since 2021.
 			nTypes(j)=1				! ESD is always 1.
@@ -707,8 +712,6 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is USEd in GlobConst
         	tKmin(J)=0.4d0*Tc(J) ! this is the general rule for ESD.
 			ZcEos(J)=ZcEsdDb(i)
 			tau(j)=tauDb(i)
-			ESD2_K10(j)=k10Db(i)
-			ESD2_K11(j)=k11Db(i)
 			ND(j)=NdDb(i)
 			NAs(j)=nAsDb(i)
 			NDs(j)=nDsDb(i)
@@ -1498,7 +1501,7 @@ end subroutine BuildEsd2qzCorr
 	USE Esd2Polar, only:MarshallPolarEsd2,EsdBmixJre
 	USE BIPs
 	Implicit DoublePrecision(A-H,K,O-Z)
-	DoublePrecision gmol(nmx),xFrac(nmx),FUGC(nmx),k10,k11,k2,B0,B1 !,KCSTARp(nmx),KVE(nmx)
+	DoublePrecision gmol(nmx),xFrac(nmx),FUGC(nmx),k10(nmx),k11(nmx),k2,B0,B1,k10o,k11o !,KCSTARp(nmx),KVE(nmx)
 	DoublePrecision bPartial(nmx)
 	DoublePrecision YQVIJ(nmx,nmx),YQVI(nmx),Y(nmx,nmx),EOK(nmx,nmx)
 	DoublePrecision CVI(nmx),CVIJ(nmx,nmx),QV(nmx,nmx)
@@ -1508,7 +1511,7 @@ end subroutine BuildEsd2qzCorr
 	LOGICAL LOUDER,bEsd2
     Character*133 errMsg(0:22)
 	!common/MEM2parts/FA,FD,betadFA_dBeta,betadFD_dBeta,aAssocPas,uAssocPas,zAssocPas
-	DATA B0,k0,k10,k11,k2,B1,expE,initCall/4,1.9D0,0,1.7745D0,1.0617D0,9.5D0,1,1/
+	DATA B0,k0,k10o,k11o,k2,B1,expE,initCall/4,1.9D0,0,1.7745D0,1.0617D0,9.5D0,1,1/
     errMsg(0)='Success!'
     errMsg(11)='FuEsdVtot: nonsense T(K),totMoles,vTotCc as input.'
     errMsg(12)='FuEsdVtot: Xi<0 for some i.'
@@ -1569,6 +1572,8 @@ end subroutine BuildEsd2qzCorr
 	rho=totMoles/ vTotCc
 	eta=rho*bMix 
 	if(LOUDER.and.initCall==1)write(dumpUnit,601)' FuEsdVtot: T,x1,bMix,eta=',tKelvin,xFrac(1),bMix,eta
+	k10(1:NC)=k10o
+	k11(1:NC)=k11o
 	bEsd2=.FALSE.
 	if(iEosOpt==23)then
 		bEsd2=.TRUE.
@@ -1577,21 +1582,22 @@ end subroutine BuildEsd2qzCorr
 			B0 =ESD2_B0
 			k0 =ESD2_k0
 			B1 =ESD2_B1
-			k10=ESD2_k10(1)
-			k11=ESD2_k11(1)
+			k10(1:NC)=ESD2_k10(1:NC)
+			k11(1:NC)=ESD2_k11(1:NC)
 			expE=0.25d0
 			k2=1
 		endif
 		if(useEsd2Polar)then
 			! Corrected ESD2-polar specification: retain the native global constants.
-			k10=-0.7d0
-			k11=2.d0
+			k10(1:NC)= -0.7d0
+			k11(1:NC)=  2.d0
 		endif
 	endif  
 
 601 format(1x,a,8E12.4)
 	YQVM=0.d0	!JRE26: This is alpha in ESD2
 	VM=0.d0
+	VtransMix=0.d0
 	CVM=0.d0
 	Cmix=0.d0
 	K1YVM=0		!JRE26: This is bigF in ESD2
@@ -1612,10 +1618,11 @@ end subroutine BuildEsd2qzCorr
 			YQVM=YQVM+YQVIJ(I,J)*xFrac(I)*xFrac(J)	   
 			CVM = CVM + CVIJ(I,J)*xFrac(I)*xFrac(J)	   !note: above means <c>=sum(xi*ci) and <b>=sum(xj*bj) 
 		enddo
-		k1(I)=K10+k11*Y(I,I)						!JRE26: so...k1(i) supersedes bigF in ESD2 notation. 
+		k1(I)=K10(I)+k11(I)*Y(I,I)						!JRE26: so...k1(i) supersedes bigF in ESD2 notation. 
 		!if(bEsd2)k1(I)=K10+k11*EOK(i,i)/tKelvin					!k1(i) takes the place of bigF. Comment for ESD2b
 		Cmix=Cmix+xFrac(i)*C(i)
 		VM=VM+xFrac(I)*bVolCc_mol(I)
+		if(iEosOpt==23)VtransMix=VtransMix+xFrac(I)*Vtrans(I)
 		K1YVM=K1YVM+xFrac(I)*K1(I)*bVolCc_mol(I) !1991 form, overwritten if applying 1990 form
 	enddo
 	Qmix=1+(Cmix-1)*B0/(B0-k0)
@@ -1651,8 +1658,9 @@ end subroutine BuildEsd2qzCorr
 		iErr=18
 		return
 	endif
-	zFactor=(1+zRep+zAtt+zAssoc+zPolar)
+	zFactor=(1+zRep+zAtt+zAssoc+zPolar)		!=P*V/RT = P*(V'-Vtrans)/RT = 1+Zrep(eta')+Zatt(eta')+Zassoc(eta')
 	pMPa=zFactor*Rgas*rho*tKelvin
+	!zTrans=								!eta'=bVol/V' = bVol/(V-Vtrans) => V = bVol/eta'+Vtrans
     if(voidFrac < 0)then
 	    IF(LOUDER)write(dumpUnit,*) 'FuEsdVtot:Error! (1-k0*eta) IS -VE. eta,rho=',eta,rho
 		iErr=14
@@ -1680,7 +1688,7 @@ end subroutine BuildEsd2qzCorr
 		! Active ESD2b uses Y=exp(expE*epsilon/T)-1 and k1=k10+k11*Y.
 		! Therefore beta*dY/dbeta=expE*(epsilon/T)*(Y+1), not the
 		! polynomial derivative left from the superseded ESD2a expression.
-		if(bEsd2)BdK1_dB=k11*expE*EOK(I,I)/tKelvin*(Y(I,I)+1.d0)
+		if(bEsd2)BdK1_dB=k11(I)*expE*EOK(I,I)/tKelvin*(Y(I,I)+1.d0)
 		BdYb_dB=BdYb_dB+xFrac(I)*vx(I)*bdK1_dB  ! = Beta*d<k1Yb>/dBeta     
 		DO J=1,NC
 			BdY_dB=EOK(I,J)/tKelvin*(Y(I,J)+K2)
@@ -1719,7 +1727,7 @@ end subroutine BuildEsd2qzCorr
 		ENDDO
 	endif
 	!I've lost faith in uAssoc for MEM2. Differentiate numerically.
-	if(bTPT)then  ! disables because isESD =/= isTPT. Change to isMEM2 if you want to enable. 
+	if(bTPT)then  ! disables because bESD =/= bTPT. Change to isMEM2 if you want to enable. 
 		Tplus =tKelvin*(1+stepSize)
 		Tminus=tKelvin*(1-stepSize)
 		CALL MEM2(isZiter,Tplus ,xFrac,NC,rho,Zdum,aPlus ,uAssoc,CVI,iErrMEM )! reusing CVI here to avoid replacing fugAssoc

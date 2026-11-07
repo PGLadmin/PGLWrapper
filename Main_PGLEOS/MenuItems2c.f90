@@ -1060,10 +1060,10 @@ end	SUBROUTINE DifCoDb
 		if (iEosOpt==5.or.iEosOpt==9) then
 			write(635,600)
             eta=bVolCC_mol(1)/VC_Pure
- 			if(LOUD)write(*,*)'Tc=',TC_Pure,' etaC=',eta
-			if(LOUD)write(*,*)'Pc=',PC_pure,' Zc=',ZC_Pure
+ 			write(*,*)'Tc=',TC_Pure,' etaC=',eta
+			write(*,*)'Pc=',PC_pure,' Zc=',ZC_Pure
 			rhoc=PC_pure*rMw(1)/(TC_Pure*Rgas*ZC_Pure)
-			if(LOUD)write(*,*)'rhoc(g/cc)=',rhoc
+			write(*,*)'rhoc(g/cc)=',rhoc
 			write(635,602)TC_Pure,PC_PURE,ZC_PURE,eta,rhoc
 		else ! must be ESD iEosOpt=2 or 4.
  			write(635,601)
@@ -6461,6 +6461,7 @@ SUBROUTINE KIJDB(NC)
 	!The routine calculates vapor pressure from TrMin to 0.95 then seeks user input.
 	subroutine VpIter(NC)
 	USE GlobConst !NMX, avoNum,RGAS,.. TC,PC,...
+	USE ESDParms, only: Vtrans 
 	IMPLICIT DOUBLEPRECISION(A-H,O-Z)
 	character outFile*251
 	DIMENSION gmol(NMX)
@@ -6497,12 +6498,21 @@ SUBROUTINE KIJDB(NC)
 	open(631,file=outFile)
 	if(bTPT)write(6 ,'(a,3F9.3)')' G0,G1,e0 ',G0,G1,eta0
 	if(bTPT)write(631,'(a,3F9.3)')'G0,G1,e0 ',G0,G1,eta0
+	if(iEosOpt<5)then
+		Tkelvin=Tb(1)
+		if(Tb(1) > 298.15)Tkelvin=298.15d0
+		call PsatEar(Tkelvin,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode)	! vLiq is tabulated at Tb.
+		Vtrans(1)=1/rhoL-vLiq(1)	! VLeos=1/rhoL; VLexp=vLiq(1)
+		write(*,'(a,2f10.2)')' T(K),Vtrans=',Tkelvin,Vtrans(1)
+	endif
 	!write(*,*)'  T(K)',tabChar,'   PsatMPa',tabChar,'rhoVap',tabChar,'rhoLiq(g/cc)',tabChar,'etaVap',tabChar,'etaLiq'
 	write(*,*)'  T(K)',tabChar,'   PsatMPa',tabChar,'rhoVap',tabChar,'rhoLiq(g/cc)',tabChar,'etaVap',tabChar,'etaLiq',tabChar,'UresVap',tabChar,'UresLiq'
 	write(631,*)'  T(K)',tabChar,'   PsatMPa',tabChar,'rhoVap',tabChar,'rhoLiq(g/cc)',tabChar,'etaVap',tabChar,'etaLiq'
 	do iStep=1,nSteps+1
 		tKelvin=TLo+delT*(iStep-1)
 		call PsatEar(tKelvin,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode)
+		if(iEosOpt<=23)rhoV=1/( 1/rhoV-Vtrans(1) )		!Vt=V+Vtrans, rhoV = 1/V. rhoVt=1/Vt = 1/(V+Vtrans)=1/(1/rhoV+Vtrans)
+		if(iEosOpt<=23)rhoL=1/( 1/rhoL-Vtrans(1) )		!Vt=V+Vtrans, rhoV = 1/V. rhoVt=1/Vt = 1/(V+Vtrans)=1/(1/rhoV+Vtrans)
 		if(ierCode > 10)then
 			if(LOUDER)pause 'Psat returned error code'
 			exit
@@ -6514,6 +6524,8 @@ SUBROUTINE KIJDB(NC)
 	tKelvin=0.96*Tc(1)
 	do while(tKelvin > 0)
 		call PsatEar(tKelvin,pMPa,chemPot,rhoL,rhoV,uSatL,uSatV,ierCode)
+		if(iEosOpt<=23)rhoV=1/( 1/rhoV-Vtrans(1) )		!Vt=V+Vtrans, rhoV = 1/V. rhoVt=1/Vt = 1/(V+Vtrans)=1/(1/rhoV+Vtrans)
+		if(iEosOpt<=23)rhoL=1/( 1/rhoL-Vtrans(1) )		!Vt=V+Vtrans, rhoV = 1/V. rhoVt=1/Vt = 1/(V+Vtrans)=1/(1/rhoV+Vtrans)
 		!call EqualArea(NC,gmol,tKelvin,Psat,vLCc,vVCc)
 		write( * ,'(F8.2,a1,5(F9.6,a1),2(F9.2,a1),i3)')tKelvin,' ',pMPa,' ',rhoV*rMw(1),' ',rhoL*rMw(1),' ',rhoV*bVolCC_mol(1),' ',rhoL*bVolCC_mol(1),' ',uSatV,' ',uSatL,' ',ierCode
 		if(pMPa > 1.D-3)then
