@@ -1,35 +1,71 @@
 {
-    "fortran.fortls.path": "${env:USERPROFILE}/Miniconda3/envs/fortran-tools/Scripts/fortls.exe",
-    "fortran.linter.compiler": "ifx",
-    "fortran.linter.includePaths": [
+  // Do not commit changes to this file if they are minor,
+  // such as adjusting turning off the fortan.linter.compiler,
+  // or changing fortran.linter.extraArgs for your own preferences.
+  "terminal.integrated.profiles.windows": {
+    "Windows PowerShell": {
+        "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    }
+  },
+
+  // CMake: point to the actual project root
+  "cmake.sourceDirectory": "${workspaceFolder}",
+  "cmake.debugConfig": {
+    "cwd": "${workspaceFolder}"
+  },
+
+  // fortls path
+  "fortran.fortls.path": "${env:USERPROFILE}/Miniconda3/envs/fortran-tools/Scripts/fortls.exe",
+
+  // fortran formatter, use fprettify. findent is compiled in C++ and is not as portable due to runtime dependencies.
+  "fortran.formatting.formatter": "fprettify",
+  "fortran.formatting.path": "${env:USERPROFILE}/Miniconda3/envs/fortran-tools/Scripts",
+  "fortran.formatting.fprettifyArgs": [
+    "--indent",
+    "2"
+  ],
+
+  // Change to "Disabled" if you want to turn off the linter entirely
+  "fortran.linter.compiler": "ifx",
+
+  // change as desired for amount of detail,
+  // consider /stand:f90, or use f95, f03, f08, f18 or f23.
+  "fortran.linter.extraArgs": [
+    "/warn:unused",
+    "/warn:declarations"
+  ],
+
+  // These include paths are fine — they work in a normal project folder
+  "fortran.linter.includePaths": [
     "${workspaceFolder}/out/build/debug/mod",
     "${workspaceFolder}/out/build/release/mod",
-    "${workspaceFolder}/out/build/relwithdebinfo/mod",
-    "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/opt/compiler/include"
-    ],
+    "${workspaceFolder}/out/build/relwithdebinfo/mod"
+  ],
 
-    "fortran.linter.extraArgs": [
-        "/nologo",
-        "/c",
-        "/warn:declarations",
-        "/warn:unused"
-    ],
+  // fortls configuration file path, relative to the workspace folder
+  "fortran.fortls.extraArgs": [
+    "--config",
+    ".fortls"
+  ],
 
-    "fortran.fortls.extraArgs": [
-        "--include_dirs", "./out/build/debug",
-        "--excl_paths", "out", "build", "x64", "x86", "Debug", "Release", ".vs", "python", "input", "output", ".git"
-    ],
+  // Your C/C++ extension settings
+  "C_Cpp.default.compilerPath": "cl.exe",
+  "C_Cpp.intelliSenseEngine": "disabled",
 
-    "C_Cpp.default.compilerPath": "cl.exe",
-    "C_Cpp.intelliSenseEngine": "disabled",
-    "files.insertFinalNewline": true,
-    "files.trimTrailingWhitespace": true,
+  // File hygiene
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
 
-    "terminal.integrated.cwd": "${workspaceFolder}",
+  // Terminal default directory
+  "terminal.integrated.cwd": "${workspaceFolder}",
 
-    "files.exclude": {
-      "**/*_genmod.f90": true,
-      "**/*_genmod.mod": true,
-      "**/*.mod": true
-    }
+  // Exclude generated module files from the vs code folder view
+  "files.exclude": {
+    "**/*_genmod.f90": true,
+    "**/*_genmod.mod": true,
+    "**/*.mod": true
+  },
+
+  "editor.tabSize": 2,
+  "terminal.integrated.shellIntegration.enabled": true
 }

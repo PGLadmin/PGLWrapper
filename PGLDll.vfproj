@@ -67,11 +67,9 @@
 			<File RelativePath="SourceCode2a\PcSaftEosGross.f90"/>
 			<File RelativePath="SourceCodeUA\PGLDLL.f90"/>
 			<File RelativePath="SourceCodeUA\PGLFugiDefs.F90"/>
-			<File RelativePath="Main_PGLdll\PGLWrapper.F90">
-			</File>
+			<File RelativePath="Main_PGLdll\PGLWrapper.F90"/>
 			<File RelativePath="SourceCode2a\PrLorraine.f90"/>
-			<File RelativePath="SourceCodeUA\UaDataTools.F90">
-			</File>
+			<File RelativePath="SourceCodeUA\UaDataTools.F90"/>
 			<File RelativePath="SourceCodeUA\UaEosTools.f90"/>
 			<File RelativePath="SourceCodeUA\Wertheim23a.f90"/>
 		</Filter>
