@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Active Target (Dynamic Setup)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "${workspaceFolder}/out/build/${command:cmake.buildType};C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin/compiler;C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin;${env:PATH}"
+        }
+      ],
+      "preLaunchTask": "CMake: build"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "source_dirs": [
+    "FlashSubs",
+    "Main_GammaPA",
+    "Main_PGLdll",
+    "Main_PGLdllTest",
+    "Main_PGLEOS",
+    "MINPACK",
+    "SourceCode2a",
+    "SourceCodeUA",
+    "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/opt/compiler/include"
+  ],
+  "include_dirs": [
+    "out/build/debug/mod",
+    "out/build/release/mod",
+    "out/build/relwithdebinfo/mod",
+    "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/opt/compiler/include/intel64"
+    ],
+
+  "excl_paths": [
+    "x64",
+    "x86",
+    ".vs",
+    "python",
+    "input",
+    "output",
+    ".git"
+  ],
+  "debug_log": false
+}

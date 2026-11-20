@@ -17,6 +17,7 @@
       },
       "environment": {
         "FC": "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin/ifx.exe",
+        "INCLUDE": "${sourceDir}/out/build/${presetName}/mod;C:/Program Files (x86)/Intel/oneAPI/compiler/latest/opt/compiler/include;$penv{INCLUDE}",
         "LIB": "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/lib;$penv{LIB}",
         "PATH": "${sourceDir}/out/build/${presetName}/Main_PGLdll;C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin/compiler;C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin;$penv{PATH}"
       }

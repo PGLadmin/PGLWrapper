@@ -28,15 +28,32 @@ set(SRC_2A
 )
 
 set(SRC_LOCAL
-    PGLWrapper.f90
+    ../Main_PGLdll/PGLWrapper.f90
+)
+
+set(PGLDLL_SOURCES_LCL
+    ${SRC_UA}
+    ${SRC_2A}
+    ${SRC_LOCAL}
+)
+
+# ---------------------------------------------------------
+# Export source list to parent scope for fortls
+# ---------------------------------------------------------
+set(PGLDLL_SOURCES
+    ${PGLDLL_SOURCES_LCL}
+    PARENT_SCOPE
 )
 
 # --- Target -------------------------------------------------------------------
 
 add_library(PGLdll SHARED
-    ${SRC_UA}
-    ${SRC_2A}
-    ${SRC_LOCAL}
+    ${PGLDLL_SOURCES_LCL}
+)
+
+# Expose the module output directory to downstream targets automatically
+target_include_directories(PGLdll PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/mod>
 )
 
 # --- Intel Fortran flags (Windows) -------------------------------------------
