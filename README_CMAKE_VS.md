@@ -1,8 +1,8 @@
-# Visual Studio 2022 Collaborator CMake Setup Guide (Internal Documentation)
+# Visual Studio 2022 Collaborator CMake Setup Guide
 
-This internal guide ensures collaborators can reliably configure, build, and debug the MDNA project using Visual Studio 2022 with CMake and Intel ifx.
+This guide is not necessary if you are using the .sln or .vfproj files. To use Visual Studio in the traditional way, just start Visual Studio and open the PGL_Projects.sln. The subprojects are available under this one solution file.
 
-To encourage code development and refinement, compile warnings are issued applying the standard for f18. Only in cases where the standard prevents compiling is this omitted.
+This internal guide ensures collaborators can reliably configure, build, and debug the MDNA project using Visual Studio 2022 with CMake and Intel ifx. The CMake method provides some additional build options with optimization preconfigured. **There is a separate .md file for working with VS Code.**
 
 ## Table of Contents
 [1. Required Software and Installer Configuration](#1-required-software-and-installer-configuration)<br>
@@ -39,7 +39,7 @@ Under Workloads:
 
 Desktop development with C++ ✔
 
-> This workload provides:
+This workload provides:
 
 * MSVC toolchain
 
@@ -89,17 +89,9 @@ This selection prevents VS from falling back to a 32-bit configuration which res
 
 Install the following Intel toolkits:
 
-Version 2024
+Version 2025 Intel oneAPI HPC Toolkit
 
->Intel oneAPI Base Toolkit
-
->Intel HPC Toolkit
-
-Version 2025
-
->Intel oneAPI HPC Toolkit
-
-These provide:
+This provides:
 
 * ifx (Intel Fortran compiler)
 
@@ -157,27 +149,27 @@ When Visual Studio is correctly using the CMake presets, the following UI elemen
 
 Ribbon
 
-> Compile options will list: debug | relwithdebinfo | release
+* Compile options will list: debug | relwithdebinfo | release
 
-> If instead the compile options lists: x64 Debug | x64 Release | x86 Debug | x86 Release, then Visual Studio is not using the CMake presets and corrective action is needed.
+* If instead the compile options lists: x64 Debug | x64 Release | x86 Debug | x86 Release, then Visual Studio is not using the CMake presets and corrective action is needed.
 
 Project Menu will list
 
-> Configure MDNA Project
+* Configure MDNA Project
 
-> Configure MDNA Project with CMake Debugger
+* Configure MDNA Project with CMake Debugger
 
-> Delete Cache and Reconfigure
+* Delete Cache and Reconfigure
 
-> View CMakeCache.txt
+* View CMakeCache.txt
 
-> Edit Cmake Presets for MDNAProject
+* Edit Cmake Presets for MDNAProject
 
-> CMake Workspace Settings
+* CMake Workspace Settings
 
 Solution Explorer Window
 
->The solution explorer defaults to 'Folder View'. Right-click the top folder MDNA Project and select the option for CMake Targets View. Use the accordion links to find the source code used for each project. Notice that PGLdllTest does not duplicate source code in PGLdll. As with the Folder View, files are opened in the editor by double-clicking.
+* The solution explorer defaults to 'Folder View'. Right-click the top folder MDNA Project and select the option for CMake Targets View. Use the accordion links to find the source code used for each project. Notice that PGLdllTest does not duplicate source code in PGLdll. As with the Folder View, files are opened in the editor by double-clicking.
 
 The toolbar should show a startup item dropdown listing: PGLdllTest | PGLEOS. Note that PGLdll is a library and thus not a startup item.
 
@@ -195,20 +187,20 @@ If Visual Studio Menus/Ribbon show:
 
 Then the errors must be fixed:
 
-> Step 1 — Fix JSON syntax errors. Open CMakePresets.json in the VS editor. Look at the bottom for errors or at the top for "Your settings are not being used due to a parsing error", or "CMakePresets.json could not be parsed". VS will indicate the offending line in the Errors window.
+* Step 1 — Fix JSON syntax errors. Open CMakePresets.json in the VS editor. Look at the bottom for errors or at the top for "Your settings are not being used due to a parsing error", or "CMakePresets.json could not be parsed". VS will indicate the offending line in the Errors window.
 
-> Even a single missing comma invalidates the entire preset file. Fix the errors. Often the CMake cache can be Deleted and Reconfigured from the project window, but VS copies the CMake cache for its own use, and sometimes the VS cache does not refresh so if the cache does not rebuild, proceeding with steps 2 and 3 are recommended.
+   Even a single missing comma invalidates the entire preset file. Fix the errors. Often the CMake cache can be Deleted and Reconfigured from the project window, but VS copies the CMake cache for its own use, and sometimes the VS cache does not refresh so if the cache does not rebuild, proceeding with steps 2 and 3 are recommended.
 
-Step 2 — **Close VS completely.** Locate the normally hidden .vs folder in the repo root. Delete the .vs folder. This clears stale cached configuration. Also, the 'out' folder can be deleted and CMake will regenerate it.
+* Step 2 — **Close VS completely.** Locate the normally hidden .vs folder in the repo root. Delete the .vs folder. This clears stale cached configuration. Also, the 'out' folder can be deleted and CMake will regenerate it.
 
-Step 3 — Restart VS and reopen the folder. Visual Studio will re-detect the CMake project and load the presets.
+* Step 3 — Restart VS and reopen the folder. Visual Studio will re-detect the CMake project and load the presets.
 
-If necessary, use Detailed Debugging -- By default, CMake 3.30 distributed with VS 2022 has detailed logging disabled. To create the log,
+   If necessary, use Detailed Debugging -- By default, CMake 3.30 distributed with VS 2022 has detailed logging disabled. To create the log,
 
-> 1. Use the Project Menu to open CMakeCache.txt
-> 2. Search for (part of) CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE and set to TRUE
-> 3. Save the file and from the 'Project' menu delete the cache and reconfigure.
-> 4. Browse in File Explorer to out\build\debug\CMakeFiles and open CMakeConfigureLog.yaml in a text editor and search the bottom portion for the fatal error.
+  1. Use the Project Menu to open CMakeCache.txt
+  2. Search for (part of) CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE and set to TRUE
+  3. Save the file and from the 'Project' menu delete the cache and reconfigure.
+  4. Browse in File Explorer to out\build\debug\CMakeFiles and open CMakeConfigureLog.yaml in a text editor and search the bottom portion for the fatal error.
 
 [Return to TOC](#table-of-contents)
 
@@ -282,9 +274,9 @@ Cause: Visual Studio ribbon is not using the CMake presets.
 
 Fix:
 
-> Open Project → CMake Settings and select a preset
+* Open Project → CMake Settings and select a preset
 
-> If missing, **close VS**, delete .vs (and optionally the 'out' folder) and reopen the folder
+* If missing, **close VS**, delete .vs (and optionally the 'out' folder) and reopen the folder
 
 ### B. "Your settings are not being used due to a parsing error"
 
@@ -292,11 +284,11 @@ Cause: Invalid JSON in CMakePresets.json.
 
 Fix:
 
-> Correct the JSON syntax
+* Correct the JSON syntax
 
-> As soon as the file is saved, the cache should rebuild.
+* As soon as the file is saved, the cache should rebuild.
 
-> If necessary, **Close VS**, delete .vs (and optionally the 'out' folder) and reopen the folder
+* If necessary, **Close VS**, delete .vs (and optionally the 'out' folder) and reopen the folder
 
 ### C. Intel Fortran compiler not detected
 
@@ -304,7 +296,7 @@ Cause: Missing environment variables.
 
 Fix:
 
-> Ensure your preset includes: "FC": "ifx" or use the full path to ifx.exe
+* Ensure your preset includes: "FC": "ifx" or use the full path to ifx.exe
 
 ### D. CMake configuration fails with missing DLLs
 
@@ -312,9 +304,7 @@ Cause: Intel runtime not on PATH.
 
 Fix:
 
-> Ensure your preset includes:
-
-> "PATH": "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin;$env{PATH}"
+* Ensure your preset includes: <br>"PATH": "C:/Program Files (x86)/Intel/oneAPI/compiler/latest/bin;$env{PATH}"
 
 ### E. CMake Targets View is empty
 
@@ -322,10 +312,10 @@ Cause: Visual Studio opened the folder in Workspace (.sln, .vfproj) Mode.
 
 Fix:
 
->Close VS, delete the .vs folder.
+* Close VS, delete the .vs folder.
 
-> Use File → Open → CMake… Select the top-level CMakeLists.txt<br>
-> or Open the Folder
+* Use File → Open → CMake… Select the top-level CMakeLists.txt<br>
+or Open the Folder
 
 ### F. Breakpoints show "unresolved"
 
