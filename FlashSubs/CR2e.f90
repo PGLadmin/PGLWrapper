@@ -112,12 +112,10 @@
 	!print*,'Initial guess from ParmsEsd? Enter 1 for yes or 0 to use MW guides as guess'
 	!read(*,*)iAns
 	if(iEosOpt==23)then
-		!Call BuildEsd2corr(ESD2_qCorr,ESD2_zCorr,iErr)	!ESD2_qCorr,ESD2_zCorr USEd in EsdParms
-		Call BuildEsd2db(iErr)	!ESD2_qCorr,ESD2_zCorr USEd in EsdParms
-		return
+		write(*,*)'RegPureEsd2: ESD2 (EOS option 23) is not supported in this build.'
+		stop 1
 	endif
 	qFac=4/(4-1.9d0)
-	if(iEosOpt==23)qFac=esd2_B0/(esd2_B0-esd2_k0)
 	iAns=1 !bypass MW guess.
 	if(iAns==0)then
 		c(1)=1+rmw(1)/150
@@ -220,7 +218,6 @@
 	x(1)=1
 	C(1)=  PARM(1)
 	qFac=4/(4-1.9d0)
-	if(iEosOpt==23)qFac=esd2_B0/(esd2_B0-esd2_k0)
 	q(1)=1+qFac*(c(1)-1)
 	eokp(1)=Parm(2)
 	VX(1)=parm(3)
