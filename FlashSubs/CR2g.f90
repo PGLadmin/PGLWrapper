@@ -271,7 +271,7 @@ SUBROUTINE RegPureDev2(nData,nParms,PARM,ERROR,IFLAG)
 		if(iErrVp < 11)then
 			do i=1,nPtsVp
 				iDev=2+i
-				call PsatEar(Tvp(i),pSatCalc,chemPot,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
+				call PsatEar(Tvp(i),pSatCalc,chemPotV,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
 				if(ierCodePsat > 10)cycle
 				error(iDev)=( pSatCalc-Pvp(i))/Pvp(i)*100
 			enddo
@@ -2375,7 +2375,7 @@ SUBROUTINE RegPureDev2(nData,nParms,PARM,ERROR,IFLAG)
 	if(LOUDER)write(*,'(3(a,f7.3),a,I8)')' Tc=',TC_PURE,'      Pc=',PC_PURE,'     etaC=',etaC_PURE,' ID=',ID(1)
     if(LOUDER.and.initCall)print*,'CP done. Calling Psat for acen.'
 	T7=0.7D0*tBest
-	call PsatEar(T7,pSat7,FUGC,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
+	call PsatEar(T7,pSat7,chemPotL,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
 	acen_pure=86  !NOTE: acen() is a vector member of GlobConst
 	TbCalc=8686
 	if(pSat7/Pc_Pure < zeroTol .or. ierCodePsat>9)then
@@ -2384,7 +2384,7 @@ SUBROUTINE RegPureDev2(nData,nParms,PARM,ERROR,IFLAG)
 		return
 	endif	
 	acen_pure= -log10(pSat7/Pc_Pure) - 1
-	call PsatEar(Tb(1),pTb,FUGC,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
+	call PsatEar(Tb(1),pTb,chemPotV,rhoLiq,rhoVap,uSatL,uSatV,ierCodePsat)
 	! ln(Psat/pTb)=A*(1/T-1/Tb); A=ln(pSat7/pTb)/(1/T7-1/Tb); ln(pSat)=ln(pTb)+A*(1/T-1/Tb)=>ln(0.101325/pTb)/A+1/Tb=1/TbCalc
 	if(pSat7/pTb < zeroTol .or. pTb<zeroTol .or. ierCodePsat>9)then
 		iErrCode=15

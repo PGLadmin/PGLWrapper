@@ -44,6 +44,8 @@ CONTAINS
 		USE EsdParms
 		Integer, INTENT(IN) :: iPolar
 		DoublePrecision, INTENT(IN) :: alphaD2
+        DoublePrecision alphaPolarD2
+        Logical useEsd2Polar,usePolarMEM2,disableEsd2MEM2
 		Logical, INTENT(IN) :: enableMEM2
 		Integer, INTENT(OUT) :: iErr
 		iErr=0
@@ -51,7 +53,7 @@ CONTAINS
 			iErr=11;return
 		endif
 		alphaPolarD2=0.d0
-		alphaPolarD2(iPolar)=alphaD2
+		!alphaPolarD2(iPolar)=alphaD2	!JRE: Is there something missing? the only scope of this variable is this routine.
 		useEsd2Polar=alphaD2>0.d0
 		usePolarMEM2=enableMEM2
 		disableEsd2MEM2=.not.enableMEM2
@@ -120,13 +122,13 @@ CONTAINS
 
 	SUBROUTINE PureScoreAtQ(qTrial,nPts,tData,pData,weights,score,epsOut,bOut,iErr)
 		USE EsdParms
-		USE GlobConst, only:bVolCc_mol
+		USE GlobConst, only:bVolCc_mol,NMX
 		Integer, INTENT(IN) :: nPts
 		DoublePrecision, INTENT(IN) :: qTrial,tData(nPts),pData(nPts),weights(nPts)
 		DoublePrecision, INTENT(OUT) :: score,epsOut,bOut
 		Integer, INTENT(OUT) :: iErr
 		Integer i,iPsat
-		DoublePrecision sumW,pCalc,chemPot(nmx),rhoL,rhoV,uL,uV,res
+		DoublePrecision sumW,pCalc,rhoL,rhoV,uL,uV,res,chemPot !(NMX)
 		epsOut=MAX(50.d0,eokP(1));bOut=MAX(5.d0,vx(1))
 		CALL SolveCriticalAtQ(qTrial,epsOut,bOut,iErr)
 		if(iErr>0)then;score=1.d6;return;endif
@@ -955,7 +957,7 @@ CONTAINS
 		DoublePrecision, INTENT(OUT) :: pCalc(nPts)
 		Integer, INTENT(OUT) :: iErr
 		Integer cas(nmx),i,iLocal,iPsat
-		DoublePrecision chemPot(nmx),rhoL,rhoV,uL,uV
+		DoublePrecision rhoL,rhoV,uL,uV,chemPot !(nmx)
 		cas=0;cas(1)=polarCas;CALL PGLWrapperStartup(1,23,cas,iLocal)
 		if(iLocal/=0)then;iErr=1;pCalc=-1.d0;return;endif
 		CALL SetEsd2PolarMode(1,alpha,.FALSE.,iLocal);CALL SetPureCandidate(qFit,epsFit,bFit)

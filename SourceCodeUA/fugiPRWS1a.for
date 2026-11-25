@@ -13,7 +13,7 @@ C  OUTPUT
 	USE VpDb ! for VpCoeffs
       IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
       PARAMETER(ndb=350,numSV=20)
-	character bipFile*234
+	character bipFile*255
 	integer GetBIPs
 c	dimension IDDippr(numSV),svKap1(numSV)
 C           Stryjek and Vera, can j chem eng, 64:323 (1986).

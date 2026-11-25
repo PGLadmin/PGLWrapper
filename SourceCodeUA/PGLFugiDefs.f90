@@ -132,7 +132,7 @@
 	USE ESDParms ! for SetParPureEsd and QueryParPureEsd
 	!USE comflash, only:ncomax ! PrLorraine's module for many constants. ncomax needed to dimension properly
 	IMPLICIT DoublePrecision( A-H,O-Z )
-	DoublePrecision xFrac(*),FUGC(*)
+	DoublePrecision xFrac(NMX),FUGC(NMX)
     Integer ierFugi(12)
 	CALL       FugiTP( tKelvin,pMPa,xFrac,nComps,LIQ,rhoMol_cc,zFactor,aRes,FUGC,uRes,iErrF )
 	ierFugi(1)=iErrF

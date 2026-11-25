@@ -1,11 +1,11 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in MemScedOpt calcs.
 	USE CritParmsDb, only:ndb		! ndb,..
-	Parameter(nMemSced=118,nTau=nMemSced-12,nBeta=37,nAlpha=12,nAssoc=18)	!for MemSced
+	Integer, Parameter :: nMemSced=118,nTau=nMemSced-12,nBeta=37,nAlpha=12,nAssoc=18	!for MemSced
 	!NOTE: ndb(ESD)=ndb(CritParms) because we must first compute "Exact" values so all possible values will be tabulated. .
 	DoublePrecision eokPdb(ndb),vxDb(ndb),mShapeDb(ndb),KadNm3Db(ndb),epsA_kBdb(ndb),epsD_kBdb(ndb),ZcEsdDb(ndb),tauDb(ndb)
 	DoublePrecision eTotAssoc(nAssoc) ,tau(nTau)
-	DoublePrecision ESD2B_0,alpha_2,ESD2K_10,ESD2K_11,ESD2		! ESD2 parameters
+	DoublePrecision ESD2B_0,alpha_2,ESD2K_10,ESD2K_11,ESD2,C1		! ESD2 parameters
 	Integer, SAVE::         IndexEsd(99999),NDdb(ndb),NDSdb(ndb),NASdb(ndb)   ! e.g. eokP(i)=eokPdb( IndexEsd(ID(i)) )
 	LOGICAL, SAVE::         isReadEsd
 	Integer idTau(nTau),idBeta(nBeta),idAlpha(nAlpha),idAssoc(nAssoc)	! for MemSced.
@@ -47,13 +47,14 @@ MODULE EsdMem2ParmsDb  ! create a linked list for ESDMEM2 to expedite lookup in 
 	!C    eokPdb
 	!C    VxDb
 	!C    IndexEsd	e.g., mShape(icomp)=mShapeDb(IndexEsd(ID(iComp)))
-	USE GlobConst, ONLY:LOUD,dumpUnit,zeroTol,PGLinputDir,nCritSet,ID,iEosOpt
+	USE GlobConst, ONLY:LOUD,dumpUnit,zeroTol,PGLinputDir,nCritSet,iEosOpt
 	USE CritParmsDb
 	IMPLICIT DoublePrecision(A-H,O-Z)
+	INTEGER iErrCode,iComp,iTemp,iEsd,i,IdEsd,NDECK1,ioErr,iErr
 	character*251 inFile,dumString
-    LOGICAL LOUDER,bEsd1
-    LOUDER=LOUD
-    !LOUDER=.TRUE.
+  LOGICAL LOUDER,bEsd1
+  LOUDER=LOUD
+  !LOUDER=.TRUE.
 	!EQUIVALENCE(IndexEsd(1),CrIndex(1))   !This doesn't work. CrIndex is in module, similar to "common" prohibition. JRE20230911
 	bEsd1=.TRUE.
 	if(iEosOpt==23)bEsd1=.FALSE.
@@ -128,9 +129,7 @@ MODULE EsdParms
 END MODULE EsdParms
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
-	!
 	!  PURPOSE:  LOOKS UP THE ESD PARAMETERS AND STORES THEM IN USEd EsdParms
-	!
 	!  INPUT
 	!    ID - VECTOR OF COMPONENT ID'S INPUT FOR COMPUTATIONS
 	!  OUTPUT(to EsdParms)   qShape,eokP,VX,KadNm3,epsA_kB,epsD_kB,ND,NDS,NAS,
@@ -140,11 +139,13 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	USE Assoc ! For eAcceptor,eDonor,...
 	USE BIPs
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
-	PARAMETER(listPool=1000)
+	Integer, Parameter :: listPool=1000
 	Character*222 bipFile,inFile,dumString !,dumString,ParmsTptFile*50 !,bipHbFile*50
+	Integer NC,iErr,iErrCode,i,j,ioErr,nDeck,iComplex,nComps
 	Integer iGotIt(NC),idCasPas(NC),idCasa(ndb),GetBIPs,ierCompExact(NC)  ! ndb USEd from EsdMem2ParmsDb(CritParmsDb)
 	DoublePrecision QA(ndb),KCSTA(ndb),eDonEpsK(ndb),eAccEpsK(ndb),bVolA(ndb),eokA(ndb),DHA(ndb)
 	Integer IDA(ndb),NDSA(ndb),NASA(ndb),NDA(ndb)
+	DoublePrecision CAi,iErrExact,iErrCrit
 	!doublePrecision bondRate(nmx,maxTypes)
 	!iErr=1 !Parms missing and iErrExact.ne.0 for at least one component
 	LOGICAL LOUDER
@@ -347,9 +348,10 @@ subroutine ExactEsd(NC,vx,c,q,eokP,iErr,ierComp)
 	!  for Zc, Bc, and Yc vs. qShape
 	!  Ref:  Elliott and Lira, Introductory Chemical Engineering Thermo, p564 (1999), also wikipedia.
 	!parameter (nmx=55)
-	DoublePrecision k1
+	DoublePrecision k1,k2,Zm,cqFactor,Wci,cShape,RooTCinv,qShape,RootQinv,ZcTmp,atemp,quadB,sqArg,Bc,Yc,rlnY1
 	DoublePrecision vx(nmx),c(nmx),q(nmx),eokP(nmx)
-    Integer ierComp(NC) !,ID(nmx)
+	Integer NC,iErr,i,isAssoc,isHelium,isH2
+  Integer ierComp(NC) !,ID(nmx)
 	LOGICAL LOUDER
 	LOUDER=LOUD
 	!LOUDER=.TRUE.
@@ -418,8 +420,10 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	!  for Zc, Bc, and Yc vs. cShape
 	!  Ref:  Elliott and Lira, Introductory Chemical Engineering Thermo, p564 (1999).
 	!parameter (nmx=55)
-	DoublePrecision k1
-    character*5 tempClass
+	DoublePrecision k1,k2,Zm,cqFactor,Wci,cShape,RooTCinv,qShape,RootQinv,ZcTmp,atemp,quadB,sqArg,Bc,Yc,rlnY1
+	DoublePrecision c1,q1,eokP1,vx1,ZcEsd
+  Character*5 tempClass
+	Integer ierComp,iErr,isAssoc,isHelium,isH2,ID1
 	!DoublePrecision vx(nmx),c(nmx),q(nmx),eokP(nmx)
 	LOGICAL LOUDER
 	LOUDER=LOUD
@@ -427,7 +431,7 @@ subroutine ExactEsd1(ID1,vx1,c1,q1,eokP1,ZcEsd,iErr)
 	ierComp=0
 	iErr=0
 	isAssoc=0
-    tempClass=TRIM(classDb(CrIndex(ID1)))
+  tempClass=TRIM(classDb(CrIndex(ID1)))
 	if(tempClass=='assoc' .or. tempClass=='Asso+')isAssoc=1
 	if(isAssoc>0)then
 		iErr=11
@@ -546,7 +550,10 @@ end	!subroutine ExactEsd1
 	USE BIPs
 	IMPLICIT DoublePrecision(A-H,K,O-Z)
 	DoublePrecision xFrac(nmx),FUGC(nmx) !,chemPoAssoc(nmx)
-    DoublePrecision tKelvin,pMPa,rhoMol_cc,zFactor,aRes,uRes,checkKij12
+  DoublePrecision tKelvin,pMPa,rhoMol_cc,zFactor,aRes,uRes,checkKij12
+	Integer NC,LIQ,i,iErr,iErrBip,nIter,itMax,isZiter,initial,iErrF
+	DoublePrecision rho,eta,etaOld,ERROLD,ERR,CHNG,sumx,bMix,Pb_RT
+	DoublePrecision errBestEta,etaBest,zStore
 	LOGICAL LOUDER
 	!  ND IS THE DEGREE OF POLYMERIZATION OF EACH SPECIES
 	!  eokP IS THE DISPERSE ATTRACTION OVER BOLTZ k FOR PURE SPECIES
@@ -696,11 +703,14 @@ end	!subroutine ExactEsd1
 	DoublePrecision gmol(nmx),xFrac(nmx),FUGC(nmx),k10,k2,Zm !,KCSTARp(nmx),KVE(nmx)
 	DoublePrecision YQVIJ(nmx,nmx),YQVI(nmx),Y(nmx,nmx),EOK(nmx,nmx)
 	DoublePrecision CVI(nmx),CVIJ(nmx,nmx),QV(nmx,nmx)
-    DoublePrecision voidFrac,tKelvin,zFactor !,zAssoc,aAssoc,uAssoc,rho,fAssoc
-	Integer initCall
-	DoublePrecision k1(nmx)
+  DoublePrecision voidFrac,tKelvin,zFactor !,zAssoc,aAssoc,uAssoc,rho,fAssoc
+	Integer initCall,NC,i,j,iErr,iErrTmin,iType,isZiter,iErrMem
+	DoublePrecision k1(nmx),stepSize,totMoles
+	DoublePrecision TminTot,TrVolatile,TrMin,vTotCc,rLogPr,aScvp,xt1,xt,rho,eta
+	DoublePrecision bMix,YqVm,Vm,cVm,cMix,K1YVm,KijBip,Fassoc,denom,PMPa,aRes,uRes
+	DoublePrecision bdYbq_db,bdYb_db,Tplus,Tminus,zDum,aPlus,aMinus,aAssocPas,uAssocPas
 	LOGICAL LOUDER
-    Character*133 errMsg(0:22)
+  Character*133 errMsg(0:22)
 	!common/MEM2parts/FA,FD,betadFA_dBeta,betadFD_dBeta,aAssocPas,uAssocPas,zAssocPas
 	DATA K10,K2,ZM,initCall/1.7745D0,1.0617D0,9.5D0,1/
     errMsg(0)='Success!'

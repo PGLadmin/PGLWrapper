@@ -7,7 +7,7 @@
 	USE GlobConst
 	IMPLICIT DOUBLEPRECISION(A-H,K,O-Z)
 	PARAMETER(ndb=1555)
-	character*234 bipFile !,inFile
+	character*255 bipFile !,inFile
 	integer GetBIPs
 	DIMENSION idComp(nComps)
 	iErrCode=0
