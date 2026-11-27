@@ -41,11 +41,11 @@ CONTAINS
 	END SUBROUTINE ApplyRegisteredPartner
 	SUBROUTINE SetEsd2PolarMode(iPolar,alphaD2,enableMEM2,iErr)
 		USE GlobConst, only:iEosOpt
-		USE EsdParms
+		USE EsdParms				!includes: alphaPolarD2,useEsd2Polar,usePolarMEM2,disableEsd2MEM2 
 		Integer, INTENT(IN) :: iPolar
 		DoublePrecision, INTENT(IN) :: alphaD2
-        DoublePrecision alphaPolarD2
-        Logical useEsd2Polar,usePolarMEM2,disableEsd2MEM2
+        !DoublePrecision alphaPolarD2
+        !Logical useEsd2Polar,usePolarMEM2,disableEsd2MEM2
 		Logical, INTENT(IN) :: enableMEM2
 		Integer, INTENT(OUT) :: iErr
 		iErr=0
@@ -53,7 +53,7 @@ CONTAINS
 			iErr=11;return
 		endif
 		alphaPolarD2=0.d0
-		!alphaPolarD2(iPolar)=alphaD2	!JRE: Is there something missing? the only scope of this variable is this routine.
+		alphaPolarD2(iPolar)=alphaD2
 		useEsd2Polar=alphaD2>0.d0
 		usePolarMEM2=enableMEM2
 		disableEsd2MEM2=.not.enableMEM2
@@ -522,12 +522,13 @@ CONTAINS
 
 	SUBROUTINE FitEsd2KijVLE(nPts,mode,tData,pData,x1Data,y1Data,kLower,kUpper,kFit,score,iErr)
 		USE BIPs, only:Kij
+		USE GlobConst, only:Tc,Pc
 		Integer, INTENT(IN) :: nPts,mode
 		DoublePrecision, INTENT(IN) :: tData(nPts),pData(nPts),x1Data(nPts),y1Data(nPts),kLower,kUpper
 		DoublePrecision, INTENT(OUT) :: kFit,score
 		Integer, INTENT(OUT) :: iErr
 		Integer iter,iLocal
-		DoublePrecision lo,hi,xA,xB,fA,fB,phi,pC(nPts),tC(nPts),yC(nPts)
+		DoublePrecision lo,hi,xA,xB,fA,fB,phi,yC(nPts)
 		lo=kLower;hi=kUpper;phi=(DSQRT(5.d0)-1.d0)/2.d0
 		xA=hi-phi*(hi-lo);xB=lo+phi*(hi-lo)
 		Kij(1,2)=xA;Kij(2,1)=xA;CALL ScoreEsd2VLE(nPts,mode,tData,pData,x1Data,y1Data,fA,pC,tC,yC,iLocal)
@@ -680,7 +681,7 @@ CONTAINS
 	SUBROUTINE NestedAlphaObjective(alpha,seedQ,seedE,seedB,nVp,tVp,pVp,wVp,nVe,tVe,pVe,xVe,veData, &
 	& nVle,vleMode,tVle,pVle,xVle,yVle,qLower,qUpper,score,qFit,epsFit,bFit,betaFit,veRmse,iErr)
 		USE EsdParms
-		USE GlobConst, only:bVolCc_mol
+		USE GlobConst, only:bVolCc_mol,Pc,Tc
 		USE BIPs, only:Kij
 		Integer, INTENT(IN) :: nVp,nVe,nVle,vleMode
 		DoublePrecision, INTENT(IN) :: alpha,seedQ,seedE,seedB,tVp(nVp),pVp(nVp),wVp(nVp)
@@ -688,14 +689,14 @@ CONTAINS
 		DoublePrecision, INTENT(IN) :: tVle(nVle),pVle(nVle),xVle(nVle),yVle(nVle),qLower,qUpper
 		DoublePrecision, INTENT(OUT) :: score,qFit,epsFit,bFit,betaFit,veRmse
 		Integer, INTENT(OUT) :: iErr
-		DoublePrecision pureScore,pC(nVle),tC(nVle),yC(nVle)
+		DoublePrecision pureScore,yC(nVle)
 		q(1)=seedQ;eokP(1)=seedE;vx(1)=seedB;bVolCc_mol(1)=seedB
 		CALL FitEsd2PureAtAlpha(nVp,tVp,pVp,wVp,alpha,qLower,qUpper,qFit,epsFit,bFit,pureScore,iErr)
 		if(iErr>0)then;score=1.d6;veRmse=1.d6;return;endif
 		Kij(1,2)=0.d0;Kij(2,1)=0.d0
 		CALL FitEsd2BetaVE(nVe,tVe,pVe,xVe,veData,-0.25d0,0.25d0,betaFit,veRmse,iErr)
 		if(iErr>0)then;score=1.d6;return;endif
-		CALL ScoreEsd2VLE(nVle,vleMode,tVle,pVle,xVle,yVle,score,pC,tC,yC,iErr)
+		CALL ScoreEsd2VLE(nVle,vleMode,tVle,pVle,xVle,yVle,score,Pc,Tc,yC,iErr)
 	END SUBROUTINE NestedAlphaObjective
 
 	SUBROUTINE FitEsd2AlphaFamilyNested(nPartners,polarCas,partnerCas,nVp,tVp,pVp,wVp, &
@@ -790,7 +791,7 @@ CONTAINS
 	& veStart,veCount,tVe,pVe,xVe,veData,nVleTotal,vleStart,vleCount,vleMode,tVle,pVle,xVle,yVle,qLower,qUpper, &
 	& qFit,epsFit,bFit,betaFit,partnerScore,balancedScore,iErr)
 		USE EsdParms
-		USE GlobConst, only:nmx,bVolCc_mol
+		USE GlobConst, only:nmx,bVolCc_mol,Tc,Pc
 		USE BIPs, only:Kij
 		Integer, INTENT(IN) :: excludePartner,nPartners,polarCas,partnerCas(nPartners),nVp,nVeTotal,nVleTotal
 		Integer, INTENT(IN) :: veStart(nPartners),veCount(nPartners),vleStart(nPartners),vleCount(nPartners),vleMode(nPartners)
@@ -799,7 +800,7 @@ CONTAINS
 		DoublePrecision, INTENT(OUT) :: qFit,epsFit,bFit,betaFit(nPartners),partnerScore(nPartners),balancedScore
 		Integer, INTENT(OUT) :: iErr
 		Integer cas(nmx),j,iLocal,i0,i1,nUsed
-		DoublePrecision pureScore,veRmse,pC(nVleTotal),tC(nVleTotal),yC(nVleTotal)
+		DoublePrecision pureScore,veRmse,yC(nVleTotal)
 		cas=0;cas(1)=polarCas
 		CALL PGLWrapperStartup(1,23,cas,iLocal)
 		if(iLocal/=0)then;iErr=41;balancedScore=1.d6;return;endif
@@ -821,7 +822,7 @@ CONTAINS
 			if(iLocal/=0)then;iErr=60+j;balancedScore=1.d6;return;endif
 			i0=vleStart(j);i1=i0+vleCount(j)-1
 			CALL ScoreEsd2VLE(vleCount(j),vleMode(j),tVle(i0:i1),pVle(i0:i1),xVle(i0:i1),yVle(i0:i1), &
-			& partnerScore(j),pC(1:vleCount(j)),tC(1:vleCount(j)),yC(1:vleCount(j)),iLocal)
+			& partnerScore(j),Pc(1:vleCount(j)),Tc(1:vleCount(j)),yC(1:vleCount(j)),iLocal)
 			if(j/=excludePartner)then;balancedScore=balancedScore+partnerScore(j);nUsed=nUsed+1;endif
 		enddo
 		if(nUsed<1)then;iErr=70;balancedScore=1.d6;else;iErr=0;balancedScore=balancedScore/DBLE(nUsed);endif
@@ -969,7 +970,7 @@ CONTAINS
 	END SUBROUTINE EvaluateEsd2PurePsat
 
 	SUBROUTINE EvaluateEsd2ExcessPoint(tKelvin,pMPa,x1,ve,heKJmol,geRT,seJmolK,iErr)
-		USE GlobConst, only:nmx,Rgas
+		USE GlobConst, only:nmx,Rgas !,Tc,Pc
 		DoublePrecision, INTENT(IN) :: tKelvin,pMPa,x1
 		DoublePrecision, INTENT(OUT) :: ve,heKJmol,geRT,seJmolK
 		Integer, INTENT(OUT) :: iErr

@@ -144,8 +144,8 @@ Subroutine GetEsdCas(NC,idCasPas,iErr) !ID is passed through GlobConst
 	Integer NC,iErr,iErrCode,i,j,ioErr,nDeck,iComplex,nComps
 	Integer iGotIt(NC),idCasPas(NC),idCasa(ndb),GetBIPs,ierCompExact(NC)  ! ndb USEd from EsdMem2ParmsDb(CritParmsDb)
 	DoublePrecision QA(ndb),KCSTA(ndb),eDonEpsK(ndb),eAccEpsK(ndb),bVolA(ndb),eokA(ndb),DHA(ndb)
-	Integer IDA(ndb),NDSA(ndb),NASA(ndb),NDA(ndb)
-	DoublePrecision CAi,iErrExact,iErrCrit
+	Integer IDA(ndb),NDSA(ndb),NASA(ndb),NDA(ndb),iErrExact,iErrCrit
+	DoublePrecision CAi
 	!doublePrecision bondRate(nmx,maxTypes)
 	!iErr=1 !Parms missing and iErrExact.ne.0 for at least one component
 	LOGICAL LOUDER

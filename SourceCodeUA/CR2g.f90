@@ -1,6 +1,5 @@
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	subroutine RegDbEsd(NC)!note:tc,pc,acen,id & esd parms USEd in GlobConst. 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine RegDbEsd(NC)!note:tc,pc,acen,id & esd parms USEd in GlobConst. 
 	! THIS ROUTINE minimizes vp error based on est'd rKadStar and dHkJ_mol (spec'd in main),  
 	! and constrained to match Tc.  Pc is ~matched implicitly by fitting vp near Tc.
 	! or matched explicitly when nParms=1.
@@ -71,11 +70,11 @@
 	close(51)
 	pause 'Output appended to ParmsEsdMEM2.txt. Restart program.'
 	stop
-	end
+end	subroutine RegDbEsd
 
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	subroutine RegPureEsd2(NC)!note:tc,pc,acen,id & esd parms USEd in GlobConst. 
+subroutine RegPureEsd2(NC)!note:tc,pc,acen,id & esd parms USEd in GlobConst. 
 	! THIS ROUTINE minimizes vp error based on est'd rKadStar and dHkJ_mol (spec'd in main),  
 	! and constrained to match Tc.  Pc is ~matched implicitly by fitting vp near Tc.
 	! or matched explicitly when nParms=1.
@@ -221,9 +220,10 @@
 		if(LOUDER)pause 'check errors'
 	endif
 	return
-	end
-	!******************************************************************************************************************************************
-	SUBROUTINE RegPureDev2(nData,nParms,PARM,ERROR,IFLAG)
+end	subroutine RegPureEsd2
+!******************************************************************************************************************************************
+SUBROUTINE RegPureDev2(nData,nParms,PARM,ERROR,IFLAG)
+	!This is a utility routine for RegPureEsd2
 	!nParms=1 => use critpt for eok and bvol
 	!nParms=2 => use critpt for eok
 	!nParms>2 => ignore critpt
